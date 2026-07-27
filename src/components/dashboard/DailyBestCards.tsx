@@ -1,13 +1,13 @@
 import { CalendarDays, Target } from "lucide-react";
 import { getPlayerById } from "@/data/selectors";
-import { usePublicData } from "@/hooks/usePublicData";
+import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { formatShortDate, formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { Avatar } from "@/components/common/Avatar";
 import { SectionHeading } from "@/components/common/SectionHeading";
 
 export function DailyBestCards() {
-  const { data } = usePublicData();
+  const { data } = useEffectivePublicData();
   return (
     <section>
       <SectionHeading eyebrow="Letzte Sessions" title="Tagesbestzeiten" />

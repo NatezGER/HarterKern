@@ -1,12 +1,12 @@
 import { Crown, MapPin, Sparkles } from "lucide-react";
 import { getPlayerById } from "@/data/selectors";
-import { usePublicData } from "@/hooks/usePublicData";
+import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { formatDate, formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { Avatar } from "@/components/common/Avatar";
 
 export function WorldRecordCard() {
-  const { data } = usePublicData();
+  const { data } = useEffectivePublicData();
   const record = data.worldRecordHistory[0];
   const player = record ? getPlayerById(data.players, record.playerId) : null;
   if (!record || !player) {

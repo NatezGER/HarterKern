@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { getRankedPlayers } from "@/data/selectors";
-import { usePublicData } from "@/hooks/usePublicData";
+import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 
 export function useLeaderboard() {
-  const { data } = usePublicData();
+  const { data } = useEffectivePublicData();
   const [query, setQuery] = useState("");
 
   const entries = useMemo(() => {

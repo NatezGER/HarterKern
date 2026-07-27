@@ -1,0 +1,117 @@
+import { CalendarPlus, Plus, Radio } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useLiveEvent } from "@/hooks/useLiveEvent";
+import { getAvatarGradient, getInitials } from "@/utils/avatar";
+import type { LiveParticipant } from "@/types/liveEvent";
+
+export function StartEventPanel({
+  candidates,
+  onStarted,
+}: {
+  candidates: LiveParticipant[];
+  onStarted: () => void;
+}) {
+  const { state, startEvent } = useLiveEvent();
+  const [name, setName] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [selected, setSelected] = useState<string[]>(candidates.map(({ id }) => id));
+  const [temporary, setTemporary] = useState<LiveParticipant[]>([]);
+  const [temporaryName, setTemporaryName] = useState("");
+  const [temporaryAk, setTemporaryAk] = useState(false);
+  const [error, setError] = useState("");
+  const allCandidates = useMemo(() => [...candidates, ...temporary], [candidates, temporary]);
+
+  const addTemporary = () => {
+    const trimmed = temporaryName.trim();
+    if (!trimmed) return;
+    const id = `temporary-${crypto.randomUUID()}`;
+    const player: LiveParticipant = {
+      id,
+      name: trimmed,
+      initials: getInitials(trimmed),
+      avatarGradient: getAvatarGradient(id),
+      avatarUrl: null,
+      personalBest: 0,
+      isAk: temporaryAk,
+    };
+    setTemporary((current) => [...current, player]);
+    setSelected((current) => [...current, id]);
+    setTemporaryName("");
+    setTemporaryAk(false);
+  };
+
+  const submit = () => {
+    const participants = allCandidates.filter(({ id }) => selected.includes(id));
+    if (!participants.length) {
+      setError("Wähle mindestens einen Teilnehmer.");
+      return;
+    }
+    if (!startEvent({ name, date, participants })) {
+      setError("Event konnte nicht gestartet werden.");
+      return;
+    }
+    onStarted();
+  };
+
+  return (
+    <section className="panel mx-auto max-w-3xl p-5 sm:p-8">
+      <Radio className="size-7 text-red-400" />
+      <h1 className="display-title mt-5 text-4xl">Live-Event starten</h1>
+      <p className="mt-2 text-sm text-white/40">Ein Event läuft exakt 24 Stunden. Parallelstarts sind gesperrt.</p>
+      {state.role !== "admin" ? (
+        <p className="mt-8 rounded-2xl border border-amber-400/20 bg-amber-400/[0.06] p-5 text-sm text-amber-200">
+          Wechsle oben in die Demo-Rolle „Admin“, um ein Event zu starten.
+        </p>
+      ) : (
+        <>
+          <div className="mt-7 grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-semibold text-white/45">
+              Eventname
+              <Input className="mt-2 rounded-xl" value={name} onChange={(event) => setName(event.target.value)} placeholder="Optional" />
+            </label>
+            <label className="text-xs font-semibold text-white/45">
+              Datum
+              <Input className="mt-2 rounded-xl" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+            </label>
+          </div>
+          <fieldset className="mt-7">
+            <legend className="text-xs font-bold uppercase tracking-[0.16em] text-gold-300">Teilnehmer</legend>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {allCandidates.map((player) => (
+                <label key={player.id} className="flex min-h-12 items-center gap-3 rounded-xl border border-white/10 px-4 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(player.id)}
+                    onChange={() => setSelected((current) =>
+                      current.includes(player.id)
+                        ? current.filter((id) => id !== player.id)
+                        : [...current, player.id],
+                    )}
+                  />
+                  <span className="flex-1">{player.name}</span>
+                  {player.isAk && <span className="text-[10px] text-white/35">AK</span>}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <div className="mt-6 rounded-2xl bg-white/[0.025] p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/40">Temporärer Teilnehmer</p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <Input className="rounded-xl" value={temporaryName} onChange={(event) => setTemporaryName(event.target.value)} placeholder="Name" />
+              <label className="flex h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-xs">
+                <input type="checkbox" checked={temporaryAk} onChange={(event) => setTemporaryAk(event.target.checked)} /> AK
+              </label>
+              <Button variant="outline" onClick={addTemporary}><Plus className="size-4" /> Hinzufügen</Button>
+            </div>
+          </div>
+          <Button size="lg" className="mt-7 h-14 w-full" onClick={submit}>
+            <CalendarPlus className="size-5" /> Event starten
+          </Button>
+          <p aria-live="assertive" className="mt-3 text-center text-sm text-red-300">{error}</p>
+        </>
+      )}
+    </section>
+  );
+}

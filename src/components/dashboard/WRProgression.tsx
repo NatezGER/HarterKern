@@ -1,11 +1,11 @@
 import { getPlayerById } from "@/data/selectors";
-import { usePublicData } from "@/hooks/usePublicData";
+import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { formatDate, formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { SectionHeading } from "@/components/common/SectionHeading";
 
 export function WRProgression() {
-  const { data } = usePublicData();
+  const { data } = useEffectivePublicData();
   return (
     <section>
       <SectionHeading eyebrow="Rekordgeschichte" title="WR Progression" />

@@ -1,14 +1,14 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getRankedPlayers } from "@/data/selectors";
-import { usePublicData } from "@/hooks/usePublicData";
+import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { formatTime } from "@/utils/format";
 import { Avatar } from "@/components/common/Avatar";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Button } from "@/components/ui/button";
 
 export function HallOfFamePreview() {
-  const { data } = usePublicData();
+  const { data } = useEffectivePublicData();
   const entries = getRankedPlayers(data.players, data.leaderboard).slice(0, 10);
 
   return (
