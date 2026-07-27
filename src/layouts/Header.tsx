@@ -1,12 +1,15 @@
-import { Menu, X } from "lucide-react";
+import { Menu, Timer, X } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { brand, navigationItems } from "@/constants/navigation";
-import { appMeta } from "@/data/mockData";
+import { appMeta } from "@/constants/content";
 import { cn } from "@/lib/cn";
+import { Button } from "@/components/ui/button";
+import { SubmitAttemptDialog } from "@/components/submission/SubmitAttemptDialog";
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const [submissionOpen, setSubmissionOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-background/85 backdrop-blur-2xl">
@@ -45,6 +48,10 @@ export function Header() {
           <span className="hidden rounded-full border border-gold-400/20 bg-gold-400/[0.07] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-gold-300 sm:block">
             {appMeta.season}
           </span>
+          <Button size="sm" onClick={() => setSubmissionOpen(true)}>
+            <Timer className="size-4" />
+            <span className="hidden sm:inline">Zeit eintragen</span>
+          </Button>
           <button
             type="button"
             aria-label="Navigation öffnen"
@@ -76,6 +83,7 @@ export function Header() {
           </div>
         </nav>
       )}
+      <SubmitAttemptDialog open={submissionOpen} onClose={() => setSubmissionOpen(false)} />
     </header>
   );
 }

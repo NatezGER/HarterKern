@@ -1,18 +1,20 @@
 import { CalendarDays, Target } from "lucide-react";
-import { dailyWinners } from "@/data/mockData";
 import { getPlayerById } from "@/data/selectors";
+import { usePublicData } from "@/hooks/usePublicData";
 import { formatShortDate, formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { Avatar } from "@/components/common/Avatar";
 import { SectionHeading } from "@/components/common/SectionHeading";
 
 export function DailyBestCards() {
+  const { data } = usePublicData();
   return (
     <section>
       <SectionHeading eyebrow="Letzte Sessions" title="Tagesbestzeiten" />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {dailyWinners.map((winner, index) => {
-          const player = getPlayerById(winner.playerId);
+        {data.dailyWinners.length === 0 && <p className="panel col-span-full py-16 text-center text-sm text-white/35">Noch keine abgeschlossenen Events mit Sieger.</p>}
+        {data.dailyWinners.map((winner, index) => {
+          const player = getPlayerById(data.players, winner.playerId);
           if (!player) return null;
           return (
             <AnimatedCard key={winner.id} delay={index * 0.06} className="p-5">

@@ -1,15 +1,22 @@
-import { CalendarDays, MapPin, Target, Users } from "lucide-react";
-import { events } from "@/data/mockData";
+import { CalendarDays, MapPin, Target, Timer, Users } from "lucide-react";
 import { formatDate } from "@/utils/format";
+import { usePublicData } from "@/hooks/usePublicData";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { Button } from "@/components/ui/button";
 
 export function CurrentEventCard() {
-  const event = events.find((item) => item.status === "upcoming") ?? events[0];
+  const { data } = usePublicData();
+  const event = data.events.find((item) => item.status === "active");
+  if (!event) {
+    return <AnimatedCard className="grid min-h-72 place-items-center p-8 text-center" hover={false}><div><CalendarDays className="mx-auto size-7 text-gold-400" /><h3 className="display-title mt-4 text-3xl">Kein aktives Event</h3><p className="mt-2 text-sm text-white/40">Die nächste Einreichung startet automatisch ein neues Event.</p></div></AnimatedCard>;
+  }
   const details = [
     { icon: CalendarDays, label: "Datum", value: formatDate(event.date) },
     { icon: Users, label: "Teilnehmer", value: `${event.participantIds.length} bestätigt` },
-    { icon: Target, label: "Versuche", value: `${event.attempts} geplant` },
+    { icon: Target, label: "Versuche", value: `${event.attempts} bestätigt` },
+    { icon: Timer, label: "Gültige Zeiten", value: String(event.validAttempts) },
+    { icon: Target, label: "DNF", value: String(event.dnfCount) },
+    { icon: Timer, label: "Aktuelle Bestzeit", value: event.fastest > 0 ? `${event.fastest.toLocaleString("de-DE", { minimumFractionDigits: 2 })} s` : "—" },
   ];
 
   return (
@@ -22,7 +29,7 @@ export function CurrentEventCard() {
               <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" /> Aktuelles Event
             </span>
             <h3 className="display-title mt-5 text-4xl sm:text-5xl">{event.title}</h3>
-            <p className="mt-2 flex items-center gap-2 text-sm text-white/40"><MapPin className="size-4 text-gold-400" /> {event.location}</p>
+            <p className="mt-2 flex items-center gap-2 text-sm text-white/40"><MapPin className="size-4 text-gold-400" /> Event vom {formatDate(event.date)}</p>
           </div>
           <Button variant="outline">Event ansehen</Button>
         </div>

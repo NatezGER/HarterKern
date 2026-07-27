@@ -1,14 +1,17 @@
 import { Crown, MapPin, Sparkles } from "lucide-react";
-import { worldRecordHistory } from "@/data/mockData";
 import { getPlayerById } from "@/data/selectors";
+import { usePublicData } from "@/hooks/usePublicData";
 import { formatDate, formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { Avatar } from "@/components/common/Avatar";
 
 export function WorldRecordCard() {
-  const record = worldRecordHistory[0];
-  const player = getPlayerById(record.playerId);
-  if (!player) return null;
+  const { data } = usePublicData();
+  const record = data.worldRecordHistory[0];
+  const player = record ? getPlayerById(data.players, record.playerId) : null;
+  if (!record || !player) {
+    return <AnimatedCard className="grid min-h-72 place-items-center p-8 text-center text-sm text-white/40" hover={false}>Noch kein offizieller Weltrekord.</AnimatedCard>;
+  }
 
   return (
     <AnimatedCard className="relative overflow-hidden bg-gradient-to-br from-[#251e0c] via-[#15140f] to-[#0e100e] p-6 shadow-gold sm:p-8" hover={false}>

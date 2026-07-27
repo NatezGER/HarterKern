@@ -1,24 +1,30 @@
-import { ArrowLeft, Target, Timer, Trophy, Zap } from "lucide-react";
+import { ArrowLeft, CircleX, Target, Timer, Trophy, Zap } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { Avatar } from "@/components/common/Avatar";
 import { SectionHeading } from "@/components/common/SectionHeading";
-import { BadgeCollection } from "@/components/players/BadgeCollection";
-import { FormChartPlaceholder } from "@/components/players/FormChartPlaceholder";
+import { DataState } from "@/components/common/DataState";
 import { Button } from "@/components/ui/button";
 import { getPlayerById, getRankedPlayers } from "@/data/selectors";
+import { usePublicData } from "@/hooks/usePublicData";
+import { hundredthsToSeconds } from "@/utils/time";
 import { formatTime } from "@/utils/format";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
 export function PlayerProfilePage() {
   const { id = "" } = useParams();
-  const player = getPlayerById(id);
+  const { data, status } = usePublicData();
+  if (status !== "ready") return <DataState><div /></DataState>;
+  const player = getPlayerById(data.players, id);
   if (!player) return <NotFoundPage />;
-  const rank = getRankedPlayers().find((entry) => entry.playerId === player.id)?.rank ?? 0;
+  const rank = getRankedPlayers(data.players, data.leaderboard).find((entry) => entry.playerId === player.id)?.rank ?? 0;
+  const recentAttempts = data.recentAttempts.filter((attempt) => attempt.playerId === player.id).slice(0, 8);
   const metrics = [
     { label: "Persönliche Bestzeit", value: formatTime(player.personalBest), icon: Zap },
     { label: "Durchschnitt", value: formatTime(player.average), icon: Timer },
     { label: "Versuche", value: String(player.attempts), icon: Target },
+    { label: "Gültige Zeiten", value: String(player.validAttempts), icon: Timer },
+    { label: "DNF", value: String(player.dnfCount), icon: CircleX },
     { label: "Tagessiege", value: String(player.dailyWins), icon: Trophy },
   ];
 
@@ -52,13 +58,20 @@ export function PlayerProfilePage() {
         ))}
       </div>
       <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
-        <section>
-          <SectionHeading eyebrow="Performance" title="Aktuelle Form" />
-          <AnimatedCard className="p-5" hover={false}><FormChartPlaceholder player={player} /></AnimatedCard>
-        </section>
-        <section>
-          <SectionHeading eyebrow="Erfolge" title="Badges" />
-          <BadgeCollection player={player} />
+        <section className="xl:col-span-2">
+          <SectionHeading eyebrow="Bestätigte Ergebnisse" title="Letzte Versuche" />
+          <AnimatedCard className="overflow-hidden" hover={false}>
+            {recentAttempts.length === 0 && <p className="py-16 text-center text-sm text-white/35">Noch keine bestätigten Versuche.</p>}
+            {recentAttempts.map((attempt) => (
+              <div key={attempt.id} className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4 last:border-0">
+                <div>
+                  <p className="font-display text-xl font-black">{attempt.isDnf ? "DNF" : formatTime(hundredthsToSeconds(attempt.timeHundredths))}</p>
+                  <p className="mt-1 text-xs text-white/35">{new Intl.DateTimeFormat("de-DE").format(new Date(attempt.submittedAt))}</p>
+                </div>
+                <span className="rounded-full border border-emerald-400/20 bg-emerald-400/[0.07] px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-emerald-300">Bestätigt</span>
+              </div>
+            ))}
+          </AnimatedCard>
         </section>
       </div>
     </div>

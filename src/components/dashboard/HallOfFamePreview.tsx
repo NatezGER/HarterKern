@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getRankedPlayers } from "@/data/selectors";
+import { usePublicData } from "@/hooks/usePublicData";
 import { formatTime } from "@/utils/format";
 import { Avatar } from "@/components/common/Avatar";
 import { RankIndicator } from "@/components/common/RankIndicator";
@@ -8,7 +9,8 @@ import { SectionHeading } from "@/components/common/SectionHeading";
 import { Button } from "@/components/ui/button";
 
 export function HallOfFamePreview() {
-  const entries = getRankedPlayers().slice(0, 10);
+  const { data } = usePublicData();
+  const entries = getRankedPlayers(data.players, data.leaderboard).slice(0, 10);
 
   return (
     <section>
@@ -18,6 +20,7 @@ export function HallOfFamePreview() {
         action={<Button asChild variant="ghost" size="sm"><Link to="/leaderboard">Alle anzeigen <ArrowRight className="size-4" /></Link></Button>}
       />
       <div className="panel overflow-hidden">
+        {entries.length === 0 && <p className="py-16 text-center text-sm text-white/35">Noch keine bestätigten Bestzeiten.</p>}
         {entries.map(({ player, rank }) => (
           <Link
             key={player.id}

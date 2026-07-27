@@ -11,6 +11,10 @@ dist
 dist-ssr
 *.local
 *.tsbuildinfo
+.env
+.env.*
+!.env.example
+supabase/.temp
 
 # Editor directories and files
 .vscode/*

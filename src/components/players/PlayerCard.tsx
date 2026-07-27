@@ -17,6 +17,7 @@ export function PlayerCard({ player, delay = 0 }: { player: Player; delay?: numb
           </Link>
         </div>
         <h2 className="display-title mt-7 text-3xl">{player.name}</h2>
+        {player.isAk && <span className="mt-2 inline-flex rounded-full border border-white/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-white/40">Außer Konkurrenz</span>}
         <div className="mt-6 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-black/25 p-4">
             <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/30">Personal Best</p>

@@ -1,10 +1,11 @@
-import { worldRecordHistory } from "@/data/mockData";
 import { getPlayerById } from "@/data/selectors";
+import { usePublicData } from "@/hooks/usePublicData";
 import { formatDate, formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { SectionHeading } from "@/components/common/SectionHeading";
 
 export function WRProgression() {
+  const { data } = usePublicData();
   return (
     <section>
       <SectionHeading eyebrow="Rekordgeschichte" title="WR Progression" />
@@ -12,8 +13,9 @@ export function WRProgression() {
         <div className="relative">
           <div className="absolute bottom-2 left-[5px] top-2 w-px bg-gradient-to-b from-gold-400 via-gold-400/30 to-transparent" />
           <div className="space-y-7">
-            {worldRecordHistory.map((record, index) => {
-              const player = getPlayerById(record.playerId);
+            {data.worldRecordHistory.length === 0 && <p className="py-12 text-center text-sm text-white/35">Noch keine Rekordprogression.</p>}
+            {data.worldRecordHistory.map((record, index) => {
+              const player = getPlayerById(data.players, record.playerId);
               if (!player) return null;
               return (
                 <div key={record.id} className="relative grid grid-cols-[1rem_1fr_auto] items-center gap-4">
