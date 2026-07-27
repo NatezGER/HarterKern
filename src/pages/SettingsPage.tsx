@@ -1,6 +1,8 @@
 import { Bell, Moon, MonitorSmartphone, ShieldCheck } from "lucide-react";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { PageHeader } from "@/components/common/PageHeader";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { SectionHeading } from "@/components/common/SectionHeading";
 
 const settingsSections = [
   { icon: Moon, title: "Darstellung", description: "Dark Theme ist für das beste Arena-Erlebnis optimiert.", status: "Aktiv" },
@@ -12,7 +14,7 @@ const settingsSections = [
 export function SettingsPage() {
   return (
     <div className="space-y-10">
-      <PageHeader eyebrow="Preferences" title="Einstellungen" description="Die Oberfläche ist vorbereitet. Funktionale Einstellungen folgen in einem späteren Milestone." />
+      <PageHeader eyebrow="Preferences" title="Einstellungen" description="Öffentliche Anzeigeoptionen und geschützte Administration für Events, Versuche und Spieler." />
       <div className="grid gap-4 md:grid-cols-2">
         {settingsSections.map(({ icon: Icon, title, description, status }, index) => (
           <AnimatedCard key={title} delay={index * 0.06} className="flex items-start gap-5 p-6">
@@ -27,6 +29,10 @@ export function SettingsPage() {
           </AnimatedCard>
         ))}
       </div>
+      <section>
+        <SectionHeading eyebrow="Geschützter Bereich" title="Administration" />
+        <AdminDashboard />
+      </section>
     </div>
   );
 }

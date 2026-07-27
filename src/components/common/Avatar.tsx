@@ -25,7 +25,9 @@ export function Avatar({ player, size = "md", className }: AvatarProps) {
         className,
       )}
     >
-      {player.initials}
+      {player.avatarUrl ? (
+        <img src={player.avatarUrl} alt="" className="size-full rounded-full object-cover" />
+      ) : player.initials}
     </div>
   );
 }

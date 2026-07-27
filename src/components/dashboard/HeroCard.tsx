@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowDownRight, Gauge } from "lucide-react";
-import { appMeta } from "@/data/mockData";
+import { appMeta } from "@/constants/content";
 
 export function HeroCard() {
   return (

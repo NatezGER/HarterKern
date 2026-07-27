@@ -1,16 +1,33 @@
-# React + Vite
+# Harter Kern – 2 Fast 2 Drink
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Premium React-Web-App für Events, Spieler, Versuche und offizielle Rekorde.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React, TypeScript und Vite
+- Tailwind CSS und shadcn/ui-basierte Komponenten
+- React Router und Framer Motion
+- Supabase Auth und PostgreSQL mit Row Level Security
 
-## React Compiler
+## Lokal starten
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
 
-## Expanding the ESLint configuration
+Die drei öffentlichen Variablen in `.env.local` müssen auf ein vorbereitetes
+Supabase-Projekt zeigen. Ohne Konfiguration startet die App weiterhin, zeigt
+aber einen klaren Setup-Hinweis statt erfundener Daten.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Qualität
+
+```bash
+npm run lint
+npm run test
+npm run build
+```
+
+Schema, Seed, Sicherheit und Deployment sind in
+[docs/MILESTONE_2_SETUP.md](docs/MILESTONE_2_SETUP.md) dokumentiert.

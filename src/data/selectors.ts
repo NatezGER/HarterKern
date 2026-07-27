@@ -1,11 +1,13 @@
-import { leaderboard, players } from "@/data/mockData";
+import type { LeaderboardEntry, Player } from "@/types";
 
-export const getPlayerById = (id: string) => players.find((player) => player.id === id);
+export const getPlayerById = (players: Player[], id: string) =>
+  players.find((player) => player.id === id);
 
-export const getRankedPlayers = () =>
+export const getRankedPlayers = (players: Player[], leaderboard: LeaderboardEntry[]) =>
   leaderboard.flatMap((entry) => {
-    const player = getPlayerById(entry.playerId);
+    const player = getPlayerById(players, entry.playerId);
     return player ? [{ ...entry, player }] : [];
   });
 
-export const getPodiumPlayers = () => getRankedPlayers().slice(0, 3);
+export const getPodiumPlayers = (players: Player[], leaderboard: LeaderboardEntry[]) =>
+  getRankedPlayers(players, leaderboard).slice(0, 3);

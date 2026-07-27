@@ -1,5 +1,5 @@
 export const formatTime = (seconds: number) =>
-  `${seconds.toLocaleString("de-DE", {
+  seconds <= 0 ? "—" : `${seconds.toLocaleString("de-DE", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })} s`;

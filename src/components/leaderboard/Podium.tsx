@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Crown } from "lucide-react";
 import { getPodiumPlayers } from "@/data/selectors";
+import { usePublicData } from "@/hooks/usePublicData";
 import { cn } from "@/lib/cn";
 import { formatTime } from "@/utils/format";
 import { Avatar } from "@/components/common/Avatar";
@@ -12,7 +13,11 @@ const podiumStyles = [
 ];
 
 export function Podium() {
-  const podium = getPodiumPlayers();
+  const { data } = usePublicData();
+  const podium = getPodiumPlayers(data.players, data.leaderboard);
+  if (podium.length === 0) {
+    return <div className="grid min-h-72 place-items-center text-sm text-white/35">Das Podium wartet auf bestätigte Zeiten.</div>;
+  }
   const displayOrder = [podium[1], podium[0], podium[2]];
 
   return (
