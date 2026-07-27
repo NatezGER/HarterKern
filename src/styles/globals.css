@@ -52,7 +52,7 @@ body {
   }
 
   .display-title {
-    @apply font-display font-black uppercase tracking-[-0.035em];
+    @apply font-display font-extrabold uppercase tracking-[0.015em] sm:tracking-[0.02em];
   }
 
   .gold-text {

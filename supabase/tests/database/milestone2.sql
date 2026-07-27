@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap;
-select plan(15);
+select plan(19);
 
 select has_table('public', 'players', 'players table exists');
 select has_table('public', 'events', 'events table exists');
@@ -85,6 +85,94 @@ select is(
 select has_function('public', 'submit_public_attempt', array['text', 'boolean', 'uuid', 'text', 'integer']);
 select has_function('public', 'admin_merge_players', array['uuid', 'uuid']);
 select has_view('public', 'event_winners');
+
+insert into public.players (id, display_name, is_ak)
+values
+  ('90000000-0000-0000-0000-000000000004', 'Tied Player', false),
+  ('90000000-0000-0000-0000-000000000005', 'Worse Average', false),
+  ('90000000-0000-0000-0000-000000000006', 'AK Player', true),
+  ('90000000-0000-0000-0000-000000000011', 'Validity Player', false);
+
+insert into public.attempts (
+  id, player_id, event_id, status, time_hundredths, is_dnf, source
+) values
+  (
+    '90000000-0000-0000-0000-000000000007',
+    '90000000-0000-0000-0000-000000000004',
+    '90000000-0000-0000-0000-000000000002',
+    'approved', 206, false, 'admin'
+  ),
+  (
+    '90000000-0000-0000-0000-000000000008',
+    '90000000-0000-0000-0000-000000000005',
+    '90000000-0000-0000-0000-000000000002',
+    'approved', 206, false, 'admin'
+  ),
+  (
+    '90000000-0000-0000-0000-000000000009',
+    '90000000-0000-0000-0000-000000000005',
+    '90000000-0000-0000-0000-000000000002',
+    'approved', 999, false, 'admin'
+  ),
+  (
+    '90000000-0000-0000-0000-000000000010',
+    '90000000-0000-0000-0000-000000000006',
+    '90000000-0000-0000-0000-000000000002',
+    'approved', 100, false, 'admin'
+  ),
+  (
+    '90000000-0000-0000-0000-000000000012',
+    '90000000-0000-0000-0000-000000000011',
+    '90000000-0000-0000-0000-000000000002',
+    'approved', 300, false, 'admin'
+  ),
+  (
+    '90000000-0000-0000-0000-000000000013',
+    '90000000-0000-0000-0000-000000000011',
+    '90000000-0000-0000-0000-000000000002',
+    'pending', 100, false, 'public'
+  ),
+  (
+    '90000000-0000-0000-0000-000000000014',
+    '90000000-0000-0000-0000-000000000011',
+    '90000000-0000-0000-0000-000000000002',
+    'approved', null, true, 'admin'
+  ),
+  (
+    '90000000-0000-0000-0000-000000000015',
+    '90000000-0000-0000-0000-000000000011',
+    '90000000-0000-0000-0000-000000000002',
+    'approved', 90, false, 'admin'
+  );
+
+update public.attempts
+set deleted_at = now()
+where id = '90000000-0000-0000-0000-000000000015';
+
+select is(
+  (select rank from public.public_hall_of_fame where player_id = '90000000-0000-0000-0000-000000000004'),
+  (select rank from public.public_hall_of_fame where player_id = '90000000-0000-0000-0000-000000000001'),
+  'identical personal bests share the same rank'
+);
+select is(
+  (select rank from public.public_hall_of_fame where player_id = '90000000-0000-0000-0000-000000000005'),
+  (select rank from public.public_hall_of_fame where player_id = '90000000-0000-0000-0000-000000000001'),
+  'a worse average does not affect the personal-best rank'
+);
+select is(
+  (select count(*) from public.public_hall_of_fame where player_id = '90000000-0000-0000-0000-000000000006'),
+  0::bigint,
+  'AK players are excluded from the Hall of Fame'
+);
+select is(
+  (
+    select personal_best_hundredths
+    from public.public_hall_of_fame
+    where player_id = '90000000-0000-0000-0000-000000000011'
+  ),
+  300,
+  'pending, DNF and deleted attempts do not affect the personal best'
+);
 
 select * from finish();
 rollback;

@@ -3,7 +3,6 @@ import type { ReturnTypeRankedPlayers } from "@/types/view";
 import { cn } from "@/lib/cn";
 import { formatDate, formatTime } from "@/utils/format";
 import { Avatar } from "@/components/common/Avatar";
-import { RankIndicator } from "@/components/common/RankIndicator";
 
 export function LeaderboardList({ entries }: { entries: ReturnTypeRankedPlayers }) {
   if (entries.length === 0) {
@@ -32,7 +31,6 @@ export function LeaderboardList({ entries }: { entries: ReturnTypeRankedPlayers 
             <Avatar player={player} size="md" />
             <div className="min-w-0">
               <p className="truncate font-display text-xl font-black uppercase">{player.name}</p>
-              <RankIndicator trend={player.trend} />
             </div>
           </div>
           <p className="hidden text-xs text-white/35 sm:block">{formatDate(recordDate)}</p>

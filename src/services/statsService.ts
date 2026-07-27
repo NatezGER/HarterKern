@@ -6,7 +6,8 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   const { data, error } = await getSupabase()
     .from("public_hall_of_fame")
     .select("*")
-    .order("rank");
+    .order("personal_best_hundredths", { ascending: true })
+    .order("display_name", { ascending: true });
   if (error) throw error;
   return data.map((row) => ({
     playerId: row.player_id,
