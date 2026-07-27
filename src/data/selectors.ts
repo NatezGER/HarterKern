@@ -6,7 +6,9 @@ export const getPlayerById = (players: Player[], id: string) =>
 export const getRankedPlayers = (players: Player[], leaderboard: LeaderboardEntry[]) =>
   leaderboard.flatMap((entry) => {
     const player = getPlayerById(players, entry.playerId);
-    return player ? [{ ...entry, player }] : [];
+    return player && !player.isAk && !player.isArchived
+      ? [{ ...entry, player }]
+      : [];
   });
 
 export const getPodiumPlayers = (players: Player[], leaderboard: LeaderboardEntry[]) =>

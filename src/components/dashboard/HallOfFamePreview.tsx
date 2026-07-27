@@ -4,7 +4,6 @@ import { getRankedPlayers } from "@/data/selectors";
 import { usePublicData } from "@/hooks/usePublicData";
 import { formatTime } from "@/utils/format";
 import { Avatar } from "@/components/common/Avatar";
-import { RankIndicator } from "@/components/common/RankIndicator";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Button } from "@/components/ui/button";
 
@@ -32,7 +31,6 @@ export function HallOfFamePreview() {
               <Avatar player={player} size="sm" />
               <div className="min-w-0">
                 <p className="truncate font-semibold">{player.name}</p>
-                <RankIndicator trend={player.trend} />
               </div>
             </div>
             <p className="hidden text-right text-xs text-white/30 sm:block">{player.attempts} Versuche</p>
