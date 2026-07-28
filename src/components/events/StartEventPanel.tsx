@@ -42,13 +42,13 @@ export function StartEventPanel({
     setTemporaryAk(false);
   };
 
-  const submit = () => {
+  const submit = async () => {
     const participants = allCandidates.filter(({ id }) => selected.includes(id));
     if (!participants.length) {
       setError("Wähle mindestens einen Teilnehmer.");
       return;
     }
-    if (!startEvent({ name, date, participants })) {
+    if (!await startEvent({ name, date, participants })) {
       setError("Event konnte nicht gestartet werden.");
       return;
     }
@@ -105,7 +105,7 @@ export function StartEventPanel({
               <Button variant="outline" onClick={addTemporary}><Plus className="size-4" /> Hinzufügen</Button>
             </div>
           </div>
-          <Button size="lg" className="mt-7 h-14 w-full" onClick={submit}>
+          <Button size="lg" className="mt-7 h-14 w-full" onClick={() => void submit()}>
             <CalendarPlus className="size-5" /> Event starten
           </Button>
           <p aria-live="assertive" className="mt-3 text-center text-sm text-red-300">{error}</p>

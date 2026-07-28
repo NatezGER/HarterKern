@@ -27,7 +27,7 @@ export async function getWorldRecordHistory(): Promise<WorldRecord[]> {
   if (eventsResult.error) throw eventsResult.error;
   const events = new Map(eventsResult.data.map((event) => [event.id, event]));
   return recordsResult.data.map((row) => {
-    const event = events.get(row.event_id);
+    const event = row.event_id ? events.get(row.event_id) : undefined;
     return {
       id: row.attempt_id,
       playerId: row.player_id,

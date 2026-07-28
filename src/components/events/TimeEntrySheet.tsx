@@ -44,11 +44,11 @@ export function TimeEntrySheet({
   }, [standing]);
 
   if (!standing) return null;
-  const save = (result: "time" | "dns") => {
+  const save = async (result: "time" | "dns") => {
     if (savingRef.current) return;
     savingRef.current = true;
     const seconds = result === "time" && parsed != null ? parsed / 100 : undefined;
-    const saved = submitAttempt(standing.player.id, result, seconds);
+    const saved = await submitAttempt(standing.player.id, result, seconds);
     if (!saved) {
       savingRef.current = false;
       setMessage("Eingabe ungültig oder bereits gespeichert.");
@@ -82,12 +82,12 @@ export function TimeEntrySheet({
         <Button
           size="lg"
           disabled={parsed == null}
-          onClick={() => save("time")}
+          onClick={() => void save("time")}
           className="h-14"
         >
           <Check className="size-5" /> Zeit speichern
         </Button>
-        <Button size="lg" variant="outline" onClick={() => save("dns")} className="h-14">
+        <Button size="lg" variant="outline" onClick={() => void save("dns")} className="h-14">
           <Flag className="size-5" /> DNS
         </Button>
       </div>

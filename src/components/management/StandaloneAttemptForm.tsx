@@ -18,11 +18,11 @@ export function StandaloneAttemptForm() {
     if (!playerId && state.players[0]) setPlayerId(state.players[0].id);
   }, [playerId, state.players]);
 
-  const save = () => {
+  const save = async () => {
     const parsed = dns ? null : parseTimeToHundredths(time);
     if (!playerId) return setMessage("Bitte einen Spieler auswählen.");
     if (!dns && parsed == null) return setMessage("Ungültige Zeit.");
-    const saved = addAttempt({
+    const saved = await addAttempt({
       playerId,
       result: dns ? "dns" : "time",
       timeSeconds: parsed == null ? undefined : parsed / 100,
@@ -46,7 +46,7 @@ export function StandaloneAttemptForm() {
         <label className="flex h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-xs"><input type="checkbox" checked={dns} onChange={(event) => setDns(event.target.checked)} /> DNS</label>
         <label className="flex h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-xs"><input type="checkbox" checked={isAk} onChange={(event) => setIsAk(event.target.checked)} /> AK</label>
       </div>
-      <Button className="mt-4" onClick={save}><Save className="size-4" /> Direkt speichern</Button>
+      <Button className="mt-4" onClick={() => void save()}><Save className="size-4" /> Direkt speichern</Button>
       <p aria-live="polite" className="mt-3 text-sm text-white/45">{message}</p>
     </section>
   );

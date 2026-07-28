@@ -1,3 +1,5 @@
+import type { DataPlatformFunctions, EventParticipantsTable } from "@/types/dataPlatform";
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 type AttemptStatus = "pending" | "approved" | "rejected";
@@ -17,6 +19,7 @@ export interface Database {
           is_archived: boolean;
           created_at: string;
           updated_at: string;
+          legacy_source_id: string | null;
         };
         Insert: {
           id?: string;
@@ -25,6 +28,7 @@ export interface Database {
           avatar_url?: string | null;
           is_ak?: boolean;
           is_archived?: boolean;
+          legacy_source_id?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["players"]["Insert"]>;
         Relationships: [];
@@ -40,6 +44,9 @@ export interface Database {
           closed_at: string | null;
           created_at: string;
           updated_at: string;
+          end_reason: string | null;
+          winner_player_id: string | null;
+          legacy_source_id: string | null;
         };
         Insert: {
           id?: string;
@@ -49,6 +56,9 @@ export interface Database {
           ends_at: string;
           status?: EventStatus;
           closed_at?: string | null;
+          end_reason?: string | null;
+          winner_player_id?: string | null;
+          legacy_source_id?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["events"]["Insert"]>;
         Relationships: [];
@@ -57,7 +67,10 @@ export interface Database {
         Row: {
           id: string;
           player_id: string;
-          event_id: string;
+          event_id: string | null;
+          event_name: string | null;
+          is_ak: boolean;
+          legacy_source_id: string | null;
           status: AttemptStatus;
           time_hundredths: number | null;
           is_dnf: boolean;
@@ -74,7 +87,10 @@ export interface Database {
         Insert: {
           id?: string;
           player_id: string;
-          event_id: string;
+          event_id?: string | null;
+          event_name?: string | null;
+          is_ak?: boolean;
+          legacy_source_id?: string | null;
           status?: AttemptStatus;
           time_hundredths?: number | null;
           is_dnf?: boolean;
@@ -90,6 +106,7 @@ export interface Database {
         };
         Relationships: [];
       };
+      event_participants: EventParticipantsTable;
       admin_roles: {
         Row: { user_id: string; created_at: string };
         Insert: { user_id: string };
@@ -166,7 +183,7 @@ export interface Database {
           display_name: string;
           time_hundredths: number;
           achieved_at: string;
-          event_id: string;
+          event_id: string | null;
         };
         Relationships: [];
       };
@@ -183,7 +200,7 @@ export interface Database {
         Relationships: [];
       };
     };
-    Functions: {
+    Functions: DataPlatformFunctions & {
       submit_public_attempt: {
         Args: {
           p_client_identifier: string;

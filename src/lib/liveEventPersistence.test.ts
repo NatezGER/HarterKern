@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { createDemoLiveState } from "@/data/liveDemoData";
-import { parseLiveEventState } from "@/lib/liveEventPersistence";
+import { parseMigratableLiveEventState } from "@/lib/liveEventPersistence";
+import type { LiveEventState } from "@/types/liveEvent";
 
 describe("live event persistence", () => {
   it("restores a valid v2 state", () => {
-    const state = createDemoLiveState(new Date("2026-07-27T12:00:00.000Z"));
-    expect(parseLiveEventState(JSON.stringify(state), createDemoLiveState)).toEqual(state);
+    const state: LiveEventState = {
+      version: 2,
+      players: [],
+      events: [],
+      attempts: [],
+    };
+    expect(parseMigratableLiveEventState(JSON.stringify(state))).toEqual(state);
   });
 
   it("migrates v1 demo IDs and makes pending attempts official", () => {
@@ -39,14 +44,16 @@ describe("live event persistence", () => {
         submittedAt: "2026-07-27T11:00:00.000Z",
       }],
     };
-    const migrated = parseLiveEventState(JSON.stringify(legacy), createDemoLiveState);
+    const migrated = parseMigratableLiveEventState(JSON.stringify(legacy));
+    expect(migrated).not.toBeNull();
+    if (!migrated) throw new Error("Migration fehlgeschlagen");
     expect(migrated.version).toBe(2);
     expect(migrated.players[0].id).toBe("10000000-0000-0000-0000-000000000001");
     expect(migrated.attempts).toHaveLength(1);
   });
 
   it.each(["{broken", JSON.stringify({ version: 0 })])(
-    "falls back safely for damaged data",
-    (raw) => expect(parseLiveEventState(raw, createDemoLiveState).version).toBe(2),
+    "rejects damaged data without inventing a fallback state",
+    (raw) => expect(parseMigratableLiveEventState(raw)).toBeNull(),
   );
 });

@@ -11,6 +11,60 @@ Supabase → Services → PublicData/Admin Hooks → Pages → UI-Komponenten
 UI-Komponenten führen keine freien Supabase-Abfragen aus. Alle Abfragen und
 Mutationen liegen unter `src/services/`.
 
+## PR 6A – gemeinsame Datenbasis
+
+PR 6A erweitert den Datenfluss zu einer einzigen autoritativen Quelle:
+
+```text
+Supabase → dataPlatformRepository → DataPlatformProvider → Public-/Live-Adapter → UI
+```
+
+Die Migrationen `202607280005` bis `202607280008` ergänzen:
+
+- stabile Legacy-Import-IDs für Spieler, Events und Versuche,
+- explizite Eventteilnehmer in `event_participants`,
+- Eventabschlussgrund und gespeicherten Sieger,
+- eventlose Einzelversuche sowie den AK-Wert pro Versuch,
+- idempotente Sync-Funktionen für den bestehenden Live-/Management-Workflow,
+- Realtime-Publikation für `players`, `events`, `attempts` und
+  `event_participants`,
+- aktualisierte, gemeinsam genutzte Ranking-, Rekord- und Statistik-Views.
+
+Vor dem Deployment müssen diese vier neuen Migrationen in Dateireihenfolge
+angewendet werden. Lokale PR-5-Daten aus `harter-kern-live-event-v1` oder
+`harter-kern-live-event-v2` werden anschließend einmalig importiert. Erst nach
+vollständig erfolgreichem Import setzt die App den Marker
+`harter-kern-pr6a-supabase-migrated` und entfernt die alten Quellschlüssel.
+Legacy-IDs und eindeutige Indizes machen einen abgebrochenen Wiederholungsversuch
+idempotent.
+
+Supabase bleibt nach dem ersten Load maßgeblich. Die App legt keine lokalen
+Spieler-, Event-, Versuch- oder Hall-of-Fame-Overlays mehr darüber.
+
+### Realtime und Refetch
+
+Eine zentrale Subscription beobachtet Insert, Update und Delete der vier
+gemeinsamen Tabellen. Jede Meldung löst einen entprellten vollständigen Refetch
+aus. Zusätzlich wird bei Fensterfokus, `visibilitychange`, beim Öffnen der
+Live-Seite und während eines aktiven Events alle 15 Sekunden aktualisiert.
+Subscriptions und Timer werden beim Unmount entfernt.
+
+### Sicherheitsgrenze ohne Login
+
+RLS bleibt aktiv. `players`, `events` und freigegebene, nicht gelöschte
+`attempts` sind wie zuvor öffentlich lesbar; `event_participants` ist ebenfalls
+öffentlich lesbar. Direkte Tabellen-Schreibrechte für anonyme Clients werden
+nicht ergänzt.
+
+Damit der bereits vorhandene PR-5-Live- und Verwaltungsworkflow ohne echtes
+Login geräteübergreifend funktioniert, dürfen `anon` und `authenticated` die
+neuen `sync_*`-Security-Definer-Funktionen ausführen. Diese Funktionen validieren
+Eingaben und erhalten Constraints, stellen aber **keine echte
+Benutzerautorisierung** dar. Jeder Client mit dem öffentlichen Anon-Key kann
+diese Workflows aufrufen. Eine belastbare Zugriffskontrolle erfordert einen
+späteren Authentifizierungs-PR; bis dahin darf die Oberfläche nicht als
+sicherer Adminbereich betrachtet werden.
+
 ## Datenbankschema
 
 Die versionierten Migrationen liegen unter `supabase/migrations/`:

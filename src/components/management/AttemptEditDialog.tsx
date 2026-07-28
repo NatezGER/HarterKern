@@ -37,13 +37,13 @@ export function AttemptEditDialog({
   }, [attempt]);
   if (!attempt) return null;
 
-  const save = () => {
+  const save = async () => {
     const parsed = result === "time" ? parseTimeToHundredths(time) : null;
     if (result === "time" && parsed == null) {
       setError("Bitte gib eine gültige Zeit ein.");
       return;
     }
-    updateAttempt(attempt.id, {
+    const saved = await updateAttempt(attempt.id, {
       playerId,
       result,
       timeSeconds: parsed == null ? undefined : parsed / 100,
@@ -51,7 +51,8 @@ export function AttemptEditDialog({
       eventName,
       outOfCompetition: isAk,
     });
-    onClose();
+    if (saved) onClose();
+    else setError("Versuch konnte nicht gespeichert werden.");
   };
 
   return (
@@ -82,11 +83,13 @@ export function AttemptEditDialog({
       </div>
       <p aria-live="assertive" className="mt-3 text-sm text-red-300">{error}</p>
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-        <Button onClick={save}><Save className="size-4" /> Speichern</Button>
+        <Button onClick={() => void save()}><Save className="size-4" /> Speichern</Button>
         <Button variant="outline" onClick={() => {
           if (!confirmDelete) return setConfirmDelete(true);
-          deleteAttempt(attempt.id);
-          onClose();
+          void deleteAttempt(attempt.id).then((deleted) => {
+            if (deleted) onClose();
+            else setError("Versuch konnte nicht gelöscht werden.");
+          });
         }}>
           <Trash2 className="size-4" /> {confirmDelete ? "Wirklich löschen" : "Löschen"}
         </Button>
