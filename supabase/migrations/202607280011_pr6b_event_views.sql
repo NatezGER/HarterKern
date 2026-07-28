@@ -60,8 +60,10 @@ winning_times as (
   select event_id, min(player_best) winning_time
   from event_bests group by event_id
 )
-select eb.event_id, eb.player_id, eb.guest_id, eb.display_name,
-  eb.is_guest, eb.player_best winning_time_hundredths
+-- Keep the complete PR 6A column prefix unchanged. PostgreSQL only permits
+-- CREATE OR REPLACE VIEW to append columns after the existing definition.
+select eb.event_id, eb.player_id, eb.display_name,
+  eb.player_best winning_time_hundredths, eb.guest_id, eb.is_guest
 from event_bests eb
 join winning_times wt on wt.event_id = eb.event_id
   and wt.winning_time = eb.player_best;

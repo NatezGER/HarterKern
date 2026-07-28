@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap;
-select plan(22);
+select plan(24);
 
 select has_table('public', 'players', 'players table exists');
 select has_table('public', 'events', 'events table exists');
@@ -86,6 +86,34 @@ select is(
 select has_function('public', 'submit_public_attempt', array['text', 'boolean', 'uuid', 'text', 'integer']);
 select has_function('public', 'admin_merge_players', array['uuid', 'uuid']);
 select has_view('public', 'event_winners');
+select results_eq(
+  $$select (column_name || ':' || udt_name)::text
+    from information_schema.columns
+    where table_schema = 'public' and table_name = 'event_winners'
+    order by ordinal_position$$,
+  $$values
+    ('event_id:uuid'::text),
+    ('player_id:uuid'::text),
+    ('display_name:text'::text),
+    ('winning_time_hundredths:int4'::text),
+    ('guest_id:uuid'::text),
+    ('is_guest:bool'::text)$$,
+  'event_winners preserves PR 6A names, types and order before guest columns'
+);
+select results_eq(
+  $$select (column_name || ':' || udt_name)::text
+    from information_schema.columns
+    where table_schema = 'public' and table_name = 'event_statistics'
+    order by ordinal_position$$,
+  $$values
+    ('event_id:uuid'::text),
+    ('participant_count:int8'::text),
+    ('valid_attempts:int8'::text),
+    ('dnf_count:int8'::text),
+    ('fastest_hundredths:int4'::text),
+    ('average_hundredths:int4'::text)$$,
+  'event_statistics preserves its PR 6A column names, types and order'
+);
 
 insert into public.players (id, display_name, is_ak)
 values
