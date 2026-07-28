@@ -1,10 +1,11 @@
 begin;
 create extension if not exists pgtap;
-select plan(19);
+select plan(30);
 
 select has_table('public', 'players', 'players table exists');
 select has_table('public', 'events', 'events table exists');
 select has_table('public', 'attempts', 'attempts table exists');
+select has_table('public', 'event_guests', 'event guests table exists');
 select has_table('public', 'admin_roles', 'admin roles table exists');
 
 select is(
@@ -85,6 +86,34 @@ select is(
 select has_function('public', 'submit_public_attempt', array['text', 'boolean', 'uuid', 'text', 'integer']);
 select has_function('public', 'admin_merge_players', array['uuid', 'uuid']);
 select has_view('public', 'event_winners');
+select results_eq(
+  $$select (column_name || ':' || udt_name)::text
+    from information_schema.columns
+    where table_schema = 'public' and table_name = 'event_winners'
+    order by ordinal_position$$,
+  $$values
+    ('event_id:uuid'::text),
+    ('player_id:uuid'::text),
+    ('display_name:text'::text),
+    ('winning_time_hundredths:int4'::text),
+    ('guest_id:uuid'::text),
+    ('is_guest:bool'::text)$$,
+  'event_winners preserves PR 6A names, types and order before guest columns'
+);
+select results_eq(
+  $$select (column_name || ':' || udt_name)::text
+    from information_schema.columns
+    where table_schema = 'public' and table_name = 'event_statistics'
+    order by ordinal_position$$,
+  $$values
+    ('event_id:uuid'::text),
+    ('participant_count:int8'::text),
+    ('valid_attempts:int8'::text),
+    ('dnf_count:int8'::text),
+    ('fastest_hundredths:int4'::text),
+    ('average_hundredths:int4'::text)$$,
+  'event_statistics preserves its PR 6A column names, types and order'
+);
 
 insert into public.players (id, display_name, is_ak)
 values
@@ -172,6 +201,95 @@ select is(
   ),
   300,
   'pending, DNF and deleted attempts do not affect the personal best'
+);
+
+insert into public.event_guests (id, event_id, display_name)
+values (
+  '90000000-0000-0000-0000-000000000016',
+  '90000000-0000-0000-0000-000000000002',
+  'Event Guest'
+);
+insert into public.attempts (
+  id, guest_id, event_id, status, time_hundredths, is_dnf, source
+) values (
+  '90000000-0000-0000-0000-000000000017',
+  '90000000-0000-0000-0000-000000000016',
+  '90000000-0000-0000-0000-000000000002',
+  'approved', 150, false, 'admin'
+);
+select is(
+  (
+    select display_name from public.event_winners
+    where event_id = '90000000-0000-0000-0000-000000000002'
+  ),
+  'Event Guest',
+  'an event guest can win the event'
+);
+select is(
+  (
+    select count(*) from public.public_hall_of_fame
+    where display_name = 'Event Guest'
+  ),
+  0::bigint,
+  'event guests never enter the Hall of Fame'
+);
+
+select lives_ok(
+  $$select public.sync_close_event(
+    '90000000-0000-0000-0000-000000000002', 'manual'
+  )$$,
+  'the first event closes through the live-event RPC'
+);
+select results_eq(
+  $$select status::text, (closed_at is not null), end_reason
+    from public.events
+    where id = '90000000-0000-0000-0000-000000000002'$$,
+  $$values ('closed'::text, true, 'manual'::text)$$,
+  'closing persists status, closed_at and end_reason'
+);
+select lives_ok(
+  $$select public.sync_start_event_v2(
+    'Second Event',
+    current_date,
+    '[{
+      "clientId": "test-player",
+      "id": "90000000-0000-0000-0000-000000000001",
+      "name": "Test Player",
+      "kind": "permanent"
+    }]'::jsonb,
+    null,
+    null,
+    'pgtap-second-event'
+  )$$,
+  'a second event starts immediately after the first closes'
+);
+select lives_ok(
+  $$select public.sync_close_event(
+    (select id from public.events where legacy_source_id = 'pgtap-second-event'),
+    'manual'
+  )$$,
+  'the second event can also be closed'
+);
+select lives_ok(
+  $$select public.sync_start_event_v2(
+    'Third Event',
+    current_date,
+    '[{
+      "clientId": "test-player",
+      "id": "90000000-0000-0000-0000-000000000001",
+      "name": "Test Player",
+      "kind": "permanent"
+    }]'::jsonb,
+    null,
+    null,
+    'pgtap-third-event'
+  )$$,
+  'the next event starts without a reload or stale active event'
+);
+select is(
+  (select count(*) from public.events where status = 'active'),
+  1::bigint,
+  'the start-close-start sequence leaves exactly one active event'
 );
 
 select * from finish();

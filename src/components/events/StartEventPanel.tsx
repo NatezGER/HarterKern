@@ -1,55 +1,78 @@
-import { CalendarPlus, Plus, Radio } from "lucide-react";
+import { CalendarPlus, LoaderCircle, Plus, Radio } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { getAvatarGradient, getInitials } from "@/utils/avatar";
-import type { LiveParticipant } from "@/types/liveEvent";
+import type {
+  StartLiveEventParticipant,
+} from "@/types/liveEvent";
 
 export function StartEventPanel({
   candidates,
   onStarted,
 }: {
-  candidates: LiveParticipant[];
+  candidates: StartLiveEventParticipant[];
   onStarted: () => void;
 }) {
-  const { startEvent } = useLiveEvent();
+  const { startEvent, startingEvent } = useLiveEvent();
   const [name, setName] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [selected, setSelected] = useState<string[]>([]);
-  const [temporary, setTemporary] = useState<LiveParticipant[]>([]);
+  const [temporary, setTemporary] = useState<StartLiveEventParticipant[]>([]);
   const [temporaryName, setTemporaryName] = useState("");
-  const [temporaryAk, setTemporaryAk] = useState(false);
+  const [temporaryKind, setTemporaryKind] = useState<"permanent" | "guest">("permanent");
   const [error, setError] = useState("");
   const allCandidates = useMemo(() => [...candidates, ...temporary], [candidates, temporary]);
 
   const addTemporary = () => {
     const trimmed = temporaryName.trim();
-    if (!trimmed) return;
+    if (!trimmed) return setError("Bitte gib einen Namen ein.");
+    const normalized = trimmed.toLocaleLowerCase("de-DE");
+    if (allCandidates.some(({ name: candidateName }) =>
+      candidateName.trim().toLocaleLowerCase("de-DE") === normalized)) {
+      return setError("Dieser Name ist bereits vorhanden.");
+    }
     const id = `temporary-${crypto.randomUUID()}`;
-    const player: LiveParticipant = {
+    const player: StartLiveEventParticipant = temporaryKind === "permanent" ? {
       id,
       name: trimmed,
+      kind: "permanent",
+      source: "new-player",
       initials: getInitials(trimmed),
       avatarGradient: getAvatarGradient(id),
       avatarUrl: null,
       personalBest: 0,
-      isAk: temporaryAk,
+      isAk: false,
+    } : {
+      id,
+      name: trimmed,
+      kind: "guest",
+      source: "new-guest",
+      initials: getInitials(trimmed),
+      avatarGradient: getAvatarGradient(id),
+      avatarUrl: null,
+      personalBest: 0,
+      isAk: false,
     };
     setTemporary((current) => [...current, player]);
     setSelected((current) => [...current, id]);
     setTemporaryName("");
-    setTemporaryAk(false);
+    setTemporaryKind("permanent");
+    setError("");
   };
 
   const submit = async () => {
+    if (startingEvent) return;
     const participants = allCandidates.filter(({ id }) => selected.includes(id));
     if (!participants.length) {
       setError("Wähle mindestens einen Teilnehmer.");
       return;
     }
-    if (!await startEvent({ name, date, participants })) {
-      setError("Event konnte nicht gestartet werden.");
+    setError("");
+    const result = await startEvent({ name, date, participants });
+    if (!result.eventId) {
+      setError(result.error ?? "Event konnte nicht gestartet werden.");
       return;
     }
     onStarted();
@@ -90,23 +113,37 @@ export function StartEventPanel({
                     {player.avatarUrl ? <img src={player.avatarUrl} alt="" className="size-full rounded-full object-cover" /> : player.initials}
                   </span>
                   <span className="min-w-0 flex-1 truncate font-bold">{player.name}</span>
-                  {player.isAk && <span className="text-[10px] text-white/35">AK</span>}
+                  {player.kind === "guest" && <span className="text-[10px] text-gold-300">Gast</span>}
                 </label>
               ))}
             </div>
           </fieldset>
           <div className="mt-6 rounded-2xl bg-white/[0.025] p-4">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/40">Temporärer Teilnehmer</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/40">Neuer Teilnehmer</p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <Input className="rounded-xl" value={temporaryName} onChange={(event) => setTemporaryName(event.target.value)} placeholder="Name" />
-              <label className="flex h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-xs">
-                <input type="checkbox" checked={temporaryAk} onChange={(event) => setTemporaryAk(event.target.checked)} /> AK
-              </label>
+              <select
+                value={temporaryKind}
+                onChange={(event) => setTemporaryKind(event.target.value as "permanent" | "guest")}
+                className="h-11 rounded-xl border border-white/10 bg-black/30 px-4 text-xs"
+                aria-label="Spielertyp"
+              >
+                <option value="permanent">Permanenter Spieler</option>
+                <option value="guest">Gast für dieses Event</option>
+              </select>
               <Button variant="outline" onClick={addTemporary}><Plus className="size-4" /> Hinzufügen</Button>
             </div>
           </div>
-          <Button size="lg" className="mt-7 h-14 w-full" onClick={() => void submit()}>
-            <CalendarPlus className="size-5" /> Event starten
+          <Button
+            size="lg"
+            className="mt-7 h-14 w-full"
+            disabled={startingEvent}
+            onClick={() => void submit()}
+          >
+            {startingEvent
+              ? <LoaderCircle className="size-5 animate-spin" />
+              : <CalendarPlus className="size-5" />}
+            {startingEvent ? "Event wird gestartet …" : "Event starten"}
           </Button>
           <p aria-live="assertive" className="mt-3 text-center text-sm text-red-300">{error}</p>
       </>

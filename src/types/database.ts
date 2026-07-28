@@ -1,4 +1,8 @@
-import type { DataPlatformFunctions, EventParticipantsTable } from "@/types/dataPlatform";
+import type {
+  DataPlatformFunctions,
+  EventGuestsTable,
+  EventParticipantsTable,
+} from "@/types/dataPlatform";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -46,6 +50,7 @@ export interface Database {
           updated_at: string;
           end_reason: string | null;
           winner_player_id: string | null;
+          winner_guest_id: string | null;
           legacy_source_id: string | null;
         };
         Insert: {
@@ -58,6 +63,7 @@ export interface Database {
           closed_at?: string | null;
           end_reason?: string | null;
           winner_player_id?: string | null;
+          winner_guest_id?: string | null;
           legacy_source_id?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["events"]["Insert"]>;
@@ -66,7 +72,8 @@ export interface Database {
       attempts: {
         Row: {
           id: string;
-          player_id: string;
+          player_id: string | null;
+          guest_id: string | null;
           event_id: string | null;
           event_name: string | null;
           is_ak: boolean;
@@ -86,7 +93,8 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          player_id: string;
+          player_id?: string | null;
+          guest_id?: string | null;
           event_id?: string | null;
           event_name?: string | null;
           is_ak?: boolean;
@@ -107,6 +115,7 @@ export interface Database {
         Relationships: [];
       };
       event_participants: EventParticipantsTable;
+      event_guests: EventGuestsTable;
       admin_roles: {
         Row: { user_id: string; created_at: string };
         Insert: { user_id: string };
@@ -170,8 +179,10 @@ export interface Database {
       event_winners: {
         Row: {
           event_id: string;
-          player_id: string;
+          player_id: string | null;
+          guest_id: string | null;
           display_name: string;
+          is_guest: boolean;
           winning_time_hundredths: number;
         };
         Relationships: [];

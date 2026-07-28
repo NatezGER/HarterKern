@@ -1,6 +1,6 @@
 import type { LeaderboardEntry, Player } from "@/types";
 
-export const getPlayerById = (players: Player[], id: string) =>
+export const getPlayerById = (players: Player[], id: string | null) =>
   players.find((player) => player.id === id);
 
 export const getRankedPlayers = (players: Player[], leaderboard: LeaderboardEntry[]) =>

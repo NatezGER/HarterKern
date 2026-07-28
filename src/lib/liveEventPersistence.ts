@@ -26,6 +26,7 @@ export function isLiveEventState(value: unknown): value is LiveEventState {
   if (!Array.isArray(state.events) || !Array.isArray(state.attempts)) return false;
   const playersValid = state.players.every((player) =>
     isString(player.id) && isString(player.name) &&
+    ["permanent", "guest"].includes(player.kind) &&
     typeof player.personalBest === "number" && typeof player.isAk === "boolean",
   );
   const playerIds = new Set(state.players.flatMap((player) =>
@@ -75,7 +76,11 @@ function migrateVersionOne(value: unknown): LiveEventState | null {
     eventPlayers.forEach((player) => {
       const id = canonicalId(player);
       idMap.set(player.id, id);
-      players.set(id, { ...player, id });
+      players.set(id, {
+        ...player,
+        id,
+        kind: player.isAk ? "guest" : "permanent",
+      });
     });
   });
   const events = legacy.events.flatMap((event) => {
@@ -120,7 +125,20 @@ export function parseMigratableLiveEventState(raw: string | null) {
   if (!raw) return null;
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (isLiveEventState(parsed)) return parsed;
+    if (parsed && typeof parsed === "object" &&
+      (parsed as { version?: number }).version === 2) {
+      const legacyV2 = parsed as LiveEventState;
+      const normalized: LiveEventState = {
+        ...legacyV2,
+        players: Array.isArray(legacyV2.players)
+          ? legacyV2.players.map((player) => ({
+            ...player,
+            kind: player.kind ?? (player.isAk ? "guest" : "permanent"),
+          }))
+          : [],
+      };
+      if (isLiveEventState(normalized)) return normalized;
+    }
     const migrated = migrateVersionOne(parsed);
     return migrated && isLiveEventState(migrated) ? migrated : null;
   } catch {

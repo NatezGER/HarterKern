@@ -7,6 +7,7 @@ import type { LiveAttempt, LiveParticipant } from "@/types/liveEvent";
 const player = (id: string, name = id): LiveParticipant => ({
   id,
   name,
+  kind: "permanent",
   initials: name.slice(0, 2).toUpperCase(),
   avatarGradient: "from-black to-gold",
   avatarUrl: null,
@@ -34,10 +35,11 @@ const snapshot = (
 
 describe("Supabase snapshot reconciliation", () => {
   it("loads shared players with their canonical id", () => {
-    const remote = snapshot([player("8e5b791d-8290-4d83-aaf4-dcf98f997127", "Paul")]);
+    const canonicalId = "10000000-0000-0000-0000-000000000003";
+    const remote = snapshot([player(canonicalId, "Jonas")]);
     const result = reconcileDataPlatformSnapshot(snapshot(), remote);
     expect(result.liveState.players).toEqual(remote.liveState.players);
-    expect(result.liveState.players[0].id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(result.liveState.players[0].id).toBe(canonicalId);
   });
 
   it("applies realtime insert exactly once", () => {
@@ -122,5 +124,43 @@ describe("Supabase snapshot reconciliation", () => {
     const result = reconcileDataPlatformSnapshot(snapshot(), remote);
     expect(result.liveState.events).toEqual([completed]);
     expect(result.liveState.events[0].status).toBe("completed");
+  });
+
+  it("reconciles start, close and immediate second start from remote snapshots", () => {
+    const firstActive = {
+      id: "event-one",
+      date: "2026-07-28",
+      startedAt: "2026-07-28T10:00:00.000Z",
+      endsAt: "2026-07-29T10:00:00.000Z",
+      status: "active" as const,
+      participantIds: [],
+      createdBy: "Supabase",
+    };
+    const firstClosed = {
+      ...firstActive,
+      status: "completed" as const,
+      endedAt: "2026-07-28T12:00:00.000Z",
+      endReason: "manual" as const,
+    };
+    const secondActive = {
+      ...firstActive,
+      id: "event-two",
+      startedAt: "2026-07-28T12:00:01.000Z",
+      endsAt: "2026-07-29T12:00:01.000Z",
+    };
+    const started = snapshot();
+    started.liveState.events = [firstActive];
+    const closed = snapshot();
+    closed.liveState.events = [firstClosed];
+    const restarted = snapshot();
+    restarted.liveState.events = [secondActive, firstClosed];
+
+    const afterStart = reconcileDataPlatformSnapshot(snapshot(), started);
+    const afterClose = reconcileDataPlatformSnapshot(afterStart, closed);
+    const afterRestart = reconcileDataPlatformSnapshot(afterClose, restarted);
+
+    expect(afterClose.liveState.events.some(({ status }) => status === "active")).toBe(false);
+    expect(afterRestart.liveState.events.find(({ status }) => status === "active")?.id)
+      .toBe("event-two");
   });
 });

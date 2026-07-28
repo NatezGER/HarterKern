@@ -15,7 +15,10 @@ import {
   getOfficialWorldRecord,
 } from "@/lib/liveEventCalculations";
 import {
+  addEventGuest,
+  addExistingEventPlayer,
   closeRemoteEvent,
+  createEventPlayer,
   createRemoteAttempt,
   deleteRemoteAttempt,
   startRemoteEvent,
@@ -33,6 +36,7 @@ import type {
   LiveParticipant,
   RecordCelebration,
   StartLiveEventInput,
+  StartLiveEventResult,
 } from "@/types/liveEvent";
 
 interface LiveEventContextValue {
@@ -40,7 +44,9 @@ interface LiveEventContextValue {
   activeEvent?: LiveEvent;
   celebration: RecordCelebration | null;
   mutationError: string | null;
-  startEvent: (input: StartLiveEventInput) => Promise<string | null>;
+  startingEvent: boolean;
+  endingEvent: boolean;
+  startEvent: (input: StartLiveEventInput) => Promise<StartLiveEventResult>;
   addAttempt: (input: AttemptInput) => Promise<boolean>;
   submitAttempt: (
     playerId: string,
@@ -51,6 +57,9 @@ interface LiveEventContextValue {
   deleteAttempt: (id: string) => Promise<boolean>;
   updatePlayer: (id: string, changes: Partial<LiveParticipant>) => Promise<boolean>;
   registerPlayer: (player: LiveParticipant) => Promise<string | null>;
+  addExistingParticipant: (playerId: string) => Promise<boolean>;
+  createAndAddPlayer: (name: string) => Promise<boolean>;
+  addGuest: (name: string) => Promise<boolean>;
   updateEvent: (id: string, changes: Partial<LiveEvent>) => Promise<boolean>;
   endEvent: () => Promise<string | null>;
   refresh: () => Promise<void>;
@@ -66,6 +75,9 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
   const activeEvent = getActiveLiveEvent(state.events);
   const [celebration, setCelebration] = useState<RecordCelebration | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const [startingEvent, setStartingEvent] = useState(false);
+  const [endingEvent, setEndingEvent] = useState(false);
+  const eventMutation = useRef<"starting" | "ending" | null>(null);
   const recentSubmissions = useRef(new Map<string, number>());
 
   const fail = useCallback((error: unknown) => {
@@ -73,7 +85,11 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     return false;
   }, []);
   const refreshAfterMutation = useCallback(async () => {
-    await refresh().catch(() => undefined);
+    try {
+      await refresh();
+    } catch {
+      await refresh();
+    }
   }, [refresh]);
 
   const detectRecord = useCallback((attempt: LiveAttempt) => {
@@ -106,17 +122,34 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
   }, [state.attempts, state.players]);
 
   const startEvent = useCallback(async (input: StartLiveEventInput) => {
-    if (activeEvent || input.participants.length === 0) return null;
+    if (input.participants.length === 0) {
+      const message = "Wähle mindestens einen Teilnehmer.";
+      setMutationError(message);
+      return { eventId: null, error: message };
+    }
+    if (eventMutation.current) {
+      const message = eventMutation.current === "starting"
+        ? "Der Eventstart wird bereits verarbeitet."
+        : "Das vorherige Event wird noch abgeschlossen.";
+      setMutationError(message);
+      return { eventId: null, error: message };
+    }
+    eventMutation.current = "starting";
+    setStartingEvent(true);
     try {
       setMutationError(null);
       const { eventId } = await startRemoteEvent(input);
       await refreshAfterMutation();
-      return eventId;
+      return { eventId, error: null };
     } catch (error) {
-      fail(error);
-      return null;
+      const message = getErrorMessage(error);
+      setMutationError(message);
+      return { eventId: null, error: message };
+    } finally {
+      eventMutation.current = null;
+      setStartingEvent(false);
     }
-  }, [activeEvent, fail, refreshAfterMutation]);
+  }, [refreshAfterMutation]);
 
   const addAttempt = useCallback(async (input: AttemptInput) => {
     if (input.result === "time" &&
@@ -155,11 +188,12 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     if (!player) return false;
     return addAttempt({
       playerId,
+      participantKind: player.kind,
       eventId: activeEvent.id,
       result,
       timeSeconds: time,
       date: activeEvent.date,
-      outOfCompetition: player.isAk,
+      outOfCompetition: false,
     });
   }, [activeEvent, addAttempt, state.players]);
 
@@ -168,13 +202,16 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     if (!current) return false;
     try {
       setMutationError(null);
-      await updateRemoteAttempt(id, current, changes);
+      const participant = state.players.find(({ id: playerId }) =>
+        playerId === (changes.playerId ?? current.playerId),
+      );
+      await updateRemoteAttempt(id, current, changes, participant);
       await refreshAfterMutation();
       return true;
     } catch (error) {
       return fail(error);
     }
-  }, [fail, refreshAfterMutation, state.attempts]);
+  }, [fail, refreshAfterMutation, state.attempts, state.players]);
 
   const deleteAttempt = useCallback(async (id: string) => {
     try {
@@ -215,6 +252,42 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     }
   }, [fail, refreshAfterMutation]);
 
+  const addExistingParticipant = useCallback(async (playerId: string) => {
+    if (!activeEvent) return false;
+    try {
+      setMutationError(null);
+      await addExistingEventPlayer(activeEvent.id, playerId);
+      await refreshAfterMutation();
+      return true;
+    } catch (error) {
+      return fail(error);
+    }
+  }, [activeEvent, fail, refreshAfterMutation]);
+
+  const createAndAddPlayer = useCallback(async (name: string) => {
+    if (!activeEvent) return false;
+    try {
+      setMutationError(null);
+      await createEventPlayer(activeEvent.id, name.trim());
+      await refreshAfterMutation();
+      return true;
+    } catch (error) {
+      return fail(error);
+    }
+  }, [activeEvent, fail, refreshAfterMutation]);
+
+  const addGuest = useCallback(async (name: string) => {
+    if (!activeEvent) return false;
+    try {
+      setMutationError(null);
+      await addEventGuest(activeEvent.id, name.trim());
+      await refreshAfterMutation();
+      return true;
+    } catch (error) {
+      return fail(error);
+    }
+  }, [activeEvent, fail, refreshAfterMutation]);
+
   const updateEvent = useCallback(async (id: string, changes: Partial<LiveEvent>) => {
     const current = state.events.find((event) => event.id === id);
     if (!current) return false;
@@ -229,7 +302,16 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
   }, [fail, refreshAfterMutation, state.events]);
 
   const endEvent = useCallback(async () => {
-    if (!activeEvent) return null;
+    if (!activeEvent) {
+      setMutationError("Es läuft kein Event, das beendet werden kann.");
+      return null;
+    }
+    if (eventMutation.current) {
+      setMutationError("Eine Eventaktion wird bereits verarbeitet.");
+      return null;
+    }
+    eventMutation.current = "ending";
+    setEndingEvent(true);
     try {
       setMutationError(null);
       const id = await closeRemoteEvent(activeEvent.id, "manual");
@@ -238,6 +320,9 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       fail(error);
       return null;
+    } finally {
+      eventMutation.current = null;
+      setEndingEvent(false);
     }
   }, [activeEvent, fail, refreshAfterMutation]);
 
@@ -246,6 +331,8 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     activeEvent,
     celebration,
     mutationError,
+    startingEvent,
+    endingEvent,
     startEvent,
     addAttempt,
     submitAttempt,
@@ -253,6 +340,9 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     deleteAttempt,
     updatePlayer,
     registerPlayer,
+    addExistingParticipant,
+    createAndAddPlayer,
+    addGuest,
     updateEvent,
     endEvent,
     refresh,
@@ -260,14 +350,19 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     clearMutationError: () => setMutationError(null),
   }), [
     activeEvent,
+    addExistingParticipant,
+    addGuest,
     addAttempt,
     celebration,
     deleteAttempt,
     endEvent,
+    endingEvent,
     mutationError,
     refresh,
+    createAndAddPlayer,
     registerPlayer,
     startEvent,
+    startingEvent,
     state,
     submitAttempt,
     updateAttempt,

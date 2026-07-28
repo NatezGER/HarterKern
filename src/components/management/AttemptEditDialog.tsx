@@ -20,7 +20,6 @@ export function AttemptEditDialog({
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
   const [eventName, setEventName] = useState("");
-  const [isAk, setIsAk] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState("");
 
@@ -31,7 +30,6 @@ export function AttemptEditDialog({
     setTime(attempt.timeSeconds?.toLocaleString("de-DE", { minimumFractionDigits: 2 }) ?? "");
     setDate(attempt.date);
     setEventName(attempt.eventName ?? "");
-    setIsAk(attempt.outOfCompetition);
     setConfirmDelete(false);
     setError("");
   }, [attempt]);
@@ -49,7 +47,7 @@ export function AttemptEditDialog({
       timeSeconds: parsed == null ? undefined : parsed / 100,
       date,
       eventName,
-      outOfCompetition: isAk,
+      outOfCompetition: false,
     });
     if (saved) onClose();
     else setError("Versuch konnte nicht gespeichert werden.");
@@ -60,7 +58,11 @@ export function AttemptEditDialog({
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-xs text-white/45">Spieler
           <select value={playerId} onChange={(event) => setPlayerId(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/30 px-3 text-sm">
-            {state.players.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}
+            {state.players.filter((player) =>
+              attempt.eventId
+                ? state.events.find(({ id }) => id === attempt.eventId)?.participantIds.includes(player.id)
+                : player.kind === "permanent"
+            ).map((player) => <option key={player.id} value={player.id}>{player.name}{player.kind === "guest" ? " (Gast)" : ""}</option>)}
           </select>
         </label>
         <label className="text-xs text-white/45">Ergebnis
@@ -76,9 +78,6 @@ export function AttemptEditDialog({
         </label>
         <label className="text-xs text-white/45 sm:col-span-2">Eventname
           <Input className="mt-2 rounded-xl" value={eventName} onChange={(event) => setEventName(event.target.value)} placeholder="Optional" />
-        </label>
-        <label className="flex h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-xs sm:col-span-2">
-          <input type="checkbox" checked={isAk} onChange={(event) => setIsAk(event.target.checked)} /> Außer Konkurrenz
         </label>
       </div>
       <p aria-live="assertive" className="mt-3 text-sm text-red-300">{error}</p>

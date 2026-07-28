@@ -4,6 +4,8 @@ export type LiveAttemptResult = "time" | "dns";
 export interface LiveParticipant {
   id: string;
   name: string;
+  kind: "permanent" | "guest";
+  eventId?: string;
   initials: string;
   avatarGradient: string;
   avatarUrl: string | null;
@@ -14,6 +16,7 @@ export interface LiveParticipant {
 export interface LiveAttempt {
   id: string;
   playerId: string;
+  participantKind?: "permanent" | "guest";
   eventId?: string;
   eventName?: string;
   result: LiveAttemptResult;
@@ -53,14 +56,25 @@ export interface LiveStanding {
   lastAttempt?: LiveAttempt;
 }
 
+export type StartLiveEventParticipant = LiveParticipant & (
+  | { kind: "permanent"; source: "existing-player" | "new-player" }
+  | { kind: "guest"; source: "new-guest" }
+);
+
 export interface StartLiveEventInput {
   name?: string;
   date: string;
-  participants: LiveParticipant[];
+  participants: StartLiveEventParticipant[];
+}
+
+export interface StartLiveEventResult {
+  eventId: string | null;
+  error: string | null;
 }
 
 export interface AttemptInput {
   playerId: string;
+  participantKind?: "permanent" | "guest";
   eventId?: string;
   eventName?: string;
   result: LiveAttemptResult;

@@ -18,6 +18,7 @@ export function createLiveAttempt(input: AttemptInput, id: string, now: string):
   return {
     id,
     playerId: input.playerId,
+    participantKind: input.participantKind,
     eventId: input.eventId,
     eventName: input.eventName?.trim() || undefined,
     result: input.result,
@@ -48,7 +49,9 @@ export function getLiveStandings(
     return {
       player,
       rank: null,
-      bestTime: fastest(playerAttempts.filter((attempt) => !attempt.outOfCompetition)),
+      bestTime: fastest(playerAttempts.filter((attempt) =>
+        player.kind === "guest" || !attempt.outOfCompetition,
+      )),
       attempts: playerAttempts.length,
       lastAttempt: [...playerAttempts].sort(
         (a, b) => b.submittedAt.localeCompare(a.submittedAt),
@@ -56,7 +59,6 @@ export function getLiveStandings(
     };
   });
   rows.sort((a, b) => {
-    if (a.player.isAk !== b.player.isAk) return a.player.isAk ? 1 : -1;
     if (a.bestTime == null) return b.bestTime == null
       ? a.player.name.localeCompare(b.player.name, "de")
       : 1;
@@ -66,12 +68,17 @@ export function getLiveStandings(
   let previousTime: number | null = null;
   let rank = 0;
   return rows.map((row, index) => {
-    if (row.player.isAk || row.bestTime == null) return row;
+    if (row.bestTime == null) return row;
     if (previousTime !== row.bestTime) rank = index + 1;
     previousTime = row.bestTime;
     return { ...row, rank };
   });
 }
+
+export const sortStandingsForEntry = (standings: LiveStanding[]) =>
+  [...standings].sort((a, b) =>
+    a.attempts - b.attempts || a.player.name.localeCompare(b.player.name, "de"),
+  );
 
 export function finalizeLiveEvent(
   event: LiveEvent,
@@ -82,7 +89,7 @@ export function finalizeLiveEvent(
 ) {
   if (event.status === "completed") return event;
   const winner = getLiveStandings(event, attempts, players).find(
-    (standing) => !standing.player.isAk && standing.bestTime != null,
+    (standing) => standing.bestTime != null,
   );
   return {
     ...event,
@@ -98,9 +105,12 @@ export const getOfficialWorldRecord = (
   attempts: LiveAttempt[],
 ) => {
   const historical = players.flatMap((player) =>
-    !player.isAk && player.personalBest > 0 ? [player.personalBest] : [],
+    player.kind === "permanent" && !player.isAk && player.personalBest > 0
+      ? [player.personalBest]
+      : [],
   );
   const live = attempts.flatMap((attempt) =>
+    players.find(({ id }) => id === attempt.playerId)?.kind === "permanent" &&
     !attempt.outOfCompetition &&
     attempt.result === "time" &&
     attempt.timeSeconds != null
@@ -115,16 +125,14 @@ export function getAttemptMilestones(
   players: LiveParticipant[],
   attempts: LiveAttempt[],
 ) {
-  const personalBests = new Map(players.map((player) => [
-    player.id,
-    player.personalBest > 0 ? player.personalBest : Infinity,
-  ]));
-  let worldRecord = Math.min(
-    ...players.flatMap((player) => !player.isAk && player.personalBest > 0 ? [player.personalBest] : []),
-  );
+  const personalBests = new Map<string, number>();
+  let worldRecord = Infinity;
+  const playersById = new Map(players.map((player) => [player.id, player]));
   const milestones = new Map<string, AttemptMilestone>();
   [...attempts].sort((a, b) => a.submittedAt.localeCompare(b.submittedAt)).forEach((attempt) => {
-    if (attempt.result !== "time" || attempt.timeSeconds == null || attempt.outOfCompetition) {
+    const participant = playersById.get(attempt.playerId);
+    if (participant?.kind !== "permanent" || attempt.result !== "time" ||
+      attempt.timeSeconds == null || attempt.outOfCompetition) {
       milestones.set(attempt.id, { isPersonalBest: false, isWorldRecord: false });
       return;
     }

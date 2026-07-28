@@ -16,6 +16,34 @@ export type EventParticipantsTable = {
   Relationships: [];
 };
 
+export type EventGuestsTable = {
+  Row: {
+    id: string;
+    event_id: string;
+    display_name: string;
+    normalized_name: string;
+    joined_at: string;
+    created_at: string;
+  };
+  Insert: {
+    id?: string;
+    event_id: string;
+    display_name: string;
+    joined_at?: string;
+  };
+  Update: {
+    display_name?: string;
+  };
+  Relationships: [];
+};
+
+export interface EventParticipantPayload {
+  clientId: string;
+  id?: string;
+  name: string;
+  kind: "permanent" | "guest";
+}
+
 export type DataPlatformFunctions = {
   sync_upsert_player: {
     Args: {
@@ -99,5 +127,79 @@ export type DataPlatformFunctions = {
   sync_close_expired_events: {
     Args: Record<never, never>;
     Returns: number;
+  };
+  sync_start_event_v2: {
+    Args: {
+      p_name: string | null;
+      p_start_date: string;
+      p_participants: EventParticipantPayload[];
+      p_started_at?: string | null;
+      p_ends_at?: string | null;
+      p_legacy_source_id?: string | null;
+    };
+    Returns: {
+      eventId: string;
+      participants: Array<{
+        clientId: string;
+        participantId: string;
+        kind: "permanent" | "guest";
+      }>;
+    };
+  };
+  sync_import_closed_event_v2: {
+    Args: {
+      p_name: string | null;
+      p_start_date: string;
+      p_started_at: string;
+      p_ends_at: string;
+      p_ended_at: string | null;
+      p_end_reason: string | null;
+      p_participant_ids: string[];
+      p_guests: EventParticipantPayload[];
+      p_legacy_source_id: string;
+    };
+    Returns: {
+      eventId: string;
+      participants: Array<{
+        clientId: string;
+        participantId: string;
+        kind: "guest";
+      }>;
+    };
+  };
+  sync_add_existing_event_player: {
+    Args: { p_event_id: string; p_player_id: string };
+    Returns: string;
+  };
+  sync_create_event_player: {
+    Args: { p_event_id: string; p_display_name: string };
+    Returns: string;
+  };
+  sync_add_event_guest: {
+    Args: { p_event_id: string; p_display_name: string };
+    Returns: string;
+  };
+  sync_create_event_attempt: {
+    Args: {
+      p_id: string;
+      p_event_id: string;
+      p_participant_id: string;
+      p_participant_kind: string;
+      p_time_hundredths: number | null;
+      p_is_dnf: boolean;
+      p_submitted_at: string;
+    };
+    Returns: string;
+  };
+  sync_update_event_attempt: {
+    Args: {
+      p_attempt_id: string;
+      p_participant_id: string;
+      p_participant_kind: string;
+      p_time_hundredths: number | null;
+      p_is_dnf: boolean;
+      p_submitted_at: string;
+    };
+    Returns: undefined;
   };
 };

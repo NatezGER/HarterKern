@@ -5,31 +5,42 @@ import { EndEventDialog } from "@/components/events/EndEventDialog";
 import { AttemptHistory } from "@/components/events/AttemptHistory";
 import { LiveEventHeader } from "@/components/events/LiveEventHeader";
 import { LiveLeaderboard } from "@/components/events/LiveLeaderboard";
+import { LiveParticipantManager } from "@/components/events/LiveParticipantManager";
 import { ParticipantCard } from "@/components/events/ParticipantCard";
 import { StartEventPanel } from "@/components/events/StartEventPanel";
 import { TimeEntrySheet } from "@/components/events/TimeEntrySheet";
 import { Button } from "@/components/ui/button";
+import { DataState } from "@/components/common/DataState";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { usePublicData } from "@/hooks/usePublicData";
-import { getLiveStandings, getOfficialWorldRecord } from "@/lib/liveEventCalculations";
+import {
+  getLiveStandings,
+  getOfficialWorldRecord,
+  sortStandingsForEntry,
+} from "@/lib/liveEventCalculations";
 import { formatTime } from "@/utils/format";
-import type { LiveParticipant, LiveStanding } from "@/types/liveEvent";
+import type {
+  LiveStanding,
+  StartLiveEventParticipant,
+} from "@/types/liveEvent";
 
 export function LiveEventPage() {
   const navigate = useNavigate();
-  const { data } = usePublicData();
-  const { activeEvent, state, endEvent, refresh } = useLiveEvent();
+  const { data, status } = usePublicData();
+  const { activeEvent, state, endEvent, endingEvent, refresh } = useLiveEvent();
   const [selected, setSelected] = useState<LiveStanding | null>(null);
   const [savedId, setSavedId] = useState("");
   const [endOpen, setEndOpen] = useState(false);
-  const candidates = useMemo<LiveParticipant[]>(() => data.players.map((player) => ({
+  const candidates = useMemo<StartLiveEventParticipant[]>(() => data.players.map((player) => ({
       id: player.id,
       name: player.name,
+      kind: "permanent",
+      source: "existing-player",
       initials: player.initials,
       avatarGradient: player.avatarGradient,
       avatarUrl: player.avatarUrl,
       personalBest: player.personalBest,
-      isAk: player.isAk,
+      isAk: false,
     })), [data.players]);
 
   useEffect(() => {
@@ -41,6 +52,8 @@ export function LiveEventPage() {
   useEffect(() => {
     void refresh().catch(() => undefined);
   }, [refresh]);
+
+  if (status !== "ready") return <DataState><div /></DataState>;
 
   if (!activeEvent) {
     const latest = state.events.find(({ status }) => status === "completed");
@@ -65,6 +78,7 @@ export function LiveEventPage() {
 
   const attempts = state.attempts.filter(({ eventId }) => eventId === activeEvent.id);
   const standings = getLiveStandings(activeEvent, attempts, state.players);
+  const entryStandings = sortStandingsForEntry(standings);
   const worldRecord = getOfficialWorldRecord(state.players, state.attempts);
   const confirmEnd = async () => {
     const id = await endEvent();
@@ -82,10 +96,11 @@ export function LiveEventPage() {
         </div>
       </section>
       <LiveLeaderboard standings={standings} />
+      <LiveParticipantManager />
       <section>
         <h2 className="display-title mb-5 text-3xl">Teilnehmer</h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {standings.map((standing) => (
+          {entryStandings.map((standing) => (
             <ParticipantCard
               key={standing.player.id}
               standing={standing}
@@ -101,6 +116,7 @@ export function LiveEventPage() {
         open={endOpen}
         onClose={() => setEndOpen(false)}
         onConfirm={() => void confirmEnd()}
+        busy={endingEvent}
       />
     </div>
   );

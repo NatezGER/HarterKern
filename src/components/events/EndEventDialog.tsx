@@ -6,10 +6,12 @@ export function EndEventDialog({
   open,
   onClose,
   onConfirm,
+  busy = false,
 }: {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  busy?: boolean;
 }) {
   return (
     <EventModal open={open} title="Event beenden" onClose={onClose}>
@@ -20,10 +22,10 @@ export function EndEventDialog({
         </p>
       </div>
       <div className="mt-5 grid gap-2">
-        <Button onClick={onConfirm}>
-          <CheckCircle2 className="size-4" /> Event beenden
+        <Button disabled={busy} onClick={onConfirm}>
+          <CheckCircle2 className="size-4" /> {busy ? "Event wird beendet …" : "Event beenden"}
         </Button>
-        <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
+        <Button disabled={busy} variant="ghost" onClick={onClose}>Abbrechen</Button>
       </div>
     </EventModal>
   );

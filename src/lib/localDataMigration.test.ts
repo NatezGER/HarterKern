@@ -20,6 +20,7 @@ const localState: LiveEventState = {
   players: [{
     id: "local-paul",
     name: "Paul",
+    kind: "permanent",
     initials: "PA",
     avatarGradient: "from-black to-gold",
     avatarUrl: null,
@@ -59,7 +60,7 @@ function createDependencies(storage: ReturnType<typeof createStorage>) {
     dependencies: {
       storage,
       upsertPlayer: vi.fn(async (
-        _player: Pick<LiveEventState["players"][number], "name" | "isAk">,
+        _player: Pick<LiveEventState["players"][number], "name">,
         legacyId?: string,
       ) => {
         const key = legacyId ?? "new-player";
@@ -69,13 +70,15 @@ function createDependencies(storage: ReturnType<typeof createStorage>) {
       }),
       startEvent: vi.fn(async () => ({
         eventId: "349372f1-df51-495f-b0dd-984a71ef8cc3",
-        participantIds: ["8e5b791d-8290-4d83-aaf4-dcf98f997127"],
+        participantIds: new Map([
+          ["local-paul", "8e5b791d-8290-4d83-aaf4-dcf98f997127"],
+        ]),
       })),
       importClosedEvent: vi.fn(async () => {
         const key = "pr5-event:local-event";
         const id = events.get(key) ?? "349372f1-df51-495f-b0dd-984a71ef8cc3";
         events.set(key, id);
-        return id;
+        return { eventId: id, participantIds: new Map<string, string>() };
       }),
       createAttempt: vi.fn(async (
         _input: unknown,

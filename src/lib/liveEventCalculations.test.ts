@@ -12,6 +12,7 @@ import type { LiveAttempt, LiveEvent, LiveParticipant } from "@/types/liveEvent"
 const participant = (id: string, personalBest = 3, isAk = false): LiveParticipant => ({
   id,
   name: id,
+  kind: isAk ? "guest" : "permanent",
   initials: id.slice(0, 2),
   avatarGradient: "",
   avatarUrl: null,
@@ -116,13 +117,14 @@ describe("live event rules", () => {
     expect(standings.slice(0, 2).map(({ rank }) => rank)).toEqual([1, 1]);
   });
 
-  it("excludes AK attempts from ranks and event wins", () => {
+  it("lets an event-only guest rank and win without affecting official records", () => {
     const attempts = [
       attempt("1", "ak", 1.2, "time", true),
       attempt("2", "paul", 2.2),
     ];
-    expect(getLiveStandings(event, attempts, players).find(({ player }) => player.id === "ak")?.rank).toBeNull();
-    expect(finalizeLiveEvent(event, attempts, players, "manual", event.endsAt).winnerPlayerId).toBe("paul");
+    expect(getLiveStandings(event, attempts, players).find(({ player }) => player.id === "ak")?.rank).toBe(1);
+    expect(finalizeLiveEvent(event, attempts, players, "manual", event.endsAt).winnerPlayerId).toBe("ak");
+    expect(getOfficialWorldRecord(players, attempts)).toBe(2.06);
   });
 
   it("recalculates a winner from the current attempts after edit or deletion", () => {

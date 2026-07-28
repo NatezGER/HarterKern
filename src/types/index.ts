@@ -27,7 +27,9 @@ export interface LeaderboardEntry {
 export interface DailyWinner {
   id: string;
   date: string;
-  playerId: string;
+  playerId: string | null;
+  participantName: string;
+  isGuest: boolean;
   time: number;
   attempts: number;
 }
@@ -58,7 +60,8 @@ export interface Event {
 
 export interface Attempt {
   id: string;
-  playerId: string;
+  playerId: string | null;
+  guestId?: string | null;
   eventId: string | null;
   timeHundredths: number | null;
   isDnf: boolean;

@@ -17,7 +17,7 @@ describe("data platform realtime subscription", () => {
 
     const cleanup = subscribeToDataPlatform(vi.fn(), vi.fn(), client);
     expect(client.channel).toHaveBeenCalledOnce();
-    expect(on).toHaveBeenCalledTimes(4);
+    expect(on).toHaveBeenCalledTimes(5);
     expect(subscribe).toHaveBeenCalledOnce();
 
     cleanup();

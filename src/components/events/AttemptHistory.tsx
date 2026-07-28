@@ -38,16 +38,25 @@ export function AttemptHistory({
         if (!player) return null;
         return (
           <article key={attempt.id} className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-white/[0.06] px-4 py-4 last:border-0 sm:grid-cols-[1fr_7rem_8rem_auto] sm:px-7">
-            <Link to={`/player/${player.id}`} className="flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400">
+            {player.kind === "permanent" ? <Link to={`/player/${player.id}`} className="flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400">
               <LiveAvatar player={player} className="size-10" />
               <div className="min-w-0">
                 <p className="truncate font-bold">{player.name}</p>
                 <p className="text-[10px] text-white/35">
                   {new Date(attempt.submittedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
-                  {attempt.outOfCompetition ? " · AK" : ""}
                 </p>
               </div>
-            </Link>
+            </Link> : (
+              <div className="flex min-w-0 items-center gap-3">
+                <LiveAvatar player={player} className="size-10" />
+                <div className="min-w-0">
+                  <p className="truncate font-bold">{player.name}</p>
+                  <p className="text-[10px] text-gold-300">
+                    {new Date(attempt.submittedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} · Gast
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="flex gap-2">
               {milestone?.isPersonalBest && <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-300"><Medal className="size-3" /> PB</span>}
               {milestone?.isWorldRecord && <span className="flex items-center gap-1 text-[10px] font-bold text-gold-300"><Trophy className="size-3" /> WR</span>}

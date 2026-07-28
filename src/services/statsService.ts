@@ -53,9 +53,11 @@ export async function getDailyWinners(): Promise<DailyWinner[]> {
     const winners = winnerResult.data.filter((winner) => winner.event_id === event.id);
     const eventStats = stats.get(event.id);
     return winners.map((winner) => ({
-      id: `${event.id}-${winner.player_id}`,
+      id: `${event.id}-${winner.player_id ?? winner.guest_id}`,
       date: event.start_date,
       playerId: winner.player_id,
+      participantName: winner.display_name,
+      isGuest: winner.is_guest,
       time: hundredthsToSeconds(winner.winning_time_hundredths),
       attempts: Number(eventStats?.valid_attempts ?? 0) + Number(eventStats?.dnf_count ?? 0),
     }));
@@ -71,7 +73,7 @@ export async function getGlobalStatistics(): Promise<Statistic[]> {
     { id: "attempts", label: "Bestätigte Versuche", value: String(data.approved_attempts), change: "Nur reguläre Spieler", icon: "target" },
     { id: "valid", label: "Gültige Zeiten", value: String(data.valid_attempts), change: "DNF ausgeschlossen", icon: "timer" },
     { id: "dnf", label: "DNF", value: String(data.dnf_count), change: "Bestätigte Versuche", icon: "target" },
-    { id: "players", label: "Reguläre Spieler", value: String(data.regular_players), change: "AK ausgeschlossen", icon: "users" },
+    { id: "players", label: "Reguläre Spieler", value: String(data.regular_players), change: "Gäste ausgeschlossen", icon: "users" },
     { id: "events", label: "Events", value: String(data.event_count), change: `Ø ${time(data.average_hundredths)}`, icon: "trophy" },
   ];
 }
