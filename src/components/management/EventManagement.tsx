@@ -25,7 +25,7 @@ export function EventManagement() {
         <Input className="rounded-xl" value={name} onChange={(event) => setName(event.target.value)} placeholder="Eventname" />
         <Input className="rounded-xl" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
       </div>
-      <Button className="mt-4" onClick={() => updateEvent(selected.id, { name: name.trim() || undefined, date })}><Save className="size-4" /> Event speichern</Button>
+      <Button className="mt-4" onClick={() => void updateEvent(selected.id, { name: name.trim() || undefined, date })}><Save className="size-4" /> Event speichern</Button>
     </section>
   );
 }

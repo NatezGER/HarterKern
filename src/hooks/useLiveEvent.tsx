@@ -2,20 +2,28 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { ReactNode } from "react";
-import { createDemoLiveState } from "@/data/liveDemoData";
-import { usePublicData } from "@/hooks/usePublicData";
+import { useDataPlatform } from "@/hooks/useDataPlatform";
+import { getErrorMessage } from "@/lib/errors";
 import {
   createLiveAttempt,
-  finalizeLiveEvent,
   getActiveLiveEvent,
   getOfficialWorldRecord,
 } from "@/lib/liveEventCalculations";
-import { parseLiveEventState } from "@/lib/liveEventPersistence";
+import {
+  closeRemoteEvent,
+  createRemoteAttempt,
+  deleteRemoteAttempt,
+  startRemoteEvent,
+  updateRemoteAttempt,
+  updateRemoteEvent,
+  updateRemotePlayer,
+  upsertCanonicalPlayer,
+} from "@/services/dataPlatformRepository";
 import type {
   AttemptInput,
   AttemptUpdate,
@@ -27,166 +35,121 @@ import type {
   StartLiveEventInput,
 } from "@/types/liveEvent";
 
-const storageKey = "harter-kern-live-event-v1";
-const readState = () => parseLiveEventState(
-  localStorage.getItem(storageKey),
-  createDemoLiveState,
-);
-
 interface LiveEventContextValue {
   state: LiveEventState;
   activeEvent?: LiveEvent;
   celebration: RecordCelebration | null;
-  startEvent: (input: StartLiveEventInput) => string | null;
-  addAttempt: (input: AttemptInput) => boolean;
-  submitAttempt: (playerId: string, result: "time" | "dns", time?: number) => boolean;
-  updateAttempt: (id: string, changes: AttemptUpdate) => void;
-  deleteAttempt: (id: string) => void;
-  updatePlayer: (id: string, changes: Partial<LiveParticipant>) => void;
-  registerPlayer: (player: LiveParticipant) => void;
-  updateEvent: (id: string, changes: Partial<LiveEvent>) => void;
-  endEvent: () => string | null;
+  mutationError: string | null;
+  startEvent: (input: StartLiveEventInput) => Promise<string | null>;
+  addAttempt: (input: AttemptInput) => Promise<boolean>;
+  submitAttempt: (
+    playerId: string,
+    result: "time" | "dns",
+    time?: number,
+  ) => Promise<boolean>;
+  updateAttempt: (id: string, changes: AttemptUpdate) => Promise<boolean>;
+  deleteAttempt: (id: string) => Promise<boolean>;
+  updatePlayer: (id: string, changes: Partial<LiveParticipant>) => Promise<boolean>;
+  registerPlayer: (player: LiveParticipant) => Promise<string | null>;
+  updateEvent: (id: string, changes: Partial<LiveEvent>) => Promise<boolean>;
+  endEvent: () => Promise<string | null>;
+  refresh: () => Promise<void>;
   dismissCelebration: () => void;
+  clearMutationError: () => void;
 }
 
 const LiveEventContext = createContext<LiveEventContextValue | null>(null);
 
-const recalculateCompletedEvents = (
-  events: LiveEvent[],
-  attempts: LiveAttempt[],
-  players: LiveParticipant[],
-) => events.map((event) => {
-  if (event.status !== "completed") return event;
-  return finalizeLiveEvent(
-    { ...event, status: "active" },
-    attempts,
-    players,
-    event.endReason ?? "manual",
-    event.endedAt ?? event.endsAt,
-  );
-});
-
 export function LiveEventProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<LiveEventState>(readState);
-  const [celebration, setCelebration] = useState<RecordCelebration | null>(null);
-  const { data: publicData } = usePublicData();
+  const { snapshot, refresh } = useDataPlatform();
+  const state = snapshot.liveState;
   const activeEvent = getActiveLiveEvent(state.events);
+  const [celebration, setCelebration] = useState<RecordCelebration | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const recentSubmissions = useRef(new Map<string, number>());
 
-  useEffect(() => {
-    if (!publicData.players.length) return;
-    setState((current) => {
-      const known = new Set(current.players.map(({ id }) => id));
-      const additions = publicData.players.filter(({ id }) => !known.has(id)).map((player) => ({
-        id: player.id,
-        name: player.name,
-        initials: player.initials,
-        avatarGradient: player.avatarGradient,
-        avatarUrl: player.avatarUrl,
-        personalBest: player.personalBest,
-        isAk: player.isAk,
-      }));
-      return additions.length
-        ? { ...current, players: [...current.players, ...additions] }
-        : current;
-    });
-  }, [publicData.players]);
-
-  useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(state));
-  }, [state]);
-
-  const expireEvents = useCallback(() => {
-    const now = new Date();
-    setState((current) => {
-      let changed = false;
-      const events = current.events.map((event) => {
-        if (event.status !== "active" || now.getTime() < new Date(event.endsAt).getTime()) {
-          return event;
-        }
-        changed = true;
-        return finalizeLiveEvent(
-          event,
-          current.attempts,
-          current.players,
-          "automatic",
-          event.endsAt,
-        );
-      });
-      return changed ? { ...current, events } : current;
-    });
+  const fail = useCallback((error: unknown) => {
+    setMutationError(getErrorMessage(error));
+    return false;
   }, []);
+  const refreshAfterMutation = useCallback(async () => {
+    await refresh().catch(() => undefined);
+  }, [refresh]);
 
-  useEffect(() => {
-    expireEvents();
-    const interval = window.setInterval(expireEvents, 30_000);
-    const onVisibility = () => document.visibilityState === "visible" && expireEvents();
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [expireEvents]);
-
-  const startEvent = useCallback((input: StartLiveEventInput) => {
-    if (activeEvent || input.participants.length === 0) return null;
-    const startedAt = new Date();
-    const id = crypto.randomUUID();
-    const event: LiveEvent = {
-      id,
-      name: input.name?.trim() || undefined,
-      date: input.date,
-      startedAt: startedAt.toISOString(),
-      endsAt: new Date(startedAt.getTime() + 24 * 60 * 60 * 1000).toISOString(),
-      status: "active",
-      participantIds: input.participants.map(({ id: playerId }) => playerId),
-      createdBy: "Live-Modus",
-    };
-    setState((current) => {
-      const players = new Map(current.players.map((player) => [player.id, player]));
-      input.participants.forEach((player) => players.set(player.id, player));
-      return { ...current, players: [...players.values()], events: [event, ...current.events] };
-    });
-    return id;
-  }, [activeEvent]);
-
-  const detectRecord = useCallback((attempt: LiveAttempt, current: LiveEventState) => {
+  const detectRecord = useCallback((attempt: LiveAttempt) => {
     if (attempt.result !== "time" || attempt.timeSeconds == null || attempt.outOfCompetition) return;
-    const player = current.players.find(({ id }) => id === attempt.playerId);
+    const player = state.players.find(({ id }) => id === attempt.playerId);
     if (!player) return;
-    const previousAttempts = current.attempts.filter(({ id }) => id !== attempt.id);
-    const previousWr = getOfficialWorldRecord(current.players, previousAttempts);
+    const previousWr = getOfficialWorldRecord(state.players, state.attempts);
     const previousPb = Math.min(
       player.personalBest > 0 ? player.personalBest : Infinity,
-      ...previousAttempts.flatMap((item) =>
+      ...state.attempts.flatMap((item) =>
         item.playerId === player.id && !item.outOfCompetition &&
         item.result === "time" && item.timeSeconds != null ? [item.timeSeconds] : [],
       ),
     );
     if (previousWr == null || attempt.timeSeconds < previousWr) {
-      setCelebration({ kind: "wr", playerName: player.name, time: attempt.timeSeconds, previousTime: previousWr ?? undefined });
+      setCelebration({
+        kind: "wr",
+        playerName: player.name,
+        time: attempt.timeSeconds,
+        previousTime: previousWr ?? undefined,
+      });
     } else if (attempt.timeSeconds < previousPb) {
-      setCelebration({ kind: "pb", playerName: player.name, time: attempt.timeSeconds, previousTime: previousPb === Infinity ? undefined : previousPb });
+      setCelebration({
+        kind: "pb",
+        playerName: player.name,
+        time: attempt.timeSeconds,
+        previousTime: previousPb === Infinity ? undefined : previousPb,
+      });
     }
-  }, []);
+  }, [state.attempts, state.players]);
 
-  const addAttempt = useCallback((input: AttemptInput) => {
-    if (input.result === "time" && (input.timeSeconds == null || input.timeSeconds <= 0 || input.timeSeconds > 300)) return false;
+  const startEvent = useCallback(async (input: StartLiveEventInput) => {
+    if (activeEvent || input.participants.length === 0) return null;
+    try {
+      setMutationError(null);
+      const { eventId } = await startRemoteEvent(input);
+      await refreshAfterMutation();
+      return eventId;
+    } catch (error) {
+      fail(error);
+      return null;
+    }
+  }, [activeEvent, fail, refreshAfterMutation]);
+
+  const addAttempt = useCallback(async (input: AttemptInput) => {
+    if (input.result === "time" &&
+      (input.timeSeconds == null || input.timeSeconds <= 0 || input.timeSeconds > 300)) {
+      return false;
+    }
     if (!state.players.some(({ id }) => id === input.playerId)) return false;
-    const now = new Date().toISOString();
-    const attempt = createLiveAttempt(input, crypto.randomUUID(), now);
-    const duplicate = state.attempts.some((candidate) =>
-      candidate.playerId === input.playerId && candidate.eventId === input.eventId &&
-      candidate.result === input.result && candidate.timeSeconds === input.timeSeconds &&
-      Date.now() - new Date(candidate.submittedAt).getTime() < 1_500,
-    );
-    if (duplicate) return false;
-    const next = { ...state, attempts: [attempt, ...state.attempts] };
-    setState(next);
-    detectRecord(attempt, next);
-    return true;
-  }, [detectRecord, state]);
+    const key = [
+      input.playerId,
+      input.eventId ?? "standalone",
+      input.result,
+      input.timeSeconds ?? "dns",
+    ].join(":");
+    const previous = recentSubmissions.current.get(key) ?? 0;
+    if (Date.now() - previous < 1_500) return false;
+    recentSubmissions.current.set(key, Date.now());
+    try {
+      setMutationError(null);
+      const id = await createRemoteAttempt(input);
+      detectRecord(createLiveAttempt(input, id, new Date().toISOString()));
+      await refreshAfterMutation();
+      return true;
+    } catch (error) {
+      recentSubmissions.current.delete(key);
+      return fail(error);
+    }
+  }, [detectRecord, fail, refreshAfterMutation, state.players]);
 
-  const submitAttempt = useCallback((playerId: string, result: "time" | "dns", time?: number) => {
+  const submitAttempt = useCallback(async (
+    playerId: string,
+    result: "time" | "dns",
+    time?: number,
+  ) => {
     if (!activeEvent || !activeEvent.participantIds.includes(playerId)) return false;
     const player = state.players.find(({ id }) => id === playerId);
     if (!player) return false;
@@ -200,70 +163,89 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     });
   }, [activeEvent, addAttempt, state.players]);
 
-  const updateAttempt = useCallback((id: string, changes: AttemptUpdate) => {
-    setState((current) => {
-      const attempts = current.attempts.map((attempt) => {
-        if (attempt.id !== id) return attempt;
-        const result = changes.result ?? attempt.result;
-        return {
-          ...attempt,
-          ...changes,
-          result,
-          timeSeconds: result === "dns" ? undefined : changes.timeSeconds ?? attempt.timeSeconds,
-        };
-      });
-      return { ...current, attempts, events: recalculateCompletedEvents(current.events, attempts, current.players) };
-    });
-  }, []);
+  const updateAttempt = useCallback(async (id: string, changes: AttemptUpdate) => {
+    const current = state.attempts.find((attempt) => attempt.id === id);
+    if (!current) return false;
+    try {
+      setMutationError(null);
+      await updateRemoteAttempt(id, current, changes);
+      await refreshAfterMutation();
+      return true;
+    } catch (error) {
+      return fail(error);
+    }
+  }, [fail, refreshAfterMutation, state.attempts]);
 
-  const deleteAttempt = useCallback((id: string) => {
-    setState((current) => {
-      const attempts = current.attempts.filter((attempt) => attempt.id !== id);
-      return { ...current, attempts, events: recalculateCompletedEvents(current.events, attempts, current.players) };
-    });
-  }, []);
+  const deleteAttempt = useCallback(async (id: string) => {
+    try {
+      setMutationError(null);
+      await deleteRemoteAttempt(id);
+      await refreshAfterMutation();
+      return true;
+    } catch (error) {
+      return fail(error);
+    }
+  }, [fail, refreshAfterMutation]);
 
-  const updatePlayer = useCallback((id: string, changes: Partial<LiveParticipant>) => {
-    setState((current) => {
-      const players = current.players.map((player) =>
-        player.id === id ? { ...player, ...changes, id } : player,
-      );
-      return {
-        ...current,
-        players,
-        events: recalculateCompletedEvents(current.events, current.attempts, players),
-      };
-    });
-  }, []);
+  const updatePlayer = useCallback(async (
+    id: string,
+    changes: Partial<LiveParticipant>,
+  ) => {
+    const current = state.players.find((player) => player.id === id);
+    if (!current) return false;
+    try {
+      setMutationError(null);
+      await updateRemotePlayer(id, { ...current, ...changes, id });
+      await refreshAfterMutation();
+      return true;
+    } catch (error) {
+      return fail(error);
+    }
+  }, [fail, refreshAfterMutation, state.players]);
 
-  const registerPlayer = useCallback((player: LiveParticipant) => {
-    setState((current) => current.players.some(({ id }) => id === player.id)
-      ? current
-      : { ...current, players: [...current.players, player] });
-  }, []);
+  const registerPlayer = useCallback(async (player: LiveParticipant) => {
+    try {
+      setMutationError(null);
+      const id = await upsertCanonicalPlayer(player);
+      await refreshAfterMutation();
+      return id;
+    } catch (error) {
+      fail(error);
+      return null;
+    }
+  }, [fail, refreshAfterMutation]);
 
-  const updateEvent = useCallback((id: string, changes: Partial<LiveEvent>) => {
-    setState((current) => ({
-      ...current,
-      events: current.events.map((event) => event.id === id ? { ...event, ...changes, id } : event),
-    }));
-  }, []);
+  const updateEvent = useCallback(async (id: string, changes: Partial<LiveEvent>) => {
+    const current = state.events.find((event) => event.id === id);
+    if (!current) return false;
+    try {
+      setMutationError(null);
+      await updateRemoteEvent(id, changes.name ?? current.name ?? "", changes.date ?? current.date);
+      await refreshAfterMutation();
+      return true;
+    } catch (error) {
+      return fail(error);
+    }
+  }, [fail, refreshAfterMutation, state.events]);
 
-  const endEvent = useCallback(() => {
+  const endEvent = useCallback(async () => {
     if (!activeEvent) return null;
-    setState((current) => ({
-      ...current,
-      events: current.events.map((event) => event.id === activeEvent.id
-        ? finalizeLiveEvent(event, current.attempts, current.players, "manual", new Date().toISOString())
-        : event),
-    }));
-    return activeEvent.id;
-  }, [activeEvent]);
+    try {
+      setMutationError(null);
+      const id = await closeRemoteEvent(activeEvent.id, "manual");
+      await refreshAfterMutation();
+      return id;
+    } catch (error) {
+      fail(error);
+      return null;
+    }
+  }, [activeEvent, fail, refreshAfterMutation]);
 
   const value = useMemo(() => ({
     state,
     activeEvent,
     celebration,
+    mutationError,
     startEvent,
     addAttempt,
     submitAttempt,
@@ -273,9 +255,25 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     registerPlayer,
     updateEvent,
     endEvent,
+    refresh,
     dismissCelebration: () => setCelebration(null),
-  }), [activeEvent, addAttempt, celebration, deleteAttempt, endEvent, registerPlayer, startEvent, state, submitAttempt, updateAttempt, updateEvent, updatePlayer]);
-
+    clearMutationError: () => setMutationError(null),
+  }), [
+    activeEvent,
+    addAttempt,
+    celebration,
+    deleteAttempt,
+    endEvent,
+    mutationError,
+    refresh,
+    registerPlayer,
+    startEvent,
+    state,
+    submitAttempt,
+    updateAttempt,
+    updateEvent,
+    updatePlayer,
+  ]);
   return <LiveEventContext.Provider value={value}>{children}</LiveEventContext.Provider>;
 }
 

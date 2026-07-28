@@ -9,7 +9,6 @@ import { ParticipantCard } from "@/components/events/ParticipantCard";
 import { StartEventPanel } from "@/components/events/StartEventPanel";
 import { TimeEntrySheet } from "@/components/events/TimeEntrySheet";
 import { Button } from "@/components/ui/button";
-import { demoParticipants } from "@/data/liveDemoData";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { usePublicData } from "@/hooks/usePublicData";
 import { getLiveStandings, getOfficialWorldRecord } from "@/lib/liveEventCalculations";
@@ -19,12 +18,11 @@ import type { LiveParticipant, LiveStanding } from "@/types/liveEvent";
 export function LiveEventPage() {
   const navigate = useNavigate();
   const { data } = usePublicData();
-  const { activeEvent, state, endEvent } = useLiveEvent();
+  const { activeEvent, state, endEvent, refresh } = useLiveEvent();
   const [selected, setSelected] = useState<LiveStanding | null>(null);
   const [savedId, setSavedId] = useState("");
   const [endOpen, setEndOpen] = useState(false);
-  const candidates = useMemo<LiveParticipant[]>(() => data.players.length
-    ? data.players.map((player) => ({
+  const candidates = useMemo<LiveParticipant[]>(() => data.players.map((player) => ({
       id: player.id,
       name: player.name,
       initials: player.initials,
@@ -32,14 +30,17 @@ export function LiveEventPage() {
       avatarUrl: player.avatarUrl,
       personalBest: player.personalBest,
       isAk: player.isAk,
-    }))
-    : demoParticipants, [data.players]);
+    })), [data.players]);
 
   useEffect(() => {
     if (!savedId) return;
     const timeout = window.setTimeout(() => setSavedId(""), 1_200);
     return () => window.clearTimeout(timeout);
   }, [savedId]);
+
+  useEffect(() => {
+    void refresh().catch(() => undefined);
+  }, [refresh]);
 
   if (!activeEvent) {
     const latest = state.events.find(({ status }) => status === "completed");
@@ -65,8 +66,8 @@ export function LiveEventPage() {
   const attempts = state.attempts.filter(({ eventId }) => eventId === activeEvent.id);
   const standings = getLiveStandings(activeEvent, attempts, state.players);
   const worldRecord = getOfficialWorldRecord(state.players, state.attempts);
-  const confirmEnd = () => {
-    const id = endEvent();
+  const confirmEnd = async () => {
+    const id = await endEvent();
     if (id) navigate(`/events/${id}/results`);
   };
 
@@ -99,7 +100,7 @@ export function LiveEventPage() {
       <EndEventDialog
         open={endOpen}
         onClose={() => setEndOpen(false)}
-        onConfirm={confirmEnd}
+        onConfirm={() => void confirmEnd()}
       />
     </div>
   );

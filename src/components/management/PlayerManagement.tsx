@@ -19,7 +19,11 @@ export function PlayerManagement() {
   const upload = (file?: File) => {
     if (!file || !file.type.startsWith("image/") || file.size > 500_000) return;
     const reader = new FileReader();
-    reader.onload = () => typeof reader.result === "string" && updatePlayer(player.id, { avatarUrl: reader.result });
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        void updatePlayer(player.id, { avatarUrl: reader.result });
+      }
+    };
     reader.readAsDataURL(file);
   };
   return (
@@ -40,7 +44,7 @@ export function PlayerManagement() {
         className="mt-4"
         onClick={() => {
           const nextName = name.trim() || player.name;
-          updatePlayer(player.id, { name: nextName, initials: getInitials(nextName), isAk });
+          void updatePlayer(player.id, { name: nextName, initials: getInitials(nextName), isAk });
         }}
       >
         <Save className="size-4" /> Spieler speichern

@@ -4,21 +4,23 @@ import type { Event } from "@/types";
 
 export async function getEvents(): Promise<Event[]> {
   const client = getSupabase();
-  const [eventsResult, statsResult, attemptsResult, winnersResult] = await Promise.all([
+  const [eventsResult, statsResult, participantsResult, winnersResult] =
+    await Promise.all([
     client.from("events").select("*").order("started_at", { ascending: false }),
     client.from("event_statistics").select("*"),
-    client.from("attempts").select("event_id,player_id").eq("status", "approved").is("deleted_at", null),
+    client.from("event_participants").select("event_id,player_id"),
     client.from("event_winners").select("*"),
   ]);
   if (eventsResult.error) throw eventsResult.error;
   if (statsResult.error) throw statsResult.error;
-  if (attemptsResult.error) throw attemptsResult.error;
+  if (participantsResult.error) throw participantsResult.error;
   if (winnersResult.error) throw winnersResult.error;
 
   const statsByEvent = new Map(statsResult.data.map((row) => [row.event_id, row]));
   return eventsResult.data.map((row) => {
-    const eventAttempts = attemptsResult.data.filter((attempt) => attempt.event_id === row.id);
-    const participants = [...new Set(eventAttempts.map((attempt) => attempt.player_id))];
+    const participants = participantsResult.data
+      .filter((participant) => participant.event_id === row.id)
+      .map((participant) => participant.player_id);
     const stats = statsByEvent.get(row.id);
     return {
       ...mapEvent(row, Number(stats?.valid_attempts ?? 0) + Number(stats?.dnf_count ?? 0), participants),
