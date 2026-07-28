@@ -24,16 +24,36 @@ export function isLiveEventState(value: unknown): value is LiveEventState {
   const state = value as Partial<LiveEventState>;
   if (state.version !== 2 || !Array.isArray(state.players)) return false;
   if (!Array.isArray(state.events) || !Array.isArray(state.attempts)) return false;
-  return state.players.every((player) =>
+  const playersValid = state.players.every((player) =>
     isString(player.id) && isString(player.name) &&
     typeof player.personalBest === "number" && typeof player.isAk === "boolean",
-  ) && state.events.every((event) =>
-    isString(event.id) && isString(event.startedAt) && isString(event.endsAt) &&
-    ["active", "completed"].includes(event.status) && Array.isArray(event.participantIds),
-  ) && state.attempts.every((attempt) =>
-    isString(attempt.id) && isString(attempt.playerId) &&
-    ["time", "dns"].includes(attempt.result) && isString(attempt.submittedAt),
   );
+  const playerIds = new Set(state.players.flatMap((player) =>
+    player && typeof player === "object" && isString(player.id) ? [player.id] : [],
+  ));
+  const eventsValid = state.events.every((event) =>
+    isString(event.id) && isString(event.startedAt) && isString(event.endsAt) &&
+    ["active", "completed"].includes(event.status) && Array.isArray(event.participantIds) &&
+    event.participantIds.every((id) => isString(id) && playerIds.has(id)),
+  );
+  const eventIds = new Set(state.events.flatMap((event) =>
+    event && typeof event === "object" && isString(event.id) ? [event.id] : [],
+  ));
+  const attemptsValid = state.attempts.every((attempt) =>
+    isString(attempt.id) && isString(attempt.playerId) &&
+    playerIds.has(attempt.playerId) &&
+    (!attempt.eventId || eventIds.has(attempt.eventId)) &&
+    ["time", "dns"].includes(attempt.result) && isString(attempt.submittedAt) &&
+    (attempt.result === "dns" || (
+      typeof attempt.timeSeconds === "number" &&
+      attempt.timeSeconds > 0 &&
+      attempt.timeSeconds <= 300
+    )),
+  );
+  return playersValid && eventsValid && attemptsValid &&
+    playerIds.size === state.players.length &&
+    eventIds.size === state.events.length &&
+    new Set(state.attempts.map(({ id }) => id)).size === state.attempts.length;
 }
 
 function migrateVersionOne(value: unknown): LiveEventState | null {
@@ -96,13 +116,14 @@ function migrateVersionOne(value: unknown): LiveEventState | null {
   return { version: 2, players: [...players.values()], events, attempts };
 }
 
-export function parseLiveEventState(raw: string | null, fallback: () => LiveEventState) {
-  if (!raw) return fallback();
+export function parseMigratableLiveEventState(raw: string | null) {
+  if (!raw) return null;
   try {
     const parsed: unknown = JSON.parse(raw);
     if (isLiveEventState(parsed)) return parsed;
-    return migrateVersionOne(parsed) ?? fallback();
+    const migrated = migrateVersionOne(parsed);
+    return migrated && isLiveEventState(migrated) ? migrated : null;
   } catch {
-    return fallback();
+    return null;
   }
 }

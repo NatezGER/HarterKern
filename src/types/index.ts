@@ -59,7 +59,7 @@ export interface Event {
 export interface Attempt {
   id: string;
   playerId: string;
-  eventId: string;
+  eventId: string | null;
   timeHundredths: number | null;
   isDnf: boolean;
   submittedAt: string;
