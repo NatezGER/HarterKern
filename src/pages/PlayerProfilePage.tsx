@@ -6,14 +6,14 @@ import { SectionHeading } from "@/components/common/SectionHeading";
 import { DataState } from "@/components/common/DataState";
 import { Button } from "@/components/ui/button";
 import { getPlayerById, getRankedPlayers } from "@/data/selectors";
-import { usePublicData } from "@/hooks/usePublicData";
+import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { hundredthsToSeconds } from "@/utils/time";
 import { formatTime } from "@/utils/format";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
 export function PlayerProfilePage() {
   const { id = "" } = useParams();
-  const { data, status } = usePublicData();
+  const { data, status } = useEffectivePublicData();
   if (status !== "ready") return <DataState><div /></DataState>;
   const player = getPlayerById(data.players, id);
   if (!player) return <NotFoundPage />;

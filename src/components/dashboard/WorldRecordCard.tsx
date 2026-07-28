@@ -1,12 +1,13 @@
 import { Crown, MapPin, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import { getPlayerById } from "@/data/selectors";
-import { usePublicData } from "@/hooks/usePublicData";
+import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { formatDate, formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { Avatar } from "@/components/common/Avatar";
 
 export function WorldRecordCard() {
-  const { data } = usePublicData();
+  const { data } = useEffectivePublicData();
   const record = data.worldRecordHistory[0];
   const player = record ? getPlayerById(data.players, record.playerId) : null;
   if (!record || !player) {
@@ -33,7 +34,10 @@ export function WorldRecordCard() {
 
         <div className="my-8">
           <p className="display-title gold-text text-7xl leading-none sm:text-8xl">{formatTime(record.time)}</p>
-          <div className="mt-6 flex items-center gap-4">
+          <Link
+            to={`/player/${player.id}`}
+            className="mt-6 flex w-fit items-center gap-4 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
+          >
             <Avatar player={player} size="md" />
             <div>
               <p className="font-display text-2xl font-black uppercase">{player.name}</p>
@@ -41,7 +45,7 @@ export function WorldRecordCard() {
                 <MapPin className="size-3" /> {record.location}
               </p>
             </div>
-          </div>
+          </Link>
         </div>
 
         <p className="border-t border-gold-400/15 pt-4 text-xs font-semibold uppercase tracking-widest text-white/40">

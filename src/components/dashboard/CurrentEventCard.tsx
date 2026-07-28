@@ -1,11 +1,11 @@
 import { CalendarDays, MapPin, Target, Timer, Users } from "lucide-react";
 import { formatDate } from "@/utils/format";
-import { usePublicData } from "@/hooks/usePublicData";
+import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { Button } from "@/components/ui/button";
 
 export function CurrentEventCard() {
-  const { data } = usePublicData();
+  const { data } = useEffectivePublicData();
   const event = data.events.find((item) => item.status === "active");
   if (!event) {
     return <AnimatedCard className="grid min-h-72 place-items-center p-8 text-center" hover={false}><div><CalendarDays className="mx-auto size-7 text-gold-400" /><h3 className="display-title mt-4 text-3xl">Kein aktives Event</h3><p className="mt-2 text-sm text-white/40">Die nächste Einreichung startet automatisch ein neues Event.</p></div></AnimatedCard>;

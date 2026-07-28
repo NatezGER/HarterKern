@@ -1,7 +1,7 @@
 import { Bell, Moon, MonitorSmartphone, ShieldCheck } from "lucide-react";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { PageHeader } from "@/components/common/PageHeader";
-import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { ManagementPanel } from "@/components/management/ManagementPanel";
 import { SectionHeading } from "@/components/common/SectionHeading";
 
 const settingsSections = [
@@ -29,9 +29,9 @@ export function SettingsPage() {
           </AnimatedCard>
         ))}
       </div>
-      <section>
+      <section className="hidden lg:block">
         <SectionHeading eyebrow="Geschützter Bereich" title="Administration" />
-        <AdminDashboard />
+        <ManagementPanel />
       </section>
     </div>
   );

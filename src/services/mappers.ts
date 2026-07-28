@@ -56,14 +56,8 @@ export function mapAttempt(row: AttemptRow): Attempt {
     id: row.id,
     playerId: row.player_id,
     eventId: row.event_id,
-    status: row.status,
     timeHundredths: row.time_hundredths,
     isDnf: row.is_dnf,
     submittedAt: row.submitted_at,
-    editedAt: row.edited_at,
-    approvedAt: row.approved_at,
-    rejectedAt: row.rejected_at,
-    deletedAt: row.deleted_at,
-    source: row.source,
   };
 }

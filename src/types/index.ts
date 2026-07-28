@@ -1,6 +1,4 @@
 export type RankTrend = "up" | "down" | "same";
-export type AttemptStatus = "pending" | "approved" | "rejected";
-export type AttemptSource = "public" | "admin";
 
 export interface Player {
   id: string;
@@ -62,15 +60,9 @@ export interface Attempt {
   id: string;
   playerId: string;
   eventId: string;
-  status: AttemptStatus;
   timeHundredths: number | null;
   isDnf: boolean;
   submittedAt: string;
-  editedAt: string | null;
-  approvedAt: string | null;
-  rejectedAt: string | null;
-  deletedAt: string | null;
-  source: AttemptSource;
 }
 
 export interface Statistic {
@@ -89,12 +81,4 @@ export interface PublicDataSnapshot {
   events: Event[];
   statistics: Statistic[];
   recentAttempts: Attempt[];
-}
-
-export interface PublicAttemptInput {
-  playerId?: string;
-  playerName?: string;
-  timeHundredths: number | null;
-  isDnf: boolean;
-  clientIdentifier: string;
 }

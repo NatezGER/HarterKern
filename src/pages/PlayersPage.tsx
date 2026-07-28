@@ -2,10 +2,10 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { PlayerCard } from "@/components/players/PlayerCard";
 import { DataState } from "@/components/common/DataState";
 import { appMeta } from "@/constants/content";
-import { usePublicData } from "@/hooks/usePublicData";
+import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 
 export function PlayersPage() {
-  const { data } = usePublicData();
+  const { data } = useEffectivePublicData();
   return (
     <div className="space-y-9">
       <PageHeader eyebrow="Roster" title="Spieler" description={appMeta.playersDescription} />

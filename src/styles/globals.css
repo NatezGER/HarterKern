@@ -15,6 +15,7 @@
 html {
   background: #080909;
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -58,4 +59,21 @@ body {
   .gold-text {
     @apply bg-gradient-to-r from-gold-300 via-beer to-gold-500 bg-clip-text text-transparent;
   }
+}
+
+.live-ticker-track {
+  animation: live-ticker 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@keyframes live-ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
