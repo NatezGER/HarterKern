@@ -41,9 +41,25 @@ idempotent.
 Supabase bleibt nach dem ersten Load maßgeblich. Die App legt keine lokalen
 Spieler-, Event-, Versuch- oder Hall-of-Fame-Overlays mehr darüber.
 
+## PR 6B – vollständige Live-Events
+
+Die Migrationen `202607280009` bis `202607280011` müssen vor dem Frontend-
+Deployment in Dateireihenfolge angewendet werden. Sie ergänzen:
+
+- eventgebundene Gäste in `event_guests`, ohne dauerhaftes Spielerprofil,
+- genau einen permanenten Spieler oder Gast je Eventversuch,
+- transaktionalen Eventstart und nachträgliche Teilnehmeraufnahme,
+- Eventabschluss mit permanentem Spieler oder Gast als Sieger,
+- Eventstatistiken und Event-Sieger inklusive Gästen.
+
+Das frühere AK-Modell wird beim Anwenden der Migration einmalig in
+eventgebundene Gäste überführt. Gäste zählen innerhalb ihres Events vollständig,
+werden aber aus Hall of Fame, Weltrekorden und langfristigen Spielerstatistiken
+herausgehalten.
+
 ### Realtime und Refetch
 
-Eine zentrale Subscription beobachtet Insert, Update und Delete der vier
+Eine zentrale Subscription beobachtet Insert, Update und Delete der fünf
 gemeinsamen Tabellen. Jede Meldung löst einen entprellten vollständigen Refetch
 aus. Zusätzlich wird bei Fensterfokus, `visibilitychange`, beim Öffnen der
 Live-Seite und während eines aktiven Events alle 15 Sekunden aktualisiert.

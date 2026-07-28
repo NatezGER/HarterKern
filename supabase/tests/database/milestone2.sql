@@ -1,10 +1,11 @@
 begin;
 create extension if not exists pgtap;
-select plan(19);
+select plan(22);
 
 select has_table('public', 'players', 'players table exists');
 select has_table('public', 'events', 'events table exists');
 select has_table('public', 'attempts', 'attempts table exists');
+select has_table('public', 'event_guests', 'event guests table exists');
 select has_table('public', 'admin_roles', 'admin roles table exists');
 
 select is(
@@ -172,6 +173,37 @@ select is(
   ),
   300,
   'pending, DNF and deleted attempts do not affect the personal best'
+);
+
+insert into public.event_guests (id, event_id, display_name)
+values (
+  '90000000-0000-0000-0000-000000000016',
+  '90000000-0000-0000-0000-000000000002',
+  'Event Guest'
+);
+insert into public.attempts (
+  id, guest_id, event_id, status, time_hundredths, is_dnf, source
+) values (
+  '90000000-0000-0000-0000-000000000017',
+  '90000000-0000-0000-0000-000000000016',
+  '90000000-0000-0000-0000-000000000002',
+  'approved', 150, false, 'admin'
+);
+select is(
+  (
+    select display_name from public.event_winners
+    where event_id = '90000000-0000-0000-0000-000000000002'
+  ),
+  'Event Guest',
+  'an event guest can win the event'
+);
+select is(
+  (
+    select count(*) from public.public_hall_of_fame
+    where display_name = 'Event Guest'
+  ),
+  0::bigint,
+  'event guests never enter the Hall of Fame'
 );
 
 select * from finish();

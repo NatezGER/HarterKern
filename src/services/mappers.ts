@@ -55,6 +55,7 @@ export function mapAttempt(row: AttemptRow): Attempt {
   return {
     id: row.id,
     playerId: row.player_id,
+    guestId: row.guest_id,
     eventId: row.event_id,
     timeHundredths: row.time_hundredths,
     isDnf: row.is_dnf,

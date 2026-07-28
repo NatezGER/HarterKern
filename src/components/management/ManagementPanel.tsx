@@ -18,7 +18,7 @@ export function ManagementPanel() {
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<LiveAttempt | null>(null);
   return (
-    <section className="hidden lg:block">
+    <section>
       <div className="panel p-7">
         <div className="flex items-center justify-between gap-4">
           <div>

@@ -3,6 +3,30 @@ import { LiveAvatar } from "@/components/events/LiveAvatar";
 import { formatTime } from "@/utils/format";
 import type { LiveStanding } from "@/types/liveEvent";
 
+function ParticipantName({ standing }: { standing: LiveStanding }) {
+  const content = (
+    <>
+      <LiveAvatar player={standing.player} className="size-10" />
+      <div className="min-w-0">
+        <p className="truncate font-bold">{standing.player.name}</p>
+        {standing.player.kind === "guest" && (
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-gold-300">
+            Gast
+          </span>
+        )}
+      </div>
+    </>
+  );
+  return standing.player.kind === "permanent" ? (
+    <Link
+      to={`/player/${standing.player.id}`}
+      className="flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
+    >
+      {content}
+    </Link>
+  ) : <div className="flex min-w-0 items-center gap-3">{content}</div>;
+}
+
 export function LiveLeaderboard({ standings }: { standings: LiveStanding[] }) {
   return (
     <section className="panel overflow-hidden">
@@ -18,19 +42,11 @@ export function LiveLeaderboard({ standings }: { standings: LiveStanding[] }) {
             <span className="font-display text-2xl font-black text-gold-400">
               {standing.rank ? String(standing.rank).padStart(2, "0") : "—"}
             </span>
-            <Link to={`/player/${standing.player.id}`} className="flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400">
-              <LiveAvatar player={standing.player} className="size-10" />
-              <div className="min-w-0">
-                <p className="truncate font-bold">{standing.player.name}</p>
-                {standing.player.isAk && (
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-white/35">
-                    Außer Konkurrenz
-                  </span>
-                )}
-              </div>
-            </Link>
+            <ParticipantName standing={standing} />
             <p className="hidden text-right text-sm text-white/40 sm:block">
-              PB {formatTime(standing.player.personalBest)}
+              {standing.player.kind === "permanent"
+                ? `PB ${formatTime(standing.player.personalBest)}`
+                : "Nur Eventwertung"}
             </p>
             <div className="text-right">
               <p className="font-display text-xl font-black">

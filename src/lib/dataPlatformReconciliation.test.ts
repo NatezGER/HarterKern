@@ -7,6 +7,7 @@ import type { LiveAttempt, LiveParticipant } from "@/types/liveEvent";
 const player = (id: string, name = id): LiveParticipant => ({
   id,
   name,
+  kind: "permanent",
   initials: name.slice(0, 2).toUpperCase(),
   avatarGradient: "from-black to-gold",
   avatarUrl: null,

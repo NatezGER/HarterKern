@@ -15,7 +15,10 @@ import {
   getOfficialWorldRecord,
 } from "@/lib/liveEventCalculations";
 import {
+  addEventGuest,
+  addExistingEventPlayer,
   closeRemoteEvent,
+  createEventPlayer,
   createRemoteAttempt,
   deleteRemoteAttempt,
   startRemoteEvent,
@@ -51,6 +54,9 @@ interface LiveEventContextValue {
   deleteAttempt: (id: string) => Promise<boolean>;
   updatePlayer: (id: string, changes: Partial<LiveParticipant>) => Promise<boolean>;
   registerPlayer: (player: LiveParticipant) => Promise<string | null>;
+  addExistingParticipant: (playerId: string) => Promise<boolean>;
+  createAndAddPlayer: (name: string) => Promise<boolean>;
+  addGuest: (name: string) => Promise<boolean>;
   updateEvent: (id: string, changes: Partial<LiveEvent>) => Promise<boolean>;
   endEvent: () => Promise<string | null>;
   refresh: () => Promise<void>;
@@ -155,11 +161,12 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     if (!player) return false;
     return addAttempt({
       playerId,
+      participantKind: player.kind,
       eventId: activeEvent.id,
       result,
       timeSeconds: time,
       date: activeEvent.date,
-      outOfCompetition: player.isAk,
+      outOfCompetition: false,
     });
   }, [activeEvent, addAttempt, state.players]);
 
@@ -168,13 +175,16 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     if (!current) return false;
     try {
       setMutationError(null);
-      await updateRemoteAttempt(id, current, changes);
+      const participant = state.players.find(({ id: playerId }) =>
+        playerId === (changes.playerId ?? current.playerId),
+      );
+      await updateRemoteAttempt(id, current, changes, participant);
       await refreshAfterMutation();
       return true;
     } catch (error) {
       return fail(error);
     }
-  }, [fail, refreshAfterMutation, state.attempts]);
+  }, [fail, refreshAfterMutation, state.attempts, state.players]);
 
   const deleteAttempt = useCallback(async (id: string) => {
     try {
@@ -215,6 +225,42 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     }
   }, [fail, refreshAfterMutation]);
 
+  const addExistingParticipant = useCallback(async (playerId: string) => {
+    if (!activeEvent) return false;
+    try {
+      setMutationError(null);
+      await addExistingEventPlayer(activeEvent.id, playerId);
+      await refreshAfterMutation();
+      return true;
+    } catch (error) {
+      return fail(error);
+    }
+  }, [activeEvent, fail, refreshAfterMutation]);
+
+  const createAndAddPlayer = useCallback(async (name: string) => {
+    if (!activeEvent) return false;
+    try {
+      setMutationError(null);
+      await createEventPlayer(activeEvent.id, name.trim());
+      await refreshAfterMutation();
+      return true;
+    } catch (error) {
+      return fail(error);
+    }
+  }, [activeEvent, fail, refreshAfterMutation]);
+
+  const addGuest = useCallback(async (name: string) => {
+    if (!activeEvent) return false;
+    try {
+      setMutationError(null);
+      await addEventGuest(activeEvent.id, name.trim());
+      await refreshAfterMutation();
+      return true;
+    } catch (error) {
+      return fail(error);
+    }
+  }, [activeEvent, fail, refreshAfterMutation]);
+
   const updateEvent = useCallback(async (id: string, changes: Partial<LiveEvent>) => {
     const current = state.events.find((event) => event.id === id);
     if (!current) return false;
@@ -253,6 +299,9 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     deleteAttempt,
     updatePlayer,
     registerPlayer,
+    addExistingParticipant,
+    createAndAddPlayer,
+    addGuest,
     updateEvent,
     endEvent,
     refresh,
@@ -260,12 +309,15 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     clearMutationError: () => setMutationError(null),
   }), [
     activeEvent,
+    addExistingParticipant,
+    addGuest,
     addAttempt,
     celebration,
     deleteAttempt,
     endEvent,
     mutationError,
     refresh,
+    createAndAddPlayer,
     registerPlayer,
     startEvent,
     state,

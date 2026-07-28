@@ -19,27 +19,34 @@ export function StartEventPanel({
   const [selected, setSelected] = useState<string[]>([]);
   const [temporary, setTemporary] = useState<LiveParticipant[]>([]);
   const [temporaryName, setTemporaryName] = useState("");
-  const [temporaryAk, setTemporaryAk] = useState(false);
+  const [temporaryKind, setTemporaryKind] = useState<"permanent" | "guest">("permanent");
   const [error, setError] = useState("");
   const allCandidates = useMemo(() => [...candidates, ...temporary], [candidates, temporary]);
 
   const addTemporary = () => {
     const trimmed = temporaryName.trim();
-    if (!trimmed) return;
+    if (!trimmed) return setError("Bitte gib einen Namen ein.");
+    const normalized = trimmed.toLocaleLowerCase("de-DE");
+    if (allCandidates.some(({ name: candidateName }) =>
+      candidateName.trim().toLocaleLowerCase("de-DE") === normalized)) {
+      return setError("Dieser Name ist bereits vorhanden.");
+    }
     const id = `temporary-${crypto.randomUUID()}`;
     const player: LiveParticipant = {
       id,
       name: trimmed,
+      kind: temporaryKind,
       initials: getInitials(trimmed),
       avatarGradient: getAvatarGradient(id),
       avatarUrl: null,
       personalBest: 0,
-      isAk: temporaryAk,
+      isAk: false,
     };
     setTemporary((current) => [...current, player]);
     setSelected((current) => [...current, id]);
     setTemporaryName("");
-    setTemporaryAk(false);
+    setTemporaryKind("permanent");
+    setError("");
   };
 
   const submit = async () => {
@@ -90,18 +97,24 @@ export function StartEventPanel({
                     {player.avatarUrl ? <img src={player.avatarUrl} alt="" className="size-full rounded-full object-cover" /> : player.initials}
                   </span>
                   <span className="min-w-0 flex-1 truncate font-bold">{player.name}</span>
-                  {player.isAk && <span className="text-[10px] text-white/35">AK</span>}
+                  {player.kind === "guest" && <span className="text-[10px] text-gold-300">Gast</span>}
                 </label>
               ))}
             </div>
           </fieldset>
           <div className="mt-6 rounded-2xl bg-white/[0.025] p-4">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/40">Temporärer Teilnehmer</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/40">Neuer Teilnehmer</p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <Input className="rounded-xl" value={temporaryName} onChange={(event) => setTemporaryName(event.target.value)} placeholder="Name" />
-              <label className="flex h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-xs">
-                <input type="checkbox" checked={temporaryAk} onChange={(event) => setTemporaryAk(event.target.checked)} /> AK
-              </label>
+              <select
+                value={temporaryKind}
+                onChange={(event) => setTemporaryKind(event.target.value as "permanent" | "guest")}
+                className="h-11 rounded-xl border border-white/10 bg-black/30 px-4 text-xs"
+                aria-label="Spielertyp"
+              >
+                <option value="permanent">Permanenter Spieler</option>
+                <option value="guest">Gast für dieses Event</option>
+              </select>
               <Button variant="outline" onClick={addTemporary}><Plus className="size-4" /> Hinzufügen</Button>
             </div>
           </div>

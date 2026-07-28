@@ -8,7 +8,7 @@ const settingsSections = [
   { icon: Moon, title: "Darstellung", description: "Dark Theme ist für das beste Arena-Erlebnis optimiert.", status: "Aktiv" },
   { icon: Bell, title: "Benachrichtigungen", description: "Event-Updates und neue Rekorde.", status: "Vorbereitet" },
   { icon: MonitorSmartphone, title: "Anzeige", description: "Optimierte Ansichten für Mobile, Desktop und TV.", status: "Automatisch" },
-  { icon: ShieldCheck, title: "Daten & Privatsphäre", description: "In Milestone 1 werden ausschließlich lokale Mock-Daten verwendet.", status: "Lokal" },
+  { icon: ShieldCheck, title: "Daten & Privatsphäre", description: "Spieler, Events und Versuche werden gemeinsam über Supabase synchronisiert.", status: "Supabase" },
 ];
 
 export function SettingsPage() {
@@ -29,7 +29,7 @@ export function SettingsPage() {
           </AnimatedCard>
         ))}
       </div>
-      <section className="hidden lg:block">
+      <section>
         <SectionHeading eyebrow="Geschützter Bereich" title="Administration" />
         <ManagementPanel />
       </section>
