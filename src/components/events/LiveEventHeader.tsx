@@ -1,23 +1,18 @@
-import { CalendarDays, Clock3, Hourglass, Users } from "lucide-react";
+import { CalendarDays, Clock3, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RoleToggle } from "@/components/events/RoleToggle";
 import { useElapsedTime } from "@/hooks/useElapsedTime";
-import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { formatDate } from "@/utils/format";
 import type { LiveEvent } from "@/types/liveEvent";
 
 export function LiveEventHeader({
   event,
   attempts,
-  pending,
   onEnd,
 }: {
   event: LiveEvent;
   attempts: number;
-  pending: number;
   onEnd: () => void;
 }) {
-  const { state } = useLiveEvent();
   const elapsed = useElapsedTime(event.startedAt);
   return (
     <section className="relative overflow-hidden rounded-3xl border border-red-400/15 bg-gradient-to-br from-red-500/[0.12] via-white/[0.035] to-gold-400/[0.06] p-6 sm:p-9">
@@ -33,15 +28,11 @@ export function LiveEventHeader({
             <span className="flex items-center gap-2"><CalendarDays className="size-4" /> {formatDate(event.date)}</span>
             <span className="flex items-center gap-2"><Clock3 className="size-4" /> {elapsed}</span>
             <span className="flex items-center gap-2"><Users className="size-4" /> {event.participantIds.length} Teilnehmer</span>
-            <span className="flex items-center gap-2"><Hourglass className="size-4" /> {pending} offen</span>
           </div>
           <p className="mt-2 text-xs text-white/30">{attempts} Eventversuche insgesamt</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <RoleToggle />
-          {state.role === "admin" && (
-            <Button variant="outline" onClick={onEnd}>Event beenden</Button>
-          )}
+          <Button variant="outline" onClick={onEnd}>Event beenden</Button>
         </div>
       </div>
     </section>

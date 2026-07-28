@@ -1,4 +1,5 @@
 import { CalendarDays, Target } from "lucide-react";
+import { Link } from "react-router-dom";
 import { getPlayerById } from "@/data/selectors";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { formatShortDate, formatTime } from "@/utils/format";
@@ -24,7 +25,12 @@ export function DailyBestCards() {
                   <CalendarDays className="size-3.5" /> {formatShortDate(winner.date)}
                 </span>
               </div>
-              <p className="mt-6 font-display text-xl font-black uppercase">{player.name}</p>
+              <Link
+                to={`/player/${player.id}`}
+                className="mt-6 block w-fit rounded-lg font-display text-xl font-black uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
+              >
+                {player.name}
+              </Link>
               <p className="gold-text mt-1 font-display text-4xl font-black">{formatTime(winner.time)}</p>
               <p className="mt-4 flex items-center gap-1.5 text-xs text-white/35">
                 <Target className="size-3.5" /> {winner.attempts} Versuche

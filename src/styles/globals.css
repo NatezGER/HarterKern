@@ -61,10 +61,8 @@ body {
   }
 }
 
-@media (max-width: 639px) {
-  .live-marquee {
-    animation: live-marquee 14s linear infinite;
-  }
+.live-ticker-track {
+  animation: live-ticker 28s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -75,7 +73,7 @@ body {
   }
 }
 
-@keyframes live-marquee {
-  0%, 12% { transform: translateX(0); }
-  88%, 100% { transform: translateX(min(0px, calc(100vw - 100% - 10rem))); }
+@keyframes live-ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }

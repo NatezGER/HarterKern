@@ -1,4 +1,5 @@
-import { CheckCircle2, Clock3, Flag, Plus, Sparkles } from "lucide-react";
+import { CheckCircle2, Flag, Plus, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LiveAvatar } from "@/components/events/LiveAvatar";
 import { cn } from "@/lib/cn";
@@ -9,10 +10,7 @@ const lastStatus = (standing: LiveStanding) => {
   const attempt = standing.lastAttempt;
   if (!attempt) return { icon: Sparkles, label: "Noch kein Versuch", color: "text-white/35" };
   if (attempt.result === "dns") return { icon: Flag, label: "DNS", color: "text-white/45" };
-  if (attempt.status === "pending") {
-    return { icon: Clock3, label: "Wartet auf Freigabe", color: "text-amber-300" };
-  }
-  return { icon: CheckCircle2, label: "Bestätigt", color: "text-emerald-300" };
+  return { icon: CheckCircle2, label: "Offiziell", color: "text-emerald-300" };
 };
 
 export function ParticipantCard({
@@ -31,7 +29,10 @@ export function ParticipantCard({
       "panel flex min-h-72 flex-col p-5 transition sm:p-6",
       saved && "border-emerald-400/40 shadow-[0_0_32px_rgba(52,211,153,.15)]",
     )}>
-      <div className="flex items-center gap-4">
+      <Link
+        to={`/player/${standing.player.id}`}
+        className="flex w-fit items-center gap-4 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
+      >
         <LiveAvatar player={standing.player} className="size-14" />
         <div className="min-w-0">
           <h3 className="truncate font-display text-2xl font-black uppercase">
@@ -41,11 +42,11 @@ export function ParticipantCard({
             <StatusIcon className="size-3.5" /> {status.label}
           </p>
         </div>
-      </div>
+      </Link>
       <div className="my-6 grid grid-cols-2 gap-3">
         <Metric label="Persönliche Bestzeit" value={formatTime(standing.player.personalBest)} />
-        <Metric label="Eventbestzeit" value={formatTime(standing.approvedBest ?? 0)} />
-        <Metric label="Vorläufig" value={formatTime(standing.pendingBest ?? 0)} />
+        <Metric label="Eventbestzeit" value={formatTime(standing.bestTime ?? 0)} />
+        <Metric label="Status" value={standing.player.isAk ? "AK" : "Offiziell"} />
         <Metric label="Versuche" value={String(standing.attempts)} />
       </div>
       <Button size="lg" onClick={onAdd} className="mt-auto h-14 w-full">

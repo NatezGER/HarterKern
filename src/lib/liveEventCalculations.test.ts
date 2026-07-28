@@ -3,23 +3,28 @@ import {
   createLiveAttempt,
   finalizeLiveEvent,
   getActiveLiveEvent,
+  getAttemptMilestones,
   getLiveStandings,
   getOfficialWorldRecord,
-  isApproved,
-  moderateLiveAttempt,
 } from "@/lib/liveEventCalculations";
 import type { LiveAttempt, LiveEvent, LiveParticipant } from "@/types/liveEvent";
 
-const player = (id: string, pb = 3, isAk = false): LiveParticipant => ({
+const participant = (id: string, personalBest = 3, isAk = false): LiveParticipant => ({
   id,
   name: id,
   initials: id.slice(0, 2),
   avatarGradient: "",
   avatarUrl: null,
-  personalBest: pb,
+  personalBest,
   isAk,
 });
-const players = [player("paul", 2.06), player("mats", 2.4), player("ak", 1.5, true)];
+
+const players = [
+  participant("paul", 2.06),
+  participant("mats", 2.4),
+  participant("ak", 1.5, true),
+];
+
 const event: LiveEvent = {
   id: "event",
   name: "Test",
@@ -28,77 +33,139 @@ const event: LiveEvent = {
   endsAt: "2026-07-28T10:00:00.000Z",
   status: "active",
   participantIds: players.map(({ id }) => id),
-  participants: players,
-  createdBy: "admin",
+  createdBy: "management",
 };
+
 const attempt = (
   id: string,
   playerId: string,
-  timeSeconds: number | undefined,
-  status: LiveAttempt["status"],
+  timeSeconds?: number,
   result: LiveAttempt["result"] = "time",
+  outOfCompetition = false,
 ): LiveAttempt => ({
   id,
   playerId,
   eventId: event.id,
   result,
-  timeSeconds,
-  status,
-  submittedAt: "2026-07-27T11:00:00.000Z",
-  submittedBy: "test",
-  submittedByRole: status === "approved" ? "admin" : "user",
+  timeSeconds: result === "time" ? timeSeconds : undefined,
+  date: event.date,
+  submittedAt: `2026-07-27T11:00:0${id}.000Z`,
+  outOfCompetition,
 });
 
 describe("live event rules", () => {
-  it("approves admin attempts immediately", () => {
-    const created = createLiveAttempt({ id: "1", eventId: event.id, player: players[0], result: "time", timeSeconds: 2.2, role: "admin", now: event.startedAt });
-    expect(created.status).toBe("approved");
+  it("creates every entered time as an immediately official attempt", () => {
+    expect(createLiveAttempt({
+      playerId: "paul",
+      eventId: event.id,
+      result: "time",
+      timeSeconds: 2.2,
+      date: event.date,
+      outOfCompetition: false,
+    }, "1", event.startedAt)).toEqual({
+      id: "1",
+      playerId: "paul",
+      eventId: event.id,
+      eventName: undefined,
+      result: "time",
+      timeSeconds: 2.2,
+      date: event.date,
+      submittedAt: event.startedAt,
+      outOfCompetition: false,
+    });
   });
-  it("stores user attempts as pending", () => {
-    const created = createLiveAttempt({ id: "1", eventId: event.id, player: players[0], result: "time", timeSeconds: 2.2, role: "user", now: event.startedAt });
-    expect(created.status).toBe("pending");
+
+  it("supports an official standalone attempt without an event", () => {
+    const created = createLiveAttempt({
+      playerId: "paul",
+      eventName: "Training",
+      result: "time",
+      timeSeconds: 2.2,
+      date: event.date,
+      outOfCompetition: false,
+    }, "1", event.startedAt);
+    expect(created).toMatchObject({ eventId: undefined, eventName: "Training" });
   });
-  it("does not treat pending attempts as globally approved", () => {
-    expect(isApproved(attempt("1", "paul", 1.9, "pending"))).toBe(false);
-  });
-  it("includes pending attempts provisionally in live standings", () => {
-    expect(getLiveStandings(event, [attempt("1", "paul", 1.9, "pending")])[0].bestTime).toBe(1.9);
-  });
-  it("approves an attempt exactly once", () => {
-    const approved = moderateLiveAttempt(attempt("1", "paul", 2.2, "pending"), "approved", event.startedAt);
-    expect(moderateLiveAttempt(approved, "approved", event.endsAt)).toBe(approved);
-  });
-  it("removes rejected attempts from live standings", () => {
-    expect(getLiveStandings(event, [attempt("1", "paul", 1.9, "rejected")])[0].bestTime).toBeNull();
-  });
-  it("selects the fastest approved regular player as winner", () => {
-    const finished = finalizeLiveEvent(event, [attempt("1", "paul", 2.2, "approved"), attempt("2", "mats", 2.3, "approved")], "manual", event.endsAt);
-    expect(finished.winnerPlayerId).toBe("paul");
-  });
+
   it("stores DNS without a time", () => {
-    const dns = createLiveAttempt({ id: "1", eventId: event.id, player: players[0], result: "dns", role: "admin", now: event.startedAt });
-    expect(dns.timeSeconds).toBeUndefined();
+    const created = createLiveAttempt({
+      playerId: "paul",
+      eventId: event.id,
+      result: "dns",
+      date: event.date,
+      outOfCompetition: false,
+    }, "1", event.startedAt);
+    expect(created.timeSeconds).toBeUndefined();
   });
-  it("finalizes automatically at the 24-hour endpoint", () => {
-    expect(finalizeLiveEvent(event, [], "automatic", event.endsAt)).toMatchObject({ status: "completed", endReason: "automatic", endedAt: event.endsAt });
+
+  it("orders standings by the fastest valid event time", () => {
+    const standings = getLiveStandings(event, [
+      attempt("1", "paul", 2.3),
+      attempt("2", "mats", 2.2),
+      attempt("3", "paul", 2.1),
+    ], players);
+    expect(standings.map(({ player }) => player.id)).toEqual(["paul", "mats", "ak"]);
+    expect(standings[0]).toMatchObject({ rank: 1, bestTime: 2.1, attempts: 2 });
   });
-  it("does not finalize an event twice", () => {
-    const finished = finalizeLiveEvent(event, [], "manual", event.endsAt);
-    expect(finalizeLiveEvent(finished, [], "automatic", "later")).toBe(finished);
+
+  it("assigns the same rank to identical best times", () => {
+    const standings = getLiveStandings(event, [
+      attempt("1", "paul", 2.2),
+      attempt("2", "mats", 2.2),
+    ], players);
+    expect(standings.slice(0, 2).map(({ rank }) => rank)).toEqual([1, 1]);
   });
-  it("exposes an active event only while it is live", () => {
+
+  it("excludes AK attempts from ranks and event wins", () => {
+    const attempts = [
+      attempt("1", "ak", 1.2, "time", true),
+      attempt("2", "paul", 2.2),
+    ];
+    expect(getLiveStandings(event, attempts, players).find(({ player }) => player.id === "ak")?.rank).toBeNull();
+    expect(finalizeLiveEvent(event, attempts, players, "manual", event.endsAt).winnerPlayerId).toBe("paul");
+  });
+
+  it("recalculates a winner from the current attempts after edit or deletion", () => {
+    const original = [attempt("1", "paul", 2.1), attempt("2", "mats", 2.2)];
+    expect(finalizeLiveEvent(event, original, players, "manual", event.endsAt).winnerPlayerId).toBe("paul");
+    const edited = original.map((item) => item.id === "1" ? { ...item, timeSeconds: 2.3 } : item);
+    expect(finalizeLiveEvent(event, edited, players, "manual", event.endsAt).winnerPlayerId).toBe("mats");
+    expect(finalizeLiveEvent(event, original.slice(1), players, "manual", event.endsAt).winnerPlayerId).toBe("mats");
+  });
+
+  it("finalizes automatically and never finalizes twice", () => {
+    const finished = finalizeLiveEvent(event, [], players, "automatic", event.endsAt);
+    expect(finished).toMatchObject({
+      status: "completed",
+      endReason: "automatic",
+      endedAt: event.endsAt,
+    });
+    expect(finalizeLiveEvent(finished, [], players, "manual", "later")).toBe(finished);
+  });
+
+  it("only exposes active events", () => {
     expect(getActiveLiveEvent([event])?.id).toBe(event.id);
     expect(getActiveLiveEvent([{ ...event, status: "completed" }])).toBeUndefined();
   });
-  it("treats historical attempts without status as approved", () => {
-    expect(isApproved({ ...attempt("1", "paul", 2.2, undefined), status: undefined })).toBe(true);
+
+  it("uses every valid regular attempt for the official world record", () => {
+    expect(getOfficialWorldRecord(players, [
+      attempt("1", "paul", 1.8),
+      attempt("2", "ak", 1.1, "time", true),
+      attempt("3", "mats", undefined, "dns"),
+    ])).toBe(1.8);
   });
-  it("updates the world record only after approval", () => {
-    const pending = attempt("1", "paul", 1.8, "pending");
-    expect(getOfficialWorldRecord(players, [pending])).toBe(2.06);
-    expect(getOfficialWorldRecord(players, [{ ...pending, status: "approved" }])).toBe(1.8);
-  });
-  it("allows manual completion while attempts are pending", () => {
-    expect(finalizeLiveEvent(event, [attempt("1", "paul", 1.9, "pending")], "manual", event.endsAt).status).toBe("completed");
+
+  it("marks PB and WR milestones chronologically", () => {
+    const baseline = [participant("paul", 3), participant("mats", 3.2)];
+    const attempts = [
+      attempt("1", "paul", 2.9),
+      attempt("2", "mats", 3.1),
+      attempt("3", "paul", 3.05),
+    ];
+    const milestones = getAttemptMilestones(baseline, attempts);
+    expect(milestones.get("1")).toEqual({ isPersonalBest: true, isWorldRecord: true });
+    expect(milestones.get("2")).toEqual({ isPersonalBest: true, isWorldRecord: false });
+    expect(milestones.get("3")).toEqual({ isPersonalBest: false, isWorldRecord: false });
   });
 });

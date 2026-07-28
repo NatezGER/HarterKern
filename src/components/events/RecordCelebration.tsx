@@ -3,6 +3,13 @@ import { Crown, Sparkles, X } from "lucide-react";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { formatTime } from "@/utils/format";
 
+const confetti = Array.from({ length: 14 }, (_, index) => ({
+  id: index,
+  left: `${6 + ((index * 29) % 88)}%`,
+  delay: (index % 7) * 0.08,
+  color: index % 3 === 0 ? "bg-white" : index % 2 === 0 ? "bg-emerald-300" : "bg-gold-400",
+}));
+
 export function RecordCelebration() {
   const { celebration, dismissCelebration } = useLiveEvent();
   const reduced = useReducedMotion();
@@ -17,6 +24,17 @@ export function RecordCelebration() {
       exit={{ opacity: 0 }}
       className="fixed inset-x-4 top-28 z-[80] mx-auto max-w-xl overflow-hidden rounded-3xl border border-gold-400/35 bg-[#15110a]/95 p-7 text-center shadow-[0_0_80px_rgba(231,186,75,.28)] backdrop-blur-xl"
     >
+      {!reduced && confetti.map((piece) => (
+        <motion.span
+          key={piece.id}
+          aria-hidden="true"
+          className={`absolute -top-4 size-2 rounded-sm ${piece.color}`}
+          style={{ left: piece.left }}
+          initial={{ y: -10, rotate: 0, opacity: 0 }}
+          animate={{ y: 280, rotate: 260, opacity: [0, 1, 1, 0] }}
+          transition={{ duration: 2.4, delay: piece.delay, ease: "easeOut" }}
+        />
+      ))}
       <button
         type="button"
         aria-label="Rekordmeldung schließen"

@@ -1,4 +1,5 @@
 import { getPlayerById } from "@/data/selectors";
+import { Link } from "react-router-dom";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { formatDate, formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
@@ -20,10 +21,13 @@ export function WRProgression() {
               return (
                 <div key={record.id} className="relative grid grid-cols-[1rem_1fr_auto] items-center gap-4">
                   <span className={`relative z-10 size-3 rounded-full border-2 ${index === 0 ? "border-gold-300 bg-gold-400 shadow-gold-sm" : "border-white/25 bg-[#111312]"}`} />
-                  <div>
+                  <Link
+                    to={`/player/${player.id}`}
+                    className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
+                  >
                     <p className="font-semibold">{player.name}</p>
                     <p className="mt-1 text-xs text-white/35">{formatDate(record.date)} · {record.location}</p>
-                  </div>
+                  </Link>
                   <p className={`font-display text-2xl font-black ${index === 0 ? "text-gold-300" : "text-white/60"}`}>{formatTime(record.time)}</p>
                 </div>
               );

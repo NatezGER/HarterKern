@@ -19,7 +19,7 @@ export function TimeEntrySheet({
   onClose: () => void;
   onSaved: (playerId: string) => void;
 }) {
-  const { state, submitAttempt } = useLiveEvent();
+  const { submitAttempt } = useLiveEvent();
   const [value, setValue] = useState("");
   const [message, setMessage] = useState("");
   const savingRef = useRef(false);
@@ -93,9 +93,7 @@ export function TimeEntrySheet({
       </div>
       <p className="mt-4 flex items-center justify-center gap-2 text-center text-xs text-white/40">
         <Timer className="size-3.5" />
-        {state.role === "admin"
-          ? "Admin-Eingaben werden sofort bestätigt."
-          : "Wird vorläufig gespeichert und wartet auf Freigabe."}
+        Die Zeit ist nach dem Speichern sofort offiziell.
       </p>
       <p aria-live="assertive" className="mt-2 text-center text-sm text-red-300">{message}</p>
     </EventModal>

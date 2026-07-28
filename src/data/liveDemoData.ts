@@ -2,81 +2,77 @@ import { getAvatarGradient, getInitials } from "@/utils/avatar";
 import type { LiveEventState, LiveParticipant } from "@/types/liveEvent";
 
 const participant = (
-  id: string,
+  index: number,
   name: string,
   personalBest: number,
   isAk = false,
-): LiveParticipant => ({
-  id,
-  name,
-  personalBest,
-  isAk,
-  initials: getInitials(name),
-  avatarGradient: getAvatarGradient(id),
-  avatarUrl: null,
-});
+): LiveParticipant => {
+  const id = `10000000-0000-0000-0000-${String(index).padStart(12, "0")}`;
+  return {
+    id,
+    name,
+    personalBest,
+    isAk,
+    initials: getInitials(name),
+    avatarGradient: getAvatarGradient(id),
+    avatarUrl: null,
+  };
+};
 
 export const demoParticipants = [
-  participant("demo-paul", "Paul", 2.06),
-  participant("demo-mats", "Mats", 2.34),
-  participant("demo-jonas", "Jonas", 2.51),
-  participant("demo-langer-name", "Christopher Turbo", 2.67),
-  participant("demo-rookie", "Rookie", 0),
-  participant("demo-ak", "Gastfahrer AK", 2.12, true),
+  participant(1, "Paul", 2.06),
+  participant(2, "Max", 2.18),
+  participant(3, "Jonas", 2.29),
+  participant(11, "Chris", 2.67),
+  participant(12, "Ben", 0),
+  participant(99, "Gastfahrer AK", 2.12, true),
 ];
 
 export function createDemoLiveState(now = new Date()): LiveEventState {
   const startedAt = new Date(now.getTime() - 2.5 * 60 * 60 * 1000);
-  const endsAt = new Date(startedAt.getTime() + 24 * 60 * 60 * 1000);
   const eventId = "demo-live-event";
   return {
-    version: 1,
-    role: "admin",
+    version: 2,
+    players: demoParticipants,
     events: [{
       id: eventId,
       name: "European Speed Cup 2027",
       date: startedAt.toISOString().slice(0, 10),
       startedAt: startedAt.toISOString(),
-      endsAt: endsAt.toISOString(),
+      endsAt: new Date(startedAt.getTime() + 24 * 60 * 60 * 1000).toISOString(),
       status: "active",
       participantIds: demoParticipants.map(({ id }) => id),
-      participants: demoParticipants,
-      createdBy: "Demo-Admin",
+      createdBy: "Live-Modus",
     }],
     attempts: [
       {
-        id: "demo-approved",
+        id: "demo-paul",
         eventId,
-        playerId: "demo-paul",
+        playerId: demoParticipants[0].id,
         result: "time",
         timeSeconds: 2.18,
-        status: "approved",
+        date: startedAt.toISOString().slice(0, 10),
         submittedAt: new Date(startedAt.getTime() + 30_000).toISOString(),
-        submittedBy: "Demo-Admin",
-        submittedByRole: "admin",
-        approvedAt: new Date(startedAt.getTime() + 30_000).toISOString(),
-        approvedBy: "Demo-Admin",
+        outOfCompetition: false,
       },
       {
-        id: "demo-pending",
+        id: "demo-max",
         eventId,
-        playerId: "demo-mats",
+        playerId: demoParticipants[1].id,
         result: "time",
-        timeSeconds: 1.98,
-        status: "pending",
+        timeSeconds: 2.31,
+        date: startedAt.toISOString().slice(0, 10),
         submittedAt: new Date(startedAt.getTime() + 60_000).toISOString(),
-        submittedBy: "Demo-Nutzer",
-        submittedByRole: "user",
+        outOfCompetition: false,
       },
       {
         id: "demo-dns",
         eventId,
-        playerId: "demo-jonas",
+        playerId: demoParticipants[2].id,
         result: "dns",
-        status: "approved",
+        date: startedAt.toISOString().slice(0, 10),
         submittedAt: new Date(startedAt.getTime() + 90_000).toISOString(),
-        submittedBy: "Demo-Admin",
-        submittedByRole: "admin",
+        outOfCompetition: false,
       },
     ],
   };

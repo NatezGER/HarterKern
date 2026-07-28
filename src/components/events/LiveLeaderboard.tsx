@@ -1,4 +1,4 @@
-import { Clock3 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { LiveAvatar } from "@/components/events/LiveAvatar";
 import { formatTime } from "@/utils/format";
 import type { LiveStanding } from "@/types/liveEvent";
@@ -18,7 +18,7 @@ export function LiveLeaderboard({ standings }: { standings: LiveStanding[] }) {
             <span className="font-display text-2xl font-black text-gold-400">
               {standing.rank ? String(standing.rank).padStart(2, "0") : "—"}
             </span>
-            <div className="flex min-w-0 items-center gap-3">
+            <Link to={`/player/${standing.player.id}`} className="flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400">
               <LiveAvatar player={standing.player} className="size-10" />
               <div className="min-w-0">
                 <p className="truncate font-bold">{standing.player.name}</p>
@@ -28,7 +28,7 @@ export function LiveLeaderboard({ standings }: { standings: LiveStanding[] }) {
                   </span>
                 )}
               </div>
-            </div>
+            </Link>
             <p className="hidden text-right text-sm text-white/40 sm:block">
               PB {formatTime(standing.player.personalBest)}
             </p>
@@ -36,11 +36,7 @@ export function LiveLeaderboard({ standings }: { standings: LiveStanding[] }) {
               <p className="font-display text-xl font-black">
                 {formatTime(standing.bestTime ?? 0)}
               </p>
-              {standing.pendingBest != null && standing.pendingBest === standing.bestTime && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-300">
-                  <Clock3 className="size-3" /> wartet auf Freigabe
-                </span>
-              )}
+              <span className="text-[10px] font-semibold text-emerald-300">offiziell</span>
             </div>
           </div>
         ))}

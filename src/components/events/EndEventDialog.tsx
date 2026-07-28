@@ -1,39 +1,27 @@
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EventModal } from "@/components/events/EventModal";
 
 export function EndEventDialog({
   open,
-  pending,
   onClose,
-  onReview,
   onConfirm,
 }: {
   open: boolean;
-  pending: number;
   onClose: () => void;
-  onReview: () => void;
   onConfirm: () => void;
 }) {
   return (
     <EventModal open={open} title="Event beenden" onClose={onClose}>
-      <div className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.06] p-5">
-        <AlertTriangle className="size-6 text-amber-300" />
-        <p className="mt-4 font-bold">
-          {pending > 0
-            ? `Es sind noch ${pending} Zeiten nicht freigegeben.`
-            : "Alle eingereichten Zeiten wurden geprüft."}
-        </p>
+      <div className="rounded-2xl border border-gold-400/20 bg-gold-400/[0.06] p-5">
+        <p className="font-bold">Event jetzt abschließen?</p>
         <p className="mt-2 text-sm leading-relaxed text-white/45">
-          Offene Zeiten bleiben auch nach dem Ende prüfbar und zählen erst nach ihrer Freigabe global.
+          Die aktuelle Rangliste wird finalisiert und die Ergebnisansicht geöffnet.
         </p>
       </div>
       <div className="mt-5 grid gap-2">
-        {pending > 0 && (
-          <Button variant="outline" onClick={onReview}>Zur Freigabe</Button>
-        )}
         <Button onClick={onConfirm}>
-          <CheckCircle2 className="size-4" /> Event trotzdem beenden
+          <CheckCircle2 className="size-4" /> Event beenden
         </Button>
         <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
       </div>

@@ -1,17 +1,17 @@
 import { Outlet, ScrollRestoration } from "react-router-dom";
 import { Footer } from "@/layouts/Footer";
 import { Header } from "@/layouts/Header";
-import { AdminProvider } from "@/hooks/useAdmin";
 import { PublicDataProvider } from "@/hooks/usePublicData";
 import { LiveEventProvider } from "@/hooks/useLiveEvent";
 import { LiveEventBanner } from "@/components/events/LiveEventBanner";
 import { RecordCelebration } from "@/components/events/RecordCelebration";
+import { ManagementModeProvider } from "@/hooks/useManagementMode";
 
 export function AppLayout() {
   return (
     <PublicDataProvider>
-      <AdminProvider>
-        <LiveEventProvider>
+      <LiveEventProvider>
+        <ManagementModeProvider>
           <div className="flex min-h-screen flex-col overflow-x-clip">
             <Header />
             <LiveEventBanner />
@@ -22,8 +22,8 @@ export function AppLayout() {
             <RecordCelebration />
             <ScrollRestoration />
           </div>
-        </LiveEventProvider>
-      </AdminProvider>
+        </ManagementModeProvider>
+      </LiveEventProvider>
     </PublicDataProvider>
   );
 }

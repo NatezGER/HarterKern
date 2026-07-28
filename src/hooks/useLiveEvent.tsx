@@ -14,60 +14,82 @@ import {
   finalizeLiveEvent,
   getActiveLiveEvent,
   getOfficialWorldRecord,
-  moderateLiveAttempt,
 } from "@/lib/liveEventCalculations";
 import { parseLiveEventState } from "@/lib/liveEventPersistence";
 import type {
+  AttemptInput,
+  AttemptUpdate,
   LiveAttempt,
-  LiveAttemptResult,
   LiveEvent,
   LiveEventState,
-  LiveRole,
+  LiveParticipant,
   RecordCelebration,
   StartLiveEventInput,
 } from "@/types/liveEvent";
 
 const storageKey = "harter-kern-live-event-v1";
-
-const readState = (): LiveEventState => {
-  return parseLiveEventState(localStorage.getItem(storageKey), createDemoLiveState);
-};
+const readState = () => parseLiveEventState(
+  localStorage.getItem(storageKey),
+  createDemoLiveState,
+);
 
 interface LiveEventContextValue {
   state: LiveEventState;
   activeEvent?: LiveEvent;
   celebration: RecordCelebration | null;
-  setRole: (role: LiveRole) => void;
   startEvent: (input: StartLiveEventInput) => string | null;
-  submitAttempt: (playerId: string, result: LiveAttemptResult, time?: number) => boolean;
-  approveAttempt: (attemptId: string) => void;
-  rejectAttempt: (attemptId: string) => void;
+  addAttempt: (input: AttemptInput) => boolean;
+  submitAttempt: (playerId: string, result: "time" | "dns", time?: number) => boolean;
+  updateAttempt: (id: string, changes: AttemptUpdate) => void;
+  deleteAttempt: (id: string) => void;
+  updatePlayer: (id: string, changes: Partial<LiveParticipant>) => void;
+  registerPlayer: (player: LiveParticipant) => void;
+  updateEvent: (id: string, changes: Partial<LiveEvent>) => void;
   endEvent: () => string | null;
   dismissCelebration: () => void;
 }
 
 const LiveEventContext = createContext<LiveEventContextValue | null>(null);
 
+const recalculateCompletedEvents = (
+  events: LiveEvent[],
+  attempts: LiveAttempt[],
+  players: LiveParticipant[],
+) => events.map((event) => {
+  if (event.status !== "completed") return event;
+  return finalizeLiveEvent(
+    { ...event, status: "active" },
+    attempts,
+    players,
+    event.endReason ?? "manual",
+    event.endedAt ?? event.endsAt,
+  );
+});
+
 export function LiveEventProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<LiveEventState>(readState);
   const [celebration, setCelebration] = useState<RecordCelebration | null>(null);
   const { data: publicData } = usePublicData();
   const activeEvent = getActiveLiveEvent(state.events);
-  const knownParticipants = useMemo(() => {
-    const participants = new Map<string, LiveEvent["participants"][number]>();
-    publicData.players.forEach((player) => participants.set(player.id, {
-      id: player.id,
-      name: player.name,
-      initials: player.initials,
-      avatarGradient: player.avatarGradient,
-      avatarUrl: player.avatarUrl,
-      personalBest: player.personalBest,
-      isAk: player.isAk,
-    }));
-    state.events.flatMap(({ participants: eventPlayers }) => eventPlayers)
-      .forEach((player) => participants.set(player.id, player));
-    return [...participants.values()];
-  }, [publicData.players, state.events]);
+
+  useEffect(() => {
+    if (!publicData.players.length) return;
+    setState((current) => {
+      const known = new Set(current.players.map(({ id }) => id));
+      const additions = publicData.players.filter(({ id }) => !known.has(id)).map((player) => ({
+        id: player.id,
+        name: player.name,
+        initials: player.initials,
+        avatarGradient: player.avatarGradient,
+        avatarUrl: player.avatarUrl,
+        personalBest: player.personalBest,
+        isAk: player.isAk,
+      }));
+      return additions.length
+        ? { ...current, players: [...current.players, ...additions] }
+        : current;
+    });
+  }, [publicData.players]);
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(state));
@@ -75,14 +97,23 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
 
   const expireEvents = useCallback(() => {
     const now = new Date();
-    setState((current) => ({
-      ...current,
-      events: current.events.map((event) =>
-        event.status === "active" && now.getTime() >= new Date(event.endsAt).getTime()
-          ? finalizeLiveEvent(event, current.attempts, "automatic", event.endsAt)
-          : event,
-      ),
-    }));
+    setState((current) => {
+      let changed = false;
+      const events = current.events.map((event) => {
+        if (event.status !== "active" || now.getTime() < new Date(event.endsAt).getTime()) {
+          return event;
+        }
+        changed = true;
+        return finalizeLiveEvent(
+          event,
+          current.attempts,
+          current.players,
+          "automatic",
+          event.endsAt,
+        );
+      });
+      return changed ? { ...current, events } : current;
+    });
   }, []);
 
   useEffect(() => {
@@ -96,12 +127,8 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     };
   }, [expireEvents]);
 
-  const setRole = useCallback((role: LiveRole) => {
-    setState((current) => ({ ...current, role }));
-  }, []);
-
   const startEvent = useCallback((input: StartLiveEventInput) => {
-    if (state.role !== "admin" || activeEvent || input.participants.length === 0) return null;
+    if (activeEvent || input.participants.length === 0) return null;
     const startedAt = new Date();
     const id = crypto.randomUUID();
     const event: LiveEvent = {
@@ -112,120 +139,142 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
       endsAt: new Date(startedAt.getTime() + 24 * 60 * 60 * 1000).toISOString(),
       status: "active",
       participantIds: input.participants.map(({ id: playerId }) => playerId),
-      participants: input.participants,
-      createdBy: "Demo-Admin",
+      createdBy: "Live-Modus",
     };
-    setState((current) => ({ ...current, events: [event, ...current.events] }));
-    return id;
-  }, [activeEvent, state.role]);
-
-  const showRecord = useCallback((attempt: LiveAttempt, event: LiveEvent, attempts: LiveAttempt[]) => {
-    if (attempt.result !== "time" || attempt.timeSeconds == null || attempt.outOfCompetition) return;
-    const player = event.participants.find(({ id }) => id === attempt.playerId);
-    if (!player) return;
-    const previousWorldRecord = getOfficialWorldRecord(
-      knownParticipants,
-      attempts.filter(({ id }) => id !== attempt.id),
-    );
-    if (previousWorldRecord == null || attempt.timeSeconds < previousWorldRecord) {
-      setCelebration({
-        kind: "wr",
-        playerName: player.name,
-        time: attempt.timeSeconds,
-        previousTime: previousWorldRecord ?? undefined,
-      });
-    } else if (player.personalBest <= 0 || attempt.timeSeconds < player.personalBest) {
-      setCelebration({ kind: "pb", playerName: player.name, time: attempt.timeSeconds });
-    }
-  }, [knownParticipants]);
-
-  const submitAttempt = useCallback((
-    playerId: string,
-    result: LiveAttemptResult,
-    time?: number,
-  ) => {
-    if (!activeEvent || !activeEvent.participantIds.includes(playerId)) return false;
-    if (result === "time" && (time == null || time <= 0 || time > 300)) return false;
-    const now = new Date().toISOString();
-    const player = activeEvent.participants.find(({ id }) => id === playerId);
-    if (!player) return false;
-    const attempt = createLiveAttempt({
-      id: crypto.randomUUID(),
-      eventId: activeEvent.id,
-      player,
-      result,
-      timeSeconds: time,
-      role: state.role,
-      now,
+    setState((current) => {
+      const players = new Map(current.players.map((player) => [player.id, player]));
+      input.participants.forEach((player) => players.set(player.id, player));
+      return { ...current, players: [...players.values()], events: [event, ...current.events] };
     });
+    return id;
+  }, [activeEvent]);
+
+  const detectRecord = useCallback((attempt: LiveAttempt, current: LiveEventState) => {
+    if (attempt.result !== "time" || attempt.timeSeconds == null || attempt.outOfCompetition) return;
+    const player = current.players.find(({ id }) => id === attempt.playerId);
+    if (!player) return;
+    const previousAttempts = current.attempts.filter(({ id }) => id !== attempt.id);
+    const previousWr = getOfficialWorldRecord(current.players, previousAttempts);
+    const previousPb = Math.min(
+      player.personalBest > 0 ? player.personalBest : Infinity,
+      ...previousAttempts.flatMap((item) =>
+        item.playerId === player.id && !item.outOfCompetition &&
+        item.result === "time" && item.timeSeconds != null ? [item.timeSeconds] : [],
+      ),
+    );
+    if (previousWr == null || attempt.timeSeconds < previousWr) {
+      setCelebration({ kind: "wr", playerName: player.name, time: attempt.timeSeconds, previousTime: previousWr ?? undefined });
+    } else if (attempt.timeSeconds < previousPb) {
+      setCelebration({ kind: "pb", playerName: player.name, time: attempt.timeSeconds, previousTime: previousPb === Infinity ? undefined : previousPb });
+    }
+  }, []);
+
+  const addAttempt = useCallback((input: AttemptInput) => {
+    if (input.result === "time" && (input.timeSeconds == null || input.timeSeconds <= 0 || input.timeSeconds > 300)) return false;
+    if (!state.players.some(({ id }) => id === input.playerId)) return false;
+    const now = new Date().toISOString();
+    const attempt = createLiveAttempt(input, crypto.randomUUID(), now);
     const duplicate = state.attempts.some((candidate) =>
-      candidate.playerId === playerId &&
-      candidate.eventId === activeEvent.id &&
-      candidate.result === result &&
-      candidate.timeSeconds === attempt.timeSeconds &&
+      candidate.playerId === input.playerId && candidate.eventId === input.eventId &&
+      candidate.result === input.result && candidate.timeSeconds === input.timeSeconds &&
       Date.now() - new Date(candidate.submittedAt).getTime() < 1_500,
     );
     if (duplicate) return false;
-    setState((current) => ({ ...current, attempts: [attempt, ...current.attempts] }));
-    if (attempt.status === "approved") showRecord(attempt, activeEvent, [attempt, ...state.attempts]);
+    const next = { ...state, attempts: [attempt, ...state.attempts] };
+    setState(next);
+    detectRecord(attempt, next);
     return true;
-  }, [activeEvent, showRecord, state.attempts, state.role]);
+  }, [detectRecord, state]);
 
-  const moderateAttempt = useCallback((attemptId: string, status: "approved" | "rejected") => {
-    if (state.role !== "admin") return;
-    const attempt = state.attempts.find(({ id }) => id === attemptId);
-    const event = state.events.find(({ id }) => id === attempt?.eventId);
-    if (!attempt || attempt.status !== "pending" || !event) return;
-    const now = new Date().toISOString();
-    const updated = moderateLiveAttempt(attempt, status, now);
+  const submitAttempt = useCallback((playerId: string, result: "time" | "dns", time?: number) => {
+    if (!activeEvent || !activeEvent.participantIds.includes(playerId)) return false;
+    const player = state.players.find(({ id }) => id === playerId);
+    if (!player) return false;
+    return addAttempt({
+      playerId,
+      eventId: activeEvent.id,
+      result,
+      timeSeconds: time,
+      date: activeEvent.date,
+      outOfCompetition: player.isAk,
+    });
+  }, [activeEvent, addAttempt, state.players]);
+
+  const updateAttempt = useCallback((id: string, changes: AttemptUpdate) => {
     setState((current) => {
-      const attempts = current.attempts.map((item) => item.id === attemptId ? updated : item);
+      const attempts = current.attempts.map((attempt) => {
+        if (attempt.id !== id) return attempt;
+        const result = changes.result ?? attempt.result;
+        return {
+          ...attempt,
+          ...changes,
+          result,
+          timeSeconds: result === "dns" ? undefined : changes.timeSeconds ?? attempt.timeSeconds,
+        };
+      });
+      return { ...current, attempts, events: recalculateCompletedEvents(current.events, attempts, current.players) };
+    });
+  }, []);
+
+  const deleteAttempt = useCallback((id: string) => {
+    setState((current) => {
+      const attempts = current.attempts.filter((attempt) => attempt.id !== id);
+      return { ...current, attempts, events: recalculateCompletedEvents(current.events, attempts, current.players) };
+    });
+  }, []);
+
+  const updatePlayer = useCallback((id: string, changes: Partial<LiveParticipant>) => {
+    setState((current) => {
+      const players = current.players.map((player) =>
+        player.id === id ? { ...player, ...changes, id } : player,
+      );
       return {
         ...current,
-        attempts,
-        events: current.events.map((currentEvent) =>
-          currentEvent.id === event.id && currentEvent.status === "completed"
-            ? {
-              ...currentEvent,
-              winnerPlayerId: finalizeLiveEvent(
-                { ...currentEvent, status: "active" },
-                attempts,
-                currentEvent.endReason ?? "manual",
-                currentEvent.endedAt ?? now,
-              ).winnerPlayerId,
-            }
-            : currentEvent,
-        ),
+        players,
+        events: recalculateCompletedEvents(current.events, current.attempts, players),
       };
     });
-    if (status === "approved") showRecord(updated, event, state.attempts);
-  }, [showRecord, state]);
+  }, []);
 
-  const endEvent = useCallback(() => {
-    if (!activeEvent || state.role !== "admin") return null;
+  const registerPlayer = useCallback((player: LiveParticipant) => {
+    setState((current) => current.players.some(({ id }) => id === player.id)
+      ? current
+      : { ...current, players: [...current.players, player] });
+  }, []);
+
+  const updateEvent = useCallback((id: string, changes: Partial<LiveEvent>) => {
     setState((current) => ({
       ...current,
-      events: current.events.map((event) =>
-        event.id === activeEvent.id
-          ? finalizeLiveEvent(event, current.attempts, "manual", new Date().toISOString())
-          : event,
-      ),
+      events: current.events.map((event) => event.id === id ? { ...event, ...changes, id } : event),
+    }));
+  }, []);
+
+  const endEvent = useCallback(() => {
+    if (!activeEvent) return null;
+    setState((current) => ({
+      ...current,
+      events: current.events.map((event) => event.id === activeEvent.id
+        ? finalizeLiveEvent(event, current.attempts, current.players, "manual", new Date().toISOString())
+        : event),
     }));
     return activeEvent.id;
-  }, [activeEvent, state.role]);
+  }, [activeEvent]);
 
   const value = useMemo(() => ({
     state,
     activeEvent,
     celebration,
-    setRole,
     startEvent,
+    addAttempt,
     submitAttempt,
-    approveAttempt: (id: string) => moderateAttempt(id, "approved"),
-    rejectAttempt: (id: string) => moderateAttempt(id, "rejected"),
+    updateAttempt,
+    deleteAttempt,
+    updatePlayer,
+    registerPlayer,
+    updateEvent,
     endEvent,
     dismissCelebration: () => setCelebration(null),
-  }), [activeEvent, celebration, endEvent, moderateAttempt, setRole, startEvent, state, submitAttempt]);
+  }), [activeEvent, addAttempt, celebration, deleteAttempt, endEvent, registerPlayer, startEvent, state, submitAttempt, updateAttempt, updateEvent, updatePlayer]);
 
   return <LiveEventContext.Provider value={value}>{children}</LiveEventContext.Provider>;
 }

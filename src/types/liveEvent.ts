@@ -1,6 +1,4 @@
-export type LiveRole = "admin" | "user";
 export type LiveEventStatus = "active" | "completed";
-export type LiveAttemptStatus = "pending" | "approved" | "rejected";
 export type LiveAttemptResult = "time" | "dns";
 
 export interface LiveParticipant {
@@ -16,18 +14,13 @@ export interface LiveParticipant {
 export interface LiveAttempt {
   id: string;
   playerId: string;
-  eventId: string;
+  eventId?: string;
+  eventName?: string;
   result: LiveAttemptResult;
   timeSeconds?: number;
-  status?: LiveAttemptStatus;
+  date: string;
   submittedAt: string;
-  submittedBy: string;
-  submittedByRole: LiveRole;
-  approvedAt?: string;
-  approvedBy?: string;
-  rejectedAt?: string;
-  rejectedBy?: string;
-  outOfCompetition?: boolean;
+  outOfCompetition: boolean;
 }
 
 export interface LiveEvent {
@@ -39,15 +32,15 @@ export interface LiveEvent {
   endedAt?: string;
   status: LiveEventStatus;
   participantIds: string[];
-  participants: LiveParticipant[];
   createdBy: string;
   winnerPlayerId?: string;
   endReason?: "manual" | "automatic";
+  seasonId?: string;
 }
 
 export interface LiveEventState {
-  version: 1;
-  role: LiveRole;
+  version: 2;
+  players: LiveParticipant[];
   events: LiveEvent[];
   attempts: LiveAttempt[];
 }
@@ -56,8 +49,6 @@ export interface LiveStanding {
   player: LiveParticipant;
   rank: number | null;
   bestTime: number | null;
-  approvedBest: number | null;
-  pendingBest: number | null;
   attempts: number;
   lastAttempt?: LiveAttempt;
 }
@@ -68,9 +59,33 @@ export interface StartLiveEventInput {
   participants: LiveParticipant[];
 }
 
+export interface AttemptInput {
+  playerId: string;
+  eventId?: string;
+  eventName?: string;
+  result: LiveAttemptResult;
+  timeSeconds?: number;
+  date: string;
+  outOfCompetition: boolean;
+}
+
+export interface AttemptUpdate {
+  playerId?: string;
+  eventName?: string;
+  result?: LiveAttemptResult;
+  timeSeconds?: number;
+  date?: string;
+  outOfCompetition?: boolean;
+}
+
 export interface RecordCelebration {
   kind: "pb" | "wr";
   playerName: string;
   time: number;
   previousTime?: number;
+}
+
+export interface AttemptMilestone {
+  isPersonalBest: boolean;
+  isWorldRecord: boolean;
 }

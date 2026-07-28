@@ -13,10 +13,10 @@ export function StartEventPanel({
   candidates: LiveParticipant[];
   onStarted: () => void;
 }) {
-  const { state, startEvent } = useLiveEvent();
+  const { startEvent } = useLiveEvent();
   const [name, setName] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [selected, setSelected] = useState<string[]>(candidates.map(({ id }) => id));
+  const [selected, setSelected] = useState<string[]>([]);
   const [temporary, setTemporary] = useState<LiveParticipant[]>([]);
   const [temporaryName, setTemporaryName] = useState("");
   const [temporaryAk, setTemporaryAk] = useState(false);
@@ -60,12 +60,7 @@ export function StartEventPanel({
       <Radio className="size-7 text-red-400" />
       <h1 className="display-title mt-5 text-4xl">Live-Event starten</h1>
       <p className="mt-2 text-sm text-white/40">Ein Event läuft exakt 24 Stunden. Parallelstarts sind gesperrt.</p>
-      {state.role !== "admin" ? (
-        <p className="mt-8 rounded-2xl border border-amber-400/20 bg-amber-400/[0.06] p-5 text-sm text-amber-200">
-          Wechsle oben in die Demo-Rolle „Admin“, um ein Event zu starten.
-        </p>
-      ) : (
-        <>
+      <>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
             <label className="text-xs font-semibold text-white/45">
               Eventname
@@ -78,11 +73,12 @@ export function StartEventPanel({
           </div>
           <fieldset className="mt-7">
             <legend className="text-xs font-bold uppercase tracking-[0.16em] text-gold-300">Teilnehmer</legend>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {allCandidates.map((player) => (
-                <label key={player.id} className="flex min-h-12 items-center gap-3 rounded-xl border border-white/10 px-4 text-sm">
+                <label key={player.id} className={`flex min-h-24 cursor-pointer items-center gap-4 rounded-2xl border p-4 text-sm transition ${selected.includes(player.id) ? "border-gold-400/45 bg-gold-400/[0.09]" : "border-white/10 bg-white/[0.025] hover:border-white/20"}`}>
                   <input
                     type="checkbox"
+                    className="sr-only"
                     checked={selected.includes(player.id)}
                     onChange={() => setSelected((current) =>
                       current.includes(player.id)
@@ -90,7 +86,10 @@ export function StartEventPanel({
                         : [...current, player.id],
                     )}
                   />
-                  <span className="flex-1">{player.name}</span>
+                  <span className={`grid size-12 shrink-0 place-items-center rounded-full bg-gradient-to-br ${player.avatarGradient} font-display font-black text-black`}>
+                    {player.avatarUrl ? <img src={player.avatarUrl} alt="" className="size-full rounded-full object-cover" /> : player.initials}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate font-bold">{player.name}</span>
                   {player.isAk && <span className="text-[10px] text-white/35">AK</span>}
                 </label>
               ))}
@@ -110,8 +109,7 @@ export function StartEventPanel({
             <CalendarPlus className="size-5" /> Event starten
           </Button>
           <p aria-live="assertive" className="mt-3 text-center text-sm text-red-300">{error}</p>
-        </>
-      )}
+      </>
     </section>
   );
 }

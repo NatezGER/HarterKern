@@ -2,11 +2,10 @@ import { ArrowLeft, Crown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { EndEventDialog } from "@/components/events/EndEventDialog";
+import { AttemptHistory } from "@/components/events/AttemptHistory";
 import { LiveEventHeader } from "@/components/events/LiveEventHeader";
 import { LiveLeaderboard } from "@/components/events/LiveLeaderboard";
 import { ParticipantCard } from "@/components/events/ParticipantCard";
-import { PendingAttemptsPanel } from "@/components/events/PendingAttemptsPanel";
-import { RoleToggle } from "@/components/events/RoleToggle";
 import { StartEventPanel } from "@/components/events/StartEventPanel";
 import { TimeEntrySheet } from "@/components/events/TimeEntrySheet";
 import { Button } from "@/components/ui/button";
@@ -46,9 +45,8 @@ export function LiveEventPage() {
     const latest = state.events.find(({ status }) => status === "completed");
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
           <Button asChild variant="ghost"><Link to="/"><ArrowLeft className="size-4" /> Übersicht</Link></Button>
-          <RoleToggle />
         </div>
         <p className="text-center text-sm text-white/45">Aktuell läuft kein Event.</p>
         <StartEventPanel candidates={candidates} onStarted={() => navigate("/events/live")} />
@@ -65,9 +63,8 @@ export function LiveEventPage() {
   }
 
   const attempts = state.attempts.filter(({ eventId }) => eventId === activeEvent.id);
-  const pending = attempts.filter(({ status }) => status === "pending");
-  const standings = getLiveStandings(activeEvent, attempts);
-  const worldRecord = getOfficialWorldRecord(candidates, state.attempts);
+  const standings = getLiveStandings(activeEvent, attempts, state.players);
+  const worldRecord = getOfficialWorldRecord(state.players, state.attempts);
   const confirmEnd = () => {
     const id = endEvent();
     if (id) navigate(`/events/${id}/results`);
@@ -75,7 +72,7 @@ export function LiveEventPage() {
 
   return (
     <div className="space-y-7 lg:space-y-10">
-      <LiveEventHeader event={activeEvent} attempts={attempts.length} pending={pending.length} onEnd={() => setEndOpen(true)} />
+      <LiveEventHeader event={activeEvent} attempts={attempts.length} onEnd={() => setEndOpen(true)} />
       <section className="panel flex items-center gap-4 border-gold-400/20 p-5 sm:p-6">
         <Crown className="size-7 text-gold-400" />
         <div>
@@ -97,16 +94,11 @@ export function LiveEventPage() {
           ))}
         </div>
       </section>
-      <PendingAttemptsPanel event={activeEvent} attempts={pending} />
+      <AttemptHistory event={activeEvent} attempts={attempts} />
       <TimeEntrySheet standing={selected} onClose={() => setSelected(null)} onSaved={setSavedId} />
       <EndEventDialog
         open={endOpen}
-        pending={pending.length}
         onClose={() => setEndOpen(false)}
-        onReview={() => {
-          setEndOpen(false);
-          document.getElementById("pending-attempts")?.scrollIntoView({ behavior: "smooth" });
-        }}
         onConfirm={confirmEnd}
       />
     </div>
