@@ -1,4 +1,4 @@
-import { CalendarPlus, Plus, Radio } from "lucide-react";
+import { CalendarPlus, LoaderCircle, Plus, Radio } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ export function StartEventPanel({
   candidates: LiveParticipant[];
   onStarted: () => void;
 }) {
-  const { startEvent } = useLiveEvent();
+  const { startEvent, startingEvent } = useLiveEvent();
   const [name, setName] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [selected, setSelected] = useState<string[]>([]);
@@ -50,13 +50,16 @@ export function StartEventPanel({
   };
 
   const submit = async () => {
+    if (startingEvent) return;
     const participants = allCandidates.filter(({ id }) => selected.includes(id));
     if (!participants.length) {
       setError("Wähle mindestens einen Teilnehmer.");
       return;
     }
-    if (!await startEvent({ name, date, participants })) {
-      setError("Event konnte nicht gestartet werden.");
+    setError("");
+    const result = await startEvent({ name, date, participants });
+    if (!result.eventId) {
+      setError(result.error ?? "Event konnte nicht gestartet werden.");
       return;
     }
     onStarted();
@@ -118,8 +121,16 @@ export function StartEventPanel({
               <Button variant="outline" onClick={addTemporary}><Plus className="size-4" /> Hinzufügen</Button>
             </div>
           </div>
-          <Button size="lg" className="mt-7 h-14 w-full" onClick={() => void submit()}>
-            <CalendarPlus className="size-5" /> Event starten
+          <Button
+            size="lg"
+            className="mt-7 h-14 w-full"
+            disabled={startingEvent}
+            onClick={() => void submit()}
+          >
+            {startingEvent
+              ? <LoaderCircle className="size-5 animate-spin" />
+              : <CalendarPlus className="size-5" />}
+            {startingEvent ? "Event wird gestartet …" : "Event starten"}
           </Button>
           <p aria-live="assertive" className="mt-3 text-center text-sm text-red-300">{error}</p>
       </>

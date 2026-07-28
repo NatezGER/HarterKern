@@ -1,4 +1,4 @@
-import { ImageUp, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,16 +15,6 @@ export function PlayerManagement() {
     setName(player?.name ?? "");
   }, [player]);
   if (!player) return null;
-  const upload = (file?: File) => {
-    if (!file || !file.type.startsWith("image/") || file.size > 500_000) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        void updatePlayer(player.id, { avatarUrl: reader.result });
-      }
-    };
-    reader.readAsDataURL(file);
-  };
   return (
     <section className="rounded-2xl border border-white/10 p-5">
       <h3 className="display-title text-2xl">Spieler bearbeiten</h3>
@@ -33,11 +23,8 @@ export function PlayerManagement() {
           {permanentPlayers.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
         </select>
         <Input className="rounded-xl" value={name} onChange={(event) => setName(event.target.value)} />
-        <label className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 px-4 text-xs font-bold">
-          <ImageUp className="size-4" /> Profilbild hochladen
-          <input className="sr-only" type="file" accept="image/*" onChange={(event) => upload(event.target.files?.[0])} />
-        </label>
       </div>
+      <p className="mt-3 text-xs text-white/35">Profilbilder folgen mit PR 6C.</p>
       <Button
         className="mt-4"
         onClick={() => {

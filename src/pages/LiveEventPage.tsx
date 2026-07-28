@@ -24,7 +24,7 @@ import type { LiveParticipant, LiveStanding } from "@/types/liveEvent";
 export function LiveEventPage() {
   const navigate = useNavigate();
   const { data, status } = usePublicData();
-  const { activeEvent, state, endEvent, refresh } = useLiveEvent();
+  const { activeEvent, state, endEvent, endingEvent, refresh } = useLiveEvent();
   const [selected, setSelected] = useState<LiveStanding | null>(null);
   const [savedId, setSavedId] = useState("");
   const [endOpen, setEndOpen] = useState(false);
@@ -112,6 +112,7 @@ export function LiveEventPage() {
         open={endOpen}
         onClose={() => setEndOpen(false)}
         onConfirm={() => void confirmEnd()}
+        busy={endingEvent}
       />
     </div>
   );

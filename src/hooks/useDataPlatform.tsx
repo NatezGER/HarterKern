@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 import { reconcileDataPlatformSnapshot } from "@/lib/dataPlatformReconciliation";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getErrorMessage } from "@/lib/errors";
+import { createRefreshCoordinator } from "@/lib/refreshCoordinator";
 import {
   emptyMigrationResult,
   migrateLocalStateToSupabase,
@@ -54,32 +55,29 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [migration, setMigration] = useState(emptyMigrationResult("none"));
   const [migrationError, setMigrationError] = useState<string | null>(null);
-  const refreshPromise = useRef<Promise<void> | null>(null);
   const refetchTimer = useRef<number | null>(null);
 
-  const refresh = useCallback(async () => {
+  const loadLatestSnapshot = useCallback(async () => {
     if (!isSupabaseConfigured) {
       setStatus("unconfigured");
       return;
     }
-    if (refreshPromise.current) return refreshPromise.current;
-    const task = loadDataPlatform()
-      .then((loaded) => {
-        setSnapshot((previous) => reconcileDataPlatformSnapshot(previous, loaded));
-        setError(null);
-        setStatus("ready");
-      })
-      .catch((loadError: unknown) => {
-        setError(getErrorMessage(loadError));
-        setStatus("error");
-        throw loadError;
-      })
-      .finally(() => {
-        refreshPromise.current = null;
-      });
-    refreshPromise.current = task;
-    return task;
+    try {
+      const loaded = await loadDataPlatform();
+      setSnapshot((previous) => reconcileDataPlatformSnapshot(previous, loaded));
+      setError(null);
+      setStatus("ready");
+    } catch (loadError) {
+      setError(getErrorMessage(loadError));
+      setStatus("error");
+      throw loadError;
+    }
   }, []);
+  const refreshCoordinator = useRef(createRefreshCoordinator(loadLatestSnapshot));
+  const refresh = useCallback(
+    () => refreshCoordinator.current(),
+    [],
+  );
 
   const scheduleRefresh = useCallback(() => {
     if (refetchTimer.current != null) window.clearTimeout(refetchTimer.current);

@@ -62,6 +62,11 @@ export interface StartLiveEventInput {
   participants: LiveParticipant[];
 }
 
+export interface StartLiveEventResult {
+  eventId: string | null;
+  error: string | null;
+}
+
 export interface AttemptInput {
   playerId: string;
   participantKind?: "permanent" | "guest";
