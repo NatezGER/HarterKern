@@ -107,10 +107,17 @@ export async function migrateLocalStateToSupabase(
           date: event.date,
           participants: localParticipants.map((player) => {
             const isGuest = player.kind === "guest" || player.isAk;
+            if (isGuest) return {
+              ...player,
+              kind: "guest" as const,
+              source: "new-guest" as const,
+              isAk: false,
+            };
             return {
               ...player,
-              id: isGuest ? player.id : playerIds.get(player.id) ?? player.id,
-              kind: isGuest ? "guest" as const : "permanent" as const,
+              id: playerIds.get(player.id) ?? player.id,
+              kind: "permanent" as const,
+              source: "existing-player" as const,
               isAk: false,
             };
           }),

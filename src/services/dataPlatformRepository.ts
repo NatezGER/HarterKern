@@ -17,8 +17,6 @@ export interface DataPlatformSnapshot {
   liveState: LiveEventState;
 }
 
-const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
 export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
   const client = getSupabase();
   const [
@@ -137,7 +135,7 @@ export async function startRemoteEvent(
 ) {
   const participants: EventParticipantPayload[] = input.participants.map((participant) => ({
     clientId: participant.id,
-    id: participant.kind === "permanent" && uuidPattern.test(participant.id)
+    id: participant.source === "existing-player"
       ? participant.id
       : undefined,
     name: participant.name,

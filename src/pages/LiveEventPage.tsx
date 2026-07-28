@@ -19,7 +19,10 @@ import {
   sortStandingsForEntry,
 } from "@/lib/liveEventCalculations";
 import { formatTime } from "@/utils/format";
-import type { LiveParticipant, LiveStanding } from "@/types/liveEvent";
+import type {
+  LiveStanding,
+  StartLiveEventParticipant,
+} from "@/types/liveEvent";
 
 export function LiveEventPage() {
   const navigate = useNavigate();
@@ -28,10 +31,11 @@ export function LiveEventPage() {
   const [selected, setSelected] = useState<LiveStanding | null>(null);
   const [savedId, setSavedId] = useState("");
   const [endOpen, setEndOpen] = useState(false);
-  const candidates = useMemo<LiveParticipant[]>(() => data.players.map((player) => ({
+  const candidates = useMemo<StartLiveEventParticipant[]>(() => data.players.map((player) => ({
       id: player.id,
       name: player.name,
       kind: "permanent",
+      source: "existing-player",
       initials: player.initials,
       avatarGradient: player.avatarGradient,
       avatarUrl: player.avatarUrl,

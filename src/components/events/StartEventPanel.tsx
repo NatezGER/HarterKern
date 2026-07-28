@@ -4,20 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { getAvatarGradient, getInitials } from "@/utils/avatar";
-import type { LiveParticipant } from "@/types/liveEvent";
+import type {
+  StartLiveEventParticipant,
+} from "@/types/liveEvent";
 
 export function StartEventPanel({
   candidates,
   onStarted,
 }: {
-  candidates: LiveParticipant[];
+  candidates: StartLiveEventParticipant[];
   onStarted: () => void;
 }) {
   const { startEvent, startingEvent } = useLiveEvent();
   const [name, setName] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [selected, setSelected] = useState<string[]>([]);
-  const [temporary, setTemporary] = useState<LiveParticipant[]>([]);
+  const [temporary, setTemporary] = useState<StartLiveEventParticipant[]>([]);
   const [temporaryName, setTemporaryName] = useState("");
   const [temporaryKind, setTemporaryKind] = useState<"permanent" | "guest">("permanent");
   const [error, setError] = useState("");
@@ -32,10 +34,21 @@ export function StartEventPanel({
       return setError("Dieser Name ist bereits vorhanden.");
     }
     const id = `temporary-${crypto.randomUUID()}`;
-    const player: LiveParticipant = {
+    const player: StartLiveEventParticipant = temporaryKind === "permanent" ? {
       id,
       name: trimmed,
-      kind: temporaryKind,
+      kind: "permanent",
+      source: "new-player",
+      initials: getInitials(trimmed),
+      avatarGradient: getAvatarGradient(id),
+      avatarUrl: null,
+      personalBest: 0,
+      isAk: false,
+    } : {
+      id,
+      name: trimmed,
+      kind: "guest",
+      source: "new-guest",
       initials: getInitials(trimmed),
       avatarGradient: getAvatarGradient(id),
       avatarUrl: null,

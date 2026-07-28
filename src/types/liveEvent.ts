@@ -56,10 +56,15 @@ export interface LiveStanding {
   lastAttempt?: LiveAttempt;
 }
 
+export type StartLiveEventParticipant = LiveParticipant & (
+  | { kind: "permanent"; source: "existing-player" | "new-player" }
+  | { kind: "guest"; source: "new-guest" }
+);
+
 export interface StartLiveEventInput {
   name?: string;
   date: string;
-  participants: LiveParticipant[];
+  participants: StartLiveEventParticipant[];
 }
 
 export interface StartLiveEventResult {

@@ -35,10 +35,11 @@ const snapshot = (
 
 describe("Supabase snapshot reconciliation", () => {
   it("loads shared players with their canonical id", () => {
-    const remote = snapshot([player("8e5b791d-8290-4d83-aaf4-dcf98f997127", "Paul")]);
+    const canonicalId = "10000000-0000-0000-0000-000000000003";
+    const remote = snapshot([player(canonicalId, "Jonas")]);
     const result = reconcileDataPlatformSnapshot(snapshot(), remote);
     expect(result.liveState.players).toEqual(remote.liveState.players);
-    expect(result.liveState.players[0].id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(result.liveState.players[0].id).toBe(canonicalId);
   });
 
   it("applies realtime insert exactly once", () => {
