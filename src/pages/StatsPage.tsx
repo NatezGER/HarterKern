@@ -4,12 +4,16 @@ import { DataState } from "@/components/common/DataState";
 import { PageHeader } from "@/components/common/PageHeader";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { StatCard } from "@/components/stats/StatCard";
+import { HistoricalAttemptList } from "@/components/history/HistoricalAttemptList";
+import { Button } from "@/components/ui/button";
 import { appMeta } from "@/constants/content";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
+import { useDataPlatform } from "@/hooks/useDataPlatform";
 import { formatDate, formatTime } from "@/utils/format";
 
 export function StatsPage() {
   const { data } = useEffectivePublicData();
+  const { snapshot } = useDataPlatform();
   const archivedEvents = data.events.filter(({ status }) => status === "closed");
   return (
     <div className="space-y-10">
@@ -48,6 +52,20 @@ export function StatsPage() {
               </Link>
             ))}
           </div>
+        </section>
+        <section id="history" className="mt-12 scroll-mt-28">
+          <SectionHeading eyebrow="Zeitarchiv" title="Historische Versuche" />
+          <p className="-mt-4 mb-5 max-w-3xl text-sm leading-6 text-white/45">
+            Diese offiziellen Einzelzeiten sind keiner vollständig dokumentierten
+            Veranstaltung zugeordnet und erzeugen deshalb keine Eventwertung.
+          </p>
+          <HistoricalAttemptList
+            attempts={snapshot.liveState.historicalAttempts}
+            limit={6}
+          />
+          <Button asChild variant="outline" className="mt-5">
+            <Link to="/history">Alle historischen Versuche anzeigen</Link>
+          </Button>
         </section>
       </DataState>
     </div>

@@ -26,6 +26,26 @@ export interface LiveAttempt {
   outOfCompetition: boolean;
 }
 
+export interface HistoricalAttempt {
+  id: string;
+  playerId: string | null;
+  displayName: string;
+  date: string;
+  timeSeconds: number;
+  historicalLabel?: string;
+  isGuest: boolean;
+  outOfCompetition: boolean;
+  sortOrder: number;
+}
+
+export interface HistoricalAttemptInput {
+  playerId: string | null;
+  guestName?: string;
+  date: string;
+  timeSeconds: number;
+  historicalLabel?: string;
+}
+
 export interface LiveEvent {
   id: string;
   name?: string;
@@ -46,6 +66,7 @@ export interface LiveEventState {
   players: LiveParticipant[];
   events: LiveEvent[];
   attempts: LiveAttempt[];
+  historicalAttempts: HistoricalAttempt[];
 }
 
 export interface LiveStanding {

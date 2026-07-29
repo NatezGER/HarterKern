@@ -9,6 +9,7 @@ describe("live event persistence", () => {
       players: [],
       events: [],
       attempts: [],
+      historicalAttempts: [],
     };
     expect(parseMigratableLiveEventState(JSON.stringify(state))).toEqual(state);
   });

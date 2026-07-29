@@ -29,6 +29,7 @@ export function reconcileDataPlatformSnapshot(
       players: uniqueBy(remote.liveState.players, ({ id }) => id),
       events: uniqueBy(remote.liveState.events, ({ id }) => id),
       attempts: uniqueBy(remote.liveState.attempts, ({ id }) => id),
+      historicalAttempts: uniqueBy(remote.liveState.historicalAttempts, ({ id }) => id),
     },
   };
 }

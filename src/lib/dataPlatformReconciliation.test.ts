@@ -30,7 +30,7 @@ const snapshot = (
   attempts: LiveAttempt[] = [],
 ): DataPlatformSnapshot => ({
   publicData: { ...emptyPublicData },
-  liveState: { version: 2, players, events: [], attempts },
+  liveState: { version: 2, players, events: [], attempts, historicalAttempts: [] },
 });
 
 describe("Supabase snapshot reconciliation", () => {
@@ -74,6 +74,25 @@ describe("Supabase snapshot reconciliation", () => {
     const once = reconcileDataPlatformSnapshot(snapshot(), remote);
     const twice = reconcileDataPlatformSnapshot(once, remote);
     expect(twice).toEqual(once);
+  });
+
+  it("keeps historical attempts stable across reload and realtime refetches", () => {
+    const remote = snapshot([player("player-1")]);
+    remote.liveState.historicalAttempts = [{
+      id: "historical-1",
+      playerId: "player-1",
+      displayName: "Paul",
+      date: "2025-05-31",
+      timeSeconds: 2.06,
+      isGuest: false,
+      outOfCompetition: false,
+      sortOrder: 24,
+    }];
+    const once = reconcileDataPlatformSnapshot(snapshot(), remote);
+    const twice = reconcileDataPlatformSnapshot(once, remote);
+    expect(twice.liveState.historicalAttempts).toEqual(
+      remote.liveState.historicalAttempts,
+    );
   });
 
   it("keeps Hall of Fame and live profiles on the same player identity", () => {

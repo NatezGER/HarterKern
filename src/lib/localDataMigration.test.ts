@@ -49,6 +49,7 @@ const localState: LiveEventState = {
     submittedAt: "2026-07-28T10:01:00.000Z",
     outOfCompetition: false,
   }],
+  historicalAttempts: [],
 };
 
 function createDependencies(storage: ReturnType<typeof createStorage>) {
