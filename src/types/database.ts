@@ -2,6 +2,7 @@ import type {
   DataPlatformFunctions,
   EventGuestsTable,
   EventParticipantsTable,
+  HistoricalAttemptsTable,
 } from "@/types/dataPlatform";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
@@ -116,6 +117,7 @@ export interface Database {
       };
       event_participants: EventParticipantsTable;
       event_guests: EventGuestsTable;
+      historical_attempts: HistoricalAttemptsTable;
       admin_roles: {
         Row: { user_id: string; created_at: string };
         Insert: { user_id: string };
@@ -195,6 +197,7 @@ export interface Database {
           time_hundredths: number;
           achieved_at: string;
           event_id: string | null;
+          historical_label: string | null;
         };
         Relationships: [];
       };

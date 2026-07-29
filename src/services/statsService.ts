@@ -33,7 +33,7 @@ export async function getWorldRecordHistory(): Promise<WorldRecord[]> {
       playerId: row.player_id,
       time: hundredthsToSeconds(row.time_hundredths),
       date: event?.start_date ?? row.achieved_at.slice(0, 10),
-      location: event?.name || "Harter Kern Event",
+      location: event?.name || row.historical_label || "Historischer Einzelversuch",
     };
   });
 }
@@ -70,7 +70,7 @@ export async function getGlobalStatistics(): Promise<Statistic[]> {
   const time = (value: number | null) => value == null ? "—" : `${hundredthsToSeconds(value).toLocaleString("de-DE", { minimumFractionDigits: 2 })} s`;
   return [
     { id: "fastest", label: "Schnellste Zeit", value: time(data.world_record_hundredths), change: "Aktueller Weltrekord", icon: "timer" },
-    { id: "attempts", label: "Bestätigte Versuche", value: String(data.approved_attempts), change: "Nur reguläre Spieler", icon: "target" },
+    { id: "attempts", label: "Eventversuche", value: String(data.approved_attempts), change: "Nur reguläre Spieler", icon: "target" },
     { id: "valid", label: "Gültige Zeiten", value: String(data.valid_attempts), change: "DNF ausgeschlossen", icon: "timer" },
     { id: "dnf", label: "DNF", value: String(data.dnf_count), change: "Bestätigte Versuche", icon: "target" },
     { id: "players", label: "Reguläre Spieler", value: String(data.regular_players), change: "Gäste ausgeschlossen", icon: "users" },

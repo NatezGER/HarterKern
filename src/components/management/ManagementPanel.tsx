@@ -2,8 +2,8 @@ import { Edit3, Lock, LogOut, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { AttemptEditDialog } from "@/components/management/AttemptEditDialog";
 import { EventManagement } from "@/components/management/EventManagement";
+import { HistoricalAttemptManagement } from "@/components/management/HistoricalAttemptManagement";
 import { PlayerManagement } from "@/components/management/PlayerManagement";
-import { StandaloneAttemptForm } from "@/components/management/StandaloneAttemptForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
@@ -47,7 +47,7 @@ export function ManagementPanel() {
         ) : (
           <div className="mt-7 space-y-5">
             <p className="flex items-center gap-2 text-sm text-emerald-300"><ShieldCheck className="size-4" /> Verwaltungsmodus aktiv</p>
-            <StandaloneAttemptForm />
+            <HistoricalAttemptManagement />
             <section className="rounded-2xl border border-white/10 p-5">
               <h3 className="display-title text-2xl">Versuche verwalten</h3>
               <div className="mt-4 max-h-96 space-y-2 overflow-y-auto">

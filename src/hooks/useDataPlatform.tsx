@@ -31,7 +31,7 @@ export type RealtimeStatus = "connecting" | "connected" | "disconnected";
 
 const emptySnapshot: DataPlatformSnapshot = {
   publicData: emptyPublicData,
-  liveState: { version: 2, players: [], events: [], attempts: [] },
+  liveState: { version: 2, players: [], events: [], attempts: [], historicalAttempts: [] },
 };
 
 interface DataPlatformContextValue {

@@ -10,6 +10,7 @@ import { StatsPage } from "@/pages/StatsPage";
 import { LiveEventPage } from "@/pages/LiveEventPage";
 import { EventResultsPage } from "@/pages/EventResultsPage";
 import { EventsPage } from "@/pages/EventsPage";
+import { HistoricalAttemptsPage } from "@/pages/HistoricalAttemptsPage";
 
 export const router = createBrowserRouter([
   {
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
       { path: "events", element: <EventsPage /> },
       { path: "events/:eventId", element: <EventResultsPage /> },
       { path: "events/:eventId/results", element: <EventResultsPage /> },
+      { path: "history", element: <HistoricalAttemptsPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

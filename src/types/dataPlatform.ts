@@ -44,6 +44,41 @@ export interface EventParticipantPayload {
   kind: "permanent" | "guest";
 }
 
+export type HistoricalAttemptsTable = {
+  Row: {
+    id: string;
+    player_id: string | null;
+    display_name: string;
+    attempt_date: string;
+    time_hundredths: number;
+    historical_label: string | null;
+    is_guest: boolean;
+    out_of_competition: boolean;
+    sort_order: number;
+    source: "public" | "admin";
+    legacy_source_id: string | null;
+    deleted_at: string | null;
+    created_at: string;
+    updated_at: string;
+  };
+  Insert: {
+    id?: string;
+    player_id?: string | null;
+    display_name: string;
+    attempt_date: string;
+    time_hundredths: number;
+    historical_label?: string | null;
+    is_guest?: boolean;
+    out_of_competition?: boolean;
+    sort_order?: number;
+    source?: "public" | "admin";
+    legacy_source_id?: string | null;
+    deleted_at?: string | null;
+  };
+  Update: Partial<HistoricalAttemptsTable["Insert"]>;
+  Relationships: [];
+};
+
 export type DataPlatformFunctions = {
   sync_upsert_player: {
     Args: {
@@ -200,6 +235,31 @@ export type DataPlatformFunctions = {
       p_is_dnf: boolean;
       p_submitted_at: string;
     };
+    Returns: undefined;
+  };
+  sync_create_historical_attempt: {
+    Args: {
+      p_player_id: string | null;
+      p_guest_name: string | null;
+      p_attempt_date: string;
+      p_time_hundredths: number;
+      p_historical_label?: string | null;
+    };
+    Returns: string;
+  };
+  sync_update_historical_attempt: {
+    Args: {
+      p_attempt_id: string;
+      p_player_id: string | null;
+      p_guest_name: string | null;
+      p_attempt_date: string;
+      p_time_hundredths: number;
+      p_historical_label?: string | null;
+    };
+    Returns: undefined;
+  };
+  sync_delete_historical_attempt: {
+    Args: { p_attempt_id: string };
     Returns: undefined;
   };
 };

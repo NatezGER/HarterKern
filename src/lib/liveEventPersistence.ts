@@ -23,7 +23,8 @@ export function isLiveEventState(value: unknown): value is LiveEventState {
   if (!value || typeof value !== "object") return false;
   const state = value as Partial<LiveEventState>;
   if (state.version !== 2 || !Array.isArray(state.players)) return false;
-  if (!Array.isArray(state.events) || !Array.isArray(state.attempts)) return false;
+  if (!Array.isArray(state.events) || !Array.isArray(state.attempts) ||
+    !Array.isArray(state.historicalAttempts)) return false;
   const playersValid = state.players.every((player) =>
     isString(player.id) && isString(player.name) &&
     ["permanent", "guest"].includes(player.kind) &&
@@ -51,7 +52,15 @@ export function isLiveEventState(value: unknown): value is LiveEventState {
       attempt.timeSeconds <= 300
     )),
   );
-  return playersValid && eventsValid && attemptsValid &&
+  const historicalAttemptsValid = state.historicalAttempts.every((attempt) =>
+    isString(attempt.id) && isString(attempt.displayName) &&
+    isString(attempt.date) && typeof attempt.timeSeconds === "number" &&
+    attempt.timeSeconds > 0 && attempt.timeSeconds <= 300 &&
+    typeof attempt.isGuest === "boolean" &&
+    typeof attempt.outOfCompetition === "boolean" &&
+    typeof attempt.sortOrder === "number",
+  );
+  return playersValid && eventsValid && attemptsValid && historicalAttemptsValid &&
     playerIds.size === state.players.length &&
     eventIds.size === state.events.length &&
     new Set(state.attempts.map(({ id }) => id)).size === state.attempts.length;
@@ -118,7 +127,13 @@ function migrateVersionOne(value: unknown): LiveEventState | null {
       outOfCompetition: Boolean(attempt.outOfCompetition),
     }];
   });
-  return { version: 2, players: [...players.values()], events, attempts };
+  return {
+    version: 2,
+    players: [...players.values()],
+    events,
+    attempts,
+    historicalAttempts: [],
+  };
 }
 
 export function parseMigratableLiveEventState(raw: string | null) {
@@ -135,6 +150,9 @@ export function parseMigratableLiveEventState(raw: string | null) {
             ...player,
             kind: player.kind ?? (player.isAk ? "guest" : "permanent"),
           }))
+          : [],
+        historicalAttempts: Array.isArray(legacyV2.historicalAttempts)
+          ? legacyV2.historicalAttempts
           : [],
       };
       if (isLiveEventState(normalized)) return normalized;

@@ -9,6 +9,7 @@ import type {
   StartLiveEventInput,
 } from "@/types/liveEvent";
 import type { EventParticipantPayload } from "@/types/dataPlatform";
+import { mapHistoricalAttempt } from "@/services/historicalAttemptRepository";
 import { getAvatarGradient, getInitials } from "@/utils/avatar";
 import { hundredthsToSeconds } from "@/utils/time";
 
@@ -26,6 +27,7 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
     participantsResult,
     guestsResult,
     attemptsResult,
+    historicalAttemptsResult,
   ] =
     await Promise.all([
       loadPublicData(),
@@ -37,9 +39,14 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
         .eq("status", "approved")
         .is("deleted_at", null)
         .order("submitted_at", { ascending: false }),
+      client.from("historical_attempts").select("*")
+        .is("deleted_at", null)
+        .order("attempt_date")
+        .order("sort_order"),
     ]);
   const error = playersResult.error ?? eventsResult.error ??
-    participantsResult.error ?? guestsResult.error ?? attemptsResult.error;
+    participantsResult.error ?? guestsResult.error ?? attemptsResult.error ??
+    historicalAttemptsResult.error;
   if (error) throw error;
 
   const playerRows = playersResult.data ?? [];
@@ -47,6 +54,7 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
   const participantRows = participantsResult.data ?? [];
   const guestRows = guestsResult.data ?? [];
   const attemptRows = attemptsResult.data ?? [];
+  const historicalAttemptRows = historicalAttemptsResult.data ?? [];
   const publicPlayers = new Map(publicData.players.map((player) => [player.id, player]));
   const players: LiveParticipant[] = playerRows.map((row) => {
     const publicPlayer = publicPlayers.get(row.id);
@@ -109,9 +117,10 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
     outOfCompetition: row.is_ak || (participant?.isAk ?? false),
     }];
   });
+  const historicalAttempts = historicalAttemptRows.map(mapHistoricalAttempt);
   return {
     publicData,
-    liveState: { version: 2, players, events, attempts },
+    liveState: { version: 2, players, events, attempts, historicalAttempts },
   };
 }
 
@@ -335,6 +344,11 @@ export function subscribeToDataPlatform(
     .on("postgres_changes", { event: "*", schema: "public", table: "players" }, onChange)
     .on("postgres_changes", { event: "*", schema: "public", table: "events" }, onChange)
     .on("postgres_changes", { event: "*", schema: "public", table: "attempts" }, onChange)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "historical_attempts" },
+      onChange,
+    )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "event_participants" },

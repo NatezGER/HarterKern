@@ -8,6 +8,7 @@ export async function getRecentAttempts(limit = 100): Promise<Attempt[]> {
     .select("*")
     .eq("status", "approved")
     .is("deleted_at", null)
+    .not("event_id", "is", null)
     .order("submitted_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
