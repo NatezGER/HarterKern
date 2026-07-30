@@ -2,6 +2,7 @@ import type { Database } from "@/types/database";
 import type { Attempt, Event, Player } from "@/types";
 import { getAvatarGradient, getInitials } from "@/utils/avatar";
 import { hundredthsToSeconds } from "@/utils/time";
+import { getSupabase } from "@/lib/supabase";
 
 type PlayerRow = Database["public"]["Tables"]["players"]["Row"];
 type PlayerStats = Database["public"]["Views"]["player_statistics"]["Row"];
@@ -9,12 +10,15 @@ type EventRow = Database["public"]["Tables"]["events"]["Row"];
 type AttemptRow = Database["public"]["Tables"]["attempts"]["Row"];
 
 export function mapPlayer(row: PlayerRow, stats?: PlayerStats): Player {
+  const resolvedAvatar = row.avatar_path
+    ? getSupabase().storage.from("player-avatars").getPublicUrl(row.avatar_path).data.publicUrl
+    : row.avatar_url;
   return {
     id: row.id,
     name: row.display_name,
     initials: getInitials(row.display_name),
     avatarGradient: getAvatarGradient(row.id),
-    avatarUrl: row.avatar_url,
+    avatarUrl: resolvedAvatar,
     personalBest: hundredthsToSeconds(stats?.personal_best_hundredths),
     average: hundredthsToSeconds(stats?.average_hundredths),
     attempts: Number(stats?.approved_attempts ?? 0),

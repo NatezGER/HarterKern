@@ -13,6 +13,9 @@ import type {
   PlayerBadgeAwardsView,
   PlayerPbProgressionView,
   PublicPlayerBadgesView,
+  EventAttemptDetailsView,
+  EventParticipantStatisticsView,
+  PlayerEventHistoryView,
 } from "@/types/pr7Foundation";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
@@ -30,6 +33,7 @@ export interface Database {
           display_name: string;
           normalized_name: string;
           avatar_url: string | null;
+          avatar_path: string | null;
           is_ak: boolean;
           is_archived: boolean;
           created_at: string;
@@ -41,6 +45,7 @@ export interface Database {
           display_name: string;
           normalized_name?: string;
           avatar_url?: string | null;
+          avatar_path?: string | null;
           is_ak?: boolean;
           is_archived?: boolean;
           legacy_source_id?: string | null;
@@ -217,6 +222,9 @@ export interface Database {
       player_attempt_number_statistics: PlayerAttemptNumberStatisticsView;
       player_pb_progression: PlayerPbProgressionView;
       public_player_badges: PublicPlayerBadgesView;
+      event_attempt_details: EventAttemptDetailsView;
+      event_participant_statistics: EventParticipantStatisticsView;
+      player_event_history: PlayerEventHistoryView;
       world_record_progression: {
         Row: {
           attempt_id: string;
@@ -280,6 +288,37 @@ export interface Database {
         Returns: undefined;
       };
       is_admin: { Args: never; Returns: boolean };
+      admin_set_player_avatar: {
+        Args: { p_player_id: string; p_storage_path: string };
+        Returns: string | null;
+      };
+      admin_clear_player_avatar: {
+        Args: { p_player_id: string };
+        Returns: string | null;
+      };
+      admin_register_event_photo: {
+        Args: {
+          p_event_id: string;
+          p_storage_path: string;
+          p_mime_type: string;
+          p_size_bytes: number;
+          p_caption?: string | null;
+        };
+        Returns: string;
+      };
+      admin_remove_event_photo: {
+        Args: { p_photo_id: string };
+        Returns: string;
+      };
+      admin_update_event_details: {
+        Args: {
+          p_event_id: string;
+          p_name: string;
+          p_description: string;
+          p_is_important: boolean;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       attempt_status: AttemptStatus;

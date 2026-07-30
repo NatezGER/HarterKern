@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useHistoricalAttempts } from "@/hooks/useHistoricalAttempts";
 import { formatDate, formatTime } from "@/utils/format";
 import type { HistoricalAttempt } from "@/types/liveEvent";
+import { compareHistoricalAttempts } from "@/lib/historicalAttempts";
 
 export function HistoricalAttemptManagement() {
   const {
@@ -17,7 +18,7 @@ export function HistoricalAttemptManagement() {
   const [editing, setEditing] = useState<HistoricalAttempt>();
   const [message, setMessage] = useState("");
   const ordered = [...attempts].sort(
-    (a, b) => b.date.localeCompare(a.date) || b.sortOrder - a.sortOrder,
+    (a, b) => compareHistoricalAttempts(b, a),
   );
   return (
     <div className="space-y-5">

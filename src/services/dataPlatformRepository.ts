@@ -44,7 +44,10 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
       client.from("historical_attempts").select("*")
         .is("deleted_at", null)
         .order("attempt_date")
-        .order("sort_order"),
+        .order("sort_order")
+        .order("source")
+        .order("legacy_source_id", { nullsFirst: false })
+        .order("id"),
     ]);
   const error = playersResult.error ?? eventsResult.error ??
     participantsResult.error ?? guestsResult.error ?? attemptsResult.error ??
@@ -66,7 +69,7 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
       kind: "permanent",
       initials: getInitials(row.display_name),
       avatarGradient: getAvatarGradient(row.id),
-      avatarUrl: row.avatar_url,
+      avatarUrl: publicPlayer?.avatarUrl ?? row.avatar_url,
       personalBest: publicPlayer?.personalBest ?? 0,
       isAk: row.is_ak,
     };
@@ -357,6 +360,7 @@ export function subscribeToDataPlatform(
       onChange,
     )
     .on("postgres_changes", { event: "*", schema: "public", table: "event_guests" }, onChange)
+    .on("postgres_changes", { event: "*", schema: "public", table: "event_photos" }, onChange)
     .subscribe(onStatus);
   return () => {
     void client.removeChannel(channel);

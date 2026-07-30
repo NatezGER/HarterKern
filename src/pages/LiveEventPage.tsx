@@ -1,4 +1,4 @@
-import { ArrowLeft, Crown } from "lucide-react";
+import { ArrowLeft, Crown, Flag } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { EndEventDialog } from "@/components/events/EndEventDialog";
@@ -29,7 +29,7 @@ export function LiveEventPage() {
   const { data, status } = usePublicData();
   const { activeEvent, state, endEvent, endingEvent, refresh } = useLiveEvent();
   const [selected, setSelected] = useState<LiveStanding | null>(null);
-  const [savedId, setSavedId] = useState("");
+  const [saved, setSaved] = useState<{ id: string; result: "time" | "dns" } | null>(null);
   const [endOpen, setEndOpen] = useState(false);
   const candidates = useMemo<StartLiveEventParticipant[]>(() => data.players.map((player) => ({
       id: player.id,
@@ -40,14 +40,14 @@ export function LiveEventPage() {
       avatarGradient: player.avatarGradient,
       avatarUrl: player.avatarUrl,
       personalBest: player.personalBest,
-      isAk: false,
+      isAk: player.isAk,
     })), [data.players]);
 
   useEffect(() => {
-    if (!savedId) return;
-    const timeout = window.setTimeout(() => setSavedId(""), 1_200);
+    if (!saved) return;
+    const timeout = window.setTimeout(() => setSaved(null), 1_800);
     return () => window.clearTimeout(timeout);
-  }, [savedId]);
+  }, [saved]);
 
   useEffect(() => {
     void refresh().catch(() => undefined);
@@ -104,14 +104,19 @@ export function LiveEventPage() {
             <ParticipantCard
               key={standing.player.id}
               standing={standing}
-              saved={savedId === standing.player.id}
+              saved={saved?.id === standing.player.id}
               onAdd={() => setSelected(standing)}
             />
           ))}
         </div>
       </section>
       <AttemptHistory event={activeEvent} attempts={attempts} />
-      <TimeEntrySheet standing={selected} onClose={() => setSelected(null)} onSaved={setSavedId} />
+      <TimeEntrySheet standing={selected} onClose={() => setSelected(null)} onSaved={(id, result) => setSaved({ id, result })} />
+      {saved?.result === "dns" && (
+        <div role="status" aria-live="polite" className="fixed bottom-5 left-1/2 z-[80] flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-red-400/25 bg-[#211111]/95 px-5 py-4 text-sm font-bold text-red-100 shadow-2xl motion-safe:animate-pulse">
+          <Flag className="size-5 text-red-300" /> DNF wurde gespeichert.
+        </div>
+      )}
       <EndEventDialog
         open={endOpen}
         onClose={() => setEndOpen(false)}

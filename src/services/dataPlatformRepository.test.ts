@@ -17,7 +17,12 @@ describe("data platform realtime subscription", () => {
 
     const cleanup = subscribeToDataPlatform(vi.fn(), vi.fn(), client);
     expect(client.channel).toHaveBeenCalledOnce();
-    expect(on).toHaveBeenCalledTimes(6);
+    expect(on).toHaveBeenCalledTimes(7);
+    expect(on).toHaveBeenCalledWith(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "event_photos" },
+      expect.any(Function),
+    );
     expect(subscribe).toHaveBeenCalledOnce();
 
     cleanup();

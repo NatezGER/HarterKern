@@ -1,6 +1,7 @@
 import { UserRound } from "lucide-react";
 import { formatDate, formatTime } from "@/utils/format";
 import type { HistoricalAttempt } from "@/types/liveEvent";
+import { sortHistoricalAttempts } from "@/lib/historicalAttempts";
 
 export function HistoricalAttemptList({
   attempts,
@@ -9,9 +10,7 @@ export function HistoricalAttemptList({
   attempts: HistoricalAttempt[];
   limit?: number;
 }) {
-  const ordered = [...attempts]
-    .sort((a, b) => a.date.localeCompare(b.date) || a.sortOrder - b.sortOrder)
-    .slice(0, limit);
+  const ordered = sortHistoricalAttempts(attempts).slice(0, limit);
   if (!ordered.length) {
     return (
       <p className="panel py-12 text-center text-sm text-white/35">

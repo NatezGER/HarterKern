@@ -16,6 +16,8 @@ export function mapHistoricalAttempt(
     isGuest: row.is_guest,
     outOfCompetition: row.out_of_competition,
     sortOrder: row.sort_order,
+    sourcePriority: row.source === "admin" ? 1 : 0,
+    sourceAttemptId: row.legacy_source_id ?? row.id,
   };
 }
 export async function createHistoricalAttempt(input: HistoricalAttemptInput) {
