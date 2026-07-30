@@ -1,30 +1,29 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { env } from "@/lib/env";
+import {
+  clearManagementCode,
+  getStoredManagementToken,
+  verifyManagementCode,
+} from "@/services/adminMediaService";
 
 interface ManagementContextValue {
   unlocked: boolean;
-  unlock: (code: string) => boolean;
+  unlock: (code: string) => Promise<boolean>;
   lock: () => void;
 }
 
 const ManagementContext = createContext<ManagementContextValue | null>(null);
-const storageKey = "harter-kern-management-unlocked";
-
 export function ManagementModeProvider({ children }: { children: ReactNode }) {
-  const [unlocked, setUnlocked] = useState(() =>
-    typeof sessionStorage !== "undefined" && sessionStorage.getItem(storageKey) === "true",
-  );
-  const unlock = useCallback((code: string) => {
-    const valid = code.trim() === env.managementCode;
+  const [unlocked, setUnlocked] = useState(() => Boolean(getStoredManagementToken()));
+  const unlock = useCallback(async (code: string) => {
+    const valid = await verifyManagementCode(code);
     if (valid) {
-      sessionStorage.setItem(storageKey, "true");
       setUnlocked(true);
     }
     return valid;
   }, []);
   const lock = useCallback(() => {
-    sessionStorage.removeItem(storageKey);
+    clearManagementCode();
     setUnlocked(false);
   }, []);
   const value = useMemo(() => ({ unlocked, unlock, lock }), [lock, unlock, unlocked]);

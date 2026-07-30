@@ -1,98 +1,68 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({
-  getSession: vi.fn(),
-  rpc: vi.fn(),
-  upload: vi.fn(),
-  remove: vi.fn(),
-  getPublicUrl: vi.fn(),
-}));
+const invokeAdminMedia = vi.hoisted(() => vi.fn());
 
-vi.mock("@/lib/supabase", () => ({
-  getSupabase: () => ({
-    auth: { getSession: mocks.getSession },
-    rpc: mocks.rpc,
-    storage: {
-      from: () => ({
-        upload: mocks.upload,
-        remove: mocks.remove,
-        getPublicUrl: mocks.getPublicUrl,
-      }),
-    },
-  }),
-}));
+vi.mock("@/services/adminMediaService", () => ({ invokeAdminMedia }));
 
 import {
+  removeEventPhoto,
   removePlayerAvatar,
+  uploadEventPhotos,
   uploadPlayerAvatar,
 } from "@/services/mediaService";
 
-const playerId = "10000000-0000-0000-0000-000000000001";
-const oldPath =
-  `${playerId}/20000000-0000-0000-0000-000000000002.jpg`;
+const playerId = "10000000-0000-4000-8000-000000000001";
+const eventId = "20000000-0000-4000-8000-000000000002";
+const photoId = "30000000-0000-4000-8000-000000000003";
 
-describe("avatar media workflow", () => {
+describe("code-admin media workflow", () => {
   beforeEach(() => {
-    mocks.getSession.mockReset().mockResolvedValue({
-      data: { session: { user: { id: "admin" } } },
-      error: null,
-    });
-    mocks.rpc.mockReset().mockImplementation((name: string) => {
-      if (name === "is_admin") return Promise.resolve({ data: true, error: null });
-      if (name === "admin_set_player_avatar") {
-        return Promise.resolve({ data: oldPath, error: null });
-      }
-      if (name === "admin_clear_player_avatar") {
-        return Promise.resolve({ data: oldPath, error: null });
-      }
-      return Promise.resolve({ data: null, error: null });
-    });
-    mocks.upload.mockReset().mockResolvedValue({ data: {}, error: null });
-    mocks.remove.mockReset().mockResolvedValue({ data: {}, error: null });
-    mocks.getPublicUrl.mockReset().mockReturnValue({
-      data: { publicUrl: "https://example.supabase.co/avatar.jpg" },
+    invokeAdminMedia.mockReset().mockResolvedValue({
+      ok: true,
+      publicUrl: "https://example.supabase.co/avatar.jpg",
     });
   });
 
-  it("uploads, links and returns the public URL before removing the old avatar", async () => {
-    const file = new File(["image"], "ignored-name.jpg", { type: "image/jpeg" });
-    await expect(uploadPlayerAvatar(playerId, file))
-      .resolves.toBe("https://example.supabase.co/avatar.jpg");
-    const uploadedPath = mocks.upload.mock.calls[0][0] as string;
-    expect(uploadedPath).toMatch(new RegExp(`^${playerId}/[0-9a-f-]{36}\\.jpg$`));
-    expect(mocks.rpc).toHaveBeenCalledWith("admin_set_player_avatar", {
-      p_player_id: playerId,
-      p_storage_path: uploadedPath,
-    });
-    expect(mocks.remove).toHaveBeenCalledWith([oldPath]);
-    expect(mocks.getPublicUrl).toHaveBeenCalledWith(uploadedPath);
-  });
+  it.each(["image/jpeg", "image/png", "image/webp"])(
+    "uploads and replaces an avatar through the protected gateway for %s",
+    async (type) => {
+      const file = new File(["image"], "avatar", { type });
+      await expect(uploadPlayerAvatar(playerId, file))
+        .resolves.toBe("https://example.supabase.co/avatar.jpg");
+      expect(invokeAdminMedia).toHaveBeenCalledWith(
+        "upload-avatar",
+        { playerId },
+        file,
+      );
+    },
+  );
 
-  it("removes the database reference and its exact storage object", async () => {
+  it("removes an avatar through the protected gateway", async () => {
     await removePlayerAvatar(playerId);
-    expect(mocks.rpc).toHaveBeenCalledWith("admin_clear_player_avatar", {
-      p_player_id: playerId,
-    });
-    expect(mocks.remove).toHaveBeenCalledWith([oldPath]);
+    expect(invokeAdminMedia).toHaveBeenCalledWith("remove-avatar", { playerId });
   });
 
-  it("cleans up a new object when linking it fails", async () => {
-    mocks.rpc.mockImplementation((name: string) => {
-      if (name === "is_admin") return Promise.resolve({ data: true, error: null });
-      return Promise.resolve({ data: null, error: new Error("RPC failed") });
-    });
-    const file = new File(["image"], "avatar.jpg", { type: "image/jpeg" });
-    await expect(uploadPlayerAvatar(playerId, file)).rejects.toThrow("RPC failed");
-    const uploadedPath = mocks.upload.mock.calls[0][0] as string;
-    expect(mocks.remove).toHaveBeenCalledWith([uploadedPath]);
-    expect(mocks.remove).not.toHaveBeenCalledWith([oldPath]);
+  it("uploads valid event photos and reports individual failures", async () => {
+    const first = new File(["one"], "one.jpg", { type: "image/jpeg" });
+    const second = new File(["two"], "two.webp", { type: "image/webp" });
+    invokeAdminMedia
+      .mockResolvedValueOnce({ ok: true })
+      .mockRejectedValueOnce(new Error("Server lehnt Foto ab."));
+
+    await expect(uploadEventPhotos(eventId, [first, second])).resolves.toEqual([
+      { fileName: "one.jpg", ok: true },
+      { fileName: "two.webp", ok: false, error: "Server lehnt Foto ab." },
+    ]);
   });
 
-  it("never writes storage without an authenticated admin session", async () => {
-    mocks.getSession.mockResolvedValue({ data: { session: null }, error: null });
-    const file = new File(["image"], "avatar.jpg", { type: "image/jpeg" });
-    await expect(uploadPlayerAvatar(playerId, file))
-      .rejects.toThrow("geschützte Supabase-Adminsession");
-    expect(mocks.upload).not.toHaveBeenCalled();
+  it("removes an event photo through the protected gateway", async () => {
+    await removeEventPhoto(photoId);
+    expect(invokeAdminMedia).toHaveBeenCalledWith("remove-event-photo", { photoId });
+  });
+
+  it("rejects unsupported files before any server mutation", async () => {
+    const file = new File(["gif"], "avatar.gif", { type: "image/gif" });
+    await expect(uploadPlayerAvatar(playerId, file)).rejects.toThrow("JPEG");
+    expect(invokeAdminMedia).not.toHaveBeenCalled();
   });
 });

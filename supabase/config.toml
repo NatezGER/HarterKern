@@ -1,0 +1,2 @@
+[functions.admin-media]
+verify_jwt = false

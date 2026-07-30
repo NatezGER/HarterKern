@@ -16,6 +16,7 @@ export function ManagementPanel() {
   const { state } = useLiveEvent();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [checking, setChecking] = useState(false);
   const [editing, setEditing] = useState<LiveAttempt | null>(null);
   return (
     <section>
@@ -38,12 +39,22 @@ export function ManagementPanel() {
             className="mt-6 flex max-w-lg flex-col gap-3 sm:flex-row"
             onSubmit={(event) => {
               event.preventDefault();
-              if (!unlock(code)) {
-                setError("Code ist nicht korrekt.");
-                return;
-              }
+              setChecking(true);
               setError("");
-              setCode("");
+              void unlock(code)
+                .then((valid) => {
+                  if (!valid) {
+                    setError("Code ist nicht korrekt.");
+                    return;
+                  }
+                  setCode("");
+                })
+                .catch((cause) => {
+                  setError(cause instanceof Error
+                    ? cause.message
+                    : "Adminfreigabe konnte nicht geprüft werden.");
+                })
+                .finally(() => setChecking(false));
             }}
           >
             <Input
@@ -55,7 +66,9 @@ export function ManagementPanel() {
               autoComplete="off"
               aria-label="Admin-Code"
             />
-            <Button type="submit"><Lock className="size-4" /> Öffnen</Button>
+            <Button type="submit" disabled={checking}>
+              <Lock className="size-4" /> {checking ? "Prüfe…" : "Öffnen"}
+            </Button>
             {error && (
               <p aria-live="assertive" className="self-center text-sm text-red-300">
                 {error}
