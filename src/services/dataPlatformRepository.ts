@@ -66,7 +66,7 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
       kind: "permanent",
       initials: getInitials(row.display_name),
       avatarGradient: getAvatarGradient(row.id),
-      avatarUrl: row.avatar_url,
+      avatarUrl: publicPlayer?.avatarUrl ?? row.avatar_url,
       personalBest: publicPlayer?.personalBest ?? 0,
       isAk: row.is_ak,
     };
@@ -357,6 +357,7 @@ export function subscribeToDataPlatform(
       onChange,
     )
     .on("postgres_changes", { event: "*", schema: "public", table: "event_guests" }, onChange)
+    .on("postgres_changes", { event: "*", schema: "public", table: "event_photos" }, onChange)
     .subscribe(onStatus);
   return () => {
     void client.removeChannel(channel);

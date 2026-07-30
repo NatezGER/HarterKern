@@ -6,7 +6,8 @@ export async function getEvents(): Promise<Event[]> {
   const client = getSupabase();
   const [eventsResult, statsResult, participantsResult, guestsResult, winnersResult] =
     await Promise.all([
-    client.from("events").select("*").order("started_at", { ascending: false }),
+    client.from("events").select("*").is("deleted_at", null)
+      .order("started_at", { ascending: false }),
     client.from("event_statistics").select("*"),
     client.from("event_participants").select("event_id,player_id"),
     client.from("event_guests").select("event_id,id"),
