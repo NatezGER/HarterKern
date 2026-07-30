@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { env, isSupabaseConfigured } from "@/lib/env";
+import { isSupabaseConfigured } from "@/lib/env";
 import { getErrorMessage } from "@/lib/errors";
 import { getSupabase } from "@/lib/supabase";
 
@@ -9,8 +9,6 @@ interface AdminSessionValue {
   isAdmin: boolean;
   loading: boolean;
   message: string;
-  requestLogin: () => Promise<void>;
-  signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -50,35 +48,9 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
     return () => data.subscription.unsubscribe();
   }, [refresh]);
 
-  const requestLogin = useCallback(async () => {
-    if (!env.adminEmail) {
-      setMessage("VITE_ADMIN_EMAIL ist nicht konfiguriert.");
-      return;
-    }
-    setLoading(true);
-    setMessage("");
-    const { error } = await getSupabase().auth.signInWithOtp({
-      email: env.adminEmail,
-      options: { emailRedirectTo: `${window.location.origin}/settings` },
-    });
-    setMessage(error
-      ? getErrorMessage(error)
-      : `Anmeldelink wurde an ${env.adminEmail} gesendet.`);
-    setLoading(false);
-  }, []);
-
-  const signOut = useCallback(async () => {
-    setLoading(true);
-    await getSupabase().auth.signOut();
-    setIsAdmin(false);
-    setEmail("");
-    setMessage("");
-    setLoading(false);
-  }, []);
-
   const value = useMemo(() => ({
-    email, isAdmin, loading, message, requestLogin, signOut, refresh,
-  }), [email, isAdmin, loading, message, refresh, requestLogin, signOut]);
+    email, isAdmin, loading, message, refresh,
+  }), [email, isAdmin, loading, message, refresh]);
   return <AdminSessionContext.Provider value={value}>{children}</AdminSessionContext.Provider>;
 }
 

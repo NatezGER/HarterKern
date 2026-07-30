@@ -1,10 +1,25 @@
 import { getSupabase } from "@/lib/supabase";
 import { createStoragePath, validateImageFile } from "@/lib/media";
 
+async function requireAdminMediaAccess() {
+  const client = getSupabase();
+  const session = await client.auth.getSession();
+  if (session.error || !session.data.session) {
+    throw new Error(
+      "Für Medienänderungen fehlt die geschützte Supabase-Adminsession.",
+    );
+  }
+  const admin = await client.rpc("is_admin");
+  if (admin.error || admin.data !== true) {
+    throw new Error("Die aktuelle Sitzung besitzt keine Medienberechtigung.");
+  }
+  return client;
+}
+
 export async function uploadPlayerAvatar(playerId: string, file: File) {
   const validation = validateImageFile(file, "avatar");
   if (validation) throw new Error(validation);
-  const client = getSupabase();
+  const client = await requireAdminMediaAccess();
   const path = createStoragePath(playerId, file.type);
   const upload = await client.storage.from("player-avatars").upload(path, file, {
     cacheControl: "31536000",
@@ -28,7 +43,7 @@ export async function uploadPlayerAvatar(playerId: string, file: File) {
 }
 
 export async function removePlayerAvatar(playerId: string) {
-  const client = getSupabase();
+  const client = await requireAdminMediaAccess();
   const cleared = await client.rpc("admin_clear_player_avatar", { p_player_id: playerId });
   if (cleared.error) throw cleared.error;
   if (!cleared.data) return;
