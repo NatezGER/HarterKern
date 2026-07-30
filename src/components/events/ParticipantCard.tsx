@@ -13,31 +13,28 @@ const lastStatus = (standing: LiveStanding) => {
   return { icon: CheckCircle2, label: "Offiziell", color: "text-emerald-300" };
 };
 
-function Identity({ standing }: { standing: LiveStanding }) {
+function Identity({ standing, onAdd }: { standing: LiveStanding; onAdd: () => void }) {
   const status = lastStatus(standing);
   const StatusIcon = status.icon;
-  const content = (
-    <>
+  const name = standing.player.kind === "permanent" ? (
+    <Link to={`/player/${standing.player.id}`} className="truncate font-display text-2xl font-black uppercase hover:text-gold-200">
+      {standing.player.name}
+    </Link>
+  ) : <h3 className="truncate font-display text-2xl font-black uppercase">{standing.player.name}</h3>;
+  return (
+    <div className="flex w-full items-center gap-4">
+      <button type="button" onClick={onAdd} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400" aria-label={`Zeit für ${standing.player.name} erfassen`}>
       <LiveAvatar player={standing.player} className="size-14" />
+      </button>
       <div className="min-w-0">
-        <h3 className="truncate font-display text-2xl font-black uppercase">
-          {standing.player.name}
-        </h3>
+        {name}
         <p className={cn("mt-1 flex items-center gap-1.5 text-xs font-semibold", status.color)}>
           <StatusIcon className="size-3.5" />
           {standing.player.kind === "guest" ? `Gast · ${status.label}` : status.label}
         </p>
       </div>
-    </>
+    </div>
   );
-  return standing.player.kind === "permanent" ? (
-    <Link
-      to={`/player/${standing.player.id}`}
-      className="flex w-fit items-center gap-4 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
-    >
-      {content}
-    </Link>
-  ) : <div className="flex w-fit items-center gap-4">{content}</div>;
 }
 
 export function ParticipantCard({
@@ -54,7 +51,7 @@ export function ParticipantCard({
       "panel flex min-h-72 flex-col p-5 transition sm:p-6",
       saved && "border-emerald-400/40 shadow-[0_0_32px_rgba(52,211,153,.15)]",
     )}>
-      <Identity standing={standing} />
+      <Identity standing={standing} onAdd={onAdd} />
       <div className="my-6 grid grid-cols-2 gap-3">
         <Metric
           label={standing.player.kind === "guest" ? "Gast im Event" : "Persönliche Bestzeit"}

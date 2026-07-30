@@ -5,14 +5,14 @@ import { DataPlatformProvider } from "@/hooks/useDataPlatform";
 import { LiveEventProvider } from "@/hooks/useLiveEvent";
 import { LiveEventBanner } from "@/components/events/LiveEventBanner";
 import { RecordCelebration } from "@/components/events/RecordCelebration";
-import { ManagementModeProvider } from "@/hooks/useManagementMode";
 import { SyncStatusNotice } from "@/components/common/SyncStatusNotice";
+import { AdminSessionProvider } from "@/hooks/useAdminSession";
 
 export function AppLayout() {
   return (
     <DataPlatformProvider>
-      <LiveEventProvider>
-        <ManagementModeProvider>
+      <AdminSessionProvider>
+        <LiveEventProvider>
           <div className="flex min-h-screen flex-col overflow-x-clip">
             <Header />
             <LiveEventBanner />
@@ -24,8 +24,8 @@ export function AppLayout() {
             <RecordCelebration />
             <ScrollRestoration />
           </div>
-        </ManagementModeProvider>
-      </LiveEventProvider>
+        </LiveEventProvider>
+      </AdminSessionProvider>
     </DataPlatformProvider>
   );
 }

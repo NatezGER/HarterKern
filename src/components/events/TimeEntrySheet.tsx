@@ -17,11 +17,12 @@ export function TimeEntrySheet({
 }: {
   standing: LiveStanding | null;
   onClose: () => void;
-  onSaved: (playerId: string) => void;
+  onSaved: (playerId: string, result: "time" | "dns") => void;
 }) {
   const { submitAttempt } = useLiveEvent();
   const [value, setValue] = useState("");
   const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const parsed = parseTimeToHundredths(value);
 
@@ -30,6 +31,7 @@ export function TimeEntrySheet({
     setValue("");
     setMessage("");
     savingRef.current = false;
+    setSaving(false);
     const onKey = (event: KeyboardEvent) => {
       if (/^\d$/.test(event.key) || [",", ".", "Backspace"].includes(event.key)) {
         event.preventDefault();
@@ -47,14 +49,16 @@ export function TimeEntrySheet({
   const save = async (result: "time" | "dns") => {
     if (savingRef.current) return;
     savingRef.current = true;
+    setSaving(true);
     const seconds = result === "time" && parsed != null ? parsed / 100 : undefined;
     const saved = await submitAttempt(standing.player.id, result, seconds);
     if (!saved) {
       savingRef.current = false;
+      setSaving(false);
       setMessage("Eingabe ungültig oder bereits gespeichert.");
       return;
     }
-    onSaved(standing.player.id);
+    onSaved(standing.player.id, result);
     onClose();
   };
 
@@ -81,14 +85,14 @@ export function TimeEntrySheet({
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         <Button
           size="lg"
-          disabled={parsed == null}
+          disabled={parsed == null || saving}
           onClick={() => void save("time")}
           className="h-14"
         >
           <Check className="size-5" /> Zeit speichern
         </Button>
-        <Button size="lg" variant="outline" onClick={() => void save("dns")} className="h-14">
-          <Flag className="size-5" /> DNS
+        <Button size="lg" variant="outline" disabled={saving} onClick={() => void save("dns")} className="h-14">
+          <Flag className="size-5" /> DNF
         </Button>
       </div>
       <p className="mt-4 flex items-center justify-center gap-2 text-center text-xs text-white/40">

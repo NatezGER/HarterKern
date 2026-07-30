@@ -23,7 +23,15 @@ export function StartEventPanel({
   const [temporaryName, setTemporaryName] = useState("");
   const [temporaryKind, setTemporaryKind] = useState<"permanent" | "guest">("permanent");
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
   const allCandidates = useMemo(() => [...candidates, ...temporary], [candidates, temporary]);
+  const visibleCandidates = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase("de-DE");
+    return query
+      ? allCandidates.filter(({ name: playerName }) =>
+        playerName.toLocaleLowerCase("de-DE").includes(query))
+      : allCandidates;
+  }, [allCandidates, search]);
 
   const addTemporary = () => {
     const trimmed = temporaryName.trim();
@@ -96,9 +104,10 @@ export function StartEventPanel({
           </div>
           <fieldset className="mt-7">
             <legend className="text-xs font-bold uppercase tracking-[0.16em] text-gold-300">Teilnehmer</legend>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {allCandidates.map((player) => (
-                <label key={player.id} className={`flex min-h-24 cursor-pointer items-center gap-4 rounded-2xl border p-4 text-sm transition ${selected.includes(player.id) ? "border-gold-400/45 bg-gold-400/[0.09]" : "border-white/10 bg-white/[0.025] hover:border-white/20"}`}>
+            <Input className="mt-3 rounded-xl" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Spieler suchen" aria-label="Spieler suchen" />
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {visibleCandidates.map((player) => (
+                <label key={player.id} className={`flex min-h-32 cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border p-3 text-center text-sm transition ${selected.includes(player.id) ? "border-gold-400/55 bg-gold-400/[0.12] ring-2 ring-gold-400/15" : "border-white/10 bg-white/[0.025] hover:border-white/20"}`}>
                   <input
                     type="checkbox"
                     className="sr-only"
@@ -109,11 +118,11 @@ export function StartEventPanel({
                         : [...current, player.id],
                     )}
                   />
-                  <span className={`grid size-12 shrink-0 place-items-center rounded-full bg-gradient-to-br ${player.avatarGradient} font-display font-black text-black`}>
+                  <span className={`grid size-16 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br ${player.avatarGradient} font-display font-black text-black ring-2 ${selected.includes(player.id) ? "ring-gold-300" : "ring-white/10"}`}>
                     {player.avatarUrl ? <img src={player.avatarUrl} alt="" className="size-full rounded-full object-cover" /> : player.initials}
                   </span>
-                  <span className="min-w-0 flex-1 truncate font-bold">{player.name}</span>
-                  {player.kind === "guest" && <span className="text-[10px] text-gold-300">Gast</span>}
+                  <span className="w-full truncate font-bold">{player.name}</span>
+                  {(player.kind === "guest" || player.isAk) && <span className="text-[10px] text-gold-300">{player.kind === "guest" ? "Gast" : "AK"}</span>}
                 </label>
               ))}
             </div>
