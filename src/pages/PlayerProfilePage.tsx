@@ -2,6 +2,7 @@ import { ArrowLeft, CircleX, Droplets, Medal, Target, Timer, Trophy, Zap } from 
 import { Link, useParams } from "react-router-dom";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
+import { BadgeTooltip } from "@/components/common/BadgeTooltip";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { DataState } from "@/components/common/DataState";
 import { AttemptNumberChart } from "@/components/players/AttemptNumberChart";
@@ -64,7 +65,7 @@ export function PlayerProfilePage() {
         <AttemptNumberChart points={player.attemptNumbers} />
       </section>
 
-      {player.badges.length > 0 && <section><SectionHeading eyebrow="Verdient" title="Badges" /><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{player.badges.map((badge) => <AnimatedCard key={badge.key} className="p-5"><Medal className="size-5 text-gold-400" /><p className="mt-4 font-bold">{badge.name}</p><p className="mt-1 text-xs capitalize text-white/35">{badge.tier} · {formatDate(badge.awardedAt.slice(0, 10))}</p>{badge.eventId && <Link to={`/events/${badge.eventId}`} className="mt-3 inline-block text-xs text-gold-300 hover:underline">Zum Event</Link>}</AnimatedCard>)}</div></section>}
+      {player.badges.length > 0 && <section><SectionHeading eyebrow="Verdient" title="Badges" /><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{player.badges.map((badge) => <AnimatedCard key={badge.key} className="p-5"><Medal className="size-5 text-gold-400" /><BadgeTooltip badge={badge} className="mt-4 text-left font-bold" /><p className="mt-1 text-xs capitalize text-white/35">{badge.tier} · {formatDate(badge.awardedAt.slice(0, 10))}</p>{badge.eventId && <Link to={`/events/${badge.eventId}`} className="mt-3 inline-block text-xs text-gold-300 hover:underline">Zum Event</Link>}</AnimatedCard>)}</div></section>}
     </div>
   );
 }

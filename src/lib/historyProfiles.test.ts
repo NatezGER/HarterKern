@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sortEventAttempts } from "@/lib/historyProfiles";
+import { getAttemptClockLabel, sortEventAttempts } from "@/lib/historyProfiles";
 import type { EventAttemptDetail } from "@/types/historyProfiles";
 
 const attempt = (
@@ -42,5 +42,19 @@ describe("event attempt presentation", () => {
     ];
     expect(sortEventAttempts(rows, "best").map(({ id }) => id)).toEqual(["a", "b"]);
     expect(sortEventAttempts(rows, "chronological").map(({ id }) => id)).toEqual(["a", "b"]);
+  });
+
+  it("preserves attempt order when clock information is identical or absent", () => {
+    const identical = [
+      { ...attempt("b", 206, false, "2026-07-30T20:00:00Z"), attemptNumber: 2 },
+      { ...attempt("a", 206, false, "2026-07-30T20:00:00Z"), attemptNumber: 1 },
+    ];
+    const missing = identical.map((row) => ({ ...row, submittedAt: "" }));
+    expect(sortEventAttempts(identical, "chronological").map(({ id }) => id))
+      .toEqual(["a", "b"]);
+    expect(sortEventAttempts(missing, "chronological").map(({ id }) => id))
+      .toEqual(["a", "b"]);
+    expect(getAttemptClockLabel("")).toBeNull();
+    expect(getAttemptClockLabel("2026-07-30")).toBeNull();
   });
 });

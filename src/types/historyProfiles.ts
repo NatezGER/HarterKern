@@ -46,6 +46,7 @@ export interface CompactBadge {
   tier: BadgeTier;
   awardedAt: string;
   eventId: string | null;
+  description: string;
 }
 
 export interface EventDetail {

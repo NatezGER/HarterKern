@@ -36,6 +36,8 @@ export interface HistoricalAttempt {
   isGuest: boolean;
   outOfCompetition: boolean;
   sortOrder: number;
+  sourcePriority?: number;
+  sourceAttemptId?: string;
 }
 
 export interface HistoricalAttemptInput {

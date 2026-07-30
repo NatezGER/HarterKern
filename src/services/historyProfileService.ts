@@ -50,6 +50,7 @@ function mapBadge(row: {
   tier: CompactBadge["tier"];
   awarded_at: string;
   source_event_id: string | null;
+  description: string;
 }): CompactBadge {
   return {
     key: row.award_key,
@@ -57,6 +58,7 @@ function mapBadge(row: {
     tier: row.tier,
     awardedAt: row.awarded_at,
     eventId: row.source_event_id,
+    description: row.description,
   };
 }
 

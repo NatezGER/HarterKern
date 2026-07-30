@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { EventAttemptList } from "@/components/events/EventAttemptList";
 import { EventPhotoGallery } from "@/components/events/EventPhotoGallery";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
+import { BadgeTooltip } from "@/components/common/BadgeTooltip";
 import { formatDate, formatTime } from "@/utils/format";
 import type { EventDetail } from "@/types/historyProfiles";
 
@@ -55,7 +56,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
       </section>
 
       <EventAttemptList attempts={detail.attempts} />
-      {detail.badges.length > 0 && <section className="panel p-6"><h2 className="display-title text-3xl">Freigeschaltet</h2><div className="mt-4 flex flex-wrap gap-2">{detail.badges.map((badge) => <span key={badge.key} className="rounded-full border border-gold-400/20 bg-gold-400/[0.06] px-4 py-2 text-xs font-bold text-gold-200">{badge.name} · {badge.tier}</span>)}</div></section>}
+      {detail.badges.length > 0 && <section className="panel p-6"><h2 className="display-title text-3xl">Freigeschaltet</h2><div className="mt-4 flex flex-wrap gap-2">{detail.badges.map((badge) => <BadgeTooltip key={badge.key} badge={badge} className="border border-gold-400/20 bg-gold-400/[0.06] px-4 py-2 text-xs font-bold text-gold-200" />)}</div></section>}
       <EventPhotoGallery eventId={detail.id} photos={detail.photos} />
     </div>
   );
