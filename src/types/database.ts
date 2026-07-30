@@ -4,6 +4,16 @@ import type {
   EventParticipantsTable,
   HistoricalAttemptsTable,
 } from "@/types/dataPlatform";
+import type {
+  BadgeDefinitionsTable,
+  BadgeTier,
+  EventPhotosTable,
+  EventPodiumView,
+  PlayerAttemptNumberStatisticsView,
+  PlayerBadgeAwardsView,
+  PlayerPbProgressionView,
+  PublicPlayerBadgesView,
+} from "@/types/pr7Foundation";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -53,6 +63,10 @@ export interface Database {
           winner_player_id: string | null;
           winner_guest_id: string | null;
           legacy_source_id: string | null;
+          description: string | null;
+          is_important: boolean;
+          deleted_at: string | null;
+          deleted_by: string | null;
         };
         Insert: {
           id?: string;
@@ -66,6 +80,10 @@ export interface Database {
           winner_player_id?: string | null;
           winner_guest_id?: string | null;
           legacy_source_id?: string | null;
+          description?: string | null;
+          is_important?: boolean;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["events"]["Insert"]>;
         Relationships: [];
@@ -118,6 +136,8 @@ export interface Database {
       event_participants: EventParticipantsTable;
       event_guests: EventGuestsTable;
       historical_attempts: HistoricalAttemptsTable;
+      event_photos: EventPhotosTable;
+      badge_definitions: BadgeDefinitionsTable;
       admin_roles: {
         Row: { user_id: string; created_at: string };
         Insert: { user_id: string };
@@ -164,6 +184,9 @@ export interface Database {
           dnf_count: number;
           average_hundredths: number | null;
           event_wins: number;
+          event_participations: number;
+          second_places: number;
+          third_places: number;
         };
         Relationships: [];
       };
@@ -189,6 +212,11 @@ export interface Database {
         };
         Relationships: [];
       };
+      event_podium: EventPodiumView;
+      player_badge_awards: PlayerBadgeAwardsView;
+      player_attempt_number_statistics: PlayerAttemptNumberStatisticsView;
+      player_pb_progression: PlayerPbProgressionView;
+      public_player_badges: PublicPlayerBadgesView;
       world_record_progression: {
         Row: {
           attempt_id: string;
@@ -198,6 +226,7 @@ export interface Database {
           achieved_at: string;
           event_id: string | null;
           historical_label: string | null;
+          source_type: "attempt" | "historical_attempt";
         };
         Relationships: [];
       };
@@ -234,12 +263,29 @@ export interface Database {
         Args: { p_source_player_id: string; p_target_player_id: string };
         Returns: undefined;
       };
+      admin_soft_delete_event: {
+        Args: { p_event_id: string };
+        Returns: undefined;
+      };
+      admin_restore_event: {
+        Args: { p_event_id: string };
+        Returns: undefined;
+      };
+      admin_prepare_event_purge: {
+        Args: { p_event_id: string };
+        Returns: Array<{ photo_path: string }>;
+      };
+      admin_finalize_event_purge: {
+        Args: { p_event_id: string };
+        Returns: undefined;
+      };
       is_admin: { Args: never; Returns: boolean };
     };
     Enums: {
       attempt_status: AttemptStatus;
       attempt_source: AttemptSource;
       event_status: EventStatus;
+      badge_tier: BadgeTier;
     };
     CompositeTypes: Record<never, never>;
   };

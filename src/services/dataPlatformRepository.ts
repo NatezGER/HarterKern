@@ -32,7 +32,9 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
     await Promise.all([
       loadPublicData(),
       client.from("players").select("*").eq("is_archived", false),
-      client.from("events").select("*").order("started_at", { ascending: false }),
+      client.from("events").select("*")
+        .is("deleted_at", null)
+        .order("started_at", { ascending: false }),
       client.from("event_participants").select("*").order("joined_at"),
       client.from("event_guests").select("*").order("joined_at"),
       client.from("attempts").select("*")
