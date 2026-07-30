@@ -22,7 +22,12 @@ export function ProfileAvatar({
       )}
     >
       {url
-        ? <img src={url} alt="" loading="lazy" className="size-full object-cover" />
+        ? <img
+            src={url}
+            alt=""
+            loading="lazy"
+            className="size-full rounded-full object-cover object-center"
+          />
         : getInitials(name)}
     </span>
   );

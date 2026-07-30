@@ -1,5 +1,6 @@
 import { cn } from "@/lib/cn";
 import type { Player } from "@/types";
+import { ProfileAvatar } from "@/components/common/ProfileAvatar";
 
 interface AvatarProps {
   player: Player;
@@ -16,18 +17,15 @@ const sizes = {
 
 export function Avatar({ player, size = "md", className }: AvatarProps) {
   return (
-    <div
-      aria-label={`Profilbild von ${player.name}`}
+    <ProfileAvatar
+      id={player.id}
+      name={player.name}
+      url={player.avatarUrl}
       className={cn(
-        "grid shrink-0 place-items-center rounded-full bg-gradient-to-br font-display font-black text-black ring-2 ring-white/10 ring-offset-4 ring-offset-[#111312]",
-        player.avatarGradient,
+        "ring-offset-4 ring-offset-[#111312]",
         sizes[size],
         className,
       )}
-    >
-      {player.avatarUrl ? (
-        <img src={player.avatarUrl} alt="" className="size-full rounded-full object-cover" />
-      ) : player.initials}
-    </div>
+    />
   );
 }
