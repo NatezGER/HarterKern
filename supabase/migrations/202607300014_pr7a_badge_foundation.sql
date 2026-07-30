@@ -192,7 +192,7 @@ first_streak_milestones as (
   select *,
     row_number() over (
       partition by player_id, badge_key
-      order by submitted_at, attempt_id
+      order by submitted_at, source_attempt_id
     ) milestone_occurrence
   from (
     select
@@ -275,7 +275,8 @@ first_performance_milestones as (
       ps.source_historical_attempt_id,
       ps.source_event_id,
       ps.achieved_at,
-      ps.time_hundredths
+      ps.time_hundredths,
+      ps.source_priority
     from performance_sources ps
     join public.badge_definitions bd
       on bd.category = 'performance'
