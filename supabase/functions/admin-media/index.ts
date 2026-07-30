@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { requirePostgresUuid } from "./validation.ts";
 
 declare const Deno: {
   env: { get(name: string): string | undefined };
@@ -10,8 +11,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const uuidPattern =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function json(payload: object, status = 200) {
   return new Response(JSON.stringify(payload), {
@@ -75,12 +74,6 @@ function extensionFor(type: string) {
   return "webp";
 }
 
-function requireUuid(value: FormDataEntryValue | null, label: string) {
-  const id = typeof value === "string" ? value : "";
-  if (!uuidPattern.test(id)) throw new Error(`${label} ist ungültig.`);
-  return id;
-}
-
 function requireImage(value: FormDataEntryValue | null, limit: number) {
   if (!(value instanceof File)) throw new Error("Bitte eine Bilddatei auswählen.");
   if (!allowedTypes.has(value.type)) {
@@ -124,7 +117,7 @@ Deno.serve(async (request) => {
     });
 
     if (action === "upload-avatar") {
-      const playerId = requireUuid(form.get("playerId"), "Spieler");
+      const playerId = requirePostgresUuid(form.get("playerId"), "Spieler");
       const file = requireImage(form.get("file"), 5 * 1024 * 1024);
       const path = `${playerId}/${crypto.randomUUID()}.${extensionFor(file.type)}`;
       const player = await supabase.from("players")
@@ -158,7 +151,7 @@ Deno.serve(async (request) => {
     }
 
     if (action === "remove-avatar") {
-      const playerId = requireUuid(form.get("playerId"), "Spieler");
+      const playerId = requirePostgresUuid(form.get("playerId"), "Spieler");
       const player = await supabase.from("players")
         .select("avatar_path").eq("id", playerId).maybeSingle();
       if (player.error) throw player.error;
@@ -177,7 +170,7 @@ Deno.serve(async (request) => {
     }
 
     if (action === "upload-event-photo") {
-      const eventId = requireUuid(form.get("eventId"), "Event");
+      const eventId = requirePostgresUuid(form.get("eventId"), "Event");
       const file = requireImage(form.get("file"), 8 * 1024 * 1024);
       const event = await supabase.from("events").select("id")
         .eq("id", eventId).eq("status", "closed").is("deleted_at", null).maybeSingle();
@@ -213,7 +206,7 @@ Deno.serve(async (request) => {
     }
 
     if (action === "remove-event-photo") {
-      const photoId = requireUuid(form.get("photoId"), "Foto");
+      const photoId = requirePostgresUuid(form.get("photoId"), "Foto");
       const photo = await supabase.from("event_photos")
         .select("storage_path").eq("id", photoId).maybeSingle();
       if (photo.error) throw photo.error;
