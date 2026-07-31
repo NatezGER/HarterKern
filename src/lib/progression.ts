@@ -3,6 +3,8 @@ export interface ProgressionDatum {
   achievedAt: string;
   timeHundredths: number;
   durationDays?: number;
+  axisAt?: string;
+  periodEndAt?: string;
 }
 
 export interface ProgressionCoordinate extends ProgressionDatum {
@@ -21,17 +23,21 @@ function timestamp(value: string) {
 
 export function buildProgressionCoordinates<T extends ProgressionDatum>(
   input: T[],
+  domain?: { startAt?: string; endAt?: string },
 ): Array<T & ProgressionCoordinate> {
   const points = [...input].sort((left, right) =>
-    left.achievedAt.localeCompare(right.achievedAt) || left.id.localeCompare(right.id));
+    (left.axisAt ?? left.achievedAt).localeCompare(right.axisAt ?? right.achievedAt)
+      || left.id.localeCompare(right.id));
   if (!points.length) return [];
   const values = points.map(({ timeHundredths }) => timeHundredths);
   const fastest = Math.min(...values);
   const slowest = Math.max(...values);
   const range = slowest - fastest;
-  const startedAt = timestamp(points[0].achievedAt);
-  const endedAt = Math.max(...points.map((point) =>
-    timestamp(point.achievedAt) + Math.max(0, point.durationDays ?? 0) * DAY_IN_MILLISECONDS));
+  const startedAt = domain?.startAt ? timestamp(domain.startAt) : timestamp(points[0].axisAt ?? points[0].achievedAt);
+  const endedAt = Math.max(domain?.endAt ? timestamp(domain.endAt) : startedAt, ...points.map((point) =>
+    point.periodEndAt
+      ? timestamp(point.periodEndAt)
+      : timestamp(point.axisAt ?? point.achievedAt) + Math.max(0, point.durationDays ?? 0) * DAY_IN_MILLISECONDS));
   const dateRange = endedAt - startedAt;
   return points.map((point) => ({
     ...point,
@@ -39,7 +45,7 @@ export function buildProgressionCoordinates<T extends ProgressionDatum>(
       ? 50
       : dateRange === 0
         ? 50
-        : X_PADDING + ((timestamp(point.achievedAt) - startedAt) / dateRange) * (100 - X_PADDING * 2),
+        : X_PADDING + ((timestamp(point.axisAt ?? point.achievedAt) - startedAt) / dateRange) * (100 - X_PADDING * 2),
     // Faster times sit lower: a falling line represents a record being broken.
     y: range === 0
       ? 50
@@ -63,4 +69,11 @@ export function formatRecordDuration(days: number) {
 export function formatCurrentRecordDuration(days: number) {
   if (days === 1) return "seit 1 Tag";
   return `seit ${days.toLocaleString("de-DE")} Tagen`;
+}
+
+export function formatTimelineMoment(achievedAt: string, achievedDate: string, hasExactTime: boolean) {
+  const date = new Date(`${achievedDate}T12:00:00`).toLocaleDateString("de-DE");
+  if (!hasExactTime) return date;
+  const time = new Date(achievedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  return `${date} · ${time} Uhr`;
 }

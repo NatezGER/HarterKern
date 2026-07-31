@@ -39,6 +39,7 @@ export interface WorldRecord {
   playerId: string;
   time: number;
   date: string;
+  achievedAt: string;
   location: string;
   eventId: string | null;
   sourceType: "attempt" | "historical_attempt";

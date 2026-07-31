@@ -35,6 +35,7 @@ export async function getWorldRecordHistory(): Promise<WorldRecord[]> {
       playerId: row.player_id,
       time: hundredthsToSeconds(row.time_hundredths),
       date: row.achieved_date,
+      achievedAt: row.achieved_at,
       location: row.source_label,
       eventId: row.event_id,
       sourceType: row.source_type,

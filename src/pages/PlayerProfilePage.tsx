@@ -13,12 +13,18 @@ import { formatDrinkVolume } from "@/lib/media";
 import { formatDate, formatTime } from "@/utils/format";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ProgressionTimeline } from "@/components/progression/ProgressionTimeline";
+import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
+import { getPlayerById } from "@/data/selectors";
+import { getRecordAt, selectRecordsForPeriod } from "@/lib/recordComparison";
+import { PodiumMedal } from "@/components/common/PodiumMedal";
+import { getPodiumCounters } from "@/lib/podiumCounters";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
 export function PlayerProfilePage() {
   const { id = "" } = useParams();
   const { data: player, loading, error } = usePlayerProfileDetail(id);
+  const { data: publicData } = useEffectivePublicData();
   if (loading) return <DataState><div /></DataState>;
   if (!player) return error
     ? <div className="panel p-8 text-center text-red-200">{error}</div>
@@ -40,6 +46,15 @@ export function PlayerProfilePage() {
     { label: "Längste WR-Phase", value: `${player.longestWorldRecordDays} Tage`, icon: Crown },
     { label: "Sichtbare Badges", value: String(player.visibleBadgeCount), icon: Medal },
   ];
+  const personalProgression = player.progression.map((point) => {
+    const record = getRecordAt(publicData.worldRecordHistory.map((item) => ({ id: item.id, achievedAt: item.achievedAt, timeHundredths: Math.round(item.time * 100) })), point.achievedAt);
+    return { ...point, playerId: player.id, playerName: player.name, avatarUrl: player.avatarUrl, hasExactTime: point.sourceType === "attempt", distanceToComparisonHundredths: record ? Math.max(0, point.timeHundredths - record.timeHundredths) : null };
+  });
+  const firstPbAt = personalProgression[0]?.achievedAt;
+  const comparisonProgression = firstPbAt ? selectRecordsForPeriod(publicData.worldRecordHistory.map((record) => ({ ...record, timeHundredths: Math.round(record.time * 100), achievedAt: record.achievedAt })), firstPbAt, new Date().toISOString()).map((record) => {
+    const holder = getPlayerById(publicData.players, record.playerId);
+    return { id: record.id, playerId: record.playerId, playerName: holder?.name ?? "Unbekannt", avatarUrl: holder?.avatarUrl ?? null, timeHundredths: record.timeHundredths, achievedAt: record.achievedAt, achievedDate: record.date, axisAt: record.axisAt, eventId: record.eventId, sourceLabel: record.location, improvementHundredths: record.improvementHundredths, durationDays: record.durationDays, isCurrent: record.isCurrent, hasExactTime: record.sourceType === "attempt" };
+  }) : [];
   return (
     <div className="space-y-10">
       <Button asChild variant="ghost" size="sm"><Link to="/players"><ArrowLeft className="size-4" /> Zurück zu Spielern</Link></Button>
@@ -58,11 +73,16 @@ export function PlayerProfilePage() {
         </div>
       </section>
 
-      {player.badges.length > 0 && <section><SectionHeading eyebrow="Verdient" title="Badge-Galerie" /><BadgeGallery badges={player.badges} /></section>}
+      {player.badges.length > 0 && <section><SectionHeading eyebrow="Verdient" title="Badge-Galerie" /><BadgeGallery badges={player.badges} featured /></section>}
+
+      <section className="panel p-6 sm:p-8">
+        <SectionHeading eyebrow="Offizielle Events" title="Podiumsmedaillen" />
+        <div className="grid gap-4 sm:grid-cols-3">{getPodiumCounters(player).map((counter) => <article key={counter.rank} className="flex items-center gap-5 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5"><PodiumMedal rank={counter.rank} size="lg" /><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">{counter.label} · Platz {counter.rank}</p><p className="mt-1 font-display text-4xl font-black">{counter.count}</p></div></article>)}</div>
+      </section>
 
       <section className="panel p-5 sm:p-8">
         <SectionHeading eyebrow="Persönliche Bestmarken" title="PB Progression" />
-        <ProgressionTimeline points={player.progression} emptyLabel="Noch keine persönliche Bestzeit vorhanden." />
+        <ProgressionTimeline points={personalProgression} comparisonPoints={comparisonProgression} emptyLabel="Noch keine persönliche Bestzeit vorhanden." />
       </section>
 
       <section className="panel p-6 sm:p-8">

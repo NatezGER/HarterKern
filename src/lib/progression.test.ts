@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildProgressionCoordinates, buildStepPath, formatCurrentRecordDuration, formatRecordDuration } from "@/lib/progression";
+import { buildProgressionCoordinates, buildStepPath, formatCurrentRecordDuration, formatRecordDuration, formatTimelineMoment } from "@/lib/progression";
 
 describe("progression chart", () => {
   it("keeps equal timestamps deterministic without inventing times", () => {
@@ -46,5 +46,7 @@ describe("progression chart", () => {
     ])[0]).toMatchObject({ x: 50, y: 50 });
     expect(formatRecordDuration(1)).toBe("1 Tag");
     expect(formatCurrentRecordDuration(426)).toBe("seit 426 Tagen");
+    expect(formatTimelineMoment("2025-01-01T00:00:00Z", "2025-01-01", false)).toBe("1.1.2025");
+    expect(formatTimelineMoment("2025-01-01T18:42:00Z", "2025-01-01", true)).toContain("19:42 Uhr");
   });
 });

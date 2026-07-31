@@ -14,13 +14,14 @@ export function WRProgression({ compact = false }: { compact?: boolean }) {
       playerName: player?.name ?? "Unbekannter Spieler",
       avatarUrl: player?.avatarUrl ?? null,
       timeHundredths: Math.round(record.time * 100),
-      achievedAt: record.date,
+      achievedAt: record.achievedAt,
       achievedDate: record.date,
       eventId: record.eventId,
       sourceLabel: record.location,
       improvementHundredths: record.improvementHundredths,
       durationDays: record.durationDays,
       isCurrent: record.isCurrent,
+      hasExactTime: record.sourceType === "attempt",
     };
   });
   return (
