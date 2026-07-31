@@ -16,7 +16,9 @@ export function BadgeTooltip({
     : badge.sourceAttemptId || badge.sourceHistoricalAttemptId ? " Ausgelöst durch einen offiziellen Einzelversuch." : "";
   const next = badge.nextBadgeName && badge.nextRequirement
     ? ` Nächste Stufe: ${badge.nextBadgeName} (${badge.nextTier}) – ${badge.nextRequirement}.${progress == null ? "" : ` Aktueller Wert: ${progress}.`}`
-    : badge.familyKey ? " Höchste Stufe dieser Familie erreicht." : "";
+    : badge.familyKey && badge.currentProgress != null
+      ? " Höchste Stufe dieser Familie erreicht."
+      : "";
   return (
     <AccessibleTooltip
       label={`${badge.name} · ${badge.tier}`}
