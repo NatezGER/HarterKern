@@ -49,7 +49,7 @@ export function ProgressionTimeline({
             const previous = plotted[index - 1];
             return <span key={point.id}>
               {segmentWidth >= 2.5 && <span className="absolute -translate-x-1/2 whitespace-nowrap rounded-md bg-[#171711]/85 px-1.5 py-0.5 text-[9px] font-bold text-white/55" style={{ left: `${point.x + segmentWidth / 2}%`, top: `${Math.max(3, point.y - (index % 2 === 0 ? 11 : 17))}%` }}>{point.isCurrent ? formatCurrentRecordDuration(point.durationDays) : formatRecordDuration(point.durationDays)}</span>}
-              {previous && point.improvementHundredths != null && <span className="absolute rounded-md border border-gold-400/15 bg-[#171711]/90 px-1.5 py-0.5 text-[9px] font-black text-gold-300" style={{ left: `${Math.min(88, point.x + 1.5)}%`, top: `${Math.max(8, Math.min(previous.y, point.y) + Math.abs(point.y - previous.y) / 2 - 4)}%` }}>−{formatTime(point.improvementHundredths / 100)}</span>}
+              {previous && point.improvementHundredths != null && <span className="absolute rounded-md border border-gold-400/15 bg-[#171711]/90 px-1.5 py-0.5 text-[9px] font-black text-gold-300" style={{ left: `${Math.min(88, point.x + 1.5)}%`, top: `${Math.max(8, Math.min(86, Math.min(previous.y, point.y) + Math.abs(point.y - previous.y) / 2 + 2))}%` }}>−{formatTime(point.improvementHundredths / 100)}</span>}
               <span
                 className={cn(
                   "absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-sm border-2 border-[#151612] bg-gold-400 shadow-gold-sm",
