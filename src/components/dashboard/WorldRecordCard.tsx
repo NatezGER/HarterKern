@@ -5,7 +5,7 @@ import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { formatDate, formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { Avatar } from "@/components/common/Avatar";
-import { formatRecordDuration } from "@/lib/progression";
+import { formatCurrentRecordDuration } from "@/lib/progression";
 
 export function WorldRecordCard() {
   const { data } = useEffectivePublicData();
@@ -28,7 +28,7 @@ export function WorldRecordCard() {
             </span>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-gold-300">Aktueller Weltrekord</p>
-              <p className="mt-0.5 text-xs text-white/35">Seit {formatRecordDuration(record.durationDays)}</p>
+              <p className="mt-0.5 text-xs text-white/35">{formatCurrentRecordDuration(record.durationDays)}</p>
             </div>
           </div>
           <span className="rounded-full border border-gold-400/20 px-3 py-1 text-[9px] font-bold tracking-widest text-gold-300">WR</span>
