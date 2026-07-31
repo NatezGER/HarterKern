@@ -2,6 +2,7 @@ export interface ProgressionDatum {
   id: string;
   achievedAt: string;
   timeHundredths: number;
+  durationDays?: number;
 }
 
 export interface ProgressionCoordinate extends ProgressionDatum {
@@ -11,6 +12,12 @@ export interface ProgressionCoordinate extends ProgressionDatum {
 
 const X_PADDING = 7;
 const Y_PADDING = 12;
+const DAY_IN_MILLISECONDS = 86_400_000;
+
+function timestamp(value: string) {
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
 export function buildProgressionCoordinates<T extends ProgressionDatum>(
   input: T[],
@@ -22,11 +29,17 @@ export function buildProgressionCoordinates<T extends ProgressionDatum>(
   const fastest = Math.min(...values);
   const slowest = Math.max(...values);
   const range = slowest - fastest;
-  return points.map((point, index) => ({
+  const startedAt = timestamp(points[0].achievedAt);
+  const endedAt = Math.max(...points.map((point) =>
+    timestamp(point.achievedAt) + Math.max(0, point.durationDays ?? 0) * DAY_IN_MILLISECONDS));
+  const dateRange = endedAt - startedAt;
+  return points.map((point) => ({
     ...point,
     x: points.length === 1
       ? 50
-      : X_PADDING + (index / (points.length - 1)) * (100 - X_PADDING * 2),
+      : dateRange === 0
+        ? 50
+        : X_PADDING + ((timestamp(point.achievedAt) - startedAt) / dateRange) * (100 - X_PADDING * 2),
     // Faster times sit lower: a falling line represents a record being broken.
     y: range === 0
       ? 50
@@ -45,4 +58,9 @@ export function buildStepPath(points: Array<{ x: number; y: number }>) {
 export function formatRecordDuration(days: number) {
   if (days === 1) return "1 Tag";
   return `${days.toLocaleString("de-DE")} Tage`;
+}
+
+export function formatCurrentRecordDuration(days: number) {
+  if (days === 1) return "seit 1 Tag";
+  return `seit ${days.toLocaleString("de-DE")} Tagen`;
 }

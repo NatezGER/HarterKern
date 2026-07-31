@@ -58,7 +58,22 @@ export function PlayerProfilePage() {
         </div>
       </section>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.map(({ label, value, icon: Icon }, index) => <AnimatedCard key={label} delay={index * 0.04} className="p-5"><Icon className="size-5 text-gold-400" /><p className="mt-6 text-[9px] font-bold uppercase tracking-[0.18em] text-white/30">{label}</p><p className="mt-1 font-display text-3xl font-black">{value}</p></AnimatedCard>)}</div>
+      {player.badges.length > 0 && <section><SectionHeading eyebrow="Verdient" title="Badge-Galerie" /><BadgeGallery badges={player.badges} /></section>}
+
+      <section className="panel p-5 sm:p-8">
+        <SectionHeading eyebrow="Persönliche Bestmarken" title="PB Progression" />
+        <ProgressionTimeline points={player.progression} emptyLabel="Noch keine persönliche Bestzeit vorhanden." />
+      </section>
+
+      <section className="panel p-6 sm:p-8">
+        <SectionHeading eyebrow="Leistung im Event" title="Nach Versuchsnummer" />
+        <AttemptNumberChart points={player.attemptNumbers} />
+      </section>
+
+      <section>
+        <SectionHeading eyebrow="Karrierewerte" title="Statistik" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.map(({ label, value, icon: Icon }, index) => <AnimatedCard key={label} delay={index * 0.04} className="p-5"><Icon className="size-5 text-gold-400" /><p className="mt-6 text-[9px] font-bold uppercase tracking-[0.18em] text-white/30">{label}</p><p className="mt-1 font-display text-3xl font-black">{value}</p></AnimatedCard>)}</div>
+      </section>
 
       <section>
         <SectionHeading eyebrow="Event für Event" title="Historie" />
@@ -67,18 +82,6 @@ export function PlayerProfilePage() {
           {player.events.map((event) => <Link key={event.eventId} to={`/events/${event.eventId}`} className="panel grid gap-3 p-5 transition hover:border-gold-400/20 sm:grid-cols-[1fr_repeat(3,8rem)] sm:items-center"><div><p className="font-display text-xl font-black uppercase">{event.eventName}</p><p className="text-xs text-white/35">{formatDate(event.eventDate)}</p></div><HistoryMetric label="Platz" value={event.rank ? `#${event.rank}` : "—"} /><HistoryMetric label="Bestzeit" value={displayTime(event.bestHundredths)} /><HistoryMetric label="Versuche / DNF" value={`${event.attempts} / ${event.dnfCount}`} /></Link>)}
         </div>
       </section>
-
-      <section className="panel p-6 sm:p-8">
-        <SectionHeading eyebrow="Leistung im Event" title="Nach Versuchsnummer" />
-        <AttemptNumberChart points={player.attemptNumbers} />
-      </section>
-
-      <section className="panel p-5 sm:p-8">
-        <SectionHeading eyebrow="Persönliche Bestmarken" title="PB Progression" />
-        <ProgressionTimeline points={player.progression} emptyLabel="Noch keine persönliche Bestzeit vorhanden." />
-      </section>
-
-      {player.badges.length > 0 && <section><SectionHeading eyebrow="Verdient" title="Badge-Galerie" /><BadgeGallery badges={player.badges} /></section>}
     </div>
   );
 }

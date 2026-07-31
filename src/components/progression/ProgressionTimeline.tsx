@@ -2,7 +2,7 @@ import { Crown, History, TrendingDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
 import { cn } from "@/lib/cn";
-import { buildProgressionCoordinates, buildStepPath, formatRecordDuration } from "@/lib/progression";
+import { buildProgressionCoordinates, buildStepPath, formatCurrentRecordDuration, formatRecordDuration } from "@/lib/progression";
 import { formatDate, formatTime } from "@/utils/format";
 
 export interface TimelinePoint {
@@ -32,25 +32,33 @@ export function ProgressionTimeline({
     return <p className="py-14 text-center text-sm text-white/35">{emptyLabel}</p>;
   }
   const path = buildStepPath(plotted);
+  const chartEnd = 93;
+  const extendedPath = `${path} H ${chartEnd}`;
   return (
     <div className="space-y-6">
       <div className="overflow-x-auto pb-2" aria-hidden="true">
         <div className="relative h-64 min-w-[42rem] overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:12.5%_25%]" />
           <svg className="absolute inset-0 size-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <path d={path} fill="none" stroke="rgba(245,185,66,.18)" strokeWidth="4" vectorEffect="non-scaling-stroke" />
-            <path d={path} fill="none" stroke="rgb(245 185 66)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+            <path d={extendedPath} fill="none" stroke="rgba(245,185,66,.18)" strokeWidth="4" vectorEffect="non-scaling-stroke" />
+            <path d={extendedPath} fill="none" stroke="rgb(245 185 66)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
           </svg>
-          {plotted.map((point) => (
-            <span
-              key={point.id}
-              className={cn(
-                "absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-sm border-2 border-[#151612] bg-gold-400 shadow-gold-sm",
-                point.isCurrent && "size-5 rotate-45 bg-white",
-              )}
-              style={{ left: `${point.x}%`, top: `${point.y}%` }}
-            />
-          ))}
+          {plotted.map((point, index) => {
+            const segmentEnd = plotted[index + 1]?.x ?? chartEnd;
+            const segmentWidth = segmentEnd - point.x;
+            const previous = plotted[index - 1];
+            return <span key={point.id}>
+              {segmentWidth >= 7 && <span className="absolute -translate-x-1/2 rounded-md bg-[#171711]/85 px-1.5 py-0.5 text-[9px] font-bold text-white/55" style={{ left: `${point.x + segmentWidth / 2}%`, top: `${Math.max(3, point.y - 11)}%` }}>{point.isCurrent ? formatCurrentRecordDuration(point.durationDays) : formatRecordDuration(point.durationDays)}</span>}
+              {previous && point.improvementHundredths != null && <span className="absolute rounded-md border border-gold-400/15 bg-[#171711]/90 px-1.5 py-0.5 text-[9px] font-black text-gold-300" style={{ left: `${Math.min(88, point.x + 1.5)}%`, top: `${Math.max(8, Math.min(previous.y, point.y) + Math.abs(point.y - previous.y) / 2 - 4)}%` }}>−{formatTime(point.improvementHundredths / 100)}</span>}
+              <span
+                className={cn(
+                  "absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-sm border-2 border-[#151612] bg-gold-400 shadow-gold-sm",
+                  point.isCurrent && "size-5 rotate-45 bg-white",
+                )}
+                style={{ left: `${point.x}%`, top: `${point.y}%` }}
+              />
+            </span>;
+          })}
           <span className="absolute bottom-3 left-4 text-[9px] font-bold uppercase tracking-[0.2em] text-white/25">Zeitverlauf</span>
           <TrendingDown className="absolute right-4 top-4 size-5 text-gold-400/40" />
         </div>

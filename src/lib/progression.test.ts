@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildProgressionCoordinates, buildStepPath, formatRecordDuration } from "@/lib/progression";
+import { buildProgressionCoordinates, buildStepPath, formatCurrentRecordDuration, formatRecordDuration } from "@/lib/progression";
 
 describe("progression chart", () => {
   it("keeps equal timestamps deterministic without inventing times", () => {
@@ -21,10 +21,30 @@ describe("progression chart", () => {
     expect(buildStepPath(points)).toContain(" V ");
   });
 
+  it("spaces record points proportionally to their real calendar distance", () => {
+    const points = buildProgressionCoordinates([
+      { id: "a", achievedAt: "2025-01-01", timeHundredths: 500 },
+      { id: "b", achievedAt: "2025-01-06", timeHundredths: 400 },
+      { id: "c", achievedAt: "2025-06-05", timeHundredths: 300 },
+    ]);
+    const shortGap = points[1].x - points[0].x;
+    const longGap = points[2].x - points[1].x;
+    expect(longGap).toBeGreaterThan(shortGap * 20);
+  });
+
+  it("reserves timeline width for the duration of the current record", () => {
+    const points = buildProgressionCoordinates([
+      { id: "a", achievedAt: "2025-01-01", timeHundredths: 500, durationDays: 10 },
+      { id: "b", achievedAt: "2025-01-11", timeHundredths: 400, durationDays: 90 },
+    ]);
+    expect(points[1].x).toBeLessThan(30);
+  });
+
   it("gives a single point a useful centered position", () => {
     expect(buildProgressionCoordinates([
       { id: "only", achievedAt: "2025-01-01", timeHundredths: 300 },
     ])[0]).toMatchObject({ x: 50, y: 50 });
     expect(formatRecordDuration(1)).toBe("1 Tag");
+    expect(formatCurrentRecordDuration(426)).toBe("seit 426 Tagen");
   });
 });
