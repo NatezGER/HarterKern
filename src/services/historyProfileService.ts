@@ -93,6 +93,7 @@ function mapBadge(row: {
   next_threshold: number | null;
   current_progress: number | null;
   threshold: number | null;
+  is_special_event_badge: boolean;
 }): CompactBadge {
   return {
     key: row.award_key,
@@ -122,6 +123,7 @@ function mapBadge(row: {
     nextTier: row.next_tier,
     nextThreshold: row.next_threshold,
     currentProgress: row.current_progress,
+    isSpecialEventBadge: row.is_special_event_badge,
   };
 }
 

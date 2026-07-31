@@ -13,22 +13,23 @@ const tierStyles: Record<BadgeTier, { shell: string; inner: string; glow: string
 
 export function PrestigeBadgeEmblem({ badge, size = "md", className }: {
   badge: { badgeKey: string; tier: BadgeTier; category?: string; threshold?: number | null; name?: string };
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "featured";
   className?: string;
 }) {
   const style = tierStyles[badge.tier];
   const Icon = style.Icon;
   const mark = getBadgeCenterMark(badge);
+  const rotations = badge.tier === "bronze" ? [0, 90] : badge.tier === "silver" ? [0, 45, 90] : badge.tier === "gold" ? [0, 45, 90, 135] : badge.tier === "diamond" ? [0, 30, 60, 90, 120, 150] : [0, 36, 72, 108, 144];
   return (
-    <div aria-label={`${badgeTierLabel[badge.tier]}-Badge ${badge.name ?? ""}`} className={cn("relative isolate shrink-0", size === "sm" ? "size-16" : size === "lg" ? "size-32" : "size-24", className)}>
+    <div aria-label={`${badgeTierLabel[badge.tier]}-Badge ${badge.name ?? ""}`} className={cn("relative isolate shrink-0", size === "sm" ? "size-16" : size === "md" ? "size-24" : size === "lg" ? "size-32" : "size-40", badge.tier === "diamond" && "scale-105", className)}>
       <span className={cn("absolute inset-[14%] rounded-full blur-xl opacity-70", style.glow)} />
-      {[0, 45, 90, 135].map((rotation) => <span key={rotation} className={cn("absolute inset-[9%] rounded-[22%] bg-gradient-to-br opacity-90", style.shell)} style={{ transform: `rotate(${rotation}deg)`, clipPath: "polygon(50% 0, 63% 32%, 100% 50%, 63% 68%, 50% 100%, 37% 68%, 0 50%, 37% 32%)" }} />)}
+      {rotations.map((rotation) => <span key={rotation} className={cn("absolute rounded-[22%] bg-gradient-to-br opacity-90", badge.tier === "bronze" ? "inset-[14%]" : badge.tier === "diamond" ? "inset-[2%]" : "inset-[8%]", style.shell)} style={{ transform: `rotate(${rotation}deg)`, clipPath: "polygon(50% 0, 63% 32%, 100% 50%, 63% 68%, 50% 100%, 37% 68%, 0 50%, 37% 32%)" }} />)}
       <span className={cn("absolute inset-[17%] rounded-full bg-gradient-to-br p-[3px]", style.shell, style.glow)}>
         <span className="grid size-full place-items-center rounded-full border border-white/45 bg-[#11130f] p-[5px]">
           <span className={cn("relative grid size-full place-items-center overflow-hidden rounded-full bg-gradient-to-br text-white", style.inner)}>
             <span className="absolute inset-x-1 top-1 h-[38%] rounded-full bg-white/35 blur-[1px]" />
             <Icon className="absolute size-[72%] opacity-[0.13]" />
-            <strong className={cn("relative font-display font-black tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,.65)]", size === "sm" ? "text-sm" : size === "lg" ? "text-2xl" : "text-lg")}>{mark}</strong>
+            <strong className={cn("relative font-display font-black tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,.65)]", size === "sm" ? "text-sm" : size === "md" ? "text-lg" : size === "lg" ? "text-2xl" : "text-3xl")}>{mark}</strong>
           </span>
         </span>
       </span>

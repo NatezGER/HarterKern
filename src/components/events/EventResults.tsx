@@ -1,4 +1,4 @@
-import { CalendarDays, CircleX, Medal, Star, Target, Timer, Trophy, Users } from "lucide-react";
+import { CalendarDays, CircleX, Star, Target, Timer, Trophy, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EventAttemptList } from "@/components/events/EventAttemptList";
 import { EventPhotoGallery } from "@/components/events/EventPhotoGallery";
@@ -7,11 +7,15 @@ import { BadgeGallery } from "@/components/common/BadgeGallery";
 import { EventAttemptNumberChart } from "@/components/events/EventAttemptNumberChart";
 import { formatDate, formatTime } from "@/utils/format";
 import type { EventDetail } from "@/types/historyProfiles";
+import { ProgressionTimeline } from "@/components/progression/ProgressionTimeline";
+import { buildEventLeadProgression } from "@/lib/eventLeadProgression";
+import { PodiumMedal } from "@/components/common/PodiumMedal";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
 export function EventResults({ detail }: { detail: EventDetail }) {
   const podium = detail.podium.filter(({ rank }) => rank != null && rank <= 3);
+  const eventProgression = buildEventLeadProgression(detail.attempts, detail.closedAt).map((point) => ({ id: point.id, playerId: point.playerId ?? point.guestId ?? undefined, playerName: point.name, avatarUrl: point.avatarUrl, timeHundredths: point.timeHundredths, achievedAt: point.submittedAt, achievedDate: point.submittedAt.slice(0, 10), periodEndAt: point.periodEndAt, eventId: detail.id, sourceLabel: detail.name, improvementHundredths: point.improvementHundredths, durationDays: 0, durationLabel: point.durationLabel, attemptNumber: point.attemptNumber, hasExactTime: true, isCurrent: false }));
   return (
     <div className="space-y-8 lg:space-y-10">
       <section className="panel relative overflow-hidden p-6 sm:p-10">
@@ -29,12 +33,17 @@ export function EventResults({ detail }: { detail: EventDetail }) {
         </div>
       </section>
 
+      {detail.badges.length > 0 && <section><h2 className="display-title mb-5 text-3xl">Freigeschaltet</h2><BadgeGallery badges={detail.badges} compact showPlayer /></section>}
+
+      {detail.status === "closed" && <section className="panel p-6 sm:p-8"><h2 className="display-title text-3xl">Event-Führungsprogression</h2><p className="mt-2 text-sm text-white/40">Wer führte zu welchem Zeitpunkt mit welcher Eventbestzeit?</p><div className="mt-6"><ProgressionTimeline points={eventProgression} domainStartAt={detail.startedAt} domainEndAt={detail.closedAt ?? undefined} emptyLabel="Dieses Event hat keine gültige Führungszeit." /></div></section>}
+
       <section>
         <h2 className="display-title mb-5 text-3xl">Podium</h2>
         {podium.length ? (
           <div className="grid items-end gap-4 md:grid-cols-3">
             {podium.map((entry) => {
-              const card = <><div className="flex items-center justify-between"><Medal className={entry.rank === 1 ? "size-7 text-gold-400" : "size-6 text-white/45"} /><span className="font-display text-3xl font-black">#{entry.rank}</span></div><ProfileAvatar id={entry.playerId ?? entry.guestId ?? entry.name} name={entry.name} url={entry.avatarUrl} className={entry.rank === 1 ? "mt-6 size-20 ring-gold-400/40" : "mt-6 size-16"} /><p className="mt-4 truncate font-display text-2xl font-black uppercase">{entry.name}</p><p className="mt-1 text-xs text-white/40">{entry.isGuest ? "Gast" : `${entry.attempts} Versuche`}</p><p className="gold-text mt-5 font-display text-4xl font-black">{displayTime(entry.bestHundredths)}</p></>;
+              const rank = entry.rank as 1 | 2 | 3;
+              const card = <><div className="flex items-center justify-between"><PodiumMedal rank={rank} size={entry.rank === 1 ? "lg" : "md"} /><span className="font-display text-3xl font-black">#{entry.rank}</span></div><ProfileAvatar id={entry.playerId ?? entry.guestId ?? entry.name} name={entry.name} url={entry.avatarUrl} className={entry.rank === 1 ? "mt-6 size-20 ring-gold-400/40" : "mt-6 size-16"} /><p className="mt-4 truncate font-display text-2xl font-black uppercase">{entry.name}</p><p className="mt-1 text-xs text-white/40">{entry.isGuest ? "Gast" : `${entry.attempts} Versuche`}</p><p className="gold-text mt-5 font-display text-4xl font-black">{displayTime(entry.bestHundredths)}</p></>;
               const className = `panel block p-6 transition hover:-translate-y-1 ${entry.rank === 1 ? "min-h-80 border-gold-400/25 md:order-2" : entry.rank === 2 ? "min-h-72 md:order-1" : "min-h-64 md:order-3"}`;
               return entry.playerId ? <Link key={`${entry.rank}-${entry.playerId}`} to={`/player/${entry.playerId}`} className={className}>{card}</Link> : <article key={`${entry.rank}-${entry.guestId}`} className={className}>{card}</article>;
             })}
@@ -58,7 +67,6 @@ export function EventResults({ detail }: { detail: EventDetail }) {
 
       <EventAttemptList attempts={detail.attempts} />
       <section className="panel p-6 sm:p-8"><h2 className="display-title text-3xl">Nach Versuchsnummer</h2><p className="mt-2 text-sm text-white/40">Durchschnitt aller gültigen regulären Spieler- und Gastzeiten dieses Events.</p><div className="mt-6"><EventAttemptNumberChart points={detail.attemptNumbers} /></div></section>
-      {detail.badges.length > 0 && <section><h2 className="display-title mb-5 text-3xl">Freigeschaltet</h2><BadgeGallery badges={detail.badges} compact showPlayer /></section>}
       <EventPhotoGallery eventId={detail.id} photos={detail.photos} />
     </div>
   );

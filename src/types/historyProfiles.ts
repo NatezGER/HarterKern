@@ -68,6 +68,7 @@ export interface CompactBadge {
   nextTier: BadgeTier | null;
   nextThreshold: number | null;
   currentProgress: number | null;
+  isSpecialEventBadge: boolean;
 }
 
 export interface ProgressionPoint {
