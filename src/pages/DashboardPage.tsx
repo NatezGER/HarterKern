@@ -8,6 +8,7 @@ import { Podium } from "@/components/leaderboard/Podium";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { DataState } from "@/components/common/DataState";
+import { PrestigeActivityFeed } from "@/components/dashboard/PrestigeActivityFeed";
 
 export function DashboardPage() {
   return (
@@ -24,8 +25,9 @@ export function DashboardPage() {
           </div>
           <HallOfFamePreview />
           <DailyBestCards />
+          <WRProgression />
           <div className="grid gap-6 xl:grid-cols-2">
-            <WRProgression />
+            <PrestigeActivityFeed />
             <div>
               <SectionHeading eyebrow="Live" title="Aktuelles Event" />
               <CurrentEventCard />

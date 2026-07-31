@@ -1,8 +1,8 @@
-import { ArrowLeft, CircleX, Droplets, Medal, Target, Timer, Trophy, Zap } from "lucide-react";
+import { ArrowLeft, CircleX, Crown, Droplets, Medal, Target, Timer, Trophy, Zap } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
-import { BadgeTooltip } from "@/components/common/BadgeTooltip";
+import { BadgeGallery } from "@/components/common/BadgeGallery";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { DataState } from "@/components/common/DataState";
 import { AttemptNumberChart } from "@/components/players/AttemptNumberChart";
@@ -12,6 +12,7 @@ import { DRINK_MILLILITERS_PER_VALID_ATTEMPT } from "@/constants/game";
 import { formatDrinkVolume } from "@/lib/media";
 import { formatDate, formatTime } from "@/utils/format";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { ProgressionTimeline } from "@/components/progression/ProgressionTimeline";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -31,6 +32,13 @@ export function PlayerProfilePage() {
     { label: "Platz 2 / 3", value: `${player.secondPlaces} / ${player.thirdPlaces}`, icon: Medal },
     { label: "Gültig / DNF", value: `${player.validAttempts} / ${player.dnfCount}`, icon: CircleX },
     { label: "Getrunken", value: formatDrinkVolume(player.validAttempts, DRINK_MILLILITERS_PER_VALID_ATTEMPT), icon: Droplets },
+    { label: "PB-Verbesserungen", value: String(player.pbCount), icon: Zap },
+    { label: "Größter PB-Sprung", value: displayTime(player.largestPbImprovementHundredths), icon: Zap },
+    { label: "Ø PB-Sprung", value: displayTime(player.averagePbImprovementHundredths), icon: Timer },
+    { label: "Weltrekorde", value: String(player.worldRecordCount), icon: Trophy },
+    { label: "Tage mit WR", value: String(player.worldRecordDays), icon: Timer },
+    { label: "Längste WR-Phase", value: `${player.longestWorldRecordDays} Tage`, icon: Crown },
+    { label: "Sichtbare Badges", value: String(player.visibleBadgeCount), icon: Medal },
   ];
   return (
     <div className="space-y-10">
@@ -65,7 +73,12 @@ export function PlayerProfilePage() {
         <AttemptNumberChart points={player.attemptNumbers} />
       </section>
 
-      {player.badges.length > 0 && <section><SectionHeading eyebrow="Verdient" title="Badges" /><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{player.badges.map((badge) => <AnimatedCard key={badge.key} className="p-5"><Medal className="size-5 text-gold-400" /><BadgeTooltip badge={badge} className="mt-4 text-left font-bold" /><p className="mt-1 text-xs capitalize text-white/35">{badge.tier} · {formatDate(badge.awardedAt.slice(0, 10))}</p>{badge.eventId && <Link to={`/events/${badge.eventId}`} className="mt-3 inline-block text-xs text-gold-300 hover:underline">Zum Event</Link>}</AnimatedCard>)}</div></section>}
+      <section className="panel p-5 sm:p-8">
+        <SectionHeading eyebrow="Persönliche Bestmarken" title="PB Progression" />
+        <ProgressionTimeline points={player.progression} emptyLabel="Noch keine persönliche Bestzeit vorhanden." />
+      </section>
+
+      {player.badges.length > 0 && <section><SectionHeading eyebrow="Verdient" title="Badge-Galerie" /><BadgeGallery badges={player.badges} /></section>}
     </div>
   );
 }
