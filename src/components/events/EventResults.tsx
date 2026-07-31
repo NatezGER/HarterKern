@@ -33,10 +33,6 @@ export function EventResults({ detail }: { detail: EventDetail }) {
         </div>
       </section>
 
-      {detail.badges.length > 0 && <section><h2 className="display-title mb-5 text-3xl">Freigeschaltet</h2><BadgeGallery badges={detail.badges} compact showPlayer /></section>}
-
-      {detail.status === "closed" && <section className="panel p-6 sm:p-8"><h2 className="display-title text-3xl">Event-Führungsprogression</h2><p className="mt-2 text-sm text-white/40">Wer führte zu welchem Zeitpunkt mit welcher Eventbestzeit?</p><div className="mt-6"><ProgressionTimeline points={eventProgression} domainStartAt={detail.startedAt} domainEndAt={detail.closedAt ?? undefined} emptyLabel="Dieses Event hat keine gültige Führungszeit." /></div></section>}
-
       <section>
         <h2 className="display-title mb-5 text-3xl">Podium</h2>
         {podium.length ? (
@@ -50,6 +46,10 @@ export function EventResults({ detail }: { detail: EventDetail }) {
           </div>
         ) : <div className="panel py-14 text-center text-sm text-white/40">Keine gültige Eventzeit vorhanden.</div>}
       </section>
+
+      {detail.badges.length > 0 && <section><h2 className="display-title mb-5 text-3xl">Freigeschaltet</h2><BadgeGallery badges={detail.badges} compact showPlayer /></section>}
+
+      {detail.status === "closed" && <section className="panel p-6 sm:p-8"><h2 className="display-title text-3xl">Event-Führungsprogression</h2><p className="mt-2 text-sm text-white/40">Wer führte zu welchem Zeitpunkt mit welcher Eventbestzeit?</p><div className="mt-6"><ProgressionTimeline points={eventProgression} domainStartAt={detail.startedAt} domainEndAt={detail.closedAt ?? undefined} emptyLabel="Dieses Event hat keine gültige Führungszeit." /></div></section>}
 
       <section>
         <h2 className="display-title mb-5 text-3xl">Eventstatistiken</h2>

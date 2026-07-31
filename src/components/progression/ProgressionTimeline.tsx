@@ -69,7 +69,7 @@ export function ProgressionTimeline({ points, comparisonPoints = [], domainStart
       <div className="overflow-x-auto pb-2">
         <div className="relative h-72 min-w-[52rem] overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:12.5%_25%]" />
-          <TimelinePath points={comparison} className="stroke-cyan-300/70" dashed />
+          <TimelinePath points={comparison} className="stroke-cyan-300/70" dashed wide />
           <TimelinePath points={primary} className="stroke-gold-400" />
           {[...comparison, ...primary].map((point, _index, all) => {
             const seriesPoints = all.filter(({ series }) => series === point.series);
@@ -95,15 +95,15 @@ export function ProgressionTimeline({ points, comparisonPoints = [], domainStart
   );
 }
 
-function TimelinePath({ points, className, dashed = false }: { points: PlottedPoint[]; className: string; dashed?: boolean }) {
+function TimelinePath({ points, className, dashed = false, wide = false }: { points: PlottedPoint[]; className: string; dashed?: boolean; wide?: boolean }) {
   if (!points.length) return null;
   const path = `${buildStepPath(points)} H 93`;
-  return <svg aria-hidden="true" className="absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none"><path d={path} fill="none" strokeWidth="4" className={cn(className, "opacity-15")} vectorEffect="non-scaling-stroke" /><path d={path} fill="none" strokeWidth="2" strokeDasharray={dashed ? "7 5" : undefined} className={className} vectorEffect="non-scaling-stroke" /></svg>;
+  return <svg aria-hidden="true" className="absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none"><path d={path} fill="none" strokeWidth={wide ? 8 : 4} className={cn(className, "opacity-15")} vectorEffect="non-scaling-stroke" /><path d={path} fill="none" strokeWidth={wide ? 4 : 2} strokeDasharray={dashed ? "7 5" : undefined} className={className} vectorEffect="non-scaling-stroke" /></svg>;
 }
 
 function TimelineNode({ point, active, onHover, onPin }: { point: PlottedPoint; active: boolean; onHover: (id: string | null) => void; onPin: () => void }) {
   const key = `${point.series}:${point.id}`;
-  return <button type="button" aria-label={`${point.playerName ?? point.sourceLabel}: ${formatTime(point.timeHundredths / 100)}, ${formatDate(point.achievedDate)}`} aria-pressed={active} onMouseEnter={() => onHover(key)} onMouseLeave={() => onHover(null)} onFocus={() => onHover(key)} onBlur={() => onHover(null)} onClick={onPin} className={cn("group absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white", point.series === "comparison" ? "size-9" : "size-11", point.isCurrent && "ring-2 ring-gold-300 ring-offset-2 ring-offset-[#11130f]")} style={{ left: `${point.x}%`, top: `${point.y}%` }}>
+  return <button type="button" aria-label={`${point.playerName ?? point.sourceLabel}: ${formatTime(point.timeHundredths / 100)}, ${formatDate(point.achievedDate)}`} aria-pressed={active} onMouseEnter={() => onHover(key)} onMouseLeave={() => onHover(null)} onFocus={() => onHover(key)} onBlur={() => onHover(null)} onClick={onPin} className={cn("group absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white", point.series === "comparison" ? "size-9" : "size-11", point.isCurrent && "ring-2 ring-gold-300 ring-offset-2 ring-offset-[#11130f]")} style={{ left: `${point.x}%`, top: `${point.y}%`, marginTop: point.series === "comparison" ? -18 : 0 }}>
     <ProfileAvatar id={point.playerId ?? point.id} name={point.playerName ?? point.sourceLabel} url={point.avatarUrl ?? null} className={cn("size-full border-2 shadow-lg", point.series === "comparison" ? "border-cyan-200/80" : "border-gold-300/80")} />
     <span className={cn("pointer-events-none absolute left-1/2 top-[calc(100%+0.25rem)] -translate-x-1/2 whitespace-nowrap rounded bg-[#10120f]/95 px-1.5 py-0.5 font-display text-[10px] font-black", point.series === "comparison" ? "text-cyan-200" : "text-gold-200")}>{formatTime(point.timeHundredths / 100)}{point.series === "primary" && point.playerName ? <small className="ml-1 font-sans text-[8px] font-semibold text-white/55">{point.playerName}</small> : null}</span>
   </button>;

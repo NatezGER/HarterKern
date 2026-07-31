@@ -13,7 +13,7 @@ export interface ProgressionCoordinate extends ProgressionDatum {
 }
 
 const X_PADDING = 7;
-const Y_PADDING = 12;
+const Y_PADDING = 18;
 const DAY_IN_MILLISECONDS = 86_400_000;
 
 function timestamp(value: string) {
