@@ -107,6 +107,9 @@ export type BadgeDefinitionsTable = {
     threshold: number | null;
     sort_order: number;
     created_at: string;
+    family_key: string | null;
+    requirement: string | null;
+    is_secret: boolean;
   };
   Insert: {
     badge_key: string;
@@ -116,10 +119,110 @@ export type BadgeDefinitionsTable = {
     description: string;
     threshold?: number | null;
     sort_order?: number;
+    family_key?: string | null;
+    requirement?: string | null;
+    is_secret?: boolean;
   };
   Update: Partial<BadgeDefinitionsTable["Insert"]>;
   Relationships: [];
 };
+
+export interface WorldRecordHistoryView {
+  Row: {
+    record_id: string;
+    player_id: string;
+    display_name: string;
+    avatar_url: string | null;
+    avatar_path: string | null;
+    time_hundredths: number;
+    achieved_at: string;
+    achieved_date: string;
+    event_id: string | null;
+    source_label: string;
+    source_type: "attempt" | "historical_attempt";
+    sequence_number: number;
+    previous_record_hundredths: number | null;
+    improvement_hundredths: number | null;
+    period_end_date: string | null;
+    duration_days: number;
+    is_current: boolean;
+  };
+  Relationships: [];
+}
+
+export interface PlayerPbHistoryView {
+  Row: {
+    source_id: string;
+    player_id: string;
+    display_name: string;
+    time_hundredths: number;
+    achieved_at: string;
+    achieved_date: string;
+    event_id: string | null;
+    source_label: string;
+    source_type: "attempt" | "historical_attempt";
+    sequence_number: number;
+    previous_best_hundredths: number | null;
+    improvement_hundredths: number | null;
+    period_end_date: string | null;
+    duration_days: number;
+    is_current: boolean;
+  };
+  Relationships: [];
+}
+
+export interface EventAttemptNumberStatisticsView {
+  Row: {
+    event_id: string;
+    attempt_number: number;
+    sample_count: number;
+    average_hundredths: number;
+    best_hundredths: number;
+    slowest_hundredths: number;
+  };
+  Relationships: [];
+}
+
+export interface VisiblePlayerBadgesView {
+  Row: PublicPlayerBadgesView["Row"] & {
+    avatar_path: string | null;
+    family_key: string | null;
+    requirement: string | null;
+    threshold: number | null;
+    sort_order: number;
+    is_secret: boolean;
+    source_event_name: string | null;
+    source_event_date: string | null;
+    tier_rank: number;
+    recipient_count: number;
+    regular_player_count: number;
+    rarity_percent: number | null;
+    source_attempt_number: number | null;
+    source_time_hundredths: number | null;
+    next_badge_key: string | null;
+    next_badge_name: string | null;
+    next_requirement: string | null;
+    next_tier: BadgeTier | null;
+    next_threshold: number | null;
+    current_progress: number | null;
+    is_special_event_badge: boolean;
+  };
+  Relationships: [];
+}
+
+export interface PlayerPrestigeStatisticsView {
+  Row: {
+    player_id: string;
+    pb_count: number;
+    largest_pb_improvement_hundredths: number | null;
+    average_pb_improvement_hundredths: number | null;
+    world_record_count: number;
+    world_record_days: number;
+    longest_world_record_days: number;
+    visible_badge_count: number;
+  };
+  Relationships: [];
+}
 
 export type EventPodiumView = {
   Row: {
@@ -171,6 +274,8 @@ export type PlayerPbProgressionView = {
     achieved_at: string;
     event_id: string | null;
     source_type: "attempt" | "historical_attempt";
+    source_priority: number;
+    source_order: number;
   };
   Relationships: [];
 };

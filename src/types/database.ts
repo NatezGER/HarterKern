@@ -16,6 +16,11 @@ import type {
   EventAttemptDetailsView,
   EventParticipantStatisticsView,
   PlayerEventHistoryView,
+  WorldRecordHistoryView,
+  PlayerPbHistoryView,
+  EventAttemptNumberStatisticsView,
+  VisiblePlayerBadgesView,
+  PlayerPrestigeStatisticsView,
 } from "@/types/pr7Foundation";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
@@ -225,6 +230,63 @@ export interface Database {
       event_attempt_details: EventAttemptDetailsView;
       event_participant_statistics: EventParticipantStatisticsView;
       player_event_history: PlayerEventHistoryView;
+      world_record_history: WorldRecordHistoryView;
+      player_pb_history: PlayerPbHistoryView;
+      event_attempt_number_statistics: EventAttemptNumberStatisticsView;
+      visible_player_badges: VisiblePlayerBadgesView;
+      event_badge_unlocks: VisiblePlayerBadgesView;
+      player_prestige_statistics: PlayerPrestigeStatisticsView;
+      prestige_activity_feed: {
+        Row: {
+          activity_id: string;
+          activity_type: "world_record" | "personal_best" | "badge" | "group_milestone";
+          occurred_at: string;
+          player_id: string | null;
+          display_name: string | null;
+          avatar_url: string | null;
+          avatar_path: string | null;
+          event_id: string | null;
+          event_name: string | null;
+          title: string;
+          description: string;
+          time_hundredths: number | null;
+          badge_key: string | null;
+          tier: BadgeTier | null;
+          priority: number;
+        };
+        Relationships: [];
+      };
+      group_milestone_progress: {
+        Row: {
+          milestone_key: string;
+          threshold: number;
+          name: string;
+          description: string;
+          sort_order: number;
+          current_count: number;
+          achieved: boolean;
+          source_attempt_id: string | null;
+          source_player_id: string | null;
+          source_player_name: string | null;
+          source_event_id: string | null;
+          source_event_name: string | null;
+          achieved_at: string | null;
+        };
+        Relationships: [];
+      };
+      badge_rarity_statistics: {
+        Row: {
+          badge_key: string;
+          name: string;
+          tier: BadgeTier;
+          tier_rank: number;
+          sort_order: number;
+          recipient_count: number;
+          regular_player_count: number;
+          rarity_percent: number | null;
+        };
+        Relationships: [];
+      };
       world_record_progression: {
         Row: {
           attempt_id: string;
@@ -235,6 +297,8 @@ export interface Database {
           event_id: string | null;
           historical_label: string | null;
           source_type: "attempt" | "historical_attempt";
+          source_priority: number;
+          source_order: number;
         };
         Relationships: [];
       };
