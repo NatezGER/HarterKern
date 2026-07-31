@@ -12,6 +12,8 @@ import { useDataPlatform } from "@/hooks/useDataPlatform";
 import { formatDate, formatTime } from "@/utils/format";
 import { WRProgression } from "@/components/dashboard/WRProgression";
 import { GroupMilestones } from "@/components/stats/GroupMilestones";
+import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
+import { badgeTierLabel } from "@/lib/badgePresentation";
 
 export function StatsPage() {
   const { data } = useEffectivePublicData();
@@ -35,8 +37,9 @@ export function StatsPage() {
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow="Prestige" title="Badge-Seltenheit" />
+          <p className="-mt-4 mb-5 max-w-3xl text-sm leading-6 text-white/45">Anteil der aktiven, dauerhaften Spieler, die diese Schwelle mindestens einmal erreicht haben. Höhere Stufen zählen deshalb auch bei den darunterliegenden Schwellen mit; Gäste und AK-Spieler sind ausgeschlossen.</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {data.badgeRarity.map((badge) => <article key={badge.key} className="panel p-5"><p className="text-[9px] font-black uppercase tracking-[0.18em] text-gold-300">{badge.tier}</p><h3 className="mt-2 font-display text-xl font-black uppercase">{badge.name}</h3><p className="mt-5 font-display text-3xl font-black">{badge.percent == null ? "—" : `${badge.percent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`}</p><p className="mt-1 text-xs text-white/35">{badge.recipients} von {badge.playerCount} Spielern</p></article>)}
+            {data.badgeRarity.map((badge) => <article key={badge.key} className="panel flex items-center gap-4 p-4"><PrestigeBadgeEmblem badge={{ badgeKey: badge.key, tier: badge.tier, name: badge.name }} size="sm" /><div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[0.18em] text-gold-300">{badgeTierLabel[badge.tier]}</p><h3 className="mt-1 truncate font-display text-lg font-black uppercase">{badge.name}</h3><p className="mt-2 font-display text-2xl font-black">{badge.percent == null ? "—" : `${badge.percent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`}</p><p className="mt-1 text-[10px] text-white/35">{badge.recipients} von {badge.playerCount} Spielern</p></div></article>)}
           </div>
         </section>
         <section id="events" className="mt-10 scroll-mt-28">

@@ -1,4 +1,3 @@
-import { Award, Crown, Gem, Medal, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { BadgeTooltip } from "@/components/common/BadgeTooltip";
@@ -6,6 +5,8 @@ import { cn } from "@/lib/cn";
 import type { CompactBadge } from "@/types/historyProfiles";
 import { formatDate } from "@/utils/format";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
+import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
+import { badgeTierLabel } from "@/lib/badgePresentation";
 
 const styles = {
   bronze: "border-orange-700/30 bg-orange-800/[0.06] text-orange-300",
@@ -15,16 +16,15 @@ const styles = {
   special: "border-violet-300/25 bg-violet-300/[0.06] text-violet-200",
 };
 
-const icons = { bronze: Medal, silver: Shield, gold: Crown, diamond: Gem, special: Award };
-
 export function BadgeGallery({ badges, compact = false, showPlayer = false }: { badges: CompactBadge[]; compact?: boolean; showPlayer?: boolean }) {
   return (
     <div className={cn("grid gap-3 sm:grid-cols-2 lg:grid-cols-3", compact && "lg:grid-cols-4")}>
       {badges.map((badge, index) => {
-        const Icon = icons[badge.tier];
-        return <AnimatedCard key={badge.key} delay={Math.min(index * 0.025, 0.2)} className={cn("border p-5", styles[badge.tier])}>
-          <div className="flex items-start justify-between gap-3"><span className="grid size-10 place-items-center rounded-full bg-black/25"><Icon className="size-5" /></span><span className="text-[9px] font-black uppercase tracking-[0.18em] opacity-65">{badge.tier}</span></div>
-          <BadgeTooltip badge={badge} className="mt-5 text-left font-display text-lg font-black uppercase" />
+        return <AnimatedCard key={badge.key} delay={Math.min(index * 0.025, 0.2)} className={cn("relative overflow-hidden border p-5 text-center", styles[badge.tier])}>
+          <span className="absolute inset-x-8 -top-16 h-32 rounded-full bg-current opacity-[0.06] blur-3xl" />
+          <div className="relative flex items-start justify-between gap-3"><span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-65">{badgeTierLabel[badge.tier]}</span>{badge.tier === "diamond" && <span className="rounded-full border border-current/20 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider">Ultimativ</span>}</div>
+          <PrestigeBadgeEmblem badge={{ badgeKey: badge.badgeKey, tier: badge.tier, category: badge.category, threshold: badge.threshold, name: badge.name }} size={compact ? "sm" : "md"} className="relative mx-auto mt-3" />
+          <BadgeTooltip badge={badge} className="mt-3 text-center font-display text-lg font-black uppercase" />
           {showPlayer && <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-white/60"><ProfileAvatar id={badge.playerId} name={badge.playerName} url={badge.playerAvatarUrl} className="size-7" /> {badge.playerName}</div>}
           <p className="mt-2 text-xs leading-relaxed text-white/40">{badge.requirement}</p>
           <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/30"><span>{formatDate(badge.awardedAt.slice(0, 10))}</span>{badge.sourceAttemptNumber && <span>Versuch {badge.sourceAttemptNumber}</span>}{badge.rarityPercent != null && <span>{badge.rarityPercent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} % Seltenheit</span>}</div>

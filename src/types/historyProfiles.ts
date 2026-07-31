@@ -54,6 +54,7 @@ export interface CompactBadge {
   category: string;
   familyKey: string | null;
   requirement: string;
+  threshold: number | null;
   recipientCount: number;
   regularPlayerCount: number;
   rarityPercent: number | null;

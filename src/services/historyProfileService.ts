@@ -13,12 +13,13 @@ export async function getAttemptBadgeUnlocks(
   playerName: string,
 ): Promise<BadgeUnlockCelebration[]> {
   const { data, error } = await getSupabase().from("public_player_badges")
-    .select("award_key,name,tier,description")
+    .select("award_key,badge_key,name,tier,description")
     .eq("source_attempt_id", attemptId)
     .order("awarded_at");
   if (error) throw error;
   return data.map((row) => ({
     key: row.award_key,
+    badgeKey: row.badge_key,
     name: row.name,
     tier: row.tier,
     requirement: row.description,
@@ -91,6 +92,7 @@ function mapBadge(row: {
   next_tier: CompactBadge["tier"] | null;
   next_threshold: number | null;
   current_progress: number | null;
+  threshold: number | null;
 }): CompactBadge {
   return {
     key: row.award_key,
@@ -106,6 +108,7 @@ function mapBadge(row: {
     category: row.category,
     familyKey: row.family_key,
     requirement: row.requirement ?? row.description,
+    threshold: row.threshold,
     recipientCount: Number(row.recipient_count),
     regularPlayerCount: Number(row.regular_player_count),
     rarityPercent: row.rarity_percent,

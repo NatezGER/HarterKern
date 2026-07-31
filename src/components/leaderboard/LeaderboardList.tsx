@@ -16,7 +16,7 @@ export function LeaderboardList({ entries }: { entries: ReturnTypeRankedPlayers 
           key={player.id}
           to={`/player/${player.id}`}
           className={cn(
-            "group grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-2xl border px-4 py-4 transition duration-300 sm:grid-cols-[3rem_1fr_8rem_7rem_6rem] sm:px-6",
+            "group grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-2xl border px-4 py-4 transition duration-300 sm:grid-cols-[3rem_1fr_7rem_7rem_7rem_6rem] sm:px-6",
             rank <= 3
               ? "border-gold-400/20 bg-gradient-to-r from-gold-400/[0.08] to-transparent hover:border-gold-400/40"
               : rank <= 10
@@ -34,6 +34,10 @@ export function LeaderboardList({ entries }: { entries: ReturnTypeRankedPlayers 
             </div>
           </div>
           <p className="hidden text-xs text-white/35 sm:block">{formatDate(recordDate)}</p>
+          <div className="hidden text-right sm:block">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-white/25">Gültig</p>
+            <p className="mt-1 font-display text-lg font-bold text-white/60">{player.validAttempts.toLocaleString("de-DE")}</p>
+          </div>
           <div className="hidden text-right sm:block">
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/25">Ø Zeit</p>
             <p className="mt-1 font-display text-lg font-bold text-white/60">{formatTime(player.average)}</p>

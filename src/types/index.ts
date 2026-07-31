@@ -101,6 +101,13 @@ export interface Event {
   fastest: number;
   average: number;
   winnerNames: string[];
+  podium?: Array<{
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+    rank: number;
+    time: number;
+  }>;
   status: "active" | "closed";
 }
 

@@ -9,6 +9,7 @@ import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { DataState } from "@/components/common/DataState";
 import { PrestigeActivityFeed } from "@/components/dashboard/PrestigeActivityFeed";
+import { LatestEventCard } from "@/components/dashboard/LatestEventCard";
 
 export function DashboardPage() {
   return (
@@ -24,6 +25,7 @@ export function DashboardPage() {
             </AnimatedCard>
           </div>
           <HallOfFamePreview />
+          <LatestEventCard />
           <DailyBestCards />
           <WRProgression />
           <div className="grid gap-6 xl:grid-cols-2">

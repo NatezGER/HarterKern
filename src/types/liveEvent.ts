@@ -124,6 +124,7 @@ export interface RecordCelebration {
 
 export interface BadgeUnlockCelebration {
   key: string;
+  badgeKey: string;
   name: string;
   tier: "bronze" | "silver" | "gold" | "diamond" | "special";
   requirement: string;

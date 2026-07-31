@@ -1,5 +1,6 @@
 import { AccessibleTooltip } from "@/components/common/AccessibleTooltip";
 import type { CompactBadge } from "@/types/historyProfiles";
+import { badgeTierLabel } from "@/lib/badgePresentation";
 
 export function BadgeTooltip({
   badge,
@@ -21,7 +22,7 @@ export function BadgeTooltip({
       : "";
   return (
     <AccessibleTooltip
-      label={`${badge.name} · ${badge.tier}`}
+      label={`${badge.name} · ${badgeTierLabel[badge.tier]}`}
       description={`Freischaltbedingung: ${badge.requirement}. Freigeschaltet am ${new Date(badge.awardedAt).toLocaleDateString("de-DE")}.${source} Seltenheit: ${badge.rarityPercent == null ? "noch nicht berechenbar" : `${badge.rarityPercent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} % der Spieler`}.${next}`}
       className={className}
     />
