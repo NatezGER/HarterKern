@@ -122,6 +122,14 @@ export interface RecordCelebration {
   previousTime?: number;
 }
 
+export interface BadgeUnlockCelebration {
+  key: string;
+  name: string;
+  tier: "bronze" | "silver" | "gold" | "diamond" | "special";
+  requirement: string;
+  playerName: string;
+}
+
 export interface AttemptMilestone {
   isPersonalBest: boolean;
   isWorldRecord: boolean;
