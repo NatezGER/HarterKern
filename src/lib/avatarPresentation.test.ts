@@ -24,4 +24,27 @@ describe("avatar presentation", () => {
     expect(getAvatarImageClass("roster")).toContain("center_24%");
     expect(getAvatarImageClass("timeline")).toContain("center_28%");
   });
+
+  it("keeps mobile framing and only tightens known full-body portraits on desktop", () => {
+    const fipsi = getAvatarImageClass("roster", "11000000-0000-0000-0000-000000000001");
+    const paul = getAvatarImageClass("podium", "11000000-0000-0000-0000-000000000002");
+    const lars = getAvatarImageClass("profile", "11000000-0000-0000-0000-000000000003");
+
+    expect(fipsi).toContain("object-[center_24%]");
+    expect(fipsi).toContain("sm:scale-[1.2]");
+    expect(paul).toContain("object-[center_24%]");
+    expect(paul).toContain("sm:object-[center_16%]");
+    expect(lars).toContain("object-[center_20%]");
+    expect(lars).toContain("sm:scale-[1.16]");
+  });
+
+  it("does not alter players whose portrait framing is already suitable", () => {
+    const leif = getAvatarImageClass("podium", "11000000-0000-0000-0000-000000000007");
+    const lonzo = getAvatarImageClass("roster", "11000000-0000-0000-0000-000000000008");
+
+    expect(leif).toBe(getAvatarImageClass("podium"));
+    expect(lonzo).toBe(getAvatarImageClass("roster"));
+    expect(leif).not.toContain("sm:scale");
+    expect(lonzo).not.toContain("sm:scale");
+  });
 });

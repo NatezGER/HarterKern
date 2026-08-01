@@ -9,8 +9,14 @@ const positions: Record<AvatarImageVariant, string> = {
   live: "object-[center_24%]",
 };
 
-export function getAvatarImageClass(variant: AvatarImageVariant) {
-  return `block size-full min-h-0 min-w-0 max-h-full max-w-full rounded-full object-cover ${positions[variant]}`;
+const desktopPortraitOverrides: Record<string, string> = {
+  "11000000-0000-0000-0000-000000000001": "sm:scale-[1.2] sm:object-[center_17%]",
+  "11000000-0000-0000-0000-000000000002": "sm:scale-[1.2] sm:object-[center_16%]",
+  "11000000-0000-0000-0000-000000000003": "sm:scale-[1.16] sm:object-[center_16%]",
+};
+
+export function getAvatarImageClass(variant: AvatarImageVariant, playerId?: string) {
+  return `block size-full min-h-0 min-w-0 max-h-full max-w-full rounded-full object-cover ${positions[variant]} ${playerId ? desktopPortraitOverrides[playerId] ?? "" : ""}`.trim();
 }
 
 export const getOriginalAvatarSource = (url: string) => url;

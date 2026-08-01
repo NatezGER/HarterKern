@@ -94,7 +94,7 @@ export function PlayerProfilePage() {
 
       <section>
         <SectionHeading eyebrow="Karrierewerte" title="Statistik" />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.map(({ label, value, icon: Icon }, index) => <AnimatedCard key={label} delay={index * 0.04} className="p-5"><Icon className="size-5 text-gold-400" /><p className="mt-6 text-[9px] font-bold uppercase tracking-[0.18em] text-white/30">{label}</p><p className="mt-1 font-display text-3xl font-black">{value}</p></AnimatedCard>)}</div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">{metrics.map(({ label, value, icon: Icon }, index) => <AnimatedCard key={label} delay={index * 0.04} className="min-w-0 p-4 last:col-span-2 sm:p-5 xl:last:col-span-1"><Icon className="size-5 text-gold-400" /><p className="mt-4 break-words text-[9px] font-bold uppercase tracking-[0.14em] text-white/30 sm:mt-6 sm:tracking-[0.18em]">{label}</p><p className="mt-1 break-words font-display text-2xl font-black sm:text-3xl">{value}</p></AnimatedCard>)}</div>
       </section>
 
       <section>
