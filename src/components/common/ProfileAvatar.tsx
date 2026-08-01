@@ -16,7 +16,7 @@ export function ProfileAvatar({
     <span
       aria-label={`Profilbild von ${name}`}
       className={cn(
-        "grid size-12 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br font-display font-black text-black ring-2 ring-white/10",
+        "relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br font-display font-black text-black ring-2 ring-white/10",
         getAvatarGradient(id),
         className,
       )}
@@ -26,7 +26,7 @@ export function ProfileAvatar({
             src={url}
             alt=""
             loading="lazy"
-            className="size-full rounded-full object-cover object-center"
+            className="absolute inset-0 block size-full rounded-full object-cover object-center"
           />
         : getInitials(name)}
     </span>
