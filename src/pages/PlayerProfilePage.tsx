@@ -19,12 +19,14 @@ import { getRecordAt, selectRecordsForPeriod } from "@/lib/recordComparison";
 import { PodiumMedal } from "@/components/common/PodiumMedal";
 import { getPodiumCounters } from "@/lib/podiumCounters";
 import { useState } from "react";
+import { PersonalBestDetailsToggle } from "@/components/progression/PersonalBestDetailsToggle";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
 export function PlayerProfilePage() {
   const { id = "" } = useParams();
   const [badgesExpanded, setBadgesExpanded] = useState(false);
+  const [pbDetailsExpanded, setPbDetailsExpanded] = useState(false);
   const { data: player, loading, error } = usePlayerProfileDetail(id);
   const { data: publicData } = useEffectivePublicData();
   if (loading) return <DataState><div /></DataState>;
@@ -84,7 +86,8 @@ export function PlayerProfilePage() {
 
       <section className="panel p-5 sm:p-8">
         <SectionHeading eyebrow="Persönliche Bestmarken" title="PB Progression" />
-        <ProgressionTimeline points={personalProgression} comparisonPoints={comparisonProgression} emptyLabel="Noch keine persönliche Bestzeit vorhanden." />
+        <ProgressionTimeline points={personalProgression} comparisonPoints={comparisonProgression} historyDisclosure={{ id: "personal-best-history", expanded: pbDetailsExpanded }} emptyLabel="Noch keine persönliche Bestzeit vorhanden." />
+        {personalProgression.length > 0 && <PersonalBestDetailsToggle expanded={pbDetailsExpanded} controls="personal-best-history" onToggle={() => setPbDetailsExpanded((value) => !value)} />}
       </section>
 
       <section className="panel p-6 sm:p-8">

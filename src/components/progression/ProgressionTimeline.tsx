@@ -30,13 +30,14 @@ export interface TimelinePoint {
 
 type PlottedPoint = TimelinePoint & { x: number; y: number; series: "primary" | "comparison" };
 
-export function ProgressionTimeline({ points, comparisonPoints = [], domainStartAt, domainEndAt, emptyLabel = "Noch keine Progression vorhanden.", showHistory = true }: {
+export function ProgressionTimeline({ points, comparisonPoints = [], domainStartAt, domainEndAt, emptyLabel = "Noch keine Progression vorhanden.", showHistory = true, historyDisclosure }: {
   points: TimelinePoint[];
   comparisonPoints?: TimelinePoint[];
   domainStartAt?: string;
   domainEndAt?: string;
   emptyLabel?: string;
   showHistory?: boolean;
+  historyDisclosure?: { id: string; expanded: boolean };
 }) {
   const [showComparison, setShowComparison] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -71,7 +72,7 @@ export function ProgressionTimeline({ points, comparisonPoints = [], domainStart
         <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.16em] text-white/45"><span className="flex items-center gap-2"><i className="h-0.5 w-7 bg-gold-400" /> PB</span>{showComparison && <span className="flex items-center gap-2"><i className="h-0.5 w-7 border-t-2 border-dashed border-cyan-300" /> Weltrekord</span>}</div>
         <Button type="button" variant={showComparison ? "default" : "outline"} size="sm" onClick={() => { setShowComparison((value) => !value); setPinnedId(null); }}>{showComparison ? "Nur meine Progression" : "Mit Weltrekord vergleichen"}</Button>
       </div>}
-      <div className="overflow-x-auto pb-2">
+      <div data-progression-chart className="overflow-x-auto pb-2">
         <div className="relative h-64 min-w-[42rem] overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20 sm:h-72 sm:min-w-[52rem]">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:12.5%_25%]" />
           <TimelinePath points={comparison} className="stroke-cyan-300/70" dashed wide />
@@ -98,9 +99,23 @@ export function ProgressionTimeline({ points, comparisonPoints = [], domainStart
         </div>
       </div>
       <TimelineDetail point={active} pinned={Boolean(pinnedId)} />
-      {showHistory && <TimelineHistory points={points} />}
+      {showHistory && <ProgressionHistory points={points} disclosure={historyDisclosure} />}
     </div>
   );
+}
+
+function ProgressionHistory({ points, disclosure }: { points: TimelinePoint[]; disclosure?: { id: string; expanded: boolean } }) {
+  if (!disclosure) return <TimelineHistory points={points} />;
+  return <div
+    id={disclosure.id}
+    data-progression-history={disclosure.expanded ? "expanded" : "collapsed"}
+    className={cn(
+      "grid transition-[grid-template-rows,opacity] duration-200 sm:grid-rows-[1fr] sm:opacity-100",
+      disclosure.expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+    )}
+  >
+    <div className="overflow-hidden"><TimelineHistory points={points} /></div>
+  </div>;
 }
 
 function TimelinePath({ points, className, dashed = false, wide = false }: { points: PlottedPoint[]; className: string; dashed?: boolean; wide?: boolean }) {
