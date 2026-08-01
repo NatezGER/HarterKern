@@ -58,6 +58,15 @@ Depends on PR 7A and PR 7B.
 - dashboard activity feed, recent PB/WR/badge/event summaries and streaks
 - final visual and responsive polish
 
+## PR 8 product outlook — player comparison
+
+At the end of a player profile, a future PR may allow selecting a second player
+for a direct two-column comparison. Candidate values include personal best,
+average, valid attempts, podium finishes, DNF, event participations, badges,
+PB improvements, world records, performance by attempt number, progression
+curves, shared events and the direct placement record in those events. This is
+planning documentation only; PR 7C does not implement the comparison.
+
 ## Central domain decisions
 
 - Deleted events are excluded in database policies and views. UI filtering is
