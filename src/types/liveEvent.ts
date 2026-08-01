@@ -75,6 +75,7 @@ export interface LiveStanding {
   player: LiveParticipant;
   rank: number | null;
   bestTime: number | null;
+  averageTime: number | null;
   attempts: number;
   lastAttempt?: LiveAttempt;
 }

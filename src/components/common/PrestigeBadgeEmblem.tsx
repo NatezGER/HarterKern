@@ -21,19 +21,22 @@ export function PrestigeBadgeEmblem({ badge, size = "md", className }: {
   const mark = getBadgeCenterMark(badge);
   const rotations = badge.tier === "bronze" ? [0, 90] : badge.tier === "silver" ? [0, 45, 90] : badge.tier === "gold" ? [0, 45, 90, 135] : badge.tier === "diamond" ? [0, 30, 60, 90, 120, 150] : [0, 36, 72, 108, 144];
   return (
-    <div aria-label={`${badgeTierLabel[badge.tier]}-Badge ${badge.name ?? ""}`} className={cn("relative isolate shrink-0", size === "sm" ? "size-16" : size === "md" ? "size-24" : size === "lg" ? "size-32" : "size-40", badge.tier === "diamond" && "scale-105", className)}>
+    <div aria-label={`${badgeTierLabel[badge.tier]}-Badge ${badge.name ?? ""}`} className={cn("relative isolate shrink-0 drop-shadow-[0_8px_14px_rgba(0,0,0,.5)]", size === "sm" ? "size-16" : size === "md" ? "size-24" : size === "lg" ? "size-24 sm:size-32" : "size-28 sm:size-40", badge.tier === "diamond" && "scale-105", className)}>
       <span className={cn("absolute inset-[14%] rounded-full blur-xl opacity-70", style.glow)} />
       {rotations.map((rotation) => <span key={rotation} className={cn("absolute rounded-[22%] bg-gradient-to-br opacity-90", badge.tier === "bronze" ? "inset-[14%]" : badge.tier === "diamond" ? "inset-[2%]" : "inset-[8%]", style.shell)} style={{ transform: `rotate(${rotation}deg)`, clipPath: "polygon(50% 0, 63% 32%, 100% 50%, 63% 68%, 50% 100%, 37% 68%, 0 50%, 37% 32%)" }} />)}
+      <span className="absolute inset-[10%] rounded-full border border-white/35 shadow-[inset_0_2px_5px_rgba(255,255,255,.35),inset_0_-5px_10px_rgba(0,0,0,.45)]" />
       <span className={cn("absolute inset-[17%] rounded-full bg-gradient-to-br p-[3px]", style.shell, style.glow)}>
         <span className="grid size-full place-items-center rounded-full border border-white/45 bg-[#11130f] p-[5px]">
           <span className={cn("relative grid size-full place-items-center overflow-hidden rounded-full bg-gradient-to-br text-white", style.inner)}>
             <span className="absolute inset-x-1 top-1 h-[38%] rounded-full bg-white/35 blur-[1px]" />
             <Icon className="absolute size-[72%] opacity-[0.13]" />
-            <strong className={cn("relative font-display font-black tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,.65)]", size === "sm" ? "text-sm" : size === "md" ? "text-lg" : size === "lg" ? "text-2xl" : "text-3xl")}>{mark}</strong>
+            <span className="absolute left-[18%] top-[14%] size-[12%] rounded-full bg-white/85 blur-[1px]" />
+            <strong className={cn("relative font-display font-black tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,.65)]", size === "sm" ? "text-sm" : size === "md" ? "text-lg" : size === "lg" ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl")}>{mark}</strong>
           </span>
         </span>
       </span>
       <span className={cn("absolute bottom-[5%] left-1/2 h-[22%] w-[38%] -translate-x-1/2 bg-gradient-to-b", style.shell)} style={{ clipPath: "polygon(0 0, 100% 0, 78% 100%, 50% 72%, 22% 100%)" }} />
+      <span className="absolute inset-[4%] rounded-full border border-white/10" />
     </div>
   );
 }

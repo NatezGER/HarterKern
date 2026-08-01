@@ -13,10 +13,10 @@ import { LatestEventCard } from "@/components/dashboard/LatestEventCard";
 
 export function DashboardPage() {
   return (
-    <div className="space-y-12 lg:space-y-16">
+    <div className="space-y-8 sm:space-y-12 lg:space-y-16">
       <HeroCard />
       <DataState>
-        <div className="space-y-12 lg:space-y-16">
+        <div className="space-y-8 sm:space-y-12 lg:space-y-16">
           <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
             <WorldRecordCard />
             <AnimatedCard className="px-4 pt-6 sm:px-8" hover={false}>
@@ -26,7 +26,7 @@ export function DashboardPage() {
           </div>
           <HallOfFamePreview />
           <LatestEventCard />
-          <DailyBestCards />
+          <div className="hidden sm:block"><DailyBestCards /></div>
           <WRProgression />
           <div className="grid gap-6 xl:grid-cols-2">
             <PrestigeActivityFeed />

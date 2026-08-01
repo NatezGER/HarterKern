@@ -7,8 +7,8 @@ const colors = {
 } as const;
 
 export function PodiumMedal({ rank, size = "md", className }: { rank: 1 | 2 | 3; size?: "sm" | "md" | "lg"; className?: string }) {
-  return <span aria-label={`Platz ${rank}`} className={cn("relative isolate inline-grid shrink-0 place-items-center", size === "sm" ? "size-9" : size === "lg" ? "size-20" : "size-14", className)}>
+  return <span aria-label={`Platz ${rank}`} className={cn("relative isolate inline-grid shrink-0 place-items-center", size === "sm" ? "size-9" : size === "lg" ? "size-12 sm:size-20" : "size-10 sm:size-14", className)}>
     {[0, 45, 90, 135].slice(0, rank === 1 ? 4 : rank === 2 ? 3 : 2).map((rotation) => <i key={rotation} className={cn("absolute inset-[10%] bg-gradient-to-br", colors[rank])} style={{ transform: `rotate(${rotation}deg)`, clipPath: "polygon(50% 0, 63% 34%, 100% 50%, 63% 66%, 50% 100%, 37% 66%, 0 50%, 37% 34%)" }} />)}
-    <i className={cn("absolute inset-[17%] rounded-full bg-gradient-to-br p-[2px]", colors[rank])}><i className="grid size-full place-items-center rounded-full border border-white/50 bg-inherit"><strong className={cn("relative font-display font-black", size === "sm" ? "text-sm" : size === "lg" ? "text-3xl" : "text-xl")}>{rank}</strong></i></i>
+    <i className={cn("absolute inset-[17%] rounded-full bg-gradient-to-br p-[2px]", colors[rank])}><i className="grid size-full place-items-center rounded-full border border-white/50 bg-inherit"><strong className={cn("relative font-display font-black", size === "sm" ? "text-sm" : size === "lg" ? "text-lg sm:text-3xl" : "text-base sm:text-xl")}>{rank}</strong></i></i>
   </span>;
 }

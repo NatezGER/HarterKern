@@ -56,28 +56,28 @@ export function PlayerProfilePage() {
     return { id: record.id, playerId: record.playerId, playerName: holder?.name ?? "Unbekannt", avatarUrl: holder?.avatarUrl ?? null, timeHundredths: record.timeHundredths, achievedAt: record.achievedAt, achievedDate: record.date, axisAt: record.axisAt, eventId: record.eventId, sourceLabel: record.location, improvementHundredths: record.improvementHundredths, durationDays: record.durationDays, isCurrent: record.isCurrent, hasExactTime: record.sourceType === "attempt" };
   }) : [];
   return (
-    <div className="space-y-10">
+    <div className="space-y-7 sm:space-y-10">
       <Button asChild variant="ghost" size="sm"><Link to="/players"><ArrowLeft className="size-4" /> Zurück zu Spielern</Link></Button>
-      <section className="panel relative overflow-hidden p-6 sm:p-10">
+      <section className="panel relative overflow-hidden p-5 sm:p-10">
         <div className="absolute -right-24 -top-36 size-96 rounded-full bg-gold-400/10 blur-[100px]" />
         <div className="relative flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-            <ProfileAvatar id={player.id} name={player.name} url={player.avatarUrl} className="size-28 ring-gold-400/35 sm:size-32" />
+          <div className="flex w-full flex-col items-center gap-5 text-center sm:w-auto sm:flex-row sm:items-center sm:text-left">
+            <ProfileAvatar id={player.id} name={player.name} url={player.avatarUrl} className="size-24 ring-gold-400/35 sm:size-32" />
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold-400">{player.rank ? `Weltrang #${player.rank}` : "Noch ohne Rang"}</p>
               <h1 className="display-title mt-2 break-words text-5xl sm:text-7xl">{player.name}</h1>
               <p className="mt-2 text-sm text-white/40">{player.isAk ? "Außer Konkurrenz" : "Harter Kern · Aktiver Athlet"}</p>
             </div>
           </div>
-          <div className="text-left md:text-right"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Personal Best</p><p className="gold-text font-display text-6xl font-black">{displayTime(player.personalBestHundredths)}</p></div>
+          <div className="w-full text-center sm:w-auto sm:text-left md:text-right"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Personal Best</p><p className="gold-text font-display text-5xl font-black sm:text-6xl">{displayTime(player.personalBestHundredths)}</p></div>
         </div>
       </section>
 
       {player.badges.length > 0 && <section><SectionHeading eyebrow="Verdient" title="Badge-Galerie" /><BadgeGallery badges={player.badges} featured /></section>}
 
-      <section className="panel p-6 sm:p-8">
+      <section className="panel p-5 sm:p-8">
         <SectionHeading eyebrow="Offizielle Events" title="Podiumsmedaillen" />
-        <div className="grid gap-4 sm:grid-cols-3">{getPodiumCounters(player).map((counter) => <article key={counter.rank} className="flex items-center gap-5 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5"><PodiumMedal rank={counter.rank} size="lg" /><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">{counter.label} · Platz {counter.rank}</p><p className="mt-1 font-display text-4xl font-black">{counter.count}</p></div></article>)}</div>
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">{getPodiumCounters(player).map((counter) => <article key={counter.rank} className="flex flex-col items-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3 text-center sm:flex-row sm:gap-5 sm:p-5 sm:text-left"><PodiumMedal rank={counter.rank} size="lg" /><div><p className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[10px] sm:tracking-[0.18em]">{counter.label} · Platz {counter.rank}</p><p className="mt-1 font-display text-3xl font-black sm:text-4xl">{counter.count}</p></div></article>)}</div>
       </section>
 
       <section className="panel p-5 sm:p-8">

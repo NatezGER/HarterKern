@@ -58,6 +58,10 @@ export function ProgressionTimeline({ points, comparisonPoints = [], domainStart
   if (!points.length) return <p className="py-14 text-center text-sm text-white/35">{emptyLabel}</p>;
   const primary = plotted.filter(({ series }) => series === "primary");
   const comparison = plotted.filter(({ series }) => series === "comparison");
+  const visibleTimes = plotted.map(({ timeHundredths }) => timeHundredths);
+  const fastestTime = Math.min(...visibleTimes);
+  const slowestTime = Math.max(...visibleTimes);
+  const orderedDates = [...points].sort((a, b) => a.achievedAt.localeCompare(b.achievedAt));
   const activeKey = pinnedId ?? hoveredId;
   const active = plotted.find((point) => `${point.series}:${point.id}` === activeKey) ?? null;
   return (
@@ -67,7 +71,7 @@ export function ProgressionTimeline({ points, comparisonPoints = [], domainStart
         <Button type="button" variant={showComparison ? "default" : "outline"} size="sm" onClick={() => { setShowComparison((value) => !value); setPinnedId(null); }}>{showComparison ? "Nur meine Progression" : "Mit Weltrekord vergleichen"}</Button>
       </div>}
       <div className="overflow-x-auto pb-2">
-        <div className="relative h-72 min-w-[52rem] overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20">
+        <div className="relative h-64 min-w-[42rem] overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20 sm:h-72 sm:min-w-[52rem]">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:12.5%_25%]" />
           <TimelinePath points={comparison} className="stroke-cyan-300/70" dashed wide />
           <TimelinePath points={primary} className="stroke-gold-400" />
@@ -80,12 +84,15 @@ export function ProgressionTimeline({ points, comparisonPoints = [], domainStart
             const previous = seriesPoints[seriesIndex - 1];
             const key = `${point.series}:${point.id}`;
             return <div key={key}>
-              {point.series === "primary" && width >= 2.5 && <span className="absolute -translate-x-1/2 whitespace-nowrap rounded-md bg-[#171711]/90 px-1.5 py-0.5 text-[9px] font-bold text-white/55" style={{ left: `${point.x + width / 2}%`, top: `${Math.max(2, point.y - (seriesIndex % 2 === 0 ? 13 : 19))}%` }}>{point.durationLabel ?? (point.isCurrent ? formatCurrentRecordDuration(point.durationDays) : formatRecordDuration(point.durationDays))}</span>}
-              {point.series === "primary" && previous && point.improvementHundredths != null && <span className="absolute -translate-x-full whitespace-nowrap rounded-md border border-gold-400/15 bg-[#171711]/95 px-1.5 py-0.5 text-[9px] font-black text-gold-300" style={{ left: `${Math.max(8, point.x - 1)}%`, top: `${Math.max(8, Math.min(86, Math.min(previous.y, point.y) + Math.abs(point.y - previous.y) / 2 + 2))}%` }}>−{formatTime(point.improvementHundredths / 100)}</span>}
+              {point.series === "primary" && width >= 2.5 && <span className="absolute hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-[#171711]/90 px-1.5 py-0.5 text-[9px] font-bold text-white/55 sm:block" style={{ left: `${point.x + width / 2}%`, top: `${Math.max(2, point.y - (seriesIndex % 2 === 0 ? 13 : 19))}%` }}>{point.durationLabel ?? (point.isCurrent ? formatCurrentRecordDuration(point.durationDays) : formatRecordDuration(point.durationDays))}</span>}
+              {point.series === "primary" && previous && point.improvementHundredths != null && <span className="absolute hidden -translate-x-full whitespace-nowrap rounded-md border border-gold-400/15 bg-[#171711]/95 px-1.5 py-0.5 text-[9px] font-black text-gold-300 sm:block" style={{ left: `${Math.max(8, point.x - 1)}%`, top: `${Math.max(8, Math.min(86, Math.min(previous.y, point.y) + Math.abs(point.y - previous.y) / 2 + 2))}%` }}>−{formatTime(point.improvementHundredths / 100)}</span>}
               <TimelineNode point={point} active={activeKey === key} onHover={setHoveredId} onPin={() => setPinnedId((value) => value === key ? null : key)} />
             </div>;
           })}
-          <span className="absolute bottom-3 left-4 text-[9px] font-bold uppercase tracking-[0.2em] text-white/25">Echte Zeitachse</span>
+          <span className="absolute left-3 top-3 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-bold text-white/30">{formatTime(slowestTime / 100)}</span>
+          <span className="absolute bottom-8 left-3 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-bold text-white/30">{formatTime(fastestTime / 100)}</span>
+          <span className="absolute bottom-2 left-3 text-[8px] font-bold uppercase tracking-[0.14em] text-white/25">{formatDate(orderedDates[0].achievedDate)}</span>
+          <span className="absolute bottom-2 right-3 text-[8px] font-bold uppercase tracking-[0.14em] text-white/25">{formatDate(orderedDates.at(-1)?.achievedDate ?? orderedDates[0].achievedDate)}</span>
           <TrendingDown className="absolute right-4 top-4 size-5 text-gold-400/40" />
         </div>
       </div>
@@ -103,14 +110,14 @@ function TimelinePath({ points, className, dashed = false, wide = false }: { poi
 
 function TimelineNode({ point, active, onHover, onPin }: { point: PlottedPoint; active: boolean; onHover: (id: string | null) => void; onPin: () => void }) {
   const key = `${point.series}:${point.id}`;
-  return <button type="button" aria-label={`${point.playerName ?? point.sourceLabel}: ${formatTime(point.timeHundredths / 100)}, ${formatDate(point.achievedDate)}`} aria-pressed={active} onMouseEnter={() => onHover(key)} onMouseLeave={() => onHover(null)} onFocus={() => onHover(key)} onBlur={() => onHover(null)} onClick={onPin} className={cn("group absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white", point.series === "comparison" ? "size-9" : "size-11", point.isCurrent && "ring-2 ring-gold-300 ring-offset-2 ring-offset-[#11130f]")} style={{ left: `${point.x}%`, top: `${point.y}%`, marginTop: point.series === "comparison" ? -18 : 0 }}>
+  return <button type="button" aria-label={`${point.playerName ?? point.sourceLabel}: ${formatTime(point.timeHundredths / 100)}, ${formatDate(point.achievedDate)}`} aria-pressed={active} onMouseEnter={() => onHover(key)} onMouseLeave={() => onHover(null)} onFocus={() => onHover(key)} onBlur={() => onHover(null)} onClick={onPin} className={cn("group absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white", point.series === "comparison" ? "size-7 sm:size-9" : "size-8 sm:size-11", point.isCurrent && "ring-2 ring-gold-300 ring-offset-2 ring-offset-[#11130f]")} style={{ left: `${point.x}%`, top: `${point.y}%`, marginTop: point.series === "comparison" ? -14 : 0 }}>
     <ProfileAvatar id={point.playerId ?? point.id} name={point.playerName ?? point.sourceLabel} url={point.avatarUrl ?? null} className={cn("size-full border-2 shadow-lg", point.series === "comparison" ? "border-cyan-200/80" : "border-gold-300/80")} />
-    <span className={cn("pointer-events-none absolute left-1/2 top-[calc(100%+0.25rem)] -translate-x-1/2 whitespace-nowrap rounded bg-[#10120f]/95 px-1.5 py-0.5 font-display text-[10px] font-black", point.series === "comparison" ? "text-cyan-200" : "text-gold-200")}>{formatTime(point.timeHundredths / 100)}{point.series === "primary" && point.playerName ? <small className="ml-1 font-sans text-[8px] font-semibold text-white/55">{point.playerName}</small> : null}</span>
+    <span className={cn("pointer-events-none absolute left-1/2 top-[calc(100%+0.2rem)] -translate-x-1/2 whitespace-nowrap rounded bg-[#10120f]/95 px-1.5 py-0.5 font-display text-[9px] font-black sm:text-[10px]", point.series === "comparison" ? "text-cyan-200" : "text-gold-200")}>{formatTime(point.timeHundredths / 100)}{point.series === "primary" && point.playerName ? <small className="ml-1 hidden font-sans text-[8px] font-semibold text-white/55 sm:inline">{point.playerName}</small> : null}</span>
   </button>;
 }
 
 function TimelineDetail({ point, pinned }: { point: PlottedPoint | null; pinned: boolean }) {
-  if (!point) return <p className="min-h-24 rounded-2xl border border-dashed border-white/[0.07] px-5 py-8 text-center text-xs text-white/30">Knoten überfahren oder fokussieren, um Details zu sehen.</p>;
+  if (!point) return <p className="min-h-20 rounded-2xl border border-dashed border-white/[0.07] px-4 py-6 text-center text-xs text-white/30 sm:min-h-24 sm:px-5 sm:py-8">Knoten antippen, überfahren oder fokussieren, um Details zu sehen.</p>;
   return <div role="status" className={cn("min-h-24 rounded-2xl border p-4", point.series === "comparison" ? "border-cyan-300/20 bg-cyan-300/[0.04]" : "border-gold-400/20 bg-gold-400/[0.04]")}>
     <div className="flex items-center gap-4"><ProfileAvatar id={point.playerId ?? point.id} name={point.playerName ?? point.sourceLabel} url={point.avatarUrl ?? null} className="size-12" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><strong className="font-display text-xl uppercase">{point.playerName ?? point.sourceLabel}</strong>{point.isCurrent && <span className="rounded-full bg-gold-400 px-2 py-0.5 text-[8px] font-black uppercase text-black">Aktuell</span>}{pinned && <span className="text-[9px] text-white/35">Fixiert</span>}</div><p className="mt-1 text-xs text-white/45">{formatTimelineMoment(point.achievedAt, point.achievedDate, Boolean(point.hasExactTime))} · {point.sourceLabel}{point.attemptNumber ? ` · Versuch ${point.attemptNumber}` : ""}</p></div><strong className="font-display text-3xl text-gold-300">{formatTime(point.timeHundredths / 100)}</strong></div>
     <div className="mt-3 flex flex-wrap gap-4 border-t border-white/[0.06] pt-3 text-xs text-white/45">

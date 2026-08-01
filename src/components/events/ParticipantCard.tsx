@@ -48,11 +48,15 @@ export function ParticipantCard({
 }) {
   return (
     <article className={cn(
-      "panel flex min-h-72 flex-col p-5 transition sm:p-6",
+      "panel flex min-h-36 flex-col p-3 transition md:min-h-72 md:p-6",
       saved && "border-emerald-400/40 shadow-[0_0_32px_rgba(52,211,153,.15)]",
     )}>
-      <Identity standing={standing} onAdd={onAdd} />
-      <div className="my-6 grid grid-cols-2 gap-3">
+      <button type="button" onClick={onAdd} className="flex min-h-28 flex-col items-center justify-center gap-3 rounded-2xl text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 md:hidden" aria-label={`Zeit für ${standing.player.name} erfassen`}>
+        <LiveAvatar player={standing.player} className="size-16" />
+        <span className="w-full truncate font-display text-lg font-black uppercase">{standing.player.name}</span>
+      </button>
+      <div className="hidden md:block"><Identity standing={standing} onAdd={onAdd} /></div>
+      <div className="my-6 hidden grid-cols-2 gap-3 md:grid">
         <Metric
           label={standing.player.kind === "guest" ? "Gast im Event" : "Persönliche Bestzeit"}
           value={standing.player.kind === "guest"
@@ -60,10 +64,10 @@ export function ParticipantCard({
             : formatTime(standing.player.personalBest)}
         />
         <Metric label="Eventbestzeit" value={formatTime(standing.bestTime ?? 0)} />
-        <Metric label="Status" value={standing.player.kind === "guest" ? "Gast" : "Permanent"} />
+        <Metric label="Event-Durchschnitt" value={formatTime(standing.averageTime ?? 0)} />
         <Metric label="Versuche" value={String(standing.attempts)} />
       </div>
-      <Button size="lg" onClick={onAdd} className="mt-auto h-14 w-full">
+      <Button size="lg" onClick={onAdd} className="mt-auto hidden h-14 w-full md:flex">
         <Plus className="size-5" /> Neue Zeit
       </Button>
     </article>

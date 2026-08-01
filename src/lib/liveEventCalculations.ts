@@ -14,6 +14,13 @@ const fastest = (attempts: LiveAttempt[]) => {
   return times.length ? Math.min(...times) : null;
 };
 
+const average = (attempts: LiveAttempt[]) => {
+  const times = attempts.flatMap((attempt) =>
+    attempt.result === "time" && attempt.timeSeconds != null ? [attempt.timeSeconds] : [],
+  );
+  return times.length ? times.reduce((sum, time) => sum + time, 0) / times.length : null;
+};
+
 export function createLiveAttempt(input: AttemptInput, id: string, now: string): LiveAttempt {
   return {
     id,
@@ -50,6 +57,9 @@ export function getLiveStandings(
       player,
       rank: null,
       bestTime: fastest(playerAttempts.filter((attempt) =>
+        player.kind === "guest" || !attempt.outOfCompetition,
+      )),
+      averageTime: average(playerAttempts.filter((attempt) =>
         player.kind === "guest" || !attempt.outOfCompetition,
       )),
       attempts: playerAttempts.length,

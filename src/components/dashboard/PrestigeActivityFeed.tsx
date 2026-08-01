@@ -5,6 +5,7 @@ import { ProfileAvatar } from "@/components/common/ProfileAvatar";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { formatDate, formatTime } from "@/utils/format";
+import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
 
 const icons = { world_record: Crown, personal_best: Gauge, badge: Award, group_milestone: Milestone };
 
@@ -20,7 +21,9 @@ export function PrestigeActivityFeed() {
             const Icon = icons[activity.type];
             const content = (
               <div className="flex items-start gap-3 py-4">
-                {activity.playerId && activity.playerName ? (
+                {activity.type === "badge" && activity.badgeKey && activity.tier ? (
+                  <PrestigeBadgeEmblem badge={{ badgeKey: activity.badgeKey, tier: activity.tier, name: activity.title }} size="sm" className="-m-2 scale-75" />
+                ) : activity.playerId && activity.playerName ? (
                   <ProfileAvatar id={activity.playerId} name={activity.playerName} url={activity.avatarUrl} className="size-10" />
                 ) : <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gold-400/10 text-gold-300"><Icon className="size-4" /></span>}
                 <div className="min-w-0 flex-1"><p className="font-bold text-white/85">{activity.title}</p><p className="mt-1 text-xs leading-relaxed text-white/40">{activity.description}</p><p className="mt-2 text-[10px] uppercase tracking-wider text-white/25">{formatDate(activity.occurredAt.slice(0, 10))}{activity.eventName ? ` · ${activity.eventName}` : ""}</p></div>

@@ -96,10 +96,9 @@ export function LiveEventPage() {
         </div>
       </section>
       <LiveLeaderboard standings={standings} />
-      <LiveParticipantManager />
       <section>
-        <h2 className="display-title mb-5 text-3xl">Teilnehmer</h2>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <h2 className="display-title mb-4 text-3xl sm:mb-5">Versuch hinzufügen</h2>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
           {entryStandings.map((standing) => (
             <ParticipantCard
               key={standing.player.id}
@@ -110,6 +109,7 @@ export function LiveEventPage() {
           ))}
         </div>
       </section>
+      <LiveParticipantManager />
       <AttemptHistory event={activeEvent} attempts={attempts} />
       <TimeEntrySheet standing={selected} onClose={() => setSelected(null)} onSaved={(id, result) => setSaved({ id, result })} />
       {saved?.result === "dns" && (

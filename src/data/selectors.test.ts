@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getRankedPlayers } from "@/data/selectors";
+import { getRankedPlayers, getRosterPlayers } from "@/data/selectors";
 import type { LeaderboardEntry, Player } from "@/types";
 
 const createPlayer = (
@@ -65,5 +65,30 @@ describe("getRankedPlayers", () => {
     const leaderboard = [entry("ak", 1), entry("regular", 2)];
 
     expect(getRankedPlayers(players, leaderboard).map(({ player }) => player.id)).toEqual(["regular"]);
+  });
+});
+
+describe("getRosterPlayers", () => {
+  it("sorts by valid attempts descending and then alphabetically", () => {
+    const anton = { ...createPlayer("anton", 2.5, 3), name: "Anton", validAttempts: 8 };
+    const zora = { ...createPlayer("zora", 2.4, 3), name: "Zora", validAttempts: 8 };
+    const ben = { ...createPlayer("ben", 2.3, 3), name: "Ben", validAttempts: 12 };
+
+    expect(getRosterPlayers([zora, anton, ben]).map(({ name }) => name)).toEqual([
+      "Ben",
+      "Anton",
+      "Zora",
+    ]);
+  });
+
+  it("does not mutate the source snapshot", () => {
+    const source = [
+      { ...createPlayer("few", 2.5, 3), validAttempts: 1 },
+      { ...createPlayer("many", 2.4, 3), validAttempts: 5 },
+    ];
+
+    getRosterPlayers(source);
+
+    expect(source.map(({ id }) => id)).toEqual(["few", "many"]);
   });
 });

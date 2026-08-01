@@ -97,7 +97,7 @@ export function LiveParticipantManager() {
             variant="outline"
             disabled={saving || available.length === 0}
             onClick={() => void addExisting()}
-            className="mt-3 h-12 w-full"
+            className="mt-3 h-auto min-h-12 w-full whitespace-normal px-3 text-center leading-tight"
           >
             <UserPlus className="size-5" /> Bestehenden Spieler hinzufügen
           </Button>
@@ -112,11 +112,11 @@ export function LiveParticipantManager() {
               placeholder="Name"
             />
           </label>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <Button size="lg" disabled={saving} onClick={() => void addNamed("permanent")} className="h-12">
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            <Button size="lg" disabled={saving} onClick={() => void addNamed("permanent")} className="h-12 w-full whitespace-normal">
               Spieler anlegen
             </Button>
-            <Button size="lg" variant="outline" disabled={saving} onClick={() => void addNamed("guest")} className="h-12">
+            <Button size="lg" variant="outline" disabled={saving} onClick={() => void addNamed("guest")} className="h-12 w-full whitespace-normal">
               Gast hinzufügen
             </Button>
           </div>

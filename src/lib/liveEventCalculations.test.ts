@@ -106,7 +106,7 @@ describe("live event rules", () => {
       attempt("3", "paul", 2.1),
     ], players);
     expect(standings.map(({ player }) => player.id)).toEqual(["paul", "mats", "ak"]);
-    expect(standings[0]).toMatchObject({ rank: 1, bestTime: 2.1, attempts: 2 });
+    expect(standings[0]).toMatchObject({ rank: 1, bestTime: 2.1, averageTime: 2.2, attempts: 2 });
   });
 
   it("assigns the same rank to identical best times", () => {
