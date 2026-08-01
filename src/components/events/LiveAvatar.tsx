@@ -1,6 +1,5 @@
 import { cn } from "@/lib/cn";
 import type { LiveParticipant } from "@/types/liveEvent";
-import { getAvatarImageClass, getOriginalAvatarSource } from "@/lib/avatarPresentation";
 
 export function LiveAvatar({
   player,
@@ -19,7 +18,7 @@ export function LiveAvatar({
       )}
     >
       {player.avatarUrl
-        ? <img src={getOriginalAvatarSource(player.avatarUrl)} alt="" className={getAvatarImageClass("live")} />
+        ? <img src={player.avatarUrl} alt="" className="size-full object-cover" />
         : player.initials}
     </div>
   );

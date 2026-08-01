@@ -1,5 +1,4 @@
 import { cn } from "@/lib/cn";
-import { getAvatarImageClass, getOriginalAvatarSource, type AvatarImageVariant } from "@/lib/avatarPresentation";
 import { getAvatarGradient, getInitials } from "@/utils/avatar";
 
 export function ProfileAvatar({
@@ -7,13 +6,11 @@ export function ProfileAvatar({
   name,
   url,
   className,
-  variant = "list",
 }: {
   id: string;
   name: string;
   url: string | null;
   className?: string;
-  variant?: AvatarImageVariant;
 }) {
   return (
     <span
@@ -26,10 +23,10 @@ export function ProfileAvatar({
     >
       {url
         ? <img
-            src={getOriginalAvatarSource(url)}
+            src={url}
             alt=""
             loading="lazy"
-            className={getAvatarImageClass(variant)}
+            className="size-full rounded-full object-cover object-center"
           />
         : getInitials(name)}
     </span>

@@ -7,7 +7,6 @@ import { getAvatarGradient, getInitials } from "@/utils/avatar";
 import type {
   StartLiveEventParticipant,
 } from "@/types/liveEvent";
-import { getAvatarImageClass, getOriginalAvatarSource } from "@/lib/avatarPresentation";
 
 export function StartEventPanel({
   candidates,
@@ -120,7 +119,7 @@ export function StartEventPanel({
                     )}
                   />
                   <span className={`grid size-16 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br ${player.avatarGradient} font-display font-black text-black ring-2 ${selected.includes(player.id) ? "ring-gold-300" : "ring-white/10"}`}>
-                    {player.avatarUrl ? <img src={getOriginalAvatarSource(player.avatarUrl)} alt="" className={getAvatarImageClass("live")} /> : player.initials}
+                    {player.avatarUrl ? <img src={player.avatarUrl} alt="" className="size-full rounded-full object-cover" /> : player.initials}
                   </span>
                   <span className="w-full truncate font-bold">{player.name}</span>
                   {(player.kind === "guest" || player.isAk) && <span className="text-[10px] text-gold-300">{player.kind === "guest" ? "Gast" : "AK"}</span>}

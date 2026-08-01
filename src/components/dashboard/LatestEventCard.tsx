@@ -28,7 +28,7 @@ export function LatestEventCard() {
           {(event.podium ?? []).map((entry) => {
             return <Link key={`${entry.id}-${entry.rank}`} to={`/events/${event.id}`} className={cn("flex items-center gap-3 rounded-2xl border p-3 transition hover:border-gold-400/30", entry.rank === 1 ? "border-gold-400/25 bg-gold-400/[0.07]" : "border-white/[0.07] bg-white/[0.025]") }>
               <PodiumMedal rank={entry.rank as 1 | 2 | 3} size="sm" />
-              <ProfileAvatar id={entry.id} name={entry.name} url={resolveEventPodiumAvatar(data.players, entry)} variant="podium" className="size-11" />
+              <ProfileAvatar id={entry.id} name={entry.name} url={resolveEventPodiumAvatar(data.players, entry)} className="size-11" />
               <div className="min-w-0"><p className="truncate font-bold">{entry.name}</p><p className="font-display text-lg font-black text-gold-300">{formatTime(entry.time)}</p></div>
             </Link>;
           })}
