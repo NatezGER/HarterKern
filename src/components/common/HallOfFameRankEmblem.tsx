@@ -1,4 +1,4 @@
-import { Crown, Leaf } from "lucide-react";
+import { Crown } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const sizes = {
@@ -8,8 +8,14 @@ const sizes = {
 } as const;
 
 const materials = {
-  2: "border-slate-200/70 bg-gradient-to-br from-white via-slate-300 to-slate-600 text-slate-950 shadow-[0_0_18px_rgba(226,232,240,.2)]",
-  3: "border-orange-200/60 bg-gradient-to-br from-orange-200 via-orange-500 to-amber-900 text-orange-950 shadow-[0_0_18px_rgba(194,93,33,.2)]",
+  2: "text-slate-200 drop-shadow-[0_0_8px_rgba(226,232,240,.18)]",
+  3: "text-orange-400 drop-shadow-[0_0_8px_rgba(194,93,33,.18)]",
+} as const;
+
+const numberSizes = {
+  compact: "text-xl",
+  standard: "text-3xl",
+  featured: "text-4xl sm:text-6xl",
 } as const;
 
 export function HallOfFameRankEmblem({ place, size = "standard", className }: { place: 1 | 2 | 3; size?: keyof typeof sizes; className?: string }) {
@@ -19,10 +25,9 @@ export function HallOfFameRankEmblem({ place, size = "standard", className }: { 
     </span>;
   }
 
-  const material = place === 2 ? "silver-laurel" : "bronze-laurel";
-  return <span data-hall-of-fame-emblem={material} data-place={place} aria-label={`Weltrang ${place}`} className={cn("relative grid shrink-0 place-items-center rounded-full border", sizes[size], materials[place], className)}>
-    <Leaf aria-hidden="true" className="absolute left-[2%] top-[14%] h-[72%] w-[48%] -rotate-[28deg] fill-current/25 stroke-[1.6]" />
-    <Leaf aria-hidden="true" className="absolute right-[2%] top-[14%] h-[72%] w-[48%] rotate-[28deg] -scale-x-100 fill-current/25 stroke-[1.6]" />
-    <strong className="relative font-display text-[0.62em] font-black">{place}</strong>
+  const material = place === 2 ? "silver" : "bronze";
+  return <span data-hall-of-fame-emblem="rank-number" data-rank-material={material} data-place={place} aria-label={`Weltrang ${place}`} className={cn("relative grid shrink-0 place-items-center", sizes[size], materials[place], className)}>
+    <strong className={cn("font-display font-black leading-none", numberSizes[size])}>{place}</strong>
+    <span aria-hidden="true" className="absolute bottom-[8%] h-px w-[72%] bg-current opacity-40" />
   </span>;
 }
