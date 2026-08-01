@@ -29,7 +29,7 @@ export function ProfileAvatar({
             src={getOriginalAvatarSource(url)}
             alt=""
             loading="lazy"
-            className={getAvatarImageClass(variant, id)}
+            className={getAvatarImageClass(variant)}
           />
         : getInitials(name)}
     </span>
