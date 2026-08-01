@@ -3,6 +3,7 @@ import type { ReturnTypeRankedPlayers } from "@/types/view";
 import { cn } from "@/lib/cn";
 import { formatDate, formatTime } from "@/utils/format";
 import { Avatar } from "@/components/common/Avatar";
+import { HallOfFameRankEmblem } from "@/components/common/HallOfFameRankEmblem";
 
 export function LeaderboardList({ entries }: { entries: ReturnTypeRankedPlayers }) {
   if (entries.length === 0) {
@@ -24,9 +25,9 @@ export function LeaderboardList({ entries }: { entries: ReturnTypeRankedPlayers 
                 : "border-transparent bg-white/[0.018] hover:border-white/[0.08]",
           )}
         >
-          <span className={cn("font-display text-2xl font-black", rank <= 3 ? "text-gold-400" : "text-white/25")}>
-            {String(rank).padStart(2, "0")}
-          </span>
+          {rank <= 3
+            ? <HallOfFameRankEmblem place={rank as 1 | 2 | 3} size="standard" />
+            : <span className="font-display text-2xl font-black text-white/25">{String(rank).padStart(2, "0")}</span>}
           <div className="flex min-w-0 items-center gap-3">
             <Avatar player={player} size="md" />
             <div className="min-w-0">
