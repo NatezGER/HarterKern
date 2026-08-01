@@ -18,11 +18,13 @@ import { getPlayerById } from "@/data/selectors";
 import { getRecordAt, selectRecordsForPeriod } from "@/lib/recordComparison";
 import { PodiumMedal } from "@/components/common/PodiumMedal";
 import { getPodiumCounters } from "@/lib/podiumCounters";
+import { useState } from "react";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
 export function PlayerProfilePage() {
   const { id = "" } = useParams();
+  const [badgesExpanded, setBadgesExpanded] = useState(false);
   const { data: player, loading, error } = usePlayerProfileDetail(id);
   const { data: publicData } = useEffectivePublicData();
   if (loading) return <DataState><div /></DataState>;
@@ -62,7 +64,7 @@ export function PlayerProfilePage() {
         <div className="absolute -right-24 -top-36 size-96 rounded-full bg-gold-400/10 blur-[100px]" />
         <div className="relative flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
           <div className="flex w-full flex-col items-center gap-5 text-center sm:w-auto sm:flex-row sm:items-center sm:text-left">
-            <ProfileAvatar id={player.id} name={player.name} url={player.avatarUrl} className="size-24 ring-gold-400/35 sm:size-32" />
+            <ProfileAvatar id={player.id} name={player.name} url={player.avatarUrl} variant="profile" className="size-24 ring-gold-400/35 sm:size-32" />
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold-400">{player.rank ? `Weltrang #${player.rank}` : "Noch ohne Rang"}</p>
               <h1 className="display-title mt-2 break-words text-5xl sm:text-7xl">{player.name}</h1>
@@ -73,7 +75,7 @@ export function PlayerProfilePage() {
         </div>
       </section>
 
-      {player.badges.length > 0 && <section><SectionHeading eyebrow="Verdient" title="Badge-Galerie" /><BadgeGallery badges={player.badges} featured /></section>}
+      {player.badges.length > 0 && <section><SectionHeading eyebrow="Verdient" title="Badge-Galerie" /><BadgeGallery badges={player.badges} featured mobileLimit={2} mobileExpanded={badgesExpanded} />{player.badges.length > 2 && <Button type="button" variant="outline" className="mt-4 w-full sm:hidden" aria-expanded={badgesExpanded} onClick={() => setBadgesExpanded((value) => !value)}>{badgesExpanded ? "Badges einklappen" : "Alle Badges anzeigen"}</Button>}</section>}
 
       <section className="panel p-5 sm:p-8">
         <SectionHeading eyebrow="Offizielle Events" title="Podiumsmedaillen" />

@@ -37,7 +37,7 @@ export function Podium() {
           >
             <div className="relative mb-5 text-center">
               {entry.rank === 1 && <Crown className="absolute -top-10 left-1/2 size-7 -translate-x-1/2 text-gold-400" />}
-              <Avatar player={entry.player} size={style.avatar} className={entry.rank === 1 ? "ring-gold-400/60" : ""} />
+              <Avatar player={entry.player} size={style.avatar} variant="podium" className={entry.rank === 1 ? "ring-gold-400/60" : ""} />
               <p className="mt-4 truncate font-display text-xl font-black uppercase sm:text-2xl">{entry.player.name}</p>
               <p className="text-xs font-bold text-gold-300">{formatTime(entry.player.personalBest)}</p>
             </div>

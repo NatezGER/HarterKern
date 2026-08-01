@@ -29,7 +29,7 @@ export function StatsPage() {
           ))}
         </div>
         <section className="mt-12">
-          <WRProgression />
+          <WRProgression collapsibleHistory />
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow="Gemeinsam erreicht" title="Liga-Meilensteine" />

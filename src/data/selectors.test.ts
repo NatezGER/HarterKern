@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getRankedPlayers, getRosterPlayers } from "@/data/selectors";
+import { getRankedPlayers, getRosterPlayers, resolveEventPodiumAvatar } from "@/data/selectors";
 import type { LeaderboardEntry, Player } from "@/types";
 
 const createPlayer = (
@@ -90,5 +90,21 @@ describe("getRosterPlayers", () => {
     getRosterPlayers(source);
 
     expect(source.map(({ id }) => id)).toEqual(["few", "many"]);
+  });
+});
+
+describe("resolveEventPodiumAvatar", () => {
+  const player = { ...createPlayer("player", 2.4, 3), avatarUrl: "https://cdn.example/player.png" };
+
+  it("uses the permanent player profile for a matching player id", () => {
+    expect(resolveEventPodiumAvatar([player], { playerId: player.id, isGuest: false, avatarUrl: null })).toBe(player.avatarUrl);
+  });
+
+  it("never assigns a permanent profile to a guest entry", () => {
+    expect(resolveEventPodiumAvatar([player], { playerId: null, isGuest: true, avatarUrl: null })).toBeNull();
+  });
+
+  it("keeps the podium view avatar when it is already present", () => {
+    expect(resolveEventPodiumAvatar([player], { playerId: player.id, isGuest: false, avatarUrl: "https://cdn.example/event.png" })).toBe("https://cdn.example/event.png");
   });
 });

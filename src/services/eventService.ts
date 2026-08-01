@@ -43,6 +43,8 @@ export async function getEvents(): Promise<Event[]> {
         .slice(0, 3)
         .map((entry) => ({
           id: entry.player_id ?? entry.guest_id ?? `${row.id}-${entry.rank}`,
+          playerId: entry.player_id,
+          isGuest: entry.player_id == null,
           name: entry.display_name,
           avatarUrl: entry.avatar_url,
           rank: entry.rank,

@@ -104,6 +104,8 @@ export interface Event {
   winnerNames: string[];
   podium?: Array<{
     id: string;
+    playerId?: string | null;
+    isGuest?: boolean;
     name: string;
     avatarUrl: string | null;
     rank: number;
