@@ -4,13 +4,14 @@ import type { Player } from "@/types";
 import { formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { Avatar } from "@/components/common/Avatar";
+import { MOBILE_CONTEXT_AVATAR_FRAME } from "@/constants/avatar";
 
 export function PlayerCard({ player, delay = 0 }: { player: Player; delay?: number }) {
   return (
     <AnimatedCard delay={delay} className="group relative overflow-hidden p-3 sm:p-6">
       <div className={`absolute -right-12 -top-16 size-40 rounded-full bg-gradient-to-br ${player.avatarGradient} opacity-[0.08] blur-3xl transition group-hover:opacity-[0.14]`} />
       <Link to={`/player/${player.id}`} className="relative flex min-h-36 flex-col items-center justify-center gap-3 rounded-2xl text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 sm:hidden">
-        <Avatar player={player} size="lg" className="ring-offset-2" />
+        <Avatar player={player} size="lg" className={`${MOBILE_CONTEXT_AVATAR_FRAME} ring-offset-2`} />
         <h2 className="w-full truncate font-display text-xl font-black uppercase">{player.name}</h2>
       </Link>
       <div className="relative hidden sm:block">

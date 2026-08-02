@@ -5,6 +5,7 @@ import { LiveAvatar } from "@/components/events/LiveAvatar";
 import { cn } from "@/lib/cn";
 import { formatTime } from "@/utils/format";
 import type { LiveStanding } from "@/types/liveEvent";
+import { MOBILE_CONTEXT_AVATAR_FRAME } from "@/constants/avatar";
 
 const lastStatus = (standing: LiveStanding) => {
   const attempt = standing.lastAttempt;
@@ -52,7 +53,7 @@ export function ParticipantCard({
       saved && "border-emerald-400/40 shadow-[0_0_32px_rgba(52,211,153,.15)]",
     )}>
       <button type="button" onClick={onAdd} className="flex min-h-28 flex-col items-center justify-center gap-3 rounded-2xl text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 md:hidden" aria-label={`Zeit für ${standing.player.name} erfassen`}>
-        <LiveAvatar player={standing.player} className="size-16" />
+        <LiveAvatar player={standing.player} className={`size-16 ${MOBILE_CONTEXT_AVATAR_FRAME}`} />
         <span className="w-full truncate font-display text-lg font-black uppercase">{standing.player.name}</span>
       </button>
       <div className="hidden md:block"><Identity standing={standing} onAdd={onAdd} /></div>

@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { formatTime } from "@/utils/format";
 import { Avatar } from "@/components/common/Avatar";
 import { HallOfFameRankEmblem } from "@/components/common/HallOfFameRankEmblem";
+import { MOBILE_CONTEXT_AVATAR_FRAME } from "@/constants/avatar";
 
 const podiumStyles = [
   { order: "order-2", height: "h-52 sm:h-60", color: "from-gold-300/30 to-gold-500/5", label: "Gold", avatar: "xl" as const },
@@ -37,7 +38,7 @@ export function Podium() {
           >
             <div className="relative mb-5 flex min-w-0 flex-col items-center text-center">
               <HallOfFameRankEmblem place={entry.rank as 1 | 2 | 3} size="featured" className="mb-3" />
-              <Avatar player={entry.player} size={style.avatar} className={entry.rank === 1 ? "ring-gold-400/60" : ""} />
+              <Avatar player={entry.player} size={style.avatar} className={cn(MOBILE_CONTEXT_AVATAR_FRAME, entry.rank === 1 && "ring-gold-400/60")} />
               <p className="mt-4 truncate font-display text-xl font-black uppercase sm:text-2xl">{entry.player.name}</p>
               <p className="text-xs font-bold text-gold-300">{formatTime(entry.player.personalBest)}</p>
             </div>
