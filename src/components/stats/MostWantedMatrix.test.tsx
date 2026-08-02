@@ -20,7 +20,7 @@ const data: MostWantedSnapshot = {
     playerId: ending === 0 ? "player-1" : null,
     guestId: null,
     playerName: ending === 0 ? "Paul" : null,
-    avatarUrl: null,
+    avatarUrl: ending === 0 ? "https://example.com/paul.webp" : null,
     isGuest: false,
     timeHundredths: ending === 0 ? 300 : null,
     occurredAt: ending === 0 ? "2026-01-01T12:00:00Z" : null,
@@ -41,5 +41,6 @@ describe("MostWantedMatrix", () => {
     expect(markup).toContain('aria-valuemax="100"');
     expect(markup).toContain("Endung 00");
     expect(markup).toContain("Endung 99");
+    expect(markup).toContain("https://example.com/paul.webp");
   });
 });

@@ -62,6 +62,79 @@ export interface MostWantedProgressView {
   Relationships: [];
 }
 
+export type BingoTier = "open" | "bronze" | "silver" | "gold";
+
+export interface PlayerBingoHitView {
+  Row: {
+    player_id: string;
+    ending: number;
+    ending_label: string;
+    source_id: string;
+    source_type: "attempt" | "historical_attempt";
+    event_id: string | null;
+    time_hundredths: number;
+    occurred_at: string;
+    occurred_date: string;
+    has_exact_time: boolean;
+    source_priority: number;
+    source_order: number;
+    source_label: string;
+    hit_sequence: number;
+  };
+  Relationships: [];
+}
+
+export interface PlayerBingoFieldView {
+  Row: {
+    player_id: string;
+    ending: number;
+    ending_label: string;
+    hit_count: number;
+    field_tier: BingoTier;
+    bronze_achieved_at: string | null;
+    silver_achieved_at: string | null;
+    gold_achieved_at: string | null;
+  };
+  Relationships: [];
+}
+
+export interface PlayerBingoLineView {
+  Row: {
+    player_id: string;
+    line_key: string;
+    line_type: "row" | "column" | "diagonal";
+    line_number: number;
+    endings: number[];
+    minimum_hit_count: number;
+    qualifies_bronze: boolean;
+    qualifies_silver: boolean;
+    qualifies_gold: boolean;
+    line_tier: BingoTier;
+    bronze_achieved_at: string | null;
+    silver_achieved_at: string | null;
+    gold_achieved_at: string | null;
+  };
+  Relationships: [];
+}
+
+export interface PlayerBingoStatisticsView {
+  Row: {
+    player_id: string;
+    collected_endings: number;
+    bronze_fields: number;
+    silver_fields: number;
+    gold_fields: number;
+    bronze_lines: number;
+    silver_lines: number;
+    gold_lines: number;
+    highest_badge_tier: Exclude<BingoTier, "open"> | null;
+    bronze_badge_achieved_at: string | null;
+    silver_badge_achieved_at: string | null;
+    gold_badge_achieved_at: string | null;
+  };
+  Relationships: [];
+}
+
 export interface LeagueTimeStatisticsView {
   Row: {
     total_valid_times: number;

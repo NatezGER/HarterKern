@@ -40,8 +40,9 @@ export function MostWantedMatrix({ data }: { data: MostWantedSnapshot }) {
                 : "border-white/[0.07] bg-black/25 text-white/25 hover:border-white/15 hover:text-white/45",
             )}
           >
-            {ending.label}
-            {ending.achieved && <Check className="absolute right-0 top-0 size-2.5 text-emerald-300 sm:right-1 sm:top-1 sm:size-3" />}
+            <span className="absolute left-0.5 top-0.5 sm:left-1 sm:top-1">{ending.label}</span>
+            {ending.achieved && ending.playerName && <ProfileAvatar id={ending.playerId ?? ending.guestId ?? ending.label} name={ending.playerName} url={ending.avatarUrl} className="absolute bottom-0.5 left-1/2 size-3.5 -translate-x-1/2 text-[5px] ring-0 sm:bottom-1 sm:size-5" />}
+            {ending.achieved && !ending.playerName && <Check className="absolute bottom-0.5 left-1/2 size-2.5 -translate-x-1/2 text-emerald-300 sm:bottom-1 sm:size-3" />}
           </button>
         ))}
       </div>

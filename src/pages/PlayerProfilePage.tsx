@@ -21,6 +21,7 @@ import { getPodiumCounters } from "@/lib/podiumCounters";
 import { useState } from "react";
 import { PersonalBestDetailsToggle } from "@/components/progression/PersonalBestDetailsToggle";
 import { TrophyCabinet } from "@/components/common/TrophyCabinet";
+import { PersonalBingo } from "@/components/players/PersonalBingo";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -50,7 +51,6 @@ export function PlayerProfilePage() {
     { label: "Tage mit WR", value: String(player.worldRecordDays), icon: Timer },
     { label: "Längste WR-Phase", value: `${player.longestWorldRecordDays} Tage`, icon: Crown },
     { label: "Sichtbare Badges", value: String(player.visibleBadgeCount), icon: Medal },
-    { label: "Most-Wanted-Ersttreffer", value: String(player.mostWantedFirstHits), icon: Target },
   ];
   const personalProgression = player.progression.map((point) => {
     const record = getRecordAt(publicData.worldRecordHistory.map((item) => ({ id: item.id, achievedAt: item.achievedAt, timeHundredths: Math.round(item.time * 100) })), point.achievedAt);
@@ -92,6 +92,12 @@ export function PlayerProfilePage() {
         <SectionHeading eyebrow="Persönliche Bestmarken" title="PB Progression" />
         <ProgressionTimeline points={personalProgression} comparisonPoints={comparisonProgression} historyDisclosure={{ id: "personal-best-history", expanded: pbDetailsExpanded }} emptyLabel="Noch keine persönliche Bestzeit vorhanden." />
         {personalProgression.length > 0 && <PersonalBestDetailsToggle expanded={pbDetailsExpanded} controls="personal-best-history" onToggle={() => setPbDetailsExpanded((value) => !value)} />}
+      </section>
+
+      <section className="panel overflow-hidden p-4 sm:p-8">
+        <SectionHeading eyebrow="Persönliche Langzeitjagd" title="BINGO" />
+        <p className="mb-5 max-w-2xl text-sm leading-6 text-white/45">Jede eigene Hundertstel-Endung steigt vom ersten Treffer in Bronze über Silber bis Gold. Im persönlichen BINGO werden bewusst keine Profilbilder gezeigt.</p>
+        <PersonalBingo data={player.bingo} />
       </section>
 
       <section className="panel p-6 sm:p-8">

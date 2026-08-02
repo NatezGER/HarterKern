@@ -1,5 +1,5 @@
 import type { BadgeTier } from "@/types/pr7Foundation";
-import type { TrophyTier } from "@/types/pr8";
+import type { BingoTier, TrophyTier } from "@/types/pr8";
 
 export interface MediaPhoto {
   id: string;
@@ -73,6 +73,7 @@ export interface CompactBadge {
   badgeKind: "tiered" | "single";
   designVariant: "standard" | "positive_special" | "consolation";
   scopeType: "all_time" | "season" | "event";
+  bingoLineCounts: { bronze: number; silver: number; gold: number } | null;
 }
 
 export interface TrophyAward {
@@ -157,6 +158,41 @@ export interface AttemptNumberPoint {
   averageHundredths: number | null;
 }
 
+export interface BingoHit {
+  id: string;
+  sourceType: "attempt" | "historical_attempt";
+  eventId: string | null;
+  timeHundredths: number;
+  occurredAt: string;
+  occurredDate: string;
+  hasExactTime: boolean;
+  sourceLabel: string;
+}
+
+export interface BingoField {
+  ending: number;
+  label: string;
+  hitCount: number;
+  tier: BingoTier;
+  hits: BingoHit[];
+}
+
+export interface BingoSummary {
+  collectedEndings: number;
+  bronzeFields: number;
+  silverFields: number;
+  goldFields: number;
+  bronzeLines: number;
+  silverLines: number;
+  goldLines: number;
+  highestBadgeTier: Exclude<BingoTier, "open"> | null;
+}
+
+export interface PlayerBingo {
+  fields: BingoField[];
+  summary: BingoSummary;
+}
+
 export interface PlayerProfileDetail {
   id: string;
   name: string;
@@ -183,6 +219,6 @@ export interface PlayerProfileDetail {
   worldRecordDays: number;
   longestWorldRecordDays: number;
   visibleBadgeCount: number;
-  mostWantedFirstHits: number;
+  bingo: PlayerBingo;
   trophies: TrophyAward[];
 }

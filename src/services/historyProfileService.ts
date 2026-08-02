@@ -105,6 +105,14 @@ function mapBadge(row: {
     typeof row.metadata.timeHundredths === "number"
     ? row.metadata.timeHundredths
     : null;
+  const bingoLineCounts = row.metadata && typeof row.metadata === "object" &&
+    !Array.isArray(row.metadata) && "bronzeLines" in row.metadata &&
+    "silverLines" in row.metadata && "goldLines" in row.metadata &&
+    typeof row.metadata.bronzeLines === "number" &&
+    typeof row.metadata.silverLines === "number" &&
+    typeof row.metadata.goldLines === "number"
+    ? { bronze: row.metadata.bronzeLines, silver: row.metadata.silverLines, gold: row.metadata.goldLines }
+    : null;
   return {
     key: row.award_key,
     playerId: row.player_id,
@@ -137,6 +145,7 @@ function mapBadge(row: {
     badgeKind: row.badge_kind ?? "tiered",
     designVariant: row.design_variant ?? "standard",
     scopeType: row.scope_type ?? "all_time",
+    bingoLineCounts,
   };
 }
 
@@ -280,7 +289,8 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
 export async function getPlayerProfileDetail(playerId: string): Promise<PlayerProfileDetail | null> {
   const client = getSupabase();
   const [playerResult, statsResult, rankResult, historyResult, badgeResult, pointsResult,
-    progressionResult, prestigeResult, trophyResult, mostWantedResult] =
+    progressionResult, prestigeResult, trophyResult, bingoFieldsResult,
+    bingoStatsResult, bingoHitsResult] =
     await Promise.all([
       client.from("players").select("*").eq("id", playerId).eq("is_archived", false).maybeSingle(),
       client.from("player_statistics").select("*").eq("player_id", playerId).maybeSingle(),
@@ -300,11 +310,17 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
         .maybeSingle(),
       client.from("player_trophies").select("*").eq("player_id", playerId)
         .order("awarded_at", { ascending: false }),
-      client.from("most_wanted_endings").select("ending", { count: "exact", head: true })
-        .eq("first_player_id", playerId),
+      client.from("player_bingo_fields").select("*").eq("player_id", playerId)
+        .order("ending"),
+      client.from("player_bingo_statistics").select("*").eq("player_id", playerId)
+        .maybeSingle(),
+      client.from("player_bingo_hits").select("*").eq("player_id", playerId)
+        .order("occurred_at").order("source_priority").order("source_order")
+        .order("source_id"),
     ]);
   for (const result of [playerResult, statsResult, rankResult, historyResult, badgeResult,
-    pointsResult, progressionResult, prestigeResult, trophyResult, mostWantedResult]) {
+    pointsResult, progressionResult, prestigeResult, trophyResult, bingoFieldsResult,
+    bingoStatsResult, bingoHitsResult]) {
     if (result.error) throw result.error;
   }
   const player = playerResult.data;
@@ -315,6 +331,14 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
   const pointRows = pointsResult.data ?? [];
   const progressionRows = progressionResult.data ?? [];
   const prestige = prestigeResult.data;
+  const bingoHits = bingoHitsResult.data ?? [];
+  const bingoStats = bingoStatsResult.data;
+  const bingoHitsByEnding = new Map<number, typeof bingoHits>();
+  for (const hit of bingoHits) {
+    const hits = bingoHitsByEnding.get(hit.ending) ?? [];
+    hits.push(hit);
+    bingoHitsByEnding.set(hit.ending, hits);
+  }
   return {
     id: player.id,
     name: player.display_name,
@@ -368,7 +392,34 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
     worldRecordDays: Number(prestige?.world_record_days ?? 0),
     longestWorldRecordDays: Number(prestige?.longest_world_record_days ?? 0),
     visibleBadgeCount: Number(prestige?.visible_badge_count ?? 0),
-    mostWantedFirstHits: mostWantedResult.count ?? 0,
+    bingo: {
+      fields: (bingoFieldsResult.data ?? []).map((field) => ({
+        ending: field.ending,
+        label: field.ending_label,
+        hitCount: field.hit_count,
+        tier: field.field_tier,
+        hits: (bingoHitsByEnding.get(field.ending) ?? []).map((hit) => ({
+          id: hit.source_id,
+          sourceType: hit.source_type,
+          eventId: hit.event_id,
+          timeHundredths: hit.time_hundredths,
+          occurredAt: hit.occurred_at,
+          occurredDate: hit.occurred_date,
+          hasExactTime: hit.has_exact_time,
+          sourceLabel: hit.source_label,
+        })),
+      })),
+      summary: {
+        collectedEndings: bingoStats?.collected_endings ?? 0,
+        bronzeFields: bingoStats?.bronze_fields ?? 0,
+        silverFields: bingoStats?.silver_fields ?? 0,
+        goldFields: bingoStats?.gold_fields ?? 0,
+        bronzeLines: bingoStats?.bronze_lines ?? 0,
+        silverLines: bingoStats?.silver_lines ?? 0,
+        goldLines: bingoStats?.gold_lines ?? 0,
+        highestBadgeTier: bingoStats?.highest_badge_tier ?? null,
+      },
+    },
     trophies: (trophyResult.data ?? []).map(mapTrophy),
   };
 }

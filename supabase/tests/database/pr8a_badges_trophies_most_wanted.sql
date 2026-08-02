@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap;
-select plan(40);
+select plan(70);
 
 select has_column('public', 'events', 'awards_trophies');
 select has_column('public', 'badge_definitions', 'badge_kind');
@@ -11,6 +11,10 @@ select has_view('public', 'precision_events');
 select has_view('public', 'most_wanted_endings');
 select has_view('public', 'most_wanted_progress');
 select has_view('public', 'most_wanted_milestones');
+select has_view('public', 'player_bingo_hits');
+select has_view('public', 'player_bingo_fields');
+select has_view('public', 'player_bingo_lines');
+select has_view('public', 'player_bingo_statistics');
 select has_view('public', 'player_trophies');
 select has_view('public', 'league_time_statistics');
 select has_function('public', 'sync_start_event_v3',
@@ -44,13 +48,20 @@ select is((select array_agg(threshold order by threshold) from public.badge_defi
 select is((select array_agg(threshold order by threshold) from public.badge_definitions
   where family_key = 'precision'), array[1,3,10,25], 'precision tiers');
 select is((select array_agg(threshold order by threshold) from public.badge_definitions
-  where family_key = 'most-wanted'), array[1,5,10,25], 'Most Wanted tiers');
+  where family_key = 'bingo'), array[1,2,3], 'BINGO has bronze, silver and gold only');
 
 insert into public.players (id, display_name, is_ak) values
   ('98000000-0000-0000-0000-000000000001', 'PR8 Main', false),
   ('98000000-0000-0000-0000-000000000002', 'PR8 Second', false),
   ('98000000-0000-0000-0000-000000000003', 'PR8 Exact Three', false),
-  ('98000000-0000-0000-0000-000000000004', 'PR8 AK', true);
+  ('98000000-0000-0000-0000-000000000004', 'PR8 AK', true),
+  ('98000000-0000-0000-0000-000000000005', 'BINGO Row', false),
+  ('98000000-0000-0000-0000-000000000006', 'BINGO Column', false),
+  ('98000000-0000-0000-0000-000000000007', 'BINGO Main Diagonal', false),
+  ('98000000-0000-0000-0000-000000000008', 'BINGO Anti Diagonal', false),
+  ('98000000-0000-0000-0000-000000000009', 'BINGO Incomplete', false),
+  ('98000000-0000-0000-0000-00000000000a', 'BINGO Silver', false),
+  ('98000000-0000-0000-0000-00000000000b', 'BINGO Gold', false);
 
 insert into public.events (
   id, name, start_date, started_at, ends_at, status, closed_at,
@@ -77,7 +88,7 @@ insert into public.attempts (
   ('98000000-0000-0000-0000-000000000101','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',299,false,false,'2026-01-10 18:01:00+01','admin'),
   ('98000000-0000-0000-0000-000000000102','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',300,false,false,'2026-01-10 18:02:00+01','admin'),
   ('98000000-0000-0000-0000-000000000103','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',290,false,false,'2026-01-10 18:03:00+01','admin'),
-  ('98000000-0000-0000-0000-000000000104','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',null,true,false,'2026-01-10 18:04:00+01','admin'),
+  ('98000000-0000-0000-0000-000000000104','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',344,true,false,'2026-01-10 18:04:00+01','admin'),
   ('98000000-0000-0000-0000-000000000105','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',280,false,false,'2026-01-10 18:05:00+01','admin'),
   ('98000000-0000-0000-0000-000000000106','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',281,false,false,'2026-01-10 18:06:00+01','admin'),
   ('98000000-0000-0000-0000-000000000107','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',282,false,false,'2026-01-10 18:07:00+01','admin'),
@@ -99,6 +110,44 @@ insert into public.historical_attempts (
   ('98000000-0000-0000-0000-000000000201','98000000-0000-0000-0000-000000000001','PR8 Main','2025-01-01',377,'PR8 Archiv',1),
   ('98000000-0000-0000-0000-000000000202','98000000-0000-0000-0000-000000000001','PR8 Main','2025-01-01',388,'PR8 Archiv',2),
   ('98000000-0000-0000-0000-000000000203','98000000-0000-0000-0000-000000000001','PR8 Main','2025-01-01',388,'PR8 Archiv',3);
+
+-- All BINGO fixtures are historical qualified times. Seconds vary while the
+-- hundredths ending remains stable; sort_order supplies deterministic order.
+insert into public.historical_attempts (
+  id, player_id, display_name, attempt_date, time_hundredths,
+  historical_label, sort_order
+)
+select gen_random_uuid(), player_id, display_name, date '2024-01-01',
+  300 + ending + ((hit_number - 1) * 100), 'BINGO Test',
+  ending * 10 + hit_number
+from (
+  select '98000000-0000-0000-0000-000000000005'::uuid player_id,
+    'BINGO Row'::text display_name, ending, 1 hit_number
+  from generate_series(0, 9) ending
+  union all
+  select '98000000-0000-0000-0000-000000000005'::uuid,
+    'BINGO Row', 77, hit_number from generate_series(1, 4) hit_number
+  union all
+  select '98000000-0000-0000-0000-000000000006'::uuid,
+    'BINGO Column', ending * 10, 1 from generate_series(0, 9) ending
+  union all
+  select '98000000-0000-0000-0000-000000000007'::uuid,
+    'BINGO Main Diagonal', ending * 11, 1 from generate_series(0, 9) ending
+  union all
+  select '98000000-0000-0000-0000-000000000008'::uuid,
+    'BINGO Anti Diagonal', 9 + ending * 9, 1 from generate_series(0, 9) ending
+  union all
+  select '98000000-0000-0000-0000-000000000009'::uuid,
+    'BINGO Incomplete', ending, 1 from generate_series(0, 8) ending
+  union all
+  select '98000000-0000-0000-0000-00000000000a'::uuid,
+    'BINGO Silver', 20 + ending, hit_number
+  from generate_series(0, 9) ending cross join generate_series(1, 2) hit_number
+  union all
+  select '98000000-0000-0000-0000-00000000000b'::uuid,
+    'BINGO Gold', 30 + ending, hit_number
+  from generate_series(0, 9) ending cross join generate_series(1, 3) hit_number
+) bingo_fixture;
 
 select is((select badge_key from public.visible_player_badges
   where player_id = '98000000-0000-0000-0000-000000000001'
@@ -144,6 +193,90 @@ select ok((select bool_and(percentage between 0 and 100)
   from public.league_time_threshold_statistics), 'threshold percentages stay valid');
 select is((select total_count from public.most_wanted_progress), 100,
   'Most Wanted always exposes exactly 100 endings');
+
+select is((select field_tier from public.player_bingo_fields
+  where player_id = '98000000-0000-0000-0000-000000000009' and ending = 9),
+  'open', 'zero hits remain open');
+select is((select field_tier from public.player_bingo_fields
+  where player_id = '98000000-0000-0000-0000-000000000005' and ending = 1),
+  'bronze', 'one hit becomes bronze');
+select is((select field_tier from public.player_bingo_fields
+  where player_id = '98000000-0000-0000-0000-00000000000a' and ending = 20),
+  'silver', 'two hits become silver');
+select is((select field_tier from public.player_bingo_fields
+  where player_id = '98000000-0000-0000-0000-00000000000b' and ending = 30),
+  'gold', 'three hits become gold');
+select is((select hit_count from public.player_bingo_fields
+  where player_id = '98000000-0000-0000-0000-000000000005' and ending = 77),
+  4, 'all hits with the same hundredths ending are counted despite different seconds');
+select is((select field_tier from public.player_bingo_fields
+  where player_id = '98000000-0000-0000-0000-000000000005' and ending = 77),
+  'gold', 'more than three hits remain gold');
+select is((select hit_count from public.player_bingo_fields
+  where player_id = '98000000-0000-0000-0000-000000000001' and ending = 44),
+  0, 'DNF attempts do not count for BINGO');
+select is((select count(*) from public.player_bingo_fields
+  where player_id = '98000000-0000-0000-0000-000000000004'),
+  0::bigint, 'AK players have no personal BINGO');
+select is((select hit_count from public.player_bingo_fields
+  where player_id = '98000000-0000-0000-0000-000000000002' and ending = 56),
+  0, 'soft-deleted attempts do not count for BINGO');
+select is((select count(*) from public.player_bingo_lines
+  where player_id = '98000000-0000-0000-0000-000000000005'),
+  22::bigint, 'every permanent player has exactly 22 possible BINGO lines');
+select ok((select bool_and(cardinality(endings) = 10)
+  from public.player_bingo_lines
+  where player_id = '98000000-0000-0000-0000-000000000005'),
+  'only complete ten-cell lines exist');
+select ok((select qualifies_bronze from public.player_bingo_lines
+  where player_id = '98000000-0000-0000-0000-000000000005' and line_key = 'row-0'),
+  'complete horizontal bronze line qualifies');
+select ok((select qualifies_bronze from public.player_bingo_lines
+  where player_id = '98000000-0000-0000-0000-000000000006' and line_key = 'column-0'),
+  'complete vertical bronze line qualifies');
+select ok((select qualifies_bronze from public.player_bingo_lines
+  where player_id = '98000000-0000-0000-0000-000000000007' and line_key = 'diagonal-main'),
+  'complete main diagonal qualifies');
+select ok((select qualifies_bronze from public.player_bingo_lines
+  where player_id = '98000000-0000-0000-0000-000000000008' and line_key = 'diagonal-anti'),
+  'complete anti diagonal qualifies');
+select is((select bronze_lines from public.player_bingo_statistics
+  where player_id = '98000000-0000-0000-0000-000000000009'),
+  0, 'nine of ten fields do not complete a line');
+select is((select line_tier from public.player_bingo_lines
+  where player_id = '98000000-0000-0000-0000-00000000000a' and line_key = 'row-2'),
+  'silver', 'two hits in every field create a silver line');
+select ok((select qualifies_gold and qualifies_silver and qualifies_bronze
+  from public.player_bingo_lines
+  where player_id = '98000000-0000-0000-0000-00000000000b' and line_key = 'row-3'),
+  'gold line cumulatively fulfils silver and bronze');
+select is((select badge_key from public.visible_player_badges
+  where player_id = '98000000-0000-0000-0000-000000000005' and family_key = 'bingo'),
+  'bingo-bronze', 'first bronze line awards BINGO Bronze');
+select is((select badge_key from public.visible_player_badges
+  where player_id = '98000000-0000-0000-0000-00000000000a' and family_key = 'bingo'),
+  'bingo-silver', 'first silver line awards BINGO Silver');
+select is((select badge_key from public.visible_player_badges
+  where player_id = '98000000-0000-0000-0000-00000000000b' and family_key = 'bingo'),
+  'bingo-gold', 'first gold line awards BINGO Gold');
+select is((select count(*) from public.visible_player_badges
+  where player_id = '98000000-0000-0000-0000-00000000000b' and family_key = 'bingo'),
+  1::bigint, 'only the highest BINGO tier is visible');
+select is((select count(*) from public.badge_definitions
+  where family_key = 'most-wanted' and is_active), 0::bigint,
+  'personal Most-Wanted hit badges are removed');
+select is((select (metadata ->> 'bronzeLines')::integer
+  from public.player_badge_awards
+  where player_id = '98000000-0000-0000-0000-00000000000b'
+    and badge_key = 'bingo-gold'), 1,
+  'BINGO badge metadata exposes cumulative bronze line count');
+select is((select ending from public.player_bingo_hits
+  where player_id = '98000000-0000-0000-0000-000000000005'
+    and time_hundredths = 577 limit 1), 77,
+  'hundredths ending is derived independently of the seconds');
+select is((select count(*) from public.player_bingo_fields
+  where player_id = '98000000-0000-0000-0000-000000000005'),
+  100::bigint, 'personal BINGO always exposes all 100 endings');
 
 select * from finish();
 rollback;

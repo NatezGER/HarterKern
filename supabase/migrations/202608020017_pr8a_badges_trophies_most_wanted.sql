@@ -1,4 +1,5 @@
--- PR 8A: additive badge, trophy, Most Wanted and league-statistics foundation.
+-- PR 8A: additive badge, trophy, Most Wanted, personal BINGO and
+-- league-statistics foundation.
 -- All awards remain derived from qualified source data. No production rows are
 -- copied, deleted or rewritten by this migration.
 
@@ -21,7 +22,7 @@ alter table public.badge_definitions
   add constraint badge_definitions_category_check check (category in (
     'attempts', 'wins', 'win_streak', 'sub3_streak', 'flawless',
     'favorite_time', 'activity', 'community', 'events', 'podiums',
-    'precision', 'most_wanted', 'performance', 'record', 'first_attempt',
+    'precision', 'most_wanted', 'bingo', 'performance', 'record', 'first_attempt',
     'dnf', 'glitch', 'consolation', 'podium'
   )),
   add constraint badge_definitions_badge_kind_check
@@ -34,7 +35,8 @@ alter table public.badge_definitions
 -- Important-event podium badges are replaced by a separate trophy read-model.
 update public.badge_definitions
 set is_active = false
-where badge_key like 'important-event-%';
+where badge_key like 'important-event-%'
+   or family_key = 'most-wanted';
 
 insert into public.badge_definitions (
   badge_key, category, tier, name, description, threshold, sort_order,
@@ -201,18 +203,15 @@ insert into public.badge_definitions (
     '25 qualifizierte Präzisions-Events.', 25, 123, 'precision',
     '25 Präzisions-Events', false, 'tiered', 'standard', 'event', true),
 
-  ('most-wanted-bronze', 'most_wanted', 'bronze', 'Ersttreffer',
-    'Eine Most-Wanted-Endung historisch zuerst getroffen.', 1, 130, 'most-wanted',
-    '1 historischen Most-Wanted-Ersttreffer erzielen', false, 'tiered', 'standard', 'all_time', true),
-  ('most-wanted-silver', 'most_wanted', 'silver', 'Fährtenleser',
-    'Fünf Most-Wanted-Endungen historisch zuerst getroffen.', 5, 131, 'most-wanted',
-    '5 historische Most-Wanted-Ersttreffer erzielen', false, 'tiered', 'standard', 'all_time', true),
-  ('most-wanted-gold', 'most_wanted', 'gold', 'Kopfgeldjäger',
-    'Zehn Most-Wanted-Endungen historisch zuerst getroffen.', 10, 132, 'most-wanted',
-    '10 historische Most-Wanted-Ersttreffer erzielen', false, 'tiered', 'standard', 'all_time', true),
-  ('most-wanted-diamond', 'most_wanted', 'diamond', 'Most Wanted',
-    '25 Most-Wanted-Endungen historisch zuerst getroffen.', 25, 133, 'most-wanted',
-    '25 historische Most-Wanted-Ersttreffer erzielen', false, 'tiered', 'standard', 'all_time', true),
+  ('bingo-bronze', 'bingo', 'bronze', 'BINGO Bronze',
+    'Mindestens eine vollständige BINGO-Linie mit je einem eigenen Treffer.', 1, 130, 'bingo',
+    'Eine vollständige Bronze-BINGO-Linie', false, 'tiered', 'standard', 'all_time', true),
+  ('bingo-silver', 'bingo', 'silver', 'BINGO Silber',
+    'Mindestens eine vollständige BINGO-Linie mit je zwei eigenen Treffern.', 2, 131, 'bingo',
+    'Eine vollständige Silber-BINGO-Linie', false, 'tiered', 'standard', 'all_time', true),
+  ('bingo-gold', 'bingo', 'gold', 'BINGO Gold',
+    'Mindestens eine vollständige BINGO-Linie mit je drei eigenen Treffern.', 3, 132, 'bingo',
+    'Eine vollständige Gold-BINGO-Linie', false, 'tiered', 'standard', 'all_time', true),
 
   ('official-world-record', 'record', 'special', 'Weltrekordhalter',
     'Mindestens einmal den offiziellen All-Time-Weltrekord gehalten.', null, 200, null,
@@ -429,6 +428,168 @@ from milestones m
 left join ordered_hits o on o.reached_sequence <= m.threshold
 group by m.threshold
 order by m.threshold;
+
+-- Personal BINGO deliberately has its own player-scoped read models. It shares
+-- only the qualified source times with league-wide Most Wanted.
+create or replace view public.player_bingo_hits
+with (security_invoker = true)
+as
+select
+  q.player_id,
+  mod(q.time_hundredths, 100)::integer ending,
+  lpad(mod(q.time_hundredths, 100)::text, 2, '0') ending_label,
+  q.source_id,
+  q.source_type,
+  q.event_id,
+  q.time_hundredths,
+  q.occurred_at,
+  q.occurred_date,
+  q.has_exact_time,
+  q.source_priority,
+  q.source_order,
+  coalesce(nullif(trim(e.name), ''), h.historical_label,
+    case when q.source_type = 'historical_attempt'
+      then 'Historischer Einzelversuch' else 'Offizieller Versuch' end) source_label,
+  row_number() over (
+    partition by q.player_id, mod(q.time_hundredths, 100)
+    order by q.occurred_at, q.source_priority, q.source_order, q.source_id
+  )::integer hit_sequence
+from public.qualified_official_times q
+left join public.events e on e.id = q.event_id and e.deleted_at is null
+left join public.historical_attempts h
+  on h.id = q.source_id and q.source_type = 'historical_attempt'
+where q.player_id is not null and not q.is_guest;
+
+create or replace view public.player_bingo_fields
+with (security_invoker = true)
+as
+with endings as (
+  select generate_series(0, 99)::integer ending
+), hit_counts as (
+  select
+    player_id,
+    ending,
+    count(*)::integer hit_count,
+    min(occurred_at) filter (where hit_sequence = 1) bronze_achieved_at,
+    min(occurred_at) filter (where hit_sequence = 2) silver_achieved_at,
+    min(occurred_at) filter (where hit_sequence = 3) gold_achieved_at
+  from public.player_bingo_hits
+  group by player_id, ending
+)
+select
+  p.id player_id,
+  e.ending,
+  lpad(e.ending::text, 2, '0') ending_label,
+  coalesce(h.hit_count, 0)::integer hit_count,
+  case
+    when coalesce(h.hit_count, 0) >= 3 then 'gold'
+    when coalesce(h.hit_count, 0) = 2 then 'silver'
+    when coalesce(h.hit_count, 0) = 1 then 'bronze'
+    else 'open'
+  end field_tier,
+  h.bronze_achieved_at,
+  h.silver_achieved_at,
+  h.gold_achieved_at
+from public.players p
+cross join endings e
+left join hit_counts h on h.player_id = p.id and h.ending = e.ending
+where not p.is_ak and not p.is_archived;
+
+create or replace view public.player_bingo_lines
+with (security_invoker = true)
+as
+with line_cells as (
+  select concat('row-', row_number) line_key, 'row'::text line_type,
+    row_number line_number, row_number * 10 + column_number ending
+  from generate_series(0, 9) row_number
+  cross join generate_series(0, 9) column_number
+  union all
+  select concat('column-', column_number), 'column'::text, column_number,
+    row_number * 10 + column_number
+  from generate_series(0, 9) column_number
+  cross join generate_series(0, 9) row_number
+  union all
+  select 'diagonal-main', 'diagonal'::text, 0, step * 11
+  from generate_series(0, 9) step
+  union all
+  select 'diagonal-anti', 'diagonal'::text, 1, 9 + step * 9
+  from generate_series(0, 9) step
+), evaluated as (
+  select
+    f.player_id,
+    l.line_key,
+    l.line_type,
+    l.line_number,
+    min(f.hit_count)::integer minimum_hit_count,
+    array_agg(l.ending order by l.ending) endings,
+    max(f.bronze_achieved_at) bronze_achieved_at,
+    max(f.silver_achieved_at) silver_achieved_at,
+    max(f.gold_achieved_at) gold_achieved_at
+  from public.player_bingo_fields f
+  join line_cells l on l.ending = f.ending
+  group by f.player_id, l.line_key, l.line_type, l.line_number
+)
+select
+  player_id,
+  line_key,
+  line_type,
+  line_number,
+  endings,
+  minimum_hit_count,
+  minimum_hit_count >= 1 qualifies_bronze,
+  minimum_hit_count >= 2 qualifies_silver,
+  minimum_hit_count >= 3 qualifies_gold,
+  case when minimum_hit_count >= 3 then 'gold'
+    when minimum_hit_count >= 2 then 'silver'
+    when minimum_hit_count >= 1 then 'bronze'
+    else 'open' end line_tier,
+  case when minimum_hit_count >= 1 then bronze_achieved_at end bronze_achieved_at,
+  case when minimum_hit_count >= 2 then silver_achieved_at end silver_achieved_at,
+  case when minimum_hit_count >= 3 then gold_achieved_at end gold_achieved_at
+from evaluated;
+
+create or replace view public.player_bingo_statistics
+with (security_invoker = true)
+as
+with field_totals as (
+  select
+    player_id,
+    count(*) filter (where hit_count >= 1)::integer collected_endings,
+    count(*) filter (where hit_count >= 1)::integer bronze_fields,
+    count(*) filter (where hit_count >= 2)::integer silver_fields,
+    count(*) filter (where hit_count >= 3)::integer gold_fields
+  from public.player_bingo_fields
+  group by player_id
+), line_totals as (
+  select
+    player_id,
+    count(*) filter (where qualifies_bronze)::integer bronze_lines,
+    count(*) filter (where qualifies_silver)::integer silver_lines,
+    count(*) filter (where qualifies_gold)::integer gold_lines,
+    min(bronze_achieved_at) filter (where qualifies_bronze) bronze_badge_achieved_at,
+    min(silver_achieved_at) filter (where qualifies_silver) silver_badge_achieved_at,
+    min(gold_achieved_at) filter (where qualifies_gold) gold_badge_achieved_at
+  from public.player_bingo_lines
+  group by player_id
+)
+select
+  f.player_id,
+  f.collected_endings,
+  f.bronze_fields,
+  f.silver_fields,
+  f.gold_fields,
+  coalesce(l.bronze_lines, 0)::integer bronze_lines,
+  coalesce(l.silver_lines, 0)::integer silver_lines,
+  coalesce(l.gold_lines, 0)::integer gold_lines,
+  case when coalesce(l.gold_lines, 0) > 0 then 'gold'
+    when coalesce(l.silver_lines, 0) > 0 then 'silver'
+    when coalesce(l.bronze_lines, 0) > 0 then 'bronze'
+    else null end highest_badge_tier,
+  l.bronze_badge_achieved_at,
+  l.silver_badge_achieved_at,
+  l.gold_badge_achieved_at
+from field_totals f
+left join line_totals l on l.player_id = f.player_id;
 
 create or replace view public.league_time_threshold_statistics
 with (security_invoker = true)
@@ -758,14 +919,6 @@ valid_player_times as (
       partition by player_id order by qualified_at, event_id
     )::integer precision_count
   from public.precision_events pe where qualifies
-), most_wanted_ranked as (
-  select mw.*,
-    row_number() over (
-      partition by first_player_id
-      order by first_occurred_at, ending, first_source_id
-    )::integer first_hit_count
-  from public.most_wanted_endings mw
-  where achieved and first_player_id is not null and not first_is_guest
 ), sequence_sources as (
   select
     q.source_id,
@@ -930,19 +1083,31 @@ valid_player_times as (
   join public.badge_definitions bd
     on bd.category = 'precision' and bd.is_active
     and bd.threshold = p.precision_count
-), most_wanted_awards as (
+), bingo_awards as (
   select
-    concat(m.first_player_id, ':', bd.badge_key), m.first_player_id, bd.badge_key,
-    m.first_source_type,
-    case when m.first_source_type = 'attempt' then m.first_source_id else null::uuid end,
-    case when m.first_source_type = 'historical_attempt' then m.first_source_id else null::uuid end,
-    m.first_event_id, m.first_occurred_at,
-    jsonb_build_object('progress', m.first_hit_count, 'ending', m.ending,
-      'timeHundredths', m.first_time_hundredths)
-  from most_wanted_ranked m
+    concat(b.player_id, ':', bd.badge_key), b.player_id, bd.badge_key,
+    'bingo'::text, null::uuid, null::uuid, null::uuid,
+    case bd.tier
+      when 'gold' then b.gold_badge_achieved_at
+      when 'silver' then b.silver_badge_achieved_at
+      else b.bronze_badge_achieved_at
+    end,
+    jsonb_build_object(
+      'progress', case bd.tier
+        when 'gold' then b.gold_lines
+        when 'silver' then b.silver_lines
+        else b.bronze_lines end,
+      'bronzeLines', b.bronze_lines,
+      'silverLines', b.silver_lines,
+      'goldLines', b.gold_lines,
+      'lineCountsAreCumulative', true
+    )
+  from public.player_bingo_statistics b
   join public.badge_definitions bd
-    on bd.category = 'most_wanted' and bd.is_active
-    and bd.threshold = m.first_hit_count
+    on bd.category = 'bingo' and bd.is_active
+    and ((bd.tier = 'bronze' and b.bronze_lines > 0)
+      or (bd.tier = 'silver' and b.silver_lines > 0)
+      or (bd.tier = 'gold' and b.gold_lines > 0))
 ), first_valid_awards as (
   select
     concat(n.player_id, ':first-official-attempt'), n.player_id,
@@ -1044,7 +1209,7 @@ valid_player_times as (
   union all select * from participation_awards
   union all select * from podium_awards
   union all select * from precision_awards
-  union all select * from most_wanted_awards
+  union all select * from bingo_awards
   union all select * from first_valid_awards
   union all select * from time_stopper_awards
   union all select * from false_starter_awards
@@ -1312,6 +1477,8 @@ grant execute on function public.sync_update_event_v2(uuid, text, date, boolean)
 grant select on public.qualified_official_times, public.precision_events,
   public.most_wanted_endings, public.most_wanted_progress,
   public.most_wanted_milestones,
+  public.player_bingo_hits, public.player_bingo_fields,
+  public.player_bingo_lines, public.player_bingo_statistics,
   public.league_time_threshold_statistics, public.league_time_statistics,
   public.player_trophies, public.most_wanted_activity_feed
   to anon, authenticated;

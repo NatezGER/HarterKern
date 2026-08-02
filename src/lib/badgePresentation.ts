@@ -29,7 +29,7 @@ export function getBadgeCenterMark(badge: {
         maximumFractionDigits: 2,
       });
   }
-  if (badge.category === "most_wanted") return "MW";
+  if (badge.category === "bingo") return "BI";
   if (badge.category === "precision") return "±";
   if (badge.category === "podiums") return "TOP3";
   if (badge.badgeKey.startsWith("first-sub")) {

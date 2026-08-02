@@ -19,6 +19,6 @@ describe("badge presentation", () => {
     expect(getBadgeCenterMark({ badgeKey: "almost", valueHundredths: 301 })).toBe("3,01");
     expect(getBadgeCenterMark({ badgeKey: "matrix-glitch" })).toBe("==");
     expect(getBadgeCenterMark({ badgeKey: "false-starter" })).toBe("DNF");
-    expect(getBadgeCenterMark({ badgeKey: "most-wanted-gold", category: "most_wanted" })).toBe("MW");
+    expect(getBadgeCenterMark({ badgeKey: "bingo-gold", category: "bingo" })).toBe("BI");
   });
 });
