@@ -8,13 +8,15 @@ import { Podium } from "@/components/leaderboard/Podium";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { DataState } from "@/components/common/DataState";
+import { PrestigeActivityFeed } from "@/components/dashboard/PrestigeActivityFeed";
+import { LatestEventCard } from "@/components/dashboard/LatestEventCard";
 
 export function DashboardPage() {
   return (
-    <div className="space-y-12 lg:space-y-16">
+    <div className="space-y-8 sm:space-y-12 lg:space-y-16">
       <HeroCard />
       <DataState>
-        <div className="space-y-12 lg:space-y-16">
+        <div className="space-y-8 sm:space-y-12 lg:space-y-16">
           <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
             <WorldRecordCard />
             <AnimatedCard className="px-4 pt-6 sm:px-8" hover={false}>
@@ -23,9 +25,11 @@ export function DashboardPage() {
             </AnimatedCard>
           </div>
           <HallOfFamePreview />
-          <DailyBestCards />
+          <LatestEventCard />
+          <div className="hidden sm:block"><DailyBestCards /></div>
+          <WRProgression />
           <div className="grid gap-6 xl:grid-cols-2">
-            <WRProgression />
+            <PrestigeActivityFeed />
             <div>
               <SectionHeading eyebrow="Live" title="Aktuelles Event" />
               <CurrentEventCard />

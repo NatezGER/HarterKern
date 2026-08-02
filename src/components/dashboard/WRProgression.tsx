@@ -1,39 +1,38 @@
-import { getPlayerById } from "@/data/selectors";
-import { Link } from "react-router-dom";
-import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
-import { formatDate, formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { SectionHeading } from "@/components/common/SectionHeading";
+import { ProgressionTimeline } from "@/components/progression/ProgressionTimeline";
+import { getPlayerById } from "@/data/selectors";
+import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
-export function WRProgression() {
+export function WRProgression({ compact = false, collapsibleHistory = false }: { compact?: boolean; collapsibleHistory?: boolean }) {
   const { data } = useEffectivePublicData();
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const points = data.worldRecordHistory.map((record) => {
+    const player = getPlayerById(data.players, record.playerId);
+    return {
+      id: record.id,
+      playerId: record.playerId,
+      playerName: player?.name ?? "Unbekannter Spieler",
+      avatarUrl: player?.avatarUrl ?? null,
+      timeHundredths: Math.round(record.time * 100),
+      achievedAt: record.achievedAt,
+      achievedDate: record.date,
+      eventId: record.eventId,
+      sourceLabel: record.location,
+      improvementHundredths: record.improvementHundredths,
+      durationDays: record.durationDays,
+      isCurrent: record.isCurrent,
+      hasExactTime: record.sourceType === "attempt",
+    };
+  });
   return (
     <section>
       <SectionHeading eyebrow="Rekordgeschichte" title="WR Progression" />
-      <AnimatedCard className="overflow-hidden p-6 sm:p-8" hover={false}>
-        <div className="relative">
-          <div className="absolute bottom-2 left-[5px] top-2 w-px bg-gradient-to-b from-gold-400 via-gold-400/30 to-transparent" />
-          <div className="space-y-7">
-            {data.worldRecordHistory.length === 0 && <p className="py-12 text-center text-sm text-white/35">Noch keine Rekordprogression.</p>}
-            {data.worldRecordHistory.map((record, index) => {
-              const player = getPlayerById(data.players, record.playerId);
-              if (!player) return null;
-              return (
-                <div key={record.id} className="relative grid grid-cols-[1rem_1fr_auto] items-center gap-4">
-                  <span className={`relative z-10 size-3 rounded-full border-2 ${index === 0 ? "border-gold-300 bg-gold-400 shadow-gold-sm" : "border-white/25 bg-[#111312]"}`} />
-                  <Link
-                    to={`/player/${player.id}`}
-                    className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
-                  >
-                    <p className="font-semibold">{player.name}</p>
-                    <p className="mt-1 text-xs text-white/35">{formatDate(record.date)} · {record.location}</p>
-                  </Link>
-                  <p className={`font-display text-2xl font-black ${index === 0 ? "text-gold-300" : "text-white/60"}`}>{formatTime(record.time)}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      <AnimatedCard className="overflow-hidden p-5 sm:p-8" hover={false}>
+        <ProgressionTimeline points={compact ? points.slice(0, 6) : points} showHistory={!collapsibleHistory || historyExpanded} emptyLabel="Noch kein offizieller Weltrekord." />
+        {collapsibleHistory && points.length > 0 && <Button type="button" variant="outline" className="mt-5 w-full sm:w-auto" aria-expanded={historyExpanded} onClick={() => setHistoryExpanded((value) => !value)}>{historyExpanded ? "Weltrekorde einklappen" : "Alle Weltrekorde anzeigen"}</Button>}
       </AnimatedCard>
     </section>
   );

@@ -4,20 +4,20 @@ import type { Event } from "@/types";
 
 export async function getEvents(): Promise<Event[]> {
   const client = getSupabase();
-  const [eventsResult, statsResult, participantsResult, guestsResult, winnersResult] =
+  const [eventsResult, statsResult, participantsResult, guestsResult, podiumResult] =
     await Promise.all([
     client.from("events").select("*").is("deleted_at", null)
       .order("started_at", { ascending: false }),
     client.from("event_statistics").select("*"),
     client.from("event_participants").select("event_id,player_id"),
     client.from("event_guests").select("event_id,id"),
-    client.from("event_winners").select("*"),
+    client.from("event_podium").select("*"),
   ]);
   if (eventsResult.error) throw eventsResult.error;
   if (statsResult.error) throw statsResult.error;
   if (participantsResult.error) throw participantsResult.error;
   if (guestsResult.error) throw guestsResult.error;
-  if (winnersResult.error) throw winnersResult.error;
+  if (podiumResult.error) throw podiumResult.error;
 
   const statsByEvent = new Map(statsResult.data.map((row) => [row.event_id, row]));
   return eventsResult.data.map((row) => {
@@ -34,9 +34,22 @@ export async function getEvents(): Promise<Event[]> {
       dnfCount: Number(stats?.dnf_count ?? 0),
       fastest: Number(stats?.fastest_hundredths ?? 0) / 100,
       average: Number(stats?.average_hundredths ?? 0) / 100,
-      winnerNames: winnersResult.data
-        .filter((winner) => winner.event_id === row.id)
-        .map((winner) => winner.display_name),
+      winnerNames: podiumResult.data
+        .filter((entry) => entry.event_id === row.id && entry.rank === 1)
+        .map((entry) => entry.display_name),
+      podium: podiumResult.data
+        .filter((entry) => entry.event_id === row.id)
+        .sort((left, right) => left.rank - right.rank)
+        .slice(0, 3)
+        .map((entry) => ({
+          id: entry.player_id ?? entry.guest_id ?? `${row.id}-${entry.rank}`,
+          playerId: entry.player_id,
+          isGuest: entry.player_id == null,
+          name: entry.display_name,
+          avatarUrl: entry.avatar_url,
+          rank: entry.rank,
+          time: entry.best_time_hundredths / 100,
+        })),
     };
   });
 }

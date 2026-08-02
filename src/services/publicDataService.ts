@@ -6,6 +6,9 @@ import {
   getGlobalStatistics,
   getLeaderboard,
   getWorldRecordHistory,
+  getPrestigeActivities,
+  getGroupMilestones,
+  getBadgeRarity,
 } from "@/services/statsService";
 import type { PublicDataSnapshot } from "@/types";
 
@@ -17,10 +20,14 @@ export const emptyPublicData: PublicDataSnapshot = {
   events: [],
   statistics: [],
   recentAttempts: [],
+  activities: [],
+  milestones: [],
+  badgeRarity: [],
 };
 
 export async function loadPublicData(): Promise<PublicDataSnapshot> {
-  const [players, leaderboard, dailyWinners, worldRecordHistory, events, statistics, recentAttempts] =
+  const [players, leaderboard, dailyWinners, worldRecordHistory, events, statistics,
+    recentAttempts, activities, milestones, badgeRarity] =
     await Promise.all([
       getPlayers(),
       getLeaderboard(),
@@ -29,6 +36,12 @@ export async function loadPublicData(): Promise<PublicDataSnapshot> {
       getEvents(),
       getGlobalStatistics(),
       getRecentAttempts(),
+      getPrestigeActivities(),
+      getGroupMilestones(),
+      getBadgeRarity(),
     ]);
-  return { players, leaderboard, dailyWinners, worldRecordHistory, events, statistics, recentAttempts };
+  return {
+    players, leaderboard, dailyWinners, worldRecordHistory, events, statistics,
+    recentAttempts, activities, milestones, badgeRarity,
+  };
 }

@@ -1,14 +1,16 @@
-import { Crown, MapPin, Sparkles } from "lucide-react";
+import { CalendarDays, Crown, MapPin, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getPlayerById } from "@/data/selectors";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { formatDate, formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { Avatar } from "@/components/common/Avatar";
+import { formatCurrentRecordDuration } from "@/lib/progression";
 
 export function WorldRecordCard() {
   const { data } = useEffectivePublicData();
-  const record = data.worldRecordHistory[0];
+  const record = data.worldRecordHistory.find(({ isCurrent }) => isCurrent)
+    ?? data.worldRecordHistory[0];
   const player = record ? getPlayerById(data.players, record.playerId) : null;
   if (!record || !player) {
     return <AnimatedCard className="grid min-h-72 place-items-center p-8 text-center text-sm text-white/40" hover={false}>Noch kein offizieller Weltrekord.</AnimatedCard>;
@@ -26,7 +28,7 @@ export function WorldRecordCard() {
             </span>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-gold-300">Aktueller Weltrekord</p>
-              <p className="mt-0.5 text-xs text-white/35">Unangefochtene Bestmarke</p>
+              <p className="mt-0.5 text-xs text-white/35">{formatCurrentRecordDuration(record.durationDays)}</p>
             </div>
           </div>
           <span className="rounded-full border border-gold-400/20 px-3 py-1 text-[9px] font-bold tracking-widest text-gold-300">WR</span>
@@ -48,9 +50,10 @@ export function WorldRecordCard() {
           </Link>
         </div>
 
-        <p className="border-t border-gold-400/15 pt-4 text-xs font-semibold uppercase tracking-widest text-white/40">
-          Aufgestellt am <span className="text-white/70">{formatDate(record.date)}</span>
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gold-400/15 pt-4 text-xs font-semibold uppercase tracking-widest text-white/40">
+          <p className="flex items-center gap-2"><CalendarDays className="size-3.5" /> Aufgestellt am <span className="text-white/70">{formatDate(record.date)}</span></p>
+          {record.eventId && <Link to={`/events/${record.eventId}`} className="text-gold-300 hover:underline">Rekordevent ansehen</Link>}
+        </div>
       </div>
     </AnimatedCard>
   );

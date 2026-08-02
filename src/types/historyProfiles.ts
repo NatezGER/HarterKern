@@ -42,11 +42,55 @@ export interface EventParticipantDetail {
 
 export interface CompactBadge {
   key: string;
+  playerId: string;
+  playerName: string;
+  playerAvatarUrl: string | null;
   name: string;
   tier: BadgeTier;
   awardedAt: string;
   eventId: string | null;
   description: string;
+  badgeKey: string;
+  category: string;
+  familyKey: string | null;
+  requirement: string;
+  threshold: number | null;
+  recipientCount: number;
+  regularPlayerCount: number;
+  rarityPercent: number | null;
+  sourceAttemptId: string | null;
+  sourceHistoricalAttemptId: string | null;
+  eventName: string | null;
+  sourceAttemptNumber: number | null;
+  sourceTimeHundredths: number | null;
+  nextBadgeName: string | null;
+  nextRequirement: string | null;
+  nextTier: BadgeTier | null;
+  nextThreshold: number | null;
+  currentProgress: number | null;
+  isSpecialEventBadge: boolean;
+}
+
+export interface ProgressionPoint {
+  id: string;
+  timeHundredths: number;
+  achievedAt: string;
+  achievedDate: string;
+  eventId: string | null;
+  sourceLabel: string;
+  sourceType: "attempt" | "historical_attempt";
+  previousHundredths: number | null;
+  improvementHundredths: number | null;
+  durationDays: number;
+  isCurrent: boolean;
+}
+
+export interface EventAttemptNumberPoint {
+  attemptNumber: number;
+  samples: number;
+  averageHundredths: number;
+  bestHundredths: number;
+  slowestHundredths: number;
 }
 
 export interface EventDetail {
@@ -68,6 +112,7 @@ export interface EventDetail {
   attempts: EventAttemptDetail[];
   badges: CompactBadge[];
   photos: MediaPhoto[];
+  attemptNumbers: EventAttemptNumberPoint[];
 }
 
 export interface PlayerEventSummary {
@@ -107,4 +152,12 @@ export interface PlayerProfileDetail {
   events: PlayerEventSummary[];
   badges: CompactBadge[];
   attemptNumbers: AttemptNumberPoint[];
+  progression: ProgressionPoint[];
+  pbCount: number;
+  largestPbImprovementHundredths: number | null;
+  averagePbImprovementHundredths: number | null;
+  worldRecordCount: number;
+  worldRecordDays: number;
+  longestWorldRecordDays: number;
+  visibleBadgeCount: number;
 }

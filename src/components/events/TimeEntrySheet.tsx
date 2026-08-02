@@ -73,6 +73,11 @@ export function TimeEntrySheet({
           </p>
         </div>
       </div>
+      <div className="mb-4 grid grid-cols-3 gap-2">
+        <EntryMetric label="Event-Bestzeit" value={formatTime(standing.bestTime ?? 0)} />
+        <EntryMetric label="Versuche" value={String(standing.attempts)} />
+        <EntryMetric label="Event-Ø" value={formatTime(standing.averageTime ?? 0)} />
+      </div>
       <div
         className="mb-4 grid min-h-20 place-items-center rounded-2xl border border-gold-400/20 bg-gold-400/[0.06]"
         aria-live="polite"
@@ -102,4 +107,8 @@ export function TimeEntrySheet({
       <p aria-live="assertive" className="mt-2 text-center text-sm text-red-300">{message}</p>
     </EventModal>
   );
+}
+
+function EntryMetric({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-xl bg-white/[0.035] p-2 text-center"><p className="text-[8px] font-bold uppercase tracking-wider text-white/30">{label}</p><p className="mt-1 font-display text-sm font-black">{value}</p></div>;
 }

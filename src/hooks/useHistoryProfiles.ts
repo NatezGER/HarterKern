@@ -16,9 +16,13 @@ interface DetailState<T> {
 const initialState = <T,>(): DetailState<T> => ({ data: null, loading: true, error: "" });
 
 export function useEventDetail(eventId: string) {
-  const { snapshot } = useDataPlatform();
+  const { snapshot, status } = useDataPlatform();
   const [state, setState] = useState<DetailState<EventDetail>>(initialState);
   useEffect(() => {
+    if (status !== "ready") {
+      setState(initialState);
+      return;
+    }
     let active = true;
     setState(initialState);
     void getEventDetail(eventId)
@@ -31,14 +35,18 @@ export function useEventDetail(eventId: string) {
     return () => {
       active = false;
     };
-  }, [eventId, snapshot]);
+  }, [eventId, snapshot, status]);
   return state;
 }
 
 export function usePlayerProfileDetail(playerId: string) {
-  const { snapshot } = useDataPlatform();
+  const { snapshot, status } = useDataPlatform();
   const [state, setState] = useState<DetailState<PlayerProfileDetail>>(initialState);
   useEffect(() => {
+    if (status !== "ready") {
+      setState(initialState);
+      return;
+    }
     let active = true;
     setState(initialState);
     void getPlayerProfileDetail(playerId)
@@ -51,6 +59,6 @@ export function usePlayerProfileDetail(playerId: string) {
     return () => {
       active = false;
     };
-  }, [playerId, snapshot]);
+  }, [playerId, snapshot, status]);
   return state;
 }

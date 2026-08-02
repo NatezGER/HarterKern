@@ -75,6 +75,7 @@ export interface LiveStanding {
   player: LiveParticipant;
   rank: number | null;
   bestTime: number | null;
+  averageTime: number | null;
   attempts: number;
   lastAttempt?: LiveAttempt;
 }
@@ -120,6 +121,15 @@ export interface RecordCelebration {
   playerName: string;
   time: number;
   previousTime?: number;
+}
+
+export interface BadgeUnlockCelebration {
+  key: string;
+  badgeKey: string;
+  name: string;
+  tier: "bronze" | "silver" | "gold" | "diamond" | "special";
+  requirement: string;
+  playerName: string;
 }
 
 export interface AttemptMilestone {

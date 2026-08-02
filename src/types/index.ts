@@ -39,7 +39,54 @@ export interface WorldRecord {
   playerId: string;
   time: number;
   date: string;
+  achievedAt: string;
   location: string;
+  eventId: string | null;
+  sourceType: "attempt" | "historical_attempt";
+  previousTime: number | null;
+  improvementHundredths: number | null;
+  durationDays: number;
+  isCurrent: boolean;
+}
+
+export interface PrestigeActivity {
+  id: string;
+  type: "world_record" | "personal_best" | "badge" | "group_milestone";
+  occurredAt: string;
+  playerId: string | null;
+  playerName: string | null;
+  avatarUrl: string | null;
+  eventId: string | null;
+  eventName: string | null;
+  title: string;
+  description: string;
+  timeHundredths: number | null;
+  badgeKey: string | null;
+  tier: "bronze" | "silver" | "gold" | "diamond" | "special" | null;
+  priority: number;
+}
+
+export interface GroupMilestone {
+  key: string;
+  threshold: number;
+  name: string;
+  description: string;
+  currentCount: number;
+  achieved: boolean;
+  achievedAt: string | null;
+  playerId: string | null;
+  playerName: string | null;
+  eventId: string | null;
+  eventName: string | null;
+}
+
+export interface BadgeRarity {
+  key: string;
+  name: string;
+  tier: "bronze" | "silver" | "gold" | "diamond" | "special";
+  recipients: number;
+  playerCount: number;
+  percent: number | null;
 }
 
 export interface Event {
@@ -55,6 +102,15 @@ export interface Event {
   fastest: number;
   average: number;
   winnerNames: string[];
+  podium?: Array<{
+    id: string;
+    playerId?: string | null;
+    isGuest?: boolean;
+    name: string;
+    avatarUrl: string | null;
+    rank: number;
+    time: number;
+  }>;
   status: "active" | "closed";
 }
 
@@ -84,4 +140,7 @@ export interface PublicDataSnapshot {
   events: Event[];
   statistics: Statistic[];
   recentAttempts: Attempt[];
+  activities: PrestigeActivity[];
+  milestones: GroupMilestone[];
+  badgeRarity: BadgeRarity[];
 }

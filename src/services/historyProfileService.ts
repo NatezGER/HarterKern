@@ -6,6 +6,26 @@ import type {
   EventParticipantDetail,
   PlayerProfileDetail,
 } from "@/types/historyProfiles";
+import type { BadgeUnlockCelebration } from "@/types/liveEvent";
+
+export async function getAttemptBadgeUnlocks(
+  attemptId: string,
+  playerName: string,
+): Promise<BadgeUnlockCelebration[]> {
+  const { data, error } = await getSupabase().from("public_player_badges")
+    .select("award_key,badge_key,name,tier,description")
+    .eq("source_attempt_id", attemptId)
+    .order("awarded_at");
+  if (error) throw error;
+  return data.map((row) => ({
+    key: row.award_key,
+    badgeKey: row.badge_key,
+    name: row.name,
+    tier: row.tier,
+    requirement: row.description,
+    playerName,
+  }));
+}
 
 function avatarUrl(path: string | null, legacyUrl: string | null) {
   if (!path) return legacyUrl;
@@ -51,33 +71,82 @@ function mapBadge(row: {
   awarded_at: string;
   source_event_id: string | null;
   description: string;
+  badge_key: string;
+  category: string;
+  family_key: string | null;
+  requirement: string | null;
+  recipient_count: number;
+  regular_player_count: number;
+  rarity_percent: number | null;
+  source_attempt_id: string | null;
+  source_historical_attempt_id: string | null;
+  source_event_name: string | null;
+  player_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  avatar_path: string | null;
+  source_attempt_number: number | null;
+  source_time_hundredths: number | null;
+  next_badge_name: string | null;
+  next_requirement: string | null;
+  next_tier: CompactBadge["tier"] | null;
+  next_threshold: number | null;
+  current_progress: number | null;
+  threshold: number | null;
+  is_special_event_badge: boolean;
 }): CompactBadge {
   return {
     key: row.award_key,
+    playerId: row.player_id,
+    playerName: row.display_name,
+    playerAvatarUrl: avatarUrl(row.avatar_path, row.avatar_url),
     name: row.name,
     tier: row.tier,
     awardedAt: row.awarded_at,
     eventId: row.source_event_id,
     description: row.description,
+    badgeKey: row.badge_key,
+    category: row.category,
+    familyKey: row.family_key,
+    requirement: row.requirement ?? row.description,
+    threshold: row.threshold,
+    recipientCount: Number(row.recipient_count),
+    regularPlayerCount: Number(row.regular_player_count),
+    rarityPercent: row.rarity_percent,
+    sourceAttemptId: row.source_attempt_id,
+    sourceHistoricalAttemptId: row.source_historical_attempt_id,
+    eventName: row.source_event_name,
+    sourceAttemptNumber: row.source_attempt_number,
+    sourceTimeHundredths: row.source_time_hundredths,
+    nextBadgeName: row.next_badge_name,
+    nextRequirement: row.next_requirement,
+    nextTier: row.next_tier,
+    nextThreshold: row.next_threshold,
+    currentProgress: row.current_progress,
+    isSpecialEventBadge: row.is_special_event_badge,
   };
 }
 
 export async function getEventDetail(eventId: string): Promise<EventDetail | null> {
   const client = getSupabase();
   const [eventResult, statsResult, podiumResult, attemptsResult, participantResult,
-    badgeResult, photoResult] = await Promise.all([
+    badgeResult, photoResult, attemptNumbersResult] = await Promise.all([
     client.from("events").select("*").eq("id", eventId).is("deleted_at", null).maybeSingle(),
     client.from("event_statistics").select("*").eq("event_id", eventId).maybeSingle(),
     client.from("event_podium").select("*").eq("event_id", eventId).order("rank"),
     client.from("event_attempt_details").select("*").eq("event_id", eventId).order("submitted_at"),
     client.from("event_participant_statistics").select("*").eq("event_id", eventId),
-    client.from("public_player_badges").select("*").eq("source_event_id", eventId)
+    client.from("event_badge_unlocks").select("*").eq("source_event_id", eventId)
+      .order("tier_rank", { ascending: false })
+      .order("is_special_event_badge", { ascending: false })
       .order("awarded_at"),
     client.from("event_photos").select("*").eq("event_id", eventId)
       .order("sort_order").order("created_at"),
+    client.from("event_attempt_number_statistics").select("*").eq("event_id", eventId)
+      .order("attempt_number"),
   ]);
   for (const result of [eventResult, statsResult, podiumResult, attemptsResult,
-    participantResult, badgeResult, photoResult]) {
+    participantResult, badgeResult, photoResult, attemptNumbersResult]) {
     if (result.error) throw result.error;
   }
   const event = eventResult.data;
@@ -147,25 +216,40 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
       url: urls.get(row.storage_path) ?? "",
       caption: row.caption,
     })).filter(({ url }) => Boolean(url)),
+    attemptNumbers: (attemptNumbersResult.data ?? []).map((row) => ({
+      attemptNumber: row.attempt_number,
+      samples: Number(row.sample_count),
+      averageHundredths: row.average_hundredths,
+      bestHundredths: row.best_hundredths,
+      slowestHundredths: row.slowest_hundredths,
+    })),
   };
 }
 
 export async function getPlayerProfileDetail(playerId: string): Promise<PlayerProfileDetail | null> {
   const client = getSupabase();
-  const [playerResult, statsResult, rankResult, historyResult, badgeResult, pointsResult] =
+  const [playerResult, statsResult, rankResult, historyResult, badgeResult, pointsResult,
+    progressionResult, prestigeResult] =
     await Promise.all([
       client.from("players").select("*").eq("id", playerId).eq("is_archived", false).maybeSingle(),
       client.from("player_statistics").select("*").eq("player_id", playerId).maybeSingle(),
       client.from("public_hall_of_fame").select("rank").eq("player_id", playerId).maybeSingle(),
       client.from("player_event_history").select("*").eq("player_id", playerId)
         .order("event_date", { ascending: false }),
-      client.from("public_player_badges").select("*").eq("player_id", playerId)
-        .order("awarded_at", { ascending: false }),
+      client.from("visible_player_badges").select("*").eq("player_id", playerId)
+        .order("tier_rank", { ascending: false })
+        .order("is_special_event_badge", { ascending: false })
+        .order("recipient_count", { ascending: true })
+        .order("sort_order"),
       client.from("player_attempt_number_statistics").select("*").eq("player_id", playerId)
         .order("attempt_number"),
+      client.from("player_pb_history").select("*").eq("player_id", playerId)
+        .order("sequence_number"),
+      client.from("player_prestige_statistics").select("*").eq("player_id", playerId)
+        .maybeSingle(),
     ]);
   for (const result of [playerResult, statsResult, rankResult, historyResult, badgeResult,
-    pointsResult]) {
+    pointsResult, progressionResult, prestigeResult]) {
     if (result.error) throw result.error;
   }
   const player = playerResult.data;
@@ -174,6 +258,8 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
   const historyRows = historyResult.data ?? [];
   const badgeRows = badgeResult.data ?? [];
   const pointRows = pointsResult.data ?? [];
+  const progressionRows = progressionResult.data ?? [];
+  const prestige = prestigeResult.data;
   return {
     id: player.id,
     name: player.display_name,
@@ -207,5 +293,25 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
       dnfCount: Number(row.dnf_count),
       averageHundredths: row.average_hundredths,
     })),
+    progression: progressionRows.map((row) => ({
+      id: row.source_id,
+      timeHundredths: row.time_hundredths,
+      achievedAt: row.achieved_at,
+      achievedDate: row.achieved_date,
+      eventId: row.event_id,
+      sourceLabel: row.source_label,
+      sourceType: row.source_type,
+      previousHundredths: row.previous_best_hundredths,
+      improvementHundredths: row.improvement_hundredths,
+      durationDays: row.duration_days,
+      isCurrent: row.is_current,
+    })),
+    pbCount: Number(prestige?.pb_count ?? 0),
+    largestPbImprovementHundredths: prestige?.largest_pb_improvement_hundredths ?? null,
+    averagePbImprovementHundredths: prestige?.average_pb_improvement_hundredths ?? null,
+    worldRecordCount: Number(prestige?.world_record_count ?? 0),
+    worldRecordDays: Number(prestige?.world_record_days ?? 0),
+    longestWorldRecordDays: Number(prestige?.longest_world_record_days ?? 0),
+    visibleBadgeCount: Number(prestige?.visible_badge_count ?? 0),
   };
 }

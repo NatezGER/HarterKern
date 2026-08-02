@@ -9,6 +9,7 @@ import {
 import type { ReactNode } from "react";
 import { useDataPlatform } from "@/hooks/useDataPlatform";
 import { getErrorMessage } from "@/lib/errors";
+import { takeUnseenUnlocks } from "@/lib/badgeUnlocks";
 import {
   createLiveAttempt,
   getActiveLiveEvent,
@@ -27,6 +28,7 @@ import {
   updateRemotePlayer,
   upsertCanonicalPlayer,
 } from "@/services/dataPlatformRepository";
+import { getAttemptBadgeUnlocks } from "@/services/historyProfileService";
 import type {
   AttemptInput,
   AttemptUpdate,
@@ -35,6 +37,7 @@ import type {
   LiveEventState,
   LiveParticipant,
   RecordCelebration,
+  BadgeUnlockCelebration,
   StartLiveEventInput,
   StartLiveEventResult,
 } from "@/types/liveEvent";
@@ -43,6 +46,7 @@ interface LiveEventContextValue {
   state: LiveEventState;
   activeEvent?: LiveEvent;
   celebration: RecordCelebration | null;
+  badgeUnlock: BadgeUnlockCelebration | null;
   mutationError: string | null;
   startingEvent: boolean;
   endingEvent: boolean;
@@ -64,6 +68,7 @@ interface LiveEventContextValue {
   endEvent: () => Promise<string | null>;
   refresh: () => Promise<void>;
   dismissCelebration: () => void;
+  dismissBadgeUnlock: () => void;
   clearMutationError: () => void;
 }
 
@@ -74,11 +79,13 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
   const state = snapshot.liveState;
   const activeEvent = getActiveLiveEvent(state.events);
   const [celebration, setCelebration] = useState<RecordCelebration | null>(null);
+  const [badgeUnlocks, setBadgeUnlocks] = useState<BadgeUnlockCelebration[]>([]);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [startingEvent, setStartingEvent] = useState(false);
   const [endingEvent, setEndingEvent] = useState(false);
   const eventMutation = useRef<"starting" | "ending" | null>(null);
   const recentSubmissions = useRef(new Map<string, number>());
+  const presentedBadgeAwards = useRef(new Set<string>());
 
   const fail = useCallback((error: unknown) => {
     setMutationError(getErrorMessage(error));
@@ -170,6 +177,17 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
       setMutationError(null);
       const id = await createRemoteAttempt(input);
       detectRecord(createLiveAttempt(input, id, new Date().toISOString()));
+      const player = state.players.find(({ id: playerId }) => playerId === input.playerId);
+      if (player && input.participantKind !== "guest" && !input.outOfCompetition) {
+        try {
+          const unlocks = await getAttemptBadgeUnlocks(id, player.name);
+          const unseen = takeUnseenUnlocks(unlocks, presentedBadgeAwards.current);
+          if (unseen.length) setBadgeUnlocks((current) => [...current, ...unseen]);
+        } catch {
+          // The attempt is already confirmed. A presentation-only badge lookup
+          // must never turn a successful save into a failed submission.
+        }
+      }
       await refreshAfterMutation();
       return true;
     } catch (error) {
@@ -330,6 +348,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     state,
     activeEvent,
     celebration,
+    badgeUnlock: badgeUnlocks[0] ?? null,
     mutationError,
     startingEvent,
     endingEvent,
@@ -347,6 +366,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     endEvent,
     refresh,
     dismissCelebration: () => setCelebration(null),
+    dismissBadgeUnlock: () => setBadgeUnlocks((current) => current.slice(1)),
     clearMutationError: () => setMutationError(null),
   }), [
     activeEvent,
@@ -354,6 +374,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     addGuest,
     addAttempt,
     celebration,
+    badgeUnlocks,
     deleteAttempt,
     endEvent,
     endingEvent,

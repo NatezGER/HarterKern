@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { getAvatarGradient, getInitials } from "@/utils/avatar";
+import { cn } from "@/lib/cn";
+import { MOBILE_CONTEXT_AVATAR_FRAME } from "@/constants/avatar";
 import type {
   StartLiveEventParticipant,
 } from "@/types/liveEvent";
@@ -118,7 +120,7 @@ export function StartEventPanel({
                         : [...current, player.id],
                     )}
                   />
-                  <span className={`grid size-16 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br ${player.avatarGradient} font-display font-black text-black ring-2 ${selected.includes(player.id) ? "ring-gold-300" : "ring-white/10"}`}>
+                  <span className={cn("grid size-16 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br font-display font-black text-black ring-2", player.avatarGradient, MOBILE_CONTEXT_AVATAR_FRAME, selected.includes(player.id) ? "ring-gold-300" : "ring-white/10")}>
                     {player.avatarUrl ? <img src={player.avatarUrl} alt="" className="size-full rounded-full object-cover" /> : player.initials}
                   </span>
                   <span className="w-full truncate font-bold">{player.name}</span>

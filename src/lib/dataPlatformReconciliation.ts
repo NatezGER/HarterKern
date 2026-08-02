@@ -23,6 +23,9 @@ export function reconcileDataPlatformSnapshot(
       events: uniqueBy(remote.publicData.events, ({ id }) => id),
       statistics: uniqueBy(remote.publicData.statistics, ({ id }) => id),
       recentAttempts: uniqueBy(remote.publicData.recentAttempts, ({ id }) => id),
+      activities: uniqueBy(remote.publicData.activities, ({ id }) => id),
+      milestones: uniqueBy(remote.publicData.milestones, ({ key }) => key),
+      badgeRarity: uniqueBy(remote.publicData.badgeRarity, ({ key }) => key),
     },
     liveState: {
       version: 2,

@@ -5,6 +5,7 @@ import { DataPlatformProvider } from "@/hooks/useDataPlatform";
 import { LiveEventProvider } from "@/hooks/useLiveEvent";
 import { LiveEventBanner } from "@/components/events/LiveEventBanner";
 import { RecordCelebration } from "@/components/events/RecordCelebration";
+import { BadgeUnlockCelebration } from "@/components/events/BadgeUnlockCelebration";
 import { SyncStatusNotice } from "@/components/common/SyncStatusNotice";
 import { AdminSessionProvider } from "@/hooks/useAdminSession";
 import { ManagementModeProvider } from "@/hooks/useManagementMode";
@@ -24,6 +25,7 @@ export function AppLayout() {
               </main>
               <Footer />
               <RecordCelebration />
+              <BadgeUnlockCelebration />
               <ScrollRestoration />
             </div>
           </ManagementModeProvider>
