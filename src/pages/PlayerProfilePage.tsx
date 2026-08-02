@@ -1,4 +1,4 @@
-import { ArrowLeft, CircleX, Crown, Droplets, Medal, Target, Timer, Trophy, Zap } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CircleX, Crown, Droplets, LoaderCircle, Medal, RefreshCw, Target, Timer, Trophy, Zap } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
@@ -29,7 +29,7 @@ export function PlayerProfilePage() {
   const { id = "" } = useParams();
   const [badgesExpanded, setBadgesExpanded] = useState(false);
   const [pbDetailsExpanded, setPbDetailsExpanded] = useState(false);
-  const { data: player, loading, error } = usePlayerProfileDetail(id);
+  const { data: player, loading, error, bingo } = usePlayerProfileDetail(id);
   const { data: publicData } = useEffectivePublicData();
   if (loading) return <DataState><div /></DataState>;
   if (!player) return error
@@ -97,7 +97,11 @@ export function PlayerProfilePage() {
       <section className="panel overflow-hidden p-4 sm:p-8">
         <SectionHeading eyebrow="Persönliche Langzeitjagd" title="BINGO" />
         <p className="mb-5 max-w-2xl text-sm leading-6 text-white/45">Jede eigene Hundertstel-Endung steigt vom ersten Treffer in Bronze über Silber bis Gold. Im persönlichen BINGO werden bewusst keine Profilbilder gezeigt.</p>
-        <PersonalBingo data={player.bingo} />
+        {bingo.data ? <PersonalBingo data={bingo.data} /> : bingo.loading ? (
+          <div className="grid min-h-40 place-items-center text-sm text-white/40"><span><LoaderCircle className="mx-auto mb-3 size-5 animate-spin text-gold-400" />BINGO wird geladen.</span></div>
+        ) : (
+          <div className="grid min-h-40 place-items-center text-center"><div><AlertTriangle className="mx-auto size-6 text-amber-300" /><p className="mt-3 text-sm text-white/65">BINGO konnte nicht geladen werden.</p><p className="mt-1 text-xs text-white/35">{bingo.error}</p><Button type="button" size="sm" variant="outline" className="mt-4" onClick={bingo.retry}><RefreshCw className="size-4" /> BINGO erneut laden</Button></div></div>
+        )}
       </section>
 
       <section className="panel p-6 sm:p-8">

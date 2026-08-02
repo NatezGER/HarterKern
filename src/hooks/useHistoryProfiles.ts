@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
-import { useDataPlatform } from "@/hooks/useDataPlatform";
+import { useCallback, useEffect, useState } from "react";
+import { useDataGroup, useDataPlatform } from "@/hooks/useDataPlatform";
 import { getErrorMessage } from "@/lib/errors";
 import {
   getEventDetail,
+  getPlayerBingo,
   getPlayerProfileDetail,
 } from "@/services/historyProfileService";
-import type { EventDetail, PlayerProfileDetail } from "@/types/historyProfiles";
+import type { EventDetail, PlayerBingo, PlayerProfileDetail } from "@/types/historyProfiles";
 
 interface DetailState<T> {
   data: T | null;
@@ -16,7 +17,8 @@ interface DetailState<T> {
 const initialState = <T,>(): DetailState<T> => ({ data: null, loading: true, error: "" });
 
 export function useEventDetail(eventId: string) {
-  const { snapshot, status } = useDataPlatform();
+  const { status } = useDataPlatform();
+  const { version } = useDataGroup("event-detail");
   const [state, setState] = useState<DetailState<EventDetail>>(initialState);
   useEffect(() => {
     if (status !== "ready") {
@@ -35,13 +37,17 @@ export function useEventDetail(eventId: string) {
     return () => {
       active = false;
     };
-  }, [eventId, snapshot, status]);
+  }, [eventId, status, version]);
   return state;
 }
 
 export function usePlayerProfileDetail(playerId: string) {
-  const { snapshot, status } = useDataPlatform();
+  const { status } = useDataPlatform();
+  const { version } = useDataGroup("player-profile");
   const [state, setState] = useState<DetailState<PlayerProfileDetail>>(initialState);
+  const [bingo, setBingo] = useState<DetailState<PlayerBingo>>(initialState);
+  const [bingoRun, setBingoRun] = useState(0);
+  const retryBingo = useCallback(() => setBingoRun((current) => current + 1), []);
   useEffect(() => {
     if (status !== "ready") {
       setState(initialState);
@@ -59,6 +65,22 @@ export function usePlayerProfileDetail(playerId: string) {
     return () => {
       active = false;
     };
-  }, [playerId, snapshot, status]);
-  return state;
+  }, [playerId, status, version]);
+  useEffect(() => {
+    if (status !== "ready") {
+      setBingo(initialState);
+      return;
+    }
+    let active = true;
+    setBingo(initialState);
+    void getPlayerBingo(playerId)
+      .then((data) => active && setBingo({ data, loading: false, error: "" }))
+      .catch((error) => active && setBingo({
+        data: null,
+        loading: false,
+        error: getErrorMessage(error),
+      }));
+    return () => { active = false; };
+  }, [bingoRun, playerId, status, version]);
+  return { ...state, bingo: { ...bingo, retry: retryBingo } };
 }

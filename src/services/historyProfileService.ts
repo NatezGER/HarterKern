@@ -4,6 +4,7 @@ import type {
   EventAttemptDetail,
   EventDetail,
   EventParticipantDetail,
+  PlayerBingo,
   PlayerProfileDetail,
   TrophyAward,
 } from "@/types/historyProfiles";
@@ -293,9 +294,8 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
   if (playerResult.error) throw playerResult.error;
   if (!playerResult.data) return null;
 
-  // Profile prestige, progression and BINGO views share the same qualified
-  // attempt graph. Keep only the inexpensive base reads concurrent and resolve
-  // the derived views in sequence to stay within the production statement budget.
+  // Keep the core profile independent from personal BINGO. A BINGO timeout must
+  // not remove identity, career statistics, badges, trophies or progression.
   const [statsResult, rankResult, historyResult] = await Promise.all([
       client.from("player_statistics").select("*").eq("player_id", playerId).maybeSingle(),
       client.from("public_hall_of_fame").select("rank").eq("player_id", playerId).maybeSingle(),
@@ -314,16 +314,8 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
     .eq("player_id", playerId).maybeSingle();
   const trophyResult = await client.from("player_trophies").select("*")
     .eq("player_id", playerId).order("awarded_at", { ascending: false });
-  const bingoFieldsResult = await client.from("player_bingo_fields").select("*")
-    .eq("player_id", playerId).order("ending");
-  const bingoStatsResult = await client.from("player_bingo_statistics").select("*")
-    .eq("player_id", playerId).maybeSingle();
-  const bingoHitsResult = await client.from("player_bingo_hits").select("*")
-    .eq("player_id", playerId).order("occurred_at").order("source_priority")
-    .order("source_order").order("source_id");
   for (const result of [playerResult, statsResult, rankResult, historyResult, badgeResult,
-    pointsResult, progressionResult, prestigeResult, trophyResult, bingoFieldsResult,
-    bingoStatsResult, bingoHitsResult]) {
+    pointsResult, progressionResult, prestigeResult, trophyResult]) {
     if (result.error) throw result.error;
   }
   const player = playerResult.data;
@@ -333,14 +325,6 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
   const pointRows = pointsResult.data ?? [];
   const progressionRows = progressionResult.data ?? [];
   const prestige = prestigeResult.data;
-  const bingoHits = bingoHitsResult.data ?? [];
-  const bingoStats = bingoStatsResult.data;
-  const bingoHitsByEnding = new Map<number, typeof bingoHits>();
-  for (const hit of bingoHits) {
-    const hits = bingoHitsByEnding.get(hit.ending) ?? [];
-    hits.push(hit);
-    bingoHitsByEnding.set(hit.ending, hits);
-  }
   return {
     id: player.id,
     name: player.display_name,
@@ -394,34 +378,71 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
     worldRecordDays: Number(prestige?.world_record_days ?? 0),
     longestWorldRecordDays: Number(prestige?.longest_world_record_days ?? 0),
     visibleBadgeCount: Number(prestige?.visible_badge_count ?? 0),
-    bingo: {
-      fields: (bingoFieldsResult.data ?? []).map((field) => ({
-        ending: field.ending,
-        label: field.ending_label,
-        hitCount: field.hit_count,
-        tier: field.field_tier,
-        hits: (bingoHitsByEnding.get(field.ending) ?? []).map((hit) => ({
-          id: hit.source_id,
-          sourceType: hit.source_type,
-          eventId: hit.event_id,
-          timeHundredths: hit.time_hundredths,
-          occurredAt: hit.occurred_at,
-          occurredDate: hit.occurred_date,
-          hasExactTime: hit.has_exact_time,
-          sourceLabel: hit.source_label,
-        })),
-      })),
-      summary: {
-        collectedEndings: bingoStats?.collected_endings ?? 0,
-        bronzeFields: bingoStats?.bronze_fields ?? 0,
-        silverFields: bingoStats?.silver_fields ?? 0,
-        goldFields: bingoStats?.gold_fields ?? 0,
-        bronzeLines: bingoStats?.bronze_lines ?? 0,
-        silverLines: bingoStats?.silver_lines ?? 0,
-        goldLines: bingoStats?.gold_lines ?? 0,
-        highestBadgeTier: bingoStats?.highest_badge_tier ?? null,
-      },
-    },
+    bingo: emptyPlayerBingo,
     trophies: (trophyResult.data ?? []).map(mapTrophy),
+  };
+}
+
+export const emptyPlayerBingo: PlayerBingo = {
+  fields: [],
+  summary: {
+    collectedEndings: 0,
+    bronzeFields: 0,
+    silverFields: 0,
+    goldFields: 0,
+    bronzeLines: 0,
+    silverLines: 0,
+    goldLines: 0,
+    highestBadgeTier: null,
+  },
+};
+
+export async function getPlayerBingo(playerId: string): Promise<PlayerBingo> {
+  const client = getSupabase();
+  const fieldsResult = await client.from("player_bingo_fields").select("*")
+    .eq("player_id", playerId).order("ending");
+  if (fieldsResult.error) throw fieldsResult.error;
+  const statsResult = await client.from("player_bingo_statistics").select("*")
+    .eq("player_id", playerId).maybeSingle();
+  if (statsResult.error) throw statsResult.error;
+  const hitsResult = await client.from("player_bingo_hits").select("*")
+    .eq("player_id", playerId).order("occurred_at").order("source_priority")
+    .order("source_order").order("source_id");
+  if (hitsResult.error) throw hitsResult.error;
+  const hits = hitsResult.data ?? [];
+  const hitsByEnding = new Map<number, typeof hits>();
+  for (const hit of hits) {
+    const current = hitsByEnding.get(hit.ending) ?? [];
+    current.push(hit);
+    hitsByEnding.set(hit.ending, current);
+  }
+  const stats = statsResult.data;
+  return {
+    fields: (fieldsResult.data ?? []).map((field) => ({
+      ending: field.ending,
+      label: field.ending_label,
+      hitCount: field.hit_count,
+      tier: field.field_tier,
+      hits: (hitsByEnding.get(field.ending) ?? []).map((hit) => ({
+        id: hit.source_id,
+        sourceType: hit.source_type,
+        eventId: hit.event_id,
+        timeHundredths: hit.time_hundredths,
+        occurredAt: hit.occurred_at,
+        occurredDate: hit.occurred_date,
+        hasExactTime: hit.has_exact_time,
+        sourceLabel: hit.source_label,
+      })),
+    })),
+    summary: {
+      collectedEndings: stats?.collected_endings ?? 0,
+      bronzeFields: stats?.bronze_fields ?? 0,
+      silverFields: stats?.silver_fields ?? 0,
+      goldFields: stats?.gold_fields ?? 0,
+      bronzeLines: stats?.bronze_lines ?? 0,
+      silverLines: stats?.silver_lines ?? 0,
+      goldLines: stats?.gold_lines ?? 0,
+      highestBadgeTier: stats?.highest_badge_tier ?? null,
+    },
   };
 }

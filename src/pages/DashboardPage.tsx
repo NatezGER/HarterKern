@@ -10,6 +10,7 @@ import { SectionHeading } from "@/components/common/SectionHeading";
 import { DataState } from "@/components/common/DataState";
 import { PrestigeActivityFeed } from "@/components/dashboard/PrestigeActivityFeed";
 import { LatestEventCard } from "@/components/dashboard/LatestEventCard";
+import { OptionalDataState } from "@/components/common/OptionalDataState";
 
 export function DashboardPage() {
   return (
@@ -29,7 +30,7 @@ export function DashboardPage() {
           <div className="hidden sm:block"><DailyBestCards /></div>
           <WRProgression />
           <div className="grid gap-6 xl:grid-cols-2">
-            <PrestigeActivityFeed />
+            <OptionalDataState group="prestige-activities"><PrestigeActivityFeed /></OptionalDataState>
             <div>
               <SectionHeading eyebrow="Live" title="Aktuelles Event" />
               <CurrentEventCard />

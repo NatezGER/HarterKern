@@ -16,6 +16,7 @@ import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
 import { badgeTierLabel } from "@/lib/badgePresentation";
 import { MostWantedMatrix } from "@/components/stats/MostWantedMatrix";
 import { LeagueTimeStatistics } from "@/components/stats/LeagueTimeStatistics";
+import { OptionalDataState } from "@/components/common/OptionalDataState";
 
 export function StatsPage() {
   const { data } = useEffectivePublicData();
@@ -35,22 +36,24 @@ export function StatsPage() {
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow="Gemeinsam erreicht" title="Liga-Meilensteine" />
-          <GroupMilestones />
+          <OptionalDataState group="group-milestones"><GroupMilestones /></OptionalDataState>
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow="00 bis 99" title="Most Wanted" />
-          <MostWantedMatrix data={data.mostWanted} />
+          <OptionalDataState group="most-wanted"><MostWantedMatrix data={data.mostWanted} /></OptionalDataState>
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow="Offizielle Zeiten" title="Ligastatistiken" />
-          <LeagueTimeStatistics data={data.leagueTimeStatistics} />
+          <OptionalDataState group="league-time"><LeagueTimeStatistics data={data.leagueTimeStatistics} /></OptionalDataState>
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow="Prestige" title="Badge-Seltenheit" />
           <p className="-mt-4 mb-5 max-w-3xl text-sm leading-6 text-white/45">Anteil der aktiven, dauerhaften Spieler, die diese Schwelle mindestens einmal erreicht haben. Höhere Stufen zählen deshalb auch bei den darunterliegenden Schwellen mit; Gäste und AK-Spieler sind ausgeschlossen.</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {data.badgeRarity.map((badge) => <article key={badge.key} className="panel flex items-center gap-4 p-4"><PrestigeBadgeEmblem badge={{ badgeKey: badge.key, tier: badge.tier, name: badge.name }} size="sm" /><div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[0.18em] text-gold-300">{badgeTierLabel[badge.tier]}</p><h3 className="mt-1 truncate font-display text-lg font-black uppercase">{badge.name}</h3><p className="mt-2 font-display text-2xl font-black">{badge.percent == null ? "—" : `${badge.percent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`}</p><p className="mt-1 text-[10px] text-white/35">{badge.recipients} von {badge.playerCount} Spielern</p></div></article>)}
-          </div>
+          <OptionalDataState group="badge-rarity">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {data.badgeRarity.map((badge) => <article key={badge.key} className="panel flex items-center gap-4 p-4"><PrestigeBadgeEmblem badge={{ badgeKey: badge.key, tier: badge.tier, name: badge.name }} size="sm" /><div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[0.18em] text-gold-300">{badgeTierLabel[badge.tier]}</p><h3 className="mt-1 truncate font-display text-lg font-black uppercase">{badge.name}</h3><p className="mt-2 font-display text-2xl font-black">{badge.percent == null ? "—" : `${badge.percent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`}</p><p className="mt-1 text-[10px] text-white/35">{badge.recipients} von {badge.playerCount} Spielern</p></div></article>)}
+            </div>
+          </OptionalDataState>
         </section>
         <section id="events" className="mt-10 scroll-mt-28">
           <SectionHeading eyebrow="Eventarchiv" title="Vergangene Events" />
