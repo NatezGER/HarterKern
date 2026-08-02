@@ -1,6 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
-import { loadPublicData } from "@/services/publicDataService";
-import type { PublicDataSnapshot } from "@/types";
+import type { Player, PublicDataSnapshot } from "@/types";
 import type {
   AttemptInput,
   AttemptUpdate,
@@ -18,12 +17,8 @@ export interface DataPlatformSnapshot {
   liveState: LiveEventState;
 }
 
-export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
+export async function loadLiveState(publicPlayerRows: Player[]): Promise<LiveEventState> {
   const client = getSupabase();
-  // Load the composed public read models before the raw live-event snapshot. The
-  // public loader already performs bounded parallel work, so overlapping both
-  // groups can trigger statement timeouts on a cold production request.
-  const publicData = await loadPublicData();
   const [
     playersResult,
     eventsResult,
@@ -62,7 +57,7 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
   const guestRows = guestsResult.data ?? [];
   const attemptRows = attemptsResult.data ?? [];
   const historicalAttemptRows = historicalAttemptsResult.data ?? [];
-  const publicPlayers = new Map(publicData.players.map((player) => [player.id, player]));
+  const publicPlayers = new Map(publicPlayerRows.map((player) => [player.id, player]));
   const players: LiveParticipant[] = playerRows.map((row) => {
     const publicPlayer = publicPlayers.get(row.id);
     return {
@@ -126,10 +121,19 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
     }];
   });
   const historicalAttempts = historicalAttemptRows.map(mapHistoricalAttempt);
-  return {
-    publicData,
-    liveState: { version: 2, players, events, attempts, historicalAttempts },
-  };
+  return { version: 2, players, events, attempts, historicalAttempts };
+}
+
+export async function loadHistoricalAttempts() {
+  const { data, error } = await getSupabase().from("historical_attempts").select("*")
+    .is("deleted_at", null)
+    .order("attempt_date")
+    .order("sort_order")
+    .order("source")
+    .order("legacy_source_id", { nullsFirst: false })
+    .order("id");
+  if (error) throw error;
+  return (data ?? []).map(mapHistoricalAttempt);
 }
 
 export async function upsertCanonicalPlayer(
@@ -351,26 +355,26 @@ export async function closeExpiredRemoteEvents() {
 }
 
 export function subscribeToDataPlatform(
-  onChange: () => void,
+  onChange: (table: string) => void,
   onStatus: (status: string) => void,
   client: Pick<ReturnType<typeof getSupabase>, "channel" | "removeChannel"> = getSupabase(),
 ) {
   const channel = client.channel("pr6a-data-platform")
-    .on("postgres_changes", { event: "*", schema: "public", table: "players" }, onChange)
-    .on("postgres_changes", { event: "*", schema: "public", table: "events" }, onChange)
-    .on("postgres_changes", { event: "*", schema: "public", table: "attempts" }, onChange)
+    .on("postgres_changes", { event: "*", schema: "public", table: "players" }, () => onChange("players"))
+    .on("postgres_changes", { event: "*", schema: "public", table: "events" }, () => onChange("events"))
+    .on("postgres_changes", { event: "*", schema: "public", table: "attempts" }, () => onChange("attempts"))
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "historical_attempts" },
-      onChange,
+      () => onChange("historical_attempts"),
     )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "event_participants" },
-      onChange,
+      () => onChange("event_participants"),
     )
-    .on("postgres_changes", { event: "*", schema: "public", table: "event_guests" }, onChange)
-    .on("postgres_changes", { event: "*", schema: "public", table: "event_photos" }, onChange)
+    .on("postgres_changes", { event: "*", schema: "public", table: "event_guests" }, () => onChange("event_guests"))
+    .on("postgres_changes", { event: "*", schema: "public", table: "event_photos" }, () => onChange("event_photos"))
     .subscribe(onStatus);
   return () => {
     void client.removeChannel(channel);
