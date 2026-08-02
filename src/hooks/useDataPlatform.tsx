@@ -73,7 +73,13 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
       throw loadError;
     }
   }, []);
-  const refreshCoordinator = useRef(createRefreshCoordinator(loadLatestSnapshot));
+  // StrictMode, focus and the realtime subscription can request the same cold
+  // snapshot concurrently. Coalesce those requests instead of immediately
+  // repeating every expensive public read model.
+  const refreshCoordinator = useRef(createRefreshCoordinator(
+    loadLatestSnapshot,
+    { rerunIfRequested: false },
+  ));
   const refresh = useCallback(
     () => refreshCoordinator.current(),
     [],

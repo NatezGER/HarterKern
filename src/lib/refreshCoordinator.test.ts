@@ -20,4 +20,21 @@ describe("refresh coordinator", () => {
     await Promise.all([mutationRefresh, realtimeRefresh]);
     expect(load).toHaveBeenCalledTimes(2);
   });
+
+  it("coalesces concurrent cold-start requests when reruns are disabled", async () => {
+    let release: (() => void) | undefined;
+    const firstLoad = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const load = vi.fn(() => firstLoad);
+    const refresh = createRefreshCoordinator(load, { rerunIfRequested: false });
+
+    const strictModeRefresh = refresh();
+    const focusRefresh = refresh();
+    expect(load).toHaveBeenCalledOnce();
+
+    release?.();
+    await Promise.all([strictModeRefresh, focusRefresh]);
+    expect(load).toHaveBeenCalledOnce();
+  });
 });

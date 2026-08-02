@@ -1,10 +1,17 @@
-export function createRefreshCoordinator(load: () => Promise<void>) {
+interface RefreshCoordinatorOptions {
+  rerunIfRequested?: boolean;
+}
+
+export function createRefreshCoordinator(
+  load: () => Promise<void>,
+  { rerunIfRequested = true }: RefreshCoordinatorOptions = {},
+) {
   let current: Promise<void> | null = null;
   let refreshAgain = false;
 
   return () => {
     if (current) {
-      refreshAgain = true;
+      refreshAgain = rerunIfRequested;
       return current;
     }
 

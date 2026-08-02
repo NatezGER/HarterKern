@@ -53,15 +53,15 @@ export async function loadPublicData(): Promise<PublicDataSnapshot> {
       getEvents(),
       getGlobalStatistics(),
     ]);
-  const [recentAttempts, activities, milestones, badgeRarity, mostWanted,
-    leagueTimeStatistics] = await Promise.all([
-      getRecentAttempts(),
-      getPrestigeActivities(),
-      getGroupMilestones(),
-      getBadgeRarity(),
-      getMostWantedSnapshot(),
-      getLeagueTimeStatistics(),
-    ]);
+  // The PR 8A read models share several underlying views. Evaluate them one
+  // after another so PostgreSQL does not have to expand the same source graph
+  // concurrently for a single browser request.
+  const recentAttempts = await getRecentAttempts();
+  const activities = await getPrestigeActivities();
+  const milestones = await getGroupMilestones();
+  const badgeRarity = await getBadgeRarity();
+  const mostWanted = await getMostWantedSnapshot();
+  const leagueTimeStatistics = await getLeagueTimeStatistics();
   return {
     players, leaderboard, dailyWinners, worldRecordHistory, events, statistics,
     recentAttempts, activities, milestones, badgeRarity, mostWanted, leagueTimeStatistics,
