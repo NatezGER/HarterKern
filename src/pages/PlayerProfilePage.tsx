@@ -66,7 +66,7 @@ export function PlayerProfilePage() {
         <div className="absolute -right-24 -top-36 size-96 rounded-full bg-gold-400/10 blur-[100px]" />
         <div className="relative flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
           <div className="flex w-full flex-col items-center gap-5 text-center sm:w-auto sm:flex-row sm:items-center sm:text-left">
-            <ProfileAvatar id={player.id} name={player.name} url={player.avatarUrl} className="size-24 ring-gold-400/35 max-sm:[&>img]:size-24 sm:size-32" />
+            <ProfileAvatar id={player.id} name={player.name} url={player.avatarUrl} className="size-24 ring-gold-400/35 sm:size-32" />
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold-400">{player.rank ? `Weltrang #${player.rank}` : "Noch ohne Rang"}</p>
               <h1 className="display-title mt-2 break-words text-5xl sm:text-7xl">{player.name}</h1>
