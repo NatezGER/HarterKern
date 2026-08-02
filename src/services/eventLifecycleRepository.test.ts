@@ -11,6 +11,7 @@ vi.mock("@/lib/supabase", () => ({
 import {
   closeRemoteEvent,
   startRemoteEvent,
+  updateRemoteEvent,
 } from "@/services/dataPlatformRepository";
 import type { StartLiveEventInput } from "@/types/liveEvent";
 
@@ -62,7 +63,8 @@ describe("event lifecycle repository", () => {
       participants: [existingPlayer, secondExistingPlayer],
     });
 
-    expect(mocks.rpc).toHaveBeenCalledWith("sync_start_event_v2", expect.objectContaining({
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_start_event_v3", expect.objectContaining({
+      p_awards_trophies: false,
       p_participants: [
         expect.objectContaining({ id: existingPlayer.id, kind: "permanent" }),
         expect.objectContaining({ id: secondExistingPlayer.id, kind: "permanent" }),
@@ -135,16 +137,27 @@ describe("event lifecycle repository", () => {
     await closeRemoteEvent("event-one", "manual");
     expect((await startRemoteEvent(input)).eventId).toBe("event-two");
     expect(mocks.rpc.mock.calls.map(([name]) => name)).toEqual([
-      "sync_start_event_v2",
+      "sync_start_event_v3",
       "sync_close_event",
-      "sync_start_event_v2",
+      "sync_start_event_v3",
     ]);
     const startPayloads = mocks.rpc.mock.calls
-      .filter(([name]) => name === "sync_start_event_v2")
+      .filter(([name]) => name === "sync_start_event_v3")
       .map(([, args]) => args.p_participants);
     expect(startPayloads).toEqual([
       [expect.objectContaining({ id: existingPlayer.id })],
       [expect.objectContaining({ id: existingPlayer.id })],
     ]);
+  });
+
+  it("persists the trophy-event flag through the versioned update RPC", async () => {
+    mocks.rpc.mockResolvedValue({ data: null, error: null });
+    await updateRemoteEvent("event-one", "Finale", "2026-08-02", true);
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_update_event_v2", {
+      p_event_id: "event-one",
+      p_name: "Finale",
+      p_start_date: "2026-08-02",
+      p_awards_trophies: true,
+    });
   });
 });

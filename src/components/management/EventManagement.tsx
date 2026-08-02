@@ -10,9 +10,11 @@ export function EventManagement() {
   const selected = state.events.find(({ id }) => id === selectedId);
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
+  const [awardsTrophies, setAwardsTrophies] = useState(false);
   useEffect(() => {
     setName(selected?.name ?? "");
     setDate(selected?.date ?? "");
+    setAwardsTrophies(selected?.awardsTrophies ?? false);
   }, [selected]);
   if (!selected) return null;
   return (
@@ -24,8 +26,12 @@ export function EventManagement() {
         </select>
         <Input className="rounded-xl" value={name} onChange={(event) => setName(event.target.value)} placeholder="Eventname" />
         <Input className="rounded-xl" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+        <label className="flex items-center gap-3 rounded-xl border border-white/10 px-4 text-sm text-white/60">
+          <input type="checkbox" checked={awardsTrophies} onChange={(event) => setAwardsTrophies(event.target.checked)} className="size-4 accent-amber-400" />
+          Trophäen für dieses Event vergeben
+        </label>
       </div>
-      <Button className="mt-4" onClick={() => void updateEvent(selected.id, { name: name.trim() || undefined, date })}><Save className="size-4" /> Event speichern</Button>
+      <Button className="mt-4" onClick={() => void updateEvent(selected.id, { name: name.trim() || undefined, date, awardsTrophies })}><Save className="size-4" /> Event speichern</Button>
     </section>
   );
 }

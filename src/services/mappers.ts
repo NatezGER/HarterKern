@@ -52,6 +52,7 @@ export function mapEvent(
     status: row.status === "active" && new Date(row.ends_at).getTime() > Date.now()
       ? "active"
       : "closed",
+    awardsTrophies: row.awards_trophies,
   };
 }
 

@@ -26,6 +26,7 @@ export function StartEventPanel({
   const [temporaryKind, setTemporaryKind] = useState<"permanent" | "guest">("permanent");
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [awardsTrophies, setAwardsTrophies] = useState(false);
   const allCandidates = useMemo(() => [...candidates, ...temporary], [candidates, temporary]);
   const visibleCandidates = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("de-DE");
@@ -80,7 +81,7 @@ export function StartEventPanel({
       return;
     }
     setError("");
-    const result = await startEvent({ name, date, participants });
+    const result = await startEvent({ name, date, participants, awardsTrophies });
     if (!result.eventId) {
       setError(result.error ?? "Event konnte nicht gestartet werden.");
       return;
@@ -104,6 +105,20 @@ export function StartEventPanel({
               <Input className="mt-2 rounded-xl" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
             </label>
           </div>
+          <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-gold-400/15 bg-gold-400/[0.04] p-4">
+            <input
+              type="checkbox"
+              checked={awardsTrophies}
+              onChange={(event) => setAwardsTrophies(event.target.checked)}
+              className="mt-0.5 size-4 accent-amber-400"
+            />
+            <span>
+              <span className="block text-sm font-bold text-white/85">Trophäen-Event</span>
+              <span className="mt-1 block text-xs leading-5 text-white/40">
+                Vergibt nach dem Abschluss Gold, Silber und Bronze an das Podium.
+              </span>
+            </span>
+          </label>
           <fieldset className="mt-7">
             <legend className="text-xs font-bold uppercase tracking-[0.16em] text-gold-300">Teilnehmer</legend>
             <Input className="mt-3 rounded-xl" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Spieler suchen" aria-label="Spieler suchen" />

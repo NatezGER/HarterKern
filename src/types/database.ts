@@ -22,6 +22,13 @@ import type {
   VisiblePlayerBadgesView,
   PlayerPrestigeStatisticsView,
 } from "@/types/pr7Foundation";
+import type {
+  LeagueTimeStatisticsView,
+  LeagueTimeThresholdStatisticsView,
+  MostWantedEndingView,
+  MostWantedProgressView,
+  PlayerTrophyView,
+} from "@/types/pr8";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -75,6 +82,7 @@ export interface Database {
           legacy_source_id: string | null;
           description: string | null;
           is_important: boolean;
+          awards_trophies: boolean;
           deleted_at: string | null;
           deleted_by: string | null;
         };
@@ -92,6 +100,7 @@ export interface Database {
           legacy_source_id?: string | null;
           description?: string | null;
           is_important?: boolean;
+          awards_trophies?: boolean;
           deleted_at?: string | null;
           deleted_by?: string | null;
         };
@@ -287,6 +296,31 @@ export interface Database {
         };
         Relationships: [];
       };
+      player_trophies: PlayerTrophyView;
+      most_wanted_endings: MostWantedEndingView;
+      most_wanted_progress: MostWantedProgressView;
+      league_time_statistics: LeagueTimeStatisticsView;
+      league_time_threshold_statistics: LeagueTimeThresholdStatisticsView;
+      most_wanted_activity_feed: {
+        Row: {
+          activity_id: string;
+          activity_type: "most_wanted_first" | "group_milestone";
+          occurred_at: string;
+          player_id: string | null;
+          display_name: string | null;
+          avatar_url: string | null;
+          avatar_path: string | null;
+          event_id: string | null;
+          event_name: string | null;
+          title: string;
+          description: string;
+          time_hundredths: number | null;
+          badge_key: null;
+          tier: null;
+          priority: number;
+        };
+        Relationships: [];
+      };
       world_record_progression: {
         Row: {
           attempt_id: string;
@@ -380,6 +414,34 @@ export interface Database {
           p_name: string;
           p_description: string;
           p_is_important: boolean;
+        };
+        Returns: undefined;
+      };
+      sync_start_event_v3: {
+        Args: {
+          p_name: string | null;
+          p_start_date: string;
+          p_participants: import("@/types/dataPlatform").EventParticipantPayload[];
+          p_started_at?: string | null;
+          p_ends_at?: string | null;
+          p_legacy_source_id?: string | null;
+          p_awards_trophies?: boolean;
+        };
+        Returns: {
+          eventId: string;
+          participants: Array<{
+            clientId: string;
+            participantId: string;
+            kind: "permanent" | "guest";
+          }>;
+        };
+      };
+      sync_update_event_v2: {
+        Args: {
+          p_event_id: string;
+          p_name: string | null;
+          p_start_date: string;
+          p_awards_trophies: boolean;
         };
         Returns: undefined;
       };

@@ -20,6 +20,7 @@ import { PodiumMedal } from "@/components/common/PodiumMedal";
 import { getPodiumCounters } from "@/lib/podiumCounters";
 import { useState } from "react";
 import { PersonalBestDetailsToggle } from "@/components/progression/PersonalBestDetailsToggle";
+import { TrophyCabinet } from "@/components/common/TrophyCabinet";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -49,6 +50,7 @@ export function PlayerProfilePage() {
     { label: "Tage mit WR", value: String(player.worldRecordDays), icon: Timer },
     { label: "Längste WR-Phase", value: `${player.longestWorldRecordDays} Tage`, icon: Crown },
     { label: "Sichtbare Badges", value: String(player.visibleBadgeCount), icon: Medal },
+    { label: "Most-Wanted-Ersttreffer", value: String(player.mostWantedFirstHits), icon: Target },
   ];
   const personalProgression = player.progression.map((point) => {
     const record = getRecordAt(publicData.worldRecordHistory.map((item) => ({ id: item.id, achievedAt: item.achievedAt, timeHundredths: Math.round(item.time * 100) })), point.achievedAt);
@@ -70,12 +72,14 @@ export function PlayerProfilePage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold-400">{player.rank ? `Weltrang #${player.rank}` : "Noch ohne Rang"}</p>
               <h1 className="display-title mt-2 break-words text-5xl sm:text-7xl">{player.name}</h1>
-              <p className="mt-2 text-sm text-white/40">{player.isAk ? "Außer Konkurrenz" : "Harter Kern · Aktiver Athlet"}</p>
+              {player.isAk && <p className="mt-2 text-sm text-white/40">Außer Konkurrenz</p>}
             </div>
           </div>
           <div className="w-full text-center sm:w-auto sm:text-left md:text-right"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Personal Best</p><p className="gold-text font-display text-5xl font-black sm:text-6xl">{displayTime(player.personalBestHundredths)}</p></div>
         </div>
       </section>
+
+      {player.trophies.length > 0 && <section><SectionHeading eyebrow="Podiumserfolge" title="Trophäenschrank" /><TrophyCabinet trophies={player.trophies} /></section>}
 
       {player.badges.length > 0 && <section><SectionHeading eyebrow="Verdient" title="Badge-Galerie" /><BadgeGallery badges={player.badges} featured mobileLimit={2} mobileExpanded={badgesExpanded} />{player.badges.length > 2 && <Button type="button" variant="outline" className="mt-4 w-full sm:hidden" aria-expanded={badgesExpanded} onClick={() => setBadgesExpanded((value) => !value)}>{badgesExpanded ? "Badges einklappen" : "Alle Badges anzeigen"}</Button>}</section>}
 

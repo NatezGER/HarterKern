@@ -51,7 +51,7 @@ export interface WorldRecord {
 
 export interface PrestigeActivity {
   id: string;
-  type: "world_record" | "personal_best" | "badge" | "group_milestone";
+  type: "world_record" | "personal_best" | "badge" | "group_milestone" | "most_wanted_first";
   occurredAt: string;
   playerId: string | null;
   playerName: string | null;
@@ -112,6 +112,65 @@ export interface Event {
     time: number;
   }>;
   status: "active" | "closed";
+  awardsTrophies: boolean;
+}
+
+export interface MostWantedEnding {
+  ending: number;
+  label: string;
+  achieved: boolean;
+  hitCount: number;
+  participantCount: number;
+  playerId: string | null;
+  guestId: string | null;
+  playerName: string | null;
+  avatarUrl: string | null;
+  isGuest: boolean;
+  timeHundredths: number | null;
+  occurredAt: string | null;
+  occurredDate: string | null;
+  hasExactTime: boolean;
+  eventId: string | null;
+  sourceType: "attempt" | "historical_attempt" | null;
+  sourceLabel: string | null;
+}
+
+export interface MostWantedSnapshot {
+  endings: MostWantedEnding[];
+  reached: number;
+  total: number;
+  percent: number;
+  openEndings: number[];
+  mostCommonEnding: number | null;
+  mostCommonHits: number;
+  rarestAchievedEndings: number[];
+}
+
+export interface TimeThresholdStatistic {
+  seconds: number;
+  count: number;
+  total: number;
+  percent: number;
+}
+
+export interface LeagueTimeStatistics {
+  totalValidTimes: number;
+  mostCommonTimeHundredths: number | null;
+  mostCommonTimeHits: number;
+  mostCommonTimeParticipants: number;
+  smoothTimeCount: number;
+  mostCommonSmoothHundredths: number | null;
+  mostCommonSmoothHits: number;
+  topSmoothPlayerId: string | null;
+  topSmoothPlayerName: string | null;
+  topSmoothPlayerAvatarUrl: string | null;
+  topSmoothPlayerHits: number;
+  latestSmoothPlayerName: string | null;
+  latestSmoothHundredths: number | null;
+  latestSmoothAt: string | null;
+  latestSmoothDate: string | null;
+  latestSmoothHasExactTime: boolean;
+  thresholds: TimeThresholdStatistic[];
 }
 
 export interface Attempt {
@@ -143,4 +202,6 @@ export interface PublicDataSnapshot {
   activities: PrestigeActivity[];
   milestones: GroupMilestone[];
   badgeRarity: BadgeRarity[];
+  mostWanted: MostWantedSnapshot;
+  leagueTimeStatistics: LeagueTimeStatistics;
 }

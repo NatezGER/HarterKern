@@ -5,6 +5,7 @@ import type {
   EventDetail,
   EventParticipantDetail,
   PlayerProfileDetail,
+  TrophyAward,
 } from "@/types/historyProfiles";
 import type { BadgeUnlockCelebration } from "@/types/liveEvent";
 
@@ -94,7 +95,16 @@ function mapBadge(row: {
   current_progress: number | null;
   threshold: number | null;
   is_special_event_badge: boolean;
+  badge_kind?: CompactBadge["badgeKind"];
+  design_variant?: CompactBadge["designVariant"];
+  scope_type?: CompactBadge["scopeType"];
+  metadata?: unknown;
 }): CompactBadge {
+  const metadataTime = row.metadata && typeof row.metadata === "object" &&
+    !Array.isArray(row.metadata) && "timeHundredths" in row.metadata &&
+    typeof row.metadata.timeHundredths === "number"
+    ? row.metadata.timeHundredths
+    : null;
   return {
     key: row.award_key,
     playerId: row.player_id,
@@ -117,20 +127,57 @@ function mapBadge(row: {
     sourceHistoricalAttemptId: row.source_historical_attempt_id,
     eventName: row.source_event_name,
     sourceAttemptNumber: row.source_attempt_number,
-    sourceTimeHundredths: row.source_time_hundredths,
+    sourceTimeHundredths: row.source_time_hundredths ?? metadataTime,
     nextBadgeName: row.next_badge_name,
     nextRequirement: row.next_requirement,
     nextTier: row.next_tier,
     nextThreshold: row.next_threshold,
     currentProgress: row.current_progress,
     isSpecialEventBadge: row.is_special_event_badge,
+    badgeKind: row.badge_kind ?? "tiered",
+    designVariant: row.design_variant ?? "standard",
+    scopeType: row.scope_type ?? "all_time",
+  };
+}
+
+function mapTrophy(row: {
+  trophy_key: string;
+  competition_type: TrophyAward["competitionType"];
+  scope_type: TrophyAward["scopeType"];
+  competition_id: string;
+  season_key: string | null;
+  competition_name: string;
+  competition_year: number;
+  event_date: string;
+  placement: 1 | 2 | 3;
+  trophy_tier: TrophyAward["tier"];
+  player_id: string | null;
+  guest_id: string | null;
+  display_name: string;
+  awarded_at: string;
+}): TrophyAward {
+  return {
+    key: row.trophy_key,
+    competitionType: row.competition_type,
+    scopeType: row.scope_type,
+    competitionId: row.competition_id,
+    seasonKey: row.season_key,
+    competitionName: row.competition_name,
+    year: row.competition_year,
+    eventDate: row.event_date,
+    placement: row.placement,
+    tier: row.trophy_tier,
+    playerId: row.player_id,
+    guestId: row.guest_id,
+    playerName: row.display_name,
+    awardedAt: row.awarded_at,
   };
 }
 
 export async function getEventDetail(eventId: string): Promise<EventDetail | null> {
   const client = getSupabase();
   const [eventResult, statsResult, podiumResult, attemptsResult, participantResult,
-    badgeResult, photoResult, attemptNumbersResult] = await Promise.all([
+    badgeResult, photoResult, attemptNumbersResult, trophyResult] = await Promise.all([
     client.from("events").select("*").eq("id", eventId).is("deleted_at", null).maybeSingle(),
     client.from("event_statistics").select("*").eq("event_id", eventId).maybeSingle(),
     client.from("event_podium").select("*").eq("event_id", eventId).order("rank"),
@@ -144,9 +191,11 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
       .order("sort_order").order("created_at"),
     client.from("event_attempt_number_statistics").select("*").eq("event_id", eventId)
       .order("attempt_number"),
+    client.from("player_trophies").select("*").eq("competition_id", eventId)
+      .order("placement"),
   ]);
   for (const result of [eventResult, statsResult, podiumResult, attemptsResult,
-    participantResult, badgeResult, photoResult, attemptNumbersResult]) {
+    participantResult, badgeResult, photoResult, attemptNumbersResult, trophyResult]) {
     if (result.error) throw result.error;
   }
   const event = eventResult.data;
@@ -190,6 +239,7 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
     status: event.status,
     description: event.description,
     isImportant: event.is_important,
+    awardsTrophies: event.awards_trophies,
     participants: Number(stats?.participant_count ?? 0),
     validAttempts: Number(stats?.valid_attempts ?? 0),
     dnfCount: Number(stats?.dnf_count ?? 0),
@@ -223,13 +273,14 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
       bestHundredths: row.best_hundredths,
       slowestHundredths: row.slowest_hundredths,
     })),
+    trophies: (trophyResult.data ?? []).map(mapTrophy),
   };
 }
 
 export async function getPlayerProfileDetail(playerId: string): Promise<PlayerProfileDetail | null> {
   const client = getSupabase();
   const [playerResult, statsResult, rankResult, historyResult, badgeResult, pointsResult,
-    progressionResult, prestigeResult] =
+    progressionResult, prestigeResult, trophyResult, mostWantedResult] =
     await Promise.all([
       client.from("players").select("*").eq("id", playerId).eq("is_archived", false).maybeSingle(),
       client.from("player_statistics").select("*").eq("player_id", playerId).maybeSingle(),
@@ -247,9 +298,13 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
         .order("sequence_number"),
       client.from("player_prestige_statistics").select("*").eq("player_id", playerId)
         .maybeSingle(),
+      client.from("player_trophies").select("*").eq("player_id", playerId)
+        .order("awarded_at", { ascending: false }),
+      client.from("most_wanted_endings").select("ending", { count: "exact", head: true })
+        .eq("first_player_id", playerId),
     ]);
   for (const result of [playerResult, statsResult, rankResult, historyResult, badgeResult,
-    pointsResult, progressionResult, prestigeResult]) {
+    pointsResult, progressionResult, prestigeResult, trophyResult, mostWantedResult]) {
     if (result.error) throw result.error;
   }
   const player = playerResult.data;
@@ -313,5 +368,7 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
     worldRecordDays: Number(prestige?.world_record_days ?? 0),
     longestWorldRecordDays: Number(prestige?.longest_world_record_days ?? 0),
     visibleBadgeCount: Number(prestige?.visible_badge_count ?? 0),
+    mostWantedFirstHits: mostWantedResult.count ?? 0,
+    trophies: (trophyResult.data ?? []).map(mapTrophy),
   };
 }

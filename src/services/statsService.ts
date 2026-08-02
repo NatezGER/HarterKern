@@ -5,6 +5,8 @@ import type {
   GroupMilestone,
   LeaderboardEntry,
   PrestigeActivity,
+  LeagueTimeStatistics,
+  MostWantedSnapshot,
   Statistic,
   WorldRecord,
 } from "@/types";
@@ -54,11 +56,17 @@ function resolveAvatar(path: string | null, legacy: string | null) {
 }
 
 export async function getPrestigeActivities(): Promise<PrestigeActivity[]> {
-  const { data, error } = await getSupabase().from("prestige_activity_feed").select("*")
-    .order("occurred_at", { ascending: false }).order("priority", { ascending: false })
-    .limit(12);
-  if (error) throw error;
-  return data.map((row) => ({
+  const client = getSupabase();
+  const [prestigeResult, wantedResult] = await Promise.all([
+    client.from("prestige_activity_feed").select("*")
+      .order("occurred_at", { ascending: false }).order("priority", { ascending: false })
+      .limit(18),
+    client.from("most_wanted_activity_feed").select("*")
+      .order("occurred_at", { ascending: false }).limit(12),
+  ]);
+  if (prestigeResult.error) throw prestigeResult.error;
+  if (wantedResult.error) throw wantedResult.error;
+  return [...prestigeResult.data, ...wantedResult.data].map((row) => ({
     id: row.activity_id,
     type: row.activity_type,
     occurredAt: row.occurred_at,
@@ -73,7 +81,85 @@ export async function getPrestigeActivities(): Promise<PrestigeActivity[]> {
     badgeKey: row.badge_key,
     tier: row.tier,
     priority: row.priority,
-  }));
+  })).sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) ||
+    right.priority - left.priority).slice(0, 12);
+}
+
+export async function getMostWantedSnapshot(): Promise<MostWantedSnapshot> {
+  const client = getSupabase();
+  const [endingsResult, progressResult] = await Promise.all([
+    client.from("most_wanted_endings").select("*").order("ending"),
+    client.from("most_wanted_progress").select("*").single(),
+  ]);
+  if (endingsResult.error) throw endingsResult.error;
+  if (progressResult.error) throw progressResult.error;
+  const progress = progressResult.data;
+  return {
+    endings: endingsResult.data.map((row) => ({
+      ending: row.ending,
+      label: row.ending_label,
+      achieved: row.achieved,
+      hitCount: Number(row.hit_count),
+      participantCount: Number(row.participant_count),
+      playerId: row.first_player_id,
+      guestId: row.first_guest_id,
+      playerName: row.first_display_name,
+      avatarUrl: resolveAvatar(row.first_avatar_path, row.first_avatar_url),
+      isGuest: row.first_is_guest,
+      timeHundredths: row.first_time_hundredths,
+      occurredAt: row.first_occurred_at,
+      occurredDate: row.first_occurred_date,
+      hasExactTime: row.first_has_exact_time,
+      eventId: row.first_event_id,
+      sourceType: row.first_source_type,
+      sourceLabel: row.source_label,
+    })),
+    reached: Number(progress.reached_count),
+    total: Number(progress.total_count),
+    percent: Number(progress.progress_percent),
+    openEndings: progress.open_endings ?? [],
+    mostCommonEnding: progress.most_common_ending,
+    mostCommonHits: Number(progress.most_common_hit_count),
+    rarestAchievedEndings: progress.rarest_achieved_endings ?? [],
+  };
+}
+
+export async function getLeagueTimeStatistics(): Promise<LeagueTimeStatistics> {
+  const client = getSupabase();
+  const [summaryResult, thresholdsResult] = await Promise.all([
+    client.from("league_time_statistics").select("*").single(),
+    client.from("league_time_threshold_statistics").select("*").order("threshold_seconds"),
+  ]);
+  if (summaryResult.error) throw summaryResult.error;
+  if (thresholdsResult.error) throw thresholdsResult.error;
+  const row = summaryResult.data;
+  return {
+    totalValidTimes: Number(row.total_valid_times),
+    mostCommonTimeHundredths: row.most_common_time_hundredths,
+    mostCommonTimeHits: Number(row.most_common_time_hits),
+    mostCommonTimeParticipants: Number(row.most_common_time_participants),
+    smoothTimeCount: Number(row.smooth_time_count),
+    mostCommonSmoothHundredths: row.most_common_smooth_time_hundredths,
+    mostCommonSmoothHits: Number(row.most_common_smooth_time_hits),
+    topSmoothPlayerId: row.top_smooth_player_id,
+    topSmoothPlayerName: row.top_smooth_player_name,
+    topSmoothPlayerAvatarUrl: resolveAvatar(
+      row.top_smooth_player_avatar_path,
+      row.top_smooth_player_avatar_url,
+    ),
+    topSmoothPlayerHits: Number(row.top_smooth_player_hits),
+    latestSmoothPlayerName: row.latest_smooth_player_name,
+    latestSmoothHundredths: row.latest_smooth_time_hundredths,
+    latestSmoothAt: row.latest_smooth_occurred_at,
+    latestSmoothDate: row.latest_smooth_occurred_date,
+    latestSmoothHasExactTime: row.latest_smooth_has_exact_time ?? false,
+    thresholds: thresholdsResult.data.map((threshold) => ({
+      seconds: threshold.threshold_seconds,
+      count: Number(threshold.attempt_count),
+      total: Number(threshold.total_count),
+      percent: Number(threshold.percentage),
+    })),
+  };
 }
 
 export async function getGroupMilestones(): Promise<GroupMilestone[]> {

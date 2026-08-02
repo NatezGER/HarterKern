@@ -1,4 +1,5 @@
 import type { BadgeTier } from "@/types/pr7Foundation";
+import type { TrophyTier } from "@/types/pr8";
 
 export interface MediaPhoto {
   id: string;
@@ -69,6 +70,26 @@ export interface CompactBadge {
   nextThreshold: number | null;
   currentProgress: number | null;
   isSpecialEventBadge: boolean;
+  badgeKind: "tiered" | "single";
+  designVariant: "standard" | "positive_special" | "consolation";
+  scopeType: "all_time" | "season" | "event";
+}
+
+export interface TrophyAward {
+  key: string;
+  competitionType: "event" | "season";
+  scopeType: "all_time" | "season" | "event";
+  competitionId: string;
+  seasonKey: string | null;
+  competitionName: string;
+  year: number;
+  eventDate: string;
+  placement: 1 | 2 | 3;
+  tier: TrophyTier;
+  playerId: string | null;
+  guestId: string | null;
+  playerName: string;
+  awardedAt: string;
 }
 
 export interface ProgressionPoint {
@@ -102,6 +123,7 @@ export interface EventDetail {
   status: "active" | "closed";
   description: string | null;
   isImportant: boolean;
+  awardsTrophies: boolean;
   participants: number;
   validAttempts: number;
   dnfCount: number;
@@ -113,6 +135,7 @@ export interface EventDetail {
   badges: CompactBadge[];
   photos: MediaPhoto[];
   attemptNumbers: EventAttemptNumberPoint[];
+  trophies: TrophyAward[];
 }
 
 export interface PlayerEventSummary {
@@ -160,4 +183,6 @@ export interface PlayerProfileDetail {
   worldRecordDays: number;
   longestWorldRecordDays: number;
   visibleBadgeCount: number;
+  mostWantedFirstHits: number;
+  trophies: TrophyAward[];
 }
