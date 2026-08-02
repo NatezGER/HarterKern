@@ -12,6 +12,45 @@ alter table public.badge_definitions
   add column if not exists scope_type text not null default 'all_time',
   add column if not exists is_active boolean not null default true;
 
+-- PR 7A used the general category `streak` for the original sub-3 badges.
+-- It remains a valid legacy category even though PR 8A assigns the known
+-- sub-3 definitions to the more precise `sub3_streak` category. The complete
+-- allow-list below is the union of every category introduced by PR 7A/main
+-- and every category introduced by PR 8A. No legacy row is rewritten merely
+-- to satisfy the constraint.
+-- Diagnostic equivalent before this migration:
+--   select distinct category from public.badge_definitions order by category;
+do $$
+declare
+  unexpected_categories text[];
+begin
+  select array_agg(category order by category)
+  into unexpected_categories
+  from (
+    select distinct category
+    from public.badge_definitions
+    where category not in (
+      'attempts', 'wins', 'streak', 'performance', 'record', 'podium',
+      'win_streak', 'sub3_streak', 'flawless', 'favorite_time',
+      'activity', 'community', 'events', 'podiums', 'precision',
+      'most_wanted', 'bingo', 'first_attempt', 'dnf', 'glitch',
+      'consolation'
+    )
+  ) unexpected;
+
+  if unexpected_categories is not null then
+    raise exception using
+      errcode = '23514',
+      message = 'badge_definitions contains unsupported categories',
+      detail = format('Unexpected categories: %s', array_to_string(unexpected_categories, ', ')),
+      hint = 'Review these rows before rerunning PR 8A; no badge definition was changed by this validation.';
+  end if;
+end;
+$$;
+
+-- The preflight above runs first so an unexpected production category leaves
+-- any still-present constraints untouched. A previous failed SQL Editor run
+-- may already have dropped some or all of these constraints, hence IF EXISTS.
 alter table public.badge_definitions
   drop constraint if exists badge_definitions_category_check,
   drop constraint if exists badge_definitions_badge_kind_check,
@@ -20,7 +59,7 @@ alter table public.badge_definitions
 
 alter table public.badge_definitions
   add constraint badge_definitions_category_check check (category in (
-    'attempts', 'wins', 'win_streak', 'sub3_streak', 'flawless',
+    'attempts', 'wins', 'streak', 'win_streak', 'sub3_streak', 'flawless',
     'favorite_time', 'activity', 'community', 'events', 'podiums',
     'precision', 'most_wanted', 'bingo', 'performance', 'record', 'first_attempt',
     'dnf', 'glitch', 'consolation', 'podium'

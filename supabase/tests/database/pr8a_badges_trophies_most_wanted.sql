@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap;
-select plan(70);
+select plan(72);
 
 select has_column('public', 'events', 'awards_trophies');
 select has_column('public', 'badge_definitions', 'badge_kind');
@@ -49,6 +49,26 @@ select is((select array_agg(threshold order by threshold) from public.badge_defi
   where family_key = 'precision'), array[1,3,10,25], 'precision tiers');
 select is((select array_agg(threshold order by threshold) from public.badge_definitions
   where family_key = 'bingo'), array[1,2,3], 'BINGO has bronze, silver and gold only');
+select lives_ok($$
+  insert into public.badge_definitions (
+    badge_key, category, tier, name, description, threshold, sort_order,
+    family_key, requirement
+  ) values (
+    'legacy-streak-contract', 'streak', 'bronze', 'Legacy Streak',
+    'Regression fixture for the valid PR 7A category.', 1, 9999,
+    'legacy-streak-contract', 'Legacy category remains accepted'
+  )
+$$, 'PR 7A streak category remains accepted by the PR 8A constraint');
+select is((select count(*) from (
+  select distinct category from public.badge_definitions
+  where category not in (
+    'attempts', 'wins', 'streak', 'performance', 'record', 'podium',
+    'win_streak', 'sub3_streak', 'flawless', 'favorite_time',
+    'activity', 'community', 'events', 'podiums', 'precision',
+    'most_wanted', 'bingo', 'first_attempt', 'dnf', 'glitch',
+    'consolation'
+  )
+) unsupported), 0::bigint, 'all stored badge categories are covered by the constraint');
 
 insert into public.players (id, display_name, is_ak) values
   ('98000000-0000-0000-0000-000000000001', 'PR8 Main', false),
