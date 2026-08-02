@@ -110,6 +110,10 @@ export type BadgeDefinitionsTable = {
     family_key: string | null;
     requirement: string | null;
     is_secret: boolean;
+    badge_kind: "tiered" | "single";
+    design_variant: "standard" | "positive_special" | "consolation";
+    scope_type: "all_time" | "season" | "event";
+    is_active: boolean;
   };
   Insert: {
     badge_key: string;
@@ -122,6 +126,10 @@ export type BadgeDefinitionsTable = {
     family_key?: string | null;
     requirement?: string | null;
     is_secret?: boolean;
+    badge_kind?: "tiered" | "single";
+    design_variant?: "standard" | "positive_special" | "consolation";
+    scope_type?: "all_time" | "season" | "event";
+    is_active?: boolean;
   };
   Update: Partial<BadgeDefinitionsTable["Insert"]>;
   Relationships: [];
@@ -206,6 +214,9 @@ export interface VisiblePlayerBadgesView {
     next_threshold: number | null;
     current_progress: number | null;
     is_special_event_badge: boolean;
+    badge_kind: "tiered" | "single";
+    design_variant: "standard" | "positive_special" | "consolation";
+    scope_type: "all_time" | "season" | "event";
   };
   Relationships: [];
 }
@@ -288,6 +299,9 @@ export type PublicPlayerBadgesView = {
     tier: BadgeTier;
     name: string;
     description: string;
+    badge_kind: "tiered" | "single";
+    design_variant: "standard" | "positive_special" | "consolation";
+    scope_type: "all_time" | "season" | "event";
   };
   Relationships: [];
 };

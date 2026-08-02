@@ -13,4 +13,12 @@ describe("badge presentation", () => {
     expect(getBadgeCenterMark({ badgeKey: "event-wins-gold", category: "wins", threshold: 10 })).toBe("10×");
     expect(getBadgeCenterMark({ badgeKey: "important-event-gold" })).toBe("#1");
   });
+
+  it("renders dynamic and special badge marks without long labels", () => {
+    expect(getBadgeCenterMark({ badgeKey: "time-stopper", valueHundredths: 300 })).toBe("3,00");
+    expect(getBadgeCenterMark({ badgeKey: "almost", valueHundredths: 301 })).toBe("3,01");
+    expect(getBadgeCenterMark({ badgeKey: "matrix-glitch" })).toBe("==");
+    expect(getBadgeCenterMark({ badgeKey: "false-starter" })).toBe("DNF");
+    expect(getBadgeCenterMark({ badgeKey: "bingo-gold", category: "bingo" })).toBe("BI");
+  });
 });

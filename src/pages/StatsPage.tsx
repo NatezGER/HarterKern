@@ -14,6 +14,8 @@ import { WRProgression } from "@/components/dashboard/WRProgression";
 import { GroupMilestones } from "@/components/stats/GroupMilestones";
 import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
 import { badgeTierLabel } from "@/lib/badgePresentation";
+import { MostWantedMatrix } from "@/components/stats/MostWantedMatrix";
+import { LeagueTimeStatistics } from "@/components/stats/LeagueTimeStatistics";
 
 export function StatsPage() {
   const { data } = useEffectivePublicData();
@@ -34,6 +36,14 @@ export function StatsPage() {
         <section className="mt-12">
           <SectionHeading eyebrow="Gemeinsam erreicht" title="Liga-Meilensteine" />
           <GroupMilestones />
+        </section>
+        <section className="mt-12">
+          <SectionHeading eyebrow="00 bis 99" title="Most Wanted" />
+          <MostWantedMatrix data={data.mostWanted} />
+        </section>
+        <section className="mt-12">
+          <SectionHeading eyebrow="Offizielle Zeiten" title="Ligastatistiken" />
+          <LeagueTimeStatistics data={data.leagueTimeStatistics} />
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow="Prestige" title="Badge-Seltenheit" />

@@ -61,6 +61,7 @@ export interface LiveEvent {
   winnerPlayerId?: string;
   endReason?: "manual" | "automatic";
   seasonId?: string;
+  awardsTrophies?: boolean;
 }
 
 export interface LiveEventState {
@@ -89,6 +90,7 @@ export interface StartLiveEventInput {
   name?: string;
   date: string;
   participants: StartLiveEventParticipant[];
+  awardsTrophies?: boolean;
 }
 
 export interface StartLiveEventResult {

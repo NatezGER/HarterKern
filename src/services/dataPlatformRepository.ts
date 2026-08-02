@@ -20,8 +20,11 @@ export interface DataPlatformSnapshot {
 
 export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
   const client = getSupabase();
+  // Load the composed public read models before the raw live-event snapshot. The
+  // public loader already performs bounded parallel work, so overlapping both
+  // groups can trigger statement timeouts on a cold production request.
+  const publicData = await loadPublicData();
   const [
-    publicData,
     playersResult,
     eventsResult,
     participantsResult,
@@ -30,7 +33,6 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
     historicalAttemptsResult,
   ] =
     await Promise.all([
-      loadPublicData(),
       client.from("players").select("*").eq("is_archived", false),
       client.from("events").select("*")
         .is("deleted_at", null)
@@ -101,6 +103,7 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
       .concat(guestRows.filter(({ event_id }) => event_id === row.id).map(({ id }) => id)),
     createdBy: "Supabase",
     winnerPlayerId: row.winner_player_id ?? row.winner_guest_id ?? undefined,
+    awardsTrophies: row.awards_trophies,
     endReason: row.end_reason === "automatic"
       ? "automatic" as const
       : row.end_reason === "manual" ? "manual" as const : undefined,
@@ -155,13 +158,14 @@ export async function startRemoteEvent(
     name: participant.name,
     kind: participant.kind,
   }));
-  const { data, error } = await getSupabase().rpc("sync_start_event_v2", {
+  const { data, error } = await getSupabase().rpc("sync_start_event_v3", {
     p_name: input.name?.trim() || null,
     p_start_date: input.date,
     p_participants: participants,
     p_started_at: timing?.startedAt ?? null,
     p_ends_at: timing?.endsAt ?? null,
     p_legacy_source_id: legacySourceId ?? null,
+    p_awards_trophies: input.awardsTrophies ?? false,
   });
   if (error) throw error;
   const participantIds = new Map(
@@ -316,11 +320,17 @@ export async function addEventGuest(eventId: string, name: string) {
   return data;
 }
 
-export async function updateRemoteEvent(id: string, name: string, date: string) {
-  const { error } = await getSupabase().rpc("sync_update_event", {
+export async function updateRemoteEvent(
+  id: string,
+  name: string,
+  date: string,
+  awardsTrophies = false,
+) {
+  const { error } = await getSupabase().rpc("sync_update_event_v2", {
     p_event_id: id,
     p_name: name.trim() || null,
     p_start_date: date,
+    p_awards_trophies: awardsTrophies,
   });
   if (error) throw error;
 }

@@ -12,16 +12,23 @@ const tierStyles: Record<BadgeTier, { shell: string; inner: string; glow: string
 };
 
 export function PrestigeBadgeEmblem({ badge, size = "md", className }: {
-  badge: { badgeKey: string; tier: BadgeTier; category?: string; threshold?: number | null; name?: string };
+  badge: { badgeKey: string; tier: BadgeTier; category?: string; threshold?: number | null; name?: string; designVariant?: "standard" | "positive_special" | "consolation"; valueHundredths?: number | null };
   size?: "sm" | "md" | "lg" | "featured";
   className?: string;
 }) {
-  const style = tierStyles[badge.tier];
+  const style = badge.designVariant === "consolation"
+    ? { shell: "from-slate-300 via-rose-400 to-slate-800", inner: "from-slate-800 via-rose-900 to-slate-400", glow: "shadow-[0_0_24px_rgba(251,113,133,.18)]", Icon: ShieldCheck }
+    : badge.designVariant === "positive_special"
+      ? { shell: "from-emerald-50 via-emerald-300 to-teal-800", inner: "from-teal-900 via-emerald-500 to-emerald-50", glow: "shadow-[0_0_34px_rgba(52,211,153,.28)]", Icon: Sparkles }
+      : tierStyles[badge.tier];
   const Icon = style.Icon;
   const mark = getBadgeCenterMark(badge);
+  const accessibleTier = badge.designVariant === "consolation" ? "Trostpreis"
+    : badge.designVariant === "positive_special" ? "Special"
+      : badgeTierLabel[badge.tier];
   const rotations = badge.tier === "bronze" ? [0, 90] : badge.tier === "silver" ? [0, 45, 90] : badge.tier === "gold" ? [0, 45, 90, 135] : badge.tier === "diamond" ? [0, 30, 60, 90, 120, 150] : [0, 36, 72, 108, 144];
   return (
-    <div aria-label={`${badgeTierLabel[badge.tier]}-Badge ${badge.name ?? ""}`} className={cn("relative isolate shrink-0", size === "sm" ? "size-16" : size === "md" ? "size-24" : size === "lg" ? "size-24 sm:size-32" : "size-28 sm:size-40", badge.tier === "diamond" && "scale-105", className)}>
+    <div aria-label={`${accessibleTier}-Badge ${badge.name ?? ""}`} className={cn("relative isolate shrink-0", size === "sm" ? "size-16" : size === "md" ? "size-24" : size === "lg" ? "size-24 sm:size-32" : "size-28 sm:size-40", badge.tier === "diamond" && "scale-105", className)}>
       <span className={cn("absolute inset-[14%] rounded-full blur-xl opacity-70", style.glow)} />
       {rotations.map((rotation) => <span key={rotation} className={cn("absolute rounded-[22%] bg-gradient-to-br opacity-90", badge.tier === "bronze" ? "inset-[14%]" : badge.tier === "diamond" ? "inset-[2%]" : "inset-[8%]", style.shell)} style={{ transform: `rotate(${rotation}deg)`, clipPath: "polygon(50% 0, 63% 32%, 100% 50%, 63% 68%, 50% 100%, 37% 68%, 0 50%, 37% 32%)" }} />)}
       <span className={cn("absolute inset-[17%] rounded-full bg-gradient-to-br p-[3px]", style.shell, style.glow)}>

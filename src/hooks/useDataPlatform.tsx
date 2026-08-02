@@ -73,7 +73,13 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
       throw loadError;
     }
   }, []);
-  const refreshCoordinator = useRef(createRefreshCoordinator(loadLatestSnapshot));
+  // StrictMode, focus and the realtime subscription can request the same cold
+  // snapshot concurrently. Coalesce those requests instead of immediately
+  // repeating every expensive public read model.
+  const refreshCoordinator = useRef(createRefreshCoordinator(
+    loadLatestSnapshot,
+    { rerunIfRequested: false },
+  ));
   const refresh = useCallback(
     () => refreshCoordinator.current(),
     [],
@@ -93,6 +99,10 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
     const initialize = async () => {
       try {
         await closeExpiredRemoteEvents();
+        // React StrictMode intentionally cleans up and restarts this effect in
+        // development/preview builds. Do not let the superseded run start a
+        // complete public snapshot after its cleanup has already fired.
+        if (!active) return;
         await refresh();
         const source = readLocalMigrationSource();
         if (!active) return;

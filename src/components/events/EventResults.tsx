@@ -11,6 +11,7 @@ import { ProgressionTimeline } from "@/components/progression/ProgressionTimelin
 import { buildEventLeadProgression } from "@/lib/eventLeadProgression";
 import { PodiumMedal } from "@/components/common/PodiumMedal";
 import { cn } from "@/lib/cn";
+import { TrophyCabinet } from "@/components/common/TrophyCabinet";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -27,6 +28,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
               {detail.status === "closed" ? "Beendet" : "Live"}
             </span>
             {detail.isImportant && <span className="flex items-center gap-1 rounded-full border border-gold-400/25 bg-gold-400/[0.08] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-gold-300"><Star className="size-3" /> Wichtiges Event</span>}
+            {detail.awardsTrophies && <span className="flex items-center gap-1 rounded-full border border-amber-300/25 bg-amber-300/[0.08] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200"><Trophy className="size-3" /> Trophäen-Event</span>}
           </div>
           <h1 className="display-title mt-4 text-4xl sm:text-6xl">{detail.name}</h1>
           <p className="mt-3 flex items-center gap-2 text-sm text-white/45"><CalendarDays className="size-4" /> {formatDate(detail.date)}</p>
@@ -48,7 +50,9 @@ export function EventResults({ detail }: { detail: EventDetail }) {
         ) : <div className="panel py-14 text-center text-sm text-white/40">Keine gültige Eventzeit vorhanden.</div>}
       </section>
 
-      {detail.badges.length > 0 && <section className="order-5 lg:order-3"><h2 className="display-title mb-4 text-2xl sm:mb-5 sm:text-3xl">Freigeschaltet</h2><BadgeGallery badges={detail.badges} compact showPlayer /></section>}
+      {detail.trophies.length > 0 && <section className="order-3"><h2 className="display-title mb-4 text-2xl sm:text-3xl">Vergebene Trophäen</h2><TrophyCabinet trophies={detail.trophies} mobileLimit={3} /></section>}
+
+      {detail.badges.length > 0 && <section className="order-5 lg:order-4"><h2 className="display-title mb-4 text-2xl sm:mb-5 sm:text-3xl">Freigeschaltet</h2><BadgeGallery badges={detail.badges} compact showPlayer /></section>}
 
       {detail.status === "closed" && <section className="panel order-3 p-4 sm:p-8 lg:order-4"><h2 className="display-title text-2xl sm:text-3xl">Event-Führungsprogression</h2><p className="mt-2 text-xs text-white/40 sm:text-sm">Wer führte zu welchem Zeitpunkt mit welcher Eventbestzeit?</p><div className="mt-4 sm:mt-6"><ProgressionTimeline points={eventProgression} domainStartAt={detail.startedAt} domainEndAt={detail.closedAt ?? undefined} emptyLabel="Dieses Event hat keine gültige Führungszeit." /></div></section>}
 

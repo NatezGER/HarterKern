@@ -1,4 +1,4 @@
-import { Award, Crown, Gauge, Milestone } from "lucide-react";
+import { Award, Crown, Crosshair, Gauge, Milestone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
@@ -7,7 +7,7 @@ import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { formatDate, formatTime } from "@/utils/format";
 import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
 
-const icons = { world_record: Crown, personal_best: Gauge, badge: Award, group_milestone: Milestone };
+const icons = { world_record: Crown, personal_best: Gauge, badge: Award, group_milestone: Milestone, most_wanted_first: Crosshair };
 
 export function PrestigeActivityFeed() {
   const { data } = useEffectivePublicData();

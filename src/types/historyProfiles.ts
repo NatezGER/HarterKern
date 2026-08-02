@@ -1,4 +1,5 @@
 import type { BadgeTier } from "@/types/pr7Foundation";
+import type { BingoTier, TrophyTier } from "@/types/pr8";
 
 export interface MediaPhoto {
   id: string;
@@ -69,6 +70,27 @@ export interface CompactBadge {
   nextThreshold: number | null;
   currentProgress: number | null;
   isSpecialEventBadge: boolean;
+  badgeKind: "tiered" | "single";
+  designVariant: "standard" | "positive_special" | "consolation";
+  scopeType: "all_time" | "season" | "event";
+  bingoLineCounts: { bronze: number; silver: number; gold: number } | null;
+}
+
+export interface TrophyAward {
+  key: string;
+  competitionType: "event" | "season";
+  scopeType: "all_time" | "season" | "event";
+  competitionId: string;
+  seasonKey: string | null;
+  competitionName: string;
+  year: number;
+  eventDate: string;
+  placement: 1 | 2 | 3;
+  tier: TrophyTier;
+  playerId: string | null;
+  guestId: string | null;
+  playerName: string;
+  awardedAt: string;
 }
 
 export interface ProgressionPoint {
@@ -102,6 +124,7 @@ export interface EventDetail {
   status: "active" | "closed";
   description: string | null;
   isImportant: boolean;
+  awardsTrophies: boolean;
   participants: number;
   validAttempts: number;
   dnfCount: number;
@@ -113,6 +136,7 @@ export interface EventDetail {
   badges: CompactBadge[];
   photos: MediaPhoto[];
   attemptNumbers: EventAttemptNumberPoint[];
+  trophies: TrophyAward[];
 }
 
 export interface PlayerEventSummary {
@@ -132,6 +156,41 @@ export interface AttemptNumberPoint {
   validAttempts: number;
   dnfCount: number;
   averageHundredths: number | null;
+}
+
+export interface BingoHit {
+  id: string;
+  sourceType: "attempt" | "historical_attempt";
+  eventId: string | null;
+  timeHundredths: number;
+  occurredAt: string;
+  occurredDate: string;
+  hasExactTime: boolean;
+  sourceLabel: string;
+}
+
+export interface BingoField {
+  ending: number;
+  label: string;
+  hitCount: number;
+  tier: BingoTier;
+  hits: BingoHit[];
+}
+
+export interface BingoSummary {
+  collectedEndings: number;
+  bronzeFields: number;
+  silverFields: number;
+  goldFields: number;
+  bronzeLines: number;
+  silverLines: number;
+  goldLines: number;
+  highestBadgeTier: Exclude<BingoTier, "open"> | null;
+}
+
+export interface PlayerBingo {
+  fields: BingoField[];
+  summary: BingoSummary;
 }
 
 export interface PlayerProfileDetail {
@@ -160,4 +219,6 @@ export interface PlayerProfileDetail {
   worldRecordDays: number;
   longestWorldRecordDays: number;
   visibleBadgeCount: number;
+  bingo: PlayerBingo;
+  trophies: TrophyAward[];
 }

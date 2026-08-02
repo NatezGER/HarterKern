@@ -26,6 +26,8 @@ export function reconcileDataPlatformSnapshot(
       activities: uniqueBy(remote.publicData.activities, ({ id }) => id),
       milestones: uniqueBy(remote.publicData.milestones, ({ key }) => key),
       badgeRarity: uniqueBy(remote.publicData.badgeRarity, ({ key }) => key),
+      mostWanted: remote.publicData.mostWanted,
+      leagueTimeStatistics: remote.publicData.leagueTimeStatistics,
     },
     liveState: {
       version: 2,

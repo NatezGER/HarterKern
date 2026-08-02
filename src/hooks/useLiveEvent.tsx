@@ -311,7 +311,12 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     if (!current) return false;
     try {
       setMutationError(null);
-      await updateRemoteEvent(id, changes.name ?? current.name ?? "", changes.date ?? current.date);
+      await updateRemoteEvent(
+        id,
+        changes.name ?? current.name ?? "",
+        changes.date ?? current.date,
+        changes.awardsTrophies ?? current.awardsTrophies ?? false,
+      );
       await refreshAfterMutation();
       return true;
     } catch (error) {
