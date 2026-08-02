@@ -41,8 +41,10 @@ export const emptyPublicData: PublicDataSnapshot = {
 };
 
 export async function loadPublicData(): Promise<PublicDataSnapshot> {
-  const [players, leaderboard, dailyWinners, worldRecordHistory, events, statistics,
-    recentAttempts, activities, milestones, badgeRarity, mostWanted, leagueTimeStatistics] =
+  // Keep the public read models in bounded batches. Several of these services issue
+  // parallel view queries themselves; starting every read model at once can exhaust
+  // the production statement budget during a cold page load.
+  const [players, leaderboard, dailyWinners, worldRecordHistory, events, statistics] =
     await Promise.all([
       getPlayers(),
       getLeaderboard(),
@@ -50,6 +52,9 @@ export async function loadPublicData(): Promise<PublicDataSnapshot> {
       getWorldRecordHistory(),
       getEvents(),
       getGlobalStatistics(),
+    ]);
+  const [recentAttempts, activities, milestones, badgeRarity, mostWanted,
+    leagueTimeStatistics] = await Promise.all([
       getRecentAttempts(),
       getPrestigeActivities(),
       getGroupMilestones(),

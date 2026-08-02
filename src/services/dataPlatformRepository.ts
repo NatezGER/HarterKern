@@ -20,8 +20,11 @@ export interface DataPlatformSnapshot {
 
 export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
   const client = getSupabase();
+  // Load the composed public read models before the raw live-event snapshot. The
+  // public loader already performs bounded parallel work, so overlapping both
+  // groups can trigger statement timeouts on a cold production request.
+  const publicData = await loadPublicData();
   const [
-    publicData,
     playersResult,
     eventsResult,
     participantsResult,
@@ -30,7 +33,6 @@ export async function loadDataPlatform(): Promise<DataPlatformSnapshot> {
     historicalAttemptsResult,
   ] =
     await Promise.all([
-      loadPublicData(),
       client.from("players").select("*").eq("is_archived", false),
       client.from("events").select("*")
         .is("deleted_at", null)

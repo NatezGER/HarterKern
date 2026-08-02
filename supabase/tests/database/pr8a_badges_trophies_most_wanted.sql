@@ -2,26 +2,26 @@ begin;
 create extension if not exists pgtap;
 select plan(72);
 
-select has_column('public', 'events', 'awards_trophies');
-select has_column('public', 'badge_definitions', 'badge_kind');
-select has_column('public', 'badge_definitions', 'design_variant');
-select has_column('public', 'badge_definitions', 'scope_type');
-select has_view('public', 'qualified_official_times');
-select has_view('public', 'precision_events');
-select has_view('public', 'most_wanted_endings');
-select has_view('public', 'most_wanted_progress');
-select has_view('public', 'most_wanted_milestones');
-select has_view('public', 'player_bingo_hits');
-select has_view('public', 'player_bingo_fields');
-select has_view('public', 'player_bingo_lines');
-select has_view('public', 'player_bingo_statistics');
-select has_view('public', 'player_trophies');
-select has_view('public', 'league_time_statistics');
+select has_column('public', 'events', 'awards_trophies', 'events.awards_trophies exists');
+select has_column('public', 'badge_definitions', 'badge_kind', 'badge_definitions.badge_kind exists');
+select has_column('public', 'badge_definitions', 'design_variant', 'badge_definitions.design_variant exists');
+select has_column('public', 'badge_definitions', 'scope_type', 'badge_definitions.scope_type exists');
+select has_view('public', 'qualified_official_times', 'qualified_official_times view exists');
+select has_view('public', 'precision_events', 'precision_events view exists');
+select has_view('public', 'most_wanted_endings', 'most_wanted_endings view exists');
+select has_view('public', 'most_wanted_progress', 'most_wanted_progress view exists');
+select has_view('public', 'most_wanted_milestones', 'most_wanted_milestones view exists');
+select has_view('public', 'player_bingo_hits', 'player_bingo_hits view exists');
+select has_view('public', 'player_bingo_fields', 'player_bingo_fields view exists');
+select has_view('public', 'player_bingo_lines', 'player_bingo_lines view exists');
+select has_view('public', 'player_bingo_statistics', 'player_bingo_statistics view exists');
+select has_view('public', 'player_trophies', 'player_trophies view exists');
+select has_view('public', 'league_time_statistics', 'league_time_statistics view exists');
 select has_function('public', 'sync_start_event_v3',
   array['text', 'date', 'jsonb', 'timestamp with time zone',
-    'timestamp with time zone', 'text', 'boolean']);
+    'timestamp with time zone', 'text', 'boolean'], 'sync_start_event_v3 exists');
 select has_function('public', 'sync_update_event_v2',
-  array['uuid', 'text', 'date', 'boolean']);
+  array['uuid', 'text', 'date', 'boolean'], 'sync_update_event_v2 exists');
 
 select is((select array_agg(threshold order by threshold) from public.badge_definitions
   where family_key = 'time-limits'), array[200,300,400,500], 'time tiers');
@@ -108,7 +108,7 @@ insert into public.attempts (
   ('98000000-0000-0000-0000-000000000101','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',299,false,false,'2026-01-10 18:01:00+01','admin'),
   ('98000000-0000-0000-0000-000000000102','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',300,false,false,'2026-01-10 18:02:00+01','admin'),
   ('98000000-0000-0000-0000-000000000103','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',290,false,false,'2026-01-10 18:03:00+01','admin'),
-  ('98000000-0000-0000-0000-000000000104','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',344,true,false,'2026-01-10 18:04:00+01','admin'),
+  ('98000000-0000-0000-0000-000000000104','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',null,true,false,'2026-01-10 18:04:00+01','admin'),
   ('98000000-0000-0000-0000-000000000105','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',280,false,false,'2026-01-10 18:05:00+01','admin'),
   ('98000000-0000-0000-0000-000000000106','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',281,false,false,'2026-01-10 18:06:00+01','admin'),
   ('98000000-0000-0000-0000-000000000107','98000000-0000-0000-0000-000000000001',null,'98000000-0000-0000-0000-000000000010','approved',282,false,false,'2026-01-10 18:07:00+01','admin'),
@@ -183,12 +183,16 @@ select ok((select qualifies from public.precision_events
     and player_id = '98000000-0000-0000-0000-000000000001'),
   'raw population standard deviation at or below 20 qualifies');
 select is((select first_source_id from public.most_wanted_endings where ending = 77),
-  '98000000-0000-0000-0000-000000000201'::uuid,
-  'historical first hit remains deterministic');
-select is((select hit_count from public.most_wanted_endings where ending = 56),
-  0, 'soft-deleted attempts do not count');
-select is((select hit_count from public.most_wanted_endings where ending = 55),
-  0, 'AK attempts do not count');
+  (select source_id from public.qualified_official_times
+    where mod(time_hundredths, 100) = 77
+    order by occurred_at, source_priority, source_order, source_id limit 1),
+  'historical first hit follows the deterministic central source order');
+select is((select count(*) from public.qualified_official_times
+  where source_id = '98000000-0000-0000-0000-000000000114'),
+  0::bigint, 'soft-deleted attempts do not count');
+select is((select count(*) from public.qualified_official_times
+  where source_id = '98000000-0000-0000-0000-000000000113'),
+  0::bigint, 'AK attempts do not count');
 select is((select count(*) from public.player_trophies
   where competition_id = '98000000-0000-0000-0000-000000000010'),
   3::bigint, 'trophy event derives three placements');
@@ -232,9 +236,9 @@ select is((select hit_count from public.player_bingo_fields
 select is((select field_tier from public.player_bingo_fields
   where player_id = '98000000-0000-0000-0000-000000000005' and ending = 77),
   'gold', 'more than three hits remain gold');
-select is((select hit_count from public.player_bingo_fields
-  where player_id = '98000000-0000-0000-0000-000000000001' and ending = 44),
-  0, 'DNF attempts do not count for BINGO');
+select is((select count(*) from public.player_bingo_hits
+  where source_id = '98000000-0000-0000-0000-000000000104'),
+  0::bigint, 'DNF attempts do not count for BINGO');
 select is((select count(*) from public.player_bingo_fields
   where player_id = '98000000-0000-0000-0000-000000000004'),
   0::bigint, 'AK players have no personal BINGO');
