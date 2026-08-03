@@ -72,8 +72,13 @@ export function formatCurrentRecordDuration(days: number) {
 }
 
 export function formatTimelineMoment(achievedAt: string, achievedDate: string, hasExactTime: boolean) {
-  const date = new Date(`${achievedDate}T12:00:00`).toLocaleDateString("de-DE");
+  const timeZone = "Europe/Berlin";
+  const date = new Date(`${achievedDate}T12:00:00Z`).toLocaleDateString("de-DE", { timeZone });
   if (!hasExactTime) return date;
-  const time = new Date(achievedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  const time = new Date(achievedAt).toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone,
+  });
   return `${date} · ${time} Uhr`;
 }

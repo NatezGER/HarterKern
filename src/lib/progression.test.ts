@@ -49,4 +49,8 @@ describe("progression chart", () => {
     expect(formatTimelineMoment("2025-01-01T00:00:00Z", "2025-01-01", false)).toBe("1.1.2025");
     expect(formatTimelineMoment("2025-01-01T18:42:00Z", "2025-01-01", true)).toContain("19:42 Uhr");
   });
+
+  it("formats summer timestamps in Europe/Berlin daylight saving time", () => {
+    expect(formatTimelineMoment("2025-07-01T18:42:00Z", "2025-07-01", true)).toContain("20:42 Uhr");
+  });
 });
