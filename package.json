@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "typecheck": "tsc -b --pretty false",
+    "check:quick": "npm run lint && npm run typecheck",
+    "check:full": "npm run check:quick && npm run test && npm run build",
     "test": "vitest run",
     "preview": "vite preview"
   },
