@@ -20,7 +20,13 @@ export type DataGroup =
   | "navigation"
   | "leaderboard"
   | "players"
-  | "player-profile"
+  | "profile-core"
+  | "profile-badges"
+  | "profile-trophies"
+  | "profile-prestige"
+  | "profile-progression"
+  | "profile-attempt-numbers"
+  | "profile-events"
   | "event-detail"
   | "live"
   | "dashboard"
@@ -47,7 +53,13 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
   navigation: 0,
   leaderboard: 3,
   players: 2,
-  "player-profile": 3,
+  "profile-core": 0,
+  "profile-badges": 0,
+  "profile-trophies": 0,
+  "profile-prestige": 0,
+  "profile-progression": 0,
+  "profile-attempt-numbers": 0,
+  "profile-events": 0,
   "event-detail": 0,
   live: 8,
   dashboard: 12,
@@ -65,7 +77,18 @@ export function getRouteDataPlan(pathname: string): RouteDataPlan {
   if (pathname === "/leaderboard") return { required: ["leaderboard"], optional: [] };
   if (pathname === "/players") return { required: ["players"], optional: [] };
   if (pathname.startsWith("/player/")) {
-    return { required: ["player-profile"], optional: [] };
+    return {
+      required: ["profile-core"],
+      optional: [
+        "profile-trophies",
+        "profile-badges",
+        "profile-prestige",
+        "profile-progression",
+        "bingo",
+        "profile-attempt-numbers",
+        "profile-events",
+      ],
+    };
   }
   if (pathname === "/stats" || pathname === "/events") {
     return {
@@ -94,6 +117,13 @@ async function loadUncached(group: DataGroup): Promise<DataGroupPatch> {
   switch (group) {
     case "navigation":
     case "event-detail":
+    case "profile-core":
+    case "profile-badges":
+    case "profile-trophies":
+    case "profile-prestige":
+    case "profile-progression":
+    case "profile-attempt-numbers":
+    case "profile-events":
     case "bingo":
       return {};
     case "leaderboard": {
@@ -102,13 +132,6 @@ async function loadUncached(group: DataGroup): Promise<DataGroupPatch> {
     }
     case "players":
       return { publicData: { players: await getPlayers() } };
-    case "player-profile": {
-      const [players, worldRecordHistory] = await Promise.all([
-        getPlayers(),
-        getWorldRecordHistory(),
-      ]);
-      return { publicData: { players, worldRecordHistory } };
-    }
     case "live": {
       const players = await getPlayers();
       return {
@@ -168,14 +191,14 @@ export function loadDataGroup(group: DataGroup): Promise<DataGroupPatch> {
 export function groupsForRealtimeTable(table: string): DataGroup[] {
   switch (table) {
     case "players":
-      return ["leaderboard", "players", "player-profile", "live", "dashboard", "statistics", "prestige-activities", "badge-rarity", "most-wanted", "bingo"];
+      return ["leaderboard", "players", "profile-core", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "badge-rarity", "most-wanted", "bingo"];
     case "attempts":
     case "historical_attempts":
-      return ["leaderboard", "players", "player-profile", "live", "dashboard", "statistics", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "historical", "event-detail"];
+      return ["leaderboard", "players", "profile-core", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "historical", "event-detail"];
     case "events":
     case "event_participants":
     case "event_guests":
-      return ["player-profile", "live", "dashboard", "statistics", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "event-detail"];
+      return ["profile-core", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "event-detail"];
     case "event_photos":
       return ["event-detail"];
     default:

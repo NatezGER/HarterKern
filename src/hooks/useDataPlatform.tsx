@@ -30,6 +30,10 @@ import {
 import type { DataGroup, DataGroupPatch, RouteDataPlan } from "@/services/dataGroupService";
 import type { LiveEventState } from "@/types/liveEvent";
 import { emptyPublicData } from "@/services/publicDataService";
+import {
+  invalidatePlayerProfileSections,
+  profileSectionsForDataGroups,
+} from "@/services/playerProfileService";
 
 export type DataStatus = "loading" | "ready" | "error" | "unconfigured";
 export type RealtimeStatus = "connecting" | "connected" | "disconnected";
@@ -186,6 +190,7 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
   }, [loadGroup, loadOptionalGroups]);
 
   const scheduleGroups = useCallback((selected: DataGroup[]) => {
+    invalidatePlayerProfileSections(profileSectionsForDataGroups(selected));
     for (const group of selected) scheduledGroups.current.add(group);
     if (refetchTimer.current != null) window.clearTimeout(refetchTimer.current);
     refetchTimer.current = window.setTimeout(() => {

@@ -193,7 +193,7 @@ export interface PlayerBingo {
   summary: BingoSummary;
 }
 
-export interface PlayerProfileDetail {
+export interface PlayerProfileCore {
   id: string;
   name: string;
   avatarUrl: string | null;
@@ -208,10 +208,9 @@ export interface PlayerProfileDetail {
   thirdPlaces: number;
   validAttempts: number;
   dnfCount: number;
-  events: PlayerEventSummary[];
-  badges: CompactBadge[];
-  attemptNumbers: AttemptNumberPoint[];
-  progression: ProgressionPoint[];
+}
+
+export interface PlayerProfilePrestige {
   pbCount: number;
   largestPbImprovementHundredths: number | null;
   averagePbImprovementHundredths: number | null;
@@ -219,6 +218,25 @@ export interface PlayerProfileDetail {
   worldRecordDays: number;
   longestWorldRecordDays: number;
   visibleBadgeCount: number;
-  bingo: PlayerBingo;
-  trophies: TrophyAward[];
+}
+
+export interface ProfileWorldRecord {
+  id: string;
+  playerId: string;
+  playerName: string;
+  avatarUrl: string | null;
+  timeHundredths: number;
+  achievedAt: string;
+  achievedDate: string;
+  eventId: string | null;
+  sourceLabel: string;
+  sourceType: "attempt" | "historical_attempt";
+  improvementHundredths: number | null;
+  durationDays: number;
+  isCurrent: boolean;
+}
+
+export interface PlayerProfileProgression {
+  personal: ProgressionPoint[];
+  worldRecords: ProfileWorldRecord[];
 }
