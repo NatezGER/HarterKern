@@ -4,8 +4,12 @@ import type {
   EventAttemptDetail,
   EventDetail,
   EventParticipantDetail,
+  AttemptNumberPoint,
+  PlayerEventSummary,
   PlayerBingo,
-  PlayerProfileDetail,
+  PlayerProfileCore,
+  PlayerProfilePrestige,
+  PlayerProfileProgression,
   TrophyAward,
 } from "@/types/historyProfiles";
 import type { BadgeUnlockCelebration } from "@/types/liveEvent";
@@ -287,44 +291,20 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
   };
 }
 
-export async function getPlayerProfileDetail(playerId: string): Promise<PlayerProfileDetail | null> {
+export async function getPlayerProfileCore(playerId: string): Promise<PlayerProfileCore | null> {
   const client = getSupabase();
-  const playerResult = await client.from("players").select("*")
-    .eq("id", playerId).eq("is_archived", false).maybeSingle();
-  if (playerResult.error) throw playerResult.error;
-  if (!playerResult.data) return null;
-
-  // Keep the core profile independent from personal BINGO. A BINGO timeout must
-  // not remove identity, career statistics, badges, trophies or progression.
-  const [statsResult, rankResult, historyResult] = await Promise.all([
-      client.from("player_statistics").select("*").eq("player_id", playerId).maybeSingle(),
-      client.from("public_hall_of_fame").select("rank").eq("player_id", playerId).maybeSingle(),
-      client.from("player_event_history").select("*").eq("player_id", playerId)
-        .order("event_date", { ascending: false }),
+  const [playerResult, statsResult, rankResult] = await Promise.all([
+    client.from("players").select("*")
+      .eq("id", playerId).eq("is_archived", false).maybeSingle(),
+    client.from("player_statistics").select("*").eq("player_id", playerId).maybeSingle(),
+    client.from("public_hall_of_fame").select("rank").eq("player_id", playerId).maybeSingle(),
   ]);
-  const badgeResult = await client.from("visible_player_badges").select("*")
-    .eq("player_id", playerId).order("tier_rank", { ascending: false })
-    .order("is_special_event_badge", { ascending: false })
-    .order("recipient_count", { ascending: true }).order("sort_order");
-  const pointsResult = await client.from("player_attempt_number_statistics").select("*")
-    .eq("player_id", playerId).order("attempt_number");
-  const progressionResult = await client.from("player_pb_history").select("*")
-    .eq("player_id", playerId).order("sequence_number");
-  const prestigeResult = await client.from("player_prestige_statistics").select("*")
-    .eq("player_id", playerId).maybeSingle();
-  const trophyResult = await client.from("player_trophies").select("*")
-    .eq("player_id", playerId).order("awarded_at", { ascending: false });
-  for (const result of [playerResult, statsResult, rankResult, historyResult, badgeResult,
-    pointsResult, progressionResult, prestigeResult, trophyResult]) {
+  for (const result of [playerResult, statsResult, rankResult]) {
     if (result.error) throw result.error;
   }
+  if (!playerResult.data) return null;
   const player = playerResult.data;
   const stats = statsResult.data;
-  const historyRows = historyResult.data ?? [];
-  const badgeRows = badgeResult.data ?? [];
-  const pointRows = pointsResult.data ?? [];
-  const progressionRows = progressionResult.data ?? [];
-  const prestige = prestigeResult.data;
   return {
     id: player.id,
     name: player.display_name,
@@ -340,25 +320,81 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
     thirdPlaces: Number(stats?.third_places ?? 0),
     validAttempts: Number(stats?.valid_attempts ?? 0),
     dnfCount: Number(stats?.dnf_count ?? 0),
-    events: historyRows.map((row) => ({
-      eventId: row.event_id,
-      eventName: row.event_name,
-      eventDate: row.event_date,
-      bestHundredths: row.best_time_hundredths,
-      rank: row.rank,
-      attempts: Number(row.attempt_count),
-      validAttempts: Number(row.valid_attempts),
-      dnfCount: Number(row.dnf_count),
-    })),
-    badges: badgeRows.map(mapBadge),
-    attemptNumbers: pointRows.map((row) => ({
+  };
+}
+
+export async function getPlayerBadges(playerId: string): Promise<CompactBadge[]> {
+  const result = await getSupabase().from("visible_player_badges").select("*")
+    .eq("player_id", playerId).order("tier_rank", { ascending: false })
+    .order("is_special_event_badge", { ascending: false })
+    .order("recipient_count", { ascending: true }).order("sort_order");
+  if (result.error) throw result.error;
+  return (result.data ?? []).map(mapBadge);
+}
+
+export async function getPlayerTrophies(playerId: string): Promise<TrophyAward[]> {
+  const result = await getSupabase().from("player_trophies").select("*")
+    .eq("player_id", playerId).order("awarded_at", { ascending: false });
+  if (result.error) throw result.error;
+  return (result.data ?? []).map(mapTrophy);
+}
+
+export async function getPlayerPrestige(playerId: string): Promise<PlayerProfilePrestige> {
+  const result = await getSupabase().from("player_prestige_statistics").select("*")
+    .eq("player_id", playerId).maybeSingle();
+  if (result.error) throw result.error;
+  const prestige = result.data;
+  return {
+    pbCount: Number(prestige?.pb_count ?? 0),
+    largestPbImprovementHundredths: prestige?.largest_pb_improvement_hundredths ?? null,
+    averagePbImprovementHundredths: prestige?.average_pb_improvement_hundredths ?? null,
+    worldRecordCount: Number(prestige?.world_record_count ?? 0),
+    worldRecordDays: Number(prestige?.world_record_days ?? 0),
+    longestWorldRecordDays: Number(prestige?.longest_world_record_days ?? 0),
+    visibleBadgeCount: Number(prestige?.visible_badge_count ?? 0),
+  };
+}
+
+export async function getPlayerAttemptNumbers(playerId: string): Promise<AttemptNumberPoint[]> {
+  const result = await getSupabase().from("player_attempt_number_statistics").select("*")
+    .eq("player_id", playerId).order("attempt_number");
+  if (result.error) throw result.error;
+  return (result.data ?? []).map((row) => ({
       attemptNumber: row.attempt_number,
       samples: Number(row.attempt_count),
       validAttempts: Number(row.valid_attempts),
       dnfCount: Number(row.dnf_count),
       averageHundredths: row.average_hundredths,
-    })),
-    progression: progressionRows.map((row) => ({
+    }));
+}
+
+export async function getPlayerEventHistory(playerId: string): Promise<PlayerEventSummary[]> {
+  const result = await getSupabase().from("player_event_history").select("*")
+    .eq("player_id", playerId).order("event_date", { ascending: false });
+  if (result.error) throw result.error;
+  return (result.data ?? []).map((row) => ({
+    eventId: row.event_id,
+    eventName: row.event_name,
+    eventDate: row.event_date,
+    bestHundredths: row.best_time_hundredths,
+    rank: row.rank,
+    attempts: Number(row.attempt_count),
+    validAttempts: Number(row.valid_attempts),
+    dnfCount: Number(row.dnf_count),
+  }));
+}
+
+export async function getPlayerProgression(playerId: string): Promise<PlayerProfileProgression> {
+  const client = getSupabase();
+  const [personalResult, worldResult] = await Promise.all([
+    client.from("player_pb_history").select("*")
+      .eq("player_id", playerId).order("sequence_number"),
+    client.from("world_record_history").select("*").order("sequence_number"),
+  ]);
+  if (personalResult.error) throw personalResult.error;
+  if (worldResult.error) throw worldResult.error;
+  return {
+    personal: (personalResult.data ?? []).map((row) => ({
       id: row.source_id,
       timeHundredths: row.time_hundredths,
       achievedAt: row.achieved_at,
@@ -371,15 +407,21 @@ export async function getPlayerProfileDetail(playerId: string): Promise<PlayerPr
       durationDays: row.duration_days,
       isCurrent: row.is_current,
     })),
-    pbCount: Number(prestige?.pb_count ?? 0),
-    largestPbImprovementHundredths: prestige?.largest_pb_improvement_hundredths ?? null,
-    averagePbImprovementHundredths: prestige?.average_pb_improvement_hundredths ?? null,
-    worldRecordCount: Number(prestige?.world_record_count ?? 0),
-    worldRecordDays: Number(prestige?.world_record_days ?? 0),
-    longestWorldRecordDays: Number(prestige?.longest_world_record_days ?? 0),
-    visibleBadgeCount: Number(prestige?.visible_badge_count ?? 0),
-    bingo: emptyPlayerBingo,
-    trophies: (trophyResult.data ?? []).map(mapTrophy),
+    worldRecords: (worldResult.data ?? []).map((row) => ({
+      id: row.record_id,
+      playerId: row.player_id,
+      playerName: row.display_name,
+      avatarUrl: avatarUrl(row.avatar_path, row.avatar_url),
+      timeHundredths: row.time_hundredths,
+      achievedAt: row.achieved_at,
+      achievedDate: row.achieved_date,
+      eventId: row.event_id,
+      sourceLabel: row.source_label,
+      sourceType: row.source_type,
+      improvementHundredths: row.improvement_hundredths,
+      durationDays: row.duration_days,
+      isCurrent: row.is_current,
+    })),
   };
 }
 
@@ -399,16 +441,18 @@ export const emptyPlayerBingo: PlayerBingo = {
 
 export async function getPlayerBingo(playerId: string): Promise<PlayerBingo> {
   const client = getSupabase();
-  const fieldsResult = await client.from("player_bingo_fields").select("*")
-    .eq("player_id", playerId).order("ending");
-  if (fieldsResult.error) throw fieldsResult.error;
-  const statsResult = await client.from("player_bingo_statistics").select("*")
-    .eq("player_id", playerId).maybeSingle();
-  if (statsResult.error) throw statsResult.error;
-  const hitsResult = await client.from("player_bingo_hits").select("*")
-    .eq("player_id", playerId).order("occurred_at").order("source_priority")
-    .order("source_order").order("source_id");
-  if (hitsResult.error) throw hitsResult.error;
+  const [fieldsResult, statsResult, hitsResult] = await Promise.all([
+    client.from("player_bingo_fields").select("*")
+      .eq("player_id", playerId).order("ending"),
+    client.from("player_bingo_statistics").select("*")
+      .eq("player_id", playerId).maybeSingle(),
+    client.from("player_bingo_hits").select("*")
+      .eq("player_id", playerId).order("occurred_at").order("source_priority")
+      .order("source_order").order("source_id"),
+  ]);
+  for (const result of [fieldsResult, statsResult, hitsResult]) {
+    if (result.error) throw result.error;
+  }
   const hits = hitsResult.data ?? [];
   const hitsByEnding = new Map<number, typeof hits>();
   for (const hit of hits) {

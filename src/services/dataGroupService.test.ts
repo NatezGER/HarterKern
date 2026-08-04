@@ -51,6 +51,22 @@ describe("route data groups", () => {
     expect(getRouteDataPlan("/").optional).toEqual(["prestige-activities"]);
   });
 
+  it("keeps player profile reads player-scoped and independently optional", () => {
+    expect(getRouteDataPlan("/player/player-1")).toEqual({
+      required: ["profile-core"],
+      optional: [
+        "profile-trophies",
+        "profile-badges",
+        "profile-prestige",
+        "profile-progression",
+        "bingo",
+        "profile-attempt-numbers",
+        "profile-events",
+      ],
+    });
+    expect(dataGroupRequestCounts["profile-core"]).toBe(0);
+  });
+
   it("loads live raw data only for live and management routes", () => {
     expect(getRouteDataPlan("/events/live").required).toContain("live");
     expect(getRouteDataPlan("/settings").required).toContain("live");
@@ -77,5 +93,9 @@ describe("route data groups", () => {
     expect(groupsForRealtimeTable("attempts")).toContain("leaderboard");
     expect(groupsForRealtimeTable("attempts")).toContain("most-wanted");
     expect(groupsForRealtimeTable("event_photos")).not.toContain("leaderboard");
+    expect(groupsForRealtimeTable("players")).toContain("profile-core");
+    expect(groupsForRealtimeTable("players")).not.toContain("profile-attempt-numbers");
+    expect(groupsForRealtimeTable("attempts")).toContain("profile-progression");
+    expect(groupsForRealtimeTable("attempts")).toContain("bingo");
   });
 });
