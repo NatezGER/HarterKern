@@ -324,10 +324,9 @@ export async function getPlayerProfileCore(playerId: string): Promise<PlayerProf
 }
 
 export async function getPlayerBadges(playerId: string): Promise<CompactBadge[]> {
-  const result = await getSupabase().from("visible_player_badges").select("*")
-    .eq("player_id", playerId).order("tier_rank", { ascending: false })
-    .order("is_special_event_badge", { ascending: false })
-    .order("recipient_count", { ascending: true }).order("sort_order");
+  const result = await getSupabase().rpc("get_visible_player_badges", {
+    p_player_id: playerId,
+  });
   if (result.error) throw result.error;
   return (result.data ?? []).map(mapBadge);
 }

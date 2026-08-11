@@ -358,6 +358,10 @@ export interface Database {
       };
     };
     Functions: DataPlatformFunctions & {
+      get_visible_player_badges: {
+        Args: { p_player_id: string };
+        Returns: VisiblePlayerBadgesView["Row"][];
+      };
       submit_public_attempt: {
         Args: {
           p_client_identifier: string;
