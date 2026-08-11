@@ -2,15 +2,20 @@ import { Menu, Timer, X } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { brand, navigationItems } from "@/constants/navigation";
-import { appMeta } from "@/constants/content";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
+import { SeasonSelector } from "@/components/common/SeasonSelector";
+import { useSeason } from "@/hooks/useSeason";
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const { isAllTime } = useSeason();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-background/85 backdrop-blur-2xl">
+    <header className={cn(
+      "sticky top-0 z-40 border-b bg-background/85 backdrop-blur-2xl transition-colors",
+      isAllTime ? "border-white/[0.07]" : "border-emerald-300/20",
+    )}>
       <div className="mx-auto flex h-20 max-w-[1600px] items-center justify-between px-5 sm:px-8 lg:px-12">
         <NavLink to="/" onClick={() => setIsOpen(false)} className="flex items-center gap-3">
           <span className="grid size-10 skew-x-[-8deg] place-items-center rounded-lg bg-gold-400 font-display text-lg font-black text-black shadow-gold-sm">
@@ -43,9 +48,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <span className="hidden rounded-full border border-gold-400/20 bg-gold-400/[0.07] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-gold-300 sm:block">
-            {appMeta.season}
-          </span>
+          <SeasonSelector />
           <Button size="sm" asChild>
             <Link to="/events/live">
               <Timer className="size-4" />

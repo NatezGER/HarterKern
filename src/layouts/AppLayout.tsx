@@ -9,28 +9,42 @@ import { BadgeUnlockCelebration } from "@/components/events/BadgeUnlockCelebrati
 import { SyncStatusNotice } from "@/components/common/SyncStatusNotice";
 import { AdminSessionProvider } from "@/hooks/useAdminSession";
 import { ManagementModeProvider } from "@/hooks/useManagementMode";
+import { SeasonProvider, useSeason } from "@/hooks/useSeason";
+
+function AppFrame() {
+  const { season } = useSeason();
+
+  return (
+    <div
+      data-season={season}
+      className="flex min-h-screen flex-col overflow-x-clip"
+    >
+      <Header />
+      <LiveEventBanner />
+      <SyncStatusNotice />
+      <main className="mx-auto w-full max-w-[1600px] flex-1 px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+        <Outlet />
+      </main>
+      <Footer />
+      <RecordCelebration />
+      <BadgeUnlockCelebration />
+      <ScrollRestoration />
+    </div>
+  );
+}
 
 export function AppLayout() {
   return (
-    <DataPlatformProvider>
-      <AdminSessionProvider>
-        <LiveEventProvider>
-          <ManagementModeProvider>
-            <div className="flex min-h-screen flex-col overflow-x-clip">
-              <Header />
-              <LiveEventBanner />
-              <SyncStatusNotice />
-              <main className="mx-auto w-full max-w-[1600px] flex-1 px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
-                <Outlet />
-              </main>
-              <Footer />
-              <RecordCelebration />
-              <BadgeUnlockCelebration />
-              <ScrollRestoration />
-            </div>
-          </ManagementModeProvider>
-        </LiveEventProvider>
-      </AdminSessionProvider>
-    </DataPlatformProvider>
+    <SeasonProvider>
+      <DataPlatformProvider>
+        <AdminSessionProvider>
+          <LiveEventProvider>
+            <ManagementModeProvider>
+              <AppFrame />
+            </ManagementModeProvider>
+          </LiveEventProvider>
+        </AdminSessionProvider>
+      </DataPlatformProvider>
+    </SeasonProvider>
   );
 }

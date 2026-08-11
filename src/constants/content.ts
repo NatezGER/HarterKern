@@ -1,5 +1,4 @@
 export const appMeta = {
-  season: "Saison 2026",
   heroEyebrow: "THE ORIGINAL SPEED DRINKING LEAGUE",
   heroTitle: "Harter Kern",
   heroSubtitle: "2 Fast 2 Drink",
