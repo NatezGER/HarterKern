@@ -1,12 +1,19 @@
 begin;
 create extension if not exists pgtap;
-select plan(7);
+select plan(9);
 
 select has_function(
   'public',
   'get_visible_player_badges',
   array['uuid'],
   'player-scoped visible badge RPC exists'
+);
+
+select has_function(
+  'public',
+  'get_player_profile_prestige',
+  array['uuid'],
+  'player-scoped prestige RPC exists'
 );
 
 insert into public.players (id, display_name, is_ak)
@@ -83,6 +90,16 @@ select is(
   )),
   0::bigint,
   'unknown players return no badges'
+);
+
+select is(
+  (select visible_badge_count
+    from public.player_prestige_statistics
+    where player_id = '99000000-0000-0000-0000-000000000001'),
+  (select count(*)::integer from public.get_visible_player_badges(
+    '99000000-0000-0000-0000-000000000001'
+  )),
+  'the existing prestige badge count equals the reusable gallery count'
 );
 
 select * from finish();

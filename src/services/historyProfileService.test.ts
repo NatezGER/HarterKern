@@ -13,7 +13,11 @@ vi.mock("@/lib/supabase", () => ({
   }),
 }));
 
-import { getPlayerBadges, getPlayerProfileCore } from "@/services/historyProfileService";
+import {
+  getPlayerBadges,
+  getPlayerPrestige,
+  getPlayerProfileCore,
+} from "@/services/historyProfileService";
 
 describe("player profile core repository", () => {
   beforeEach(() => {
@@ -124,6 +128,36 @@ describe("player profile core repository", () => {
       }),
     ]);
     expect(mocks.rpc).toHaveBeenCalledWith("get_visible_player_badges", {
+      p_player_id: "player-1",
+    });
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it("loads prestige without recalculating badges and uses the supplied count", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        player_id: "player-1",
+        pb_count: 4,
+        largest_pb_improvement_hundredths: 80,
+        average_pb_improvement_hundredths: 35,
+        world_record_count: 2,
+        world_record_days: 20,
+        longest_world_record_days: 15,
+      },
+      error: null,
+    });
+    mocks.rpc.mockReturnValueOnce({ maybeSingle });
+
+    await expect(getPlayerPrestige("player-1", 7)).resolves.toEqual({
+      pbCount: 4,
+      largestPbImprovementHundredths: 80,
+      averagePbImprovementHundredths: 35,
+      worldRecordCount: 2,
+      worldRecordDays: 20,
+      longestWorldRecordDays: 15,
+      visibleBadgeCount: 7,
+    });
+    expect(mocks.rpc).toHaveBeenCalledWith("get_player_profile_prestige", {
       p_player_id: "player-1",
     });
     expect(mocks.from).not.toHaveBeenCalled();

@@ -362,6 +362,18 @@ export interface Database {
         Args: { p_player_id: string };
         Returns: VisiblePlayerBadgesView["Row"][];
       };
+      get_player_profile_prestige: {
+        Args: { p_player_id: string };
+        Returns: Array<{
+          player_id: string;
+          pb_count: number;
+          largest_pb_improvement_hundredths: number | null;
+          average_pb_improvement_hundredths: number | null;
+          world_record_count: number;
+          world_record_days: number;
+          longest_world_record_days: number;
+        }>;
+      };
       submit_public_attempt: {
         Args: {
           p_client_identifier: string;

@@ -65,6 +65,26 @@ describe("player profile section loading", () => {
     await Promise.all([badges, trophies]);
   });
 
+  it("waits only prestige for badges and keeps other sections parallel", async () => {
+    let resolveBadges!: (value: Array<{ key: string }>) => void;
+    mocks.badges.mockReturnValueOnce(new Promise((resolve) => { resolveBadges = resolve; }));
+    const badges = loadPlayerProfileSection("badges", "player-1");
+    const prestige = loadPlayerProfileSection("prestige", "player-1");
+    const progression = loadPlayerProfileSection("progression", "player-1");
+
+    expect(mocks.badges).toHaveBeenCalledOnce();
+    expect(mocks.prestige).not.toHaveBeenCalled();
+    expect(mocks.progression).toHaveBeenCalledOnce();
+
+    resolveBadges([{ key: "one" }, { key: "two" }]);
+    await badges;
+    await prestige;
+    await progression;
+
+    expect(mocks.prestige).toHaveBeenCalledWith("player-1", 2);
+    expect(mocks.progression).toHaveBeenCalledOnce();
+  });
+
   it("deduplicates in-flight reads and reuses a successful cache entry", async () => {
     let resolveBadges!: (value: never[]) => void;
     mocks.badges.mockReturnValueOnce(new Promise((resolve) => { resolveBadges = resolve; }));

@@ -54,12 +54,24 @@ const loaders: {
   core: getPlayerProfileCore,
   badges: getPlayerBadges,
   trophies: getPlayerTrophies,
-  prestige: getPlayerPrestige,
+  prestige: (playerId) => getPlayerPrestige(playerId, 0),
   progression: getPlayerProgression,
   "attempt-numbers": getPlayerAttemptNumbers,
   events: getPlayerEventHistory,
   bingo: getPlayerBingo,
 };
+
+function loadSection<Section extends PlayerProfileSection>(
+  section: Section,
+  playerId: string,
+): Promise<PlayerProfileSectionData[Section]> {
+  if (section === "prestige") {
+    return loadPlayerProfileSection("badges", playerId)
+      .then((badges) => getPlayerPrestige(playerId, badges.length)) as
+      Promise<PlayerProfileSectionData[Section]>;
+  }
+  return loaders[section](playerId);
+}
 
 function cacheKey(section: PlayerProfileSection, playerId: string) {
   return `${section}:${playerId}`;
@@ -81,7 +93,7 @@ export function loadPlayerProfileSection<Section extends PlayerProfileSection>(
   if (running) return running as Promise<PlayerProfileSectionData[Section]>;
 
   const generation = generations.get(key) ?? 0;
-  const request = loaders[section](playerId)
+  const request = loadSection(section, playerId)
     .then((value) => {
       if ((generations.get(key) ?? 0) === generation) {
         cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });

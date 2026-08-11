@@ -338,9 +338,13 @@ export async function getPlayerTrophies(playerId: string): Promise<TrophyAward[]
   return (result.data ?? []).map(mapTrophy);
 }
 
-export async function getPlayerPrestige(playerId: string): Promise<PlayerProfilePrestige> {
-  const result = await getSupabase().from("player_prestige_statistics").select("*")
-    .eq("player_id", playerId).maybeSingle();
+export async function getPlayerPrestige(
+  playerId: string,
+  visibleBadgeCount: number,
+): Promise<PlayerProfilePrestige> {
+  const result = await getSupabase().rpc("get_player_profile_prestige", {
+    p_player_id: playerId,
+  }).maybeSingle();
   if (result.error) throw result.error;
   const prestige = result.data;
   return {
@@ -350,7 +354,7 @@ export async function getPlayerPrestige(playerId: string): Promise<PlayerProfile
     worldRecordCount: Number(prestige?.world_record_count ?? 0),
     worldRecordDays: Number(prestige?.world_record_days ?? 0),
     longestWorldRecordDays: Number(prestige?.longest_world_record_days ?? 0),
-    visibleBadgeCount: Number(prestige?.visible_badge_count ?? 0),
+    visibleBadgeCount,
   };
 }
 
