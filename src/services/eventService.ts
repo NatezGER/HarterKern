@@ -8,14 +8,16 @@ import type { SeasonSelection } from "@/lib/season";
 export async function getEvents(season: SeasonSelection = ALL_TIME_SEASON): Promise<Event[]> {
   const client = getSupabase();
   if (season === ALL_TIME_SEASON) {
-    const [eventsResult, statsResult, participantsResult, guestsResult, podiumResult, winnersResult] =
+    const [eventsResult, statsResult, participantsResult, guestsResult, podiumResult,
+      medalEventsResult, winnersResult] =
       await Promise.all([
       client.from("events").select("*").is("deleted_at", null)
         .order("started_at", { ascending: false }),
       client.from("event_statistics").select("*"),
       client.from("event_participants").select("event_id,player_id"),
       client.from("event_guests").select("event_id,id"),
-      client.from("qualified_event_podium").select("*"),
+      client.from("event_podium").select("*"),
+      client.from("qualified_events").select("event_id"),
       client.from("event_winners").select("event_id,display_name"),
     ]);
     if (eventsResult.error) throw eventsResult.error;
@@ -23,6 +25,7 @@ export async function getEvents(season: SeasonSelection = ALL_TIME_SEASON): Prom
     if (participantsResult.error) throw participantsResult.error;
     if (guestsResult.error) throw guestsResult.error;
     if (podiumResult.error) throw podiumResult.error;
+    if (medalEventsResult.error) throw medalEventsResult.error;
     if (winnersResult.error) throw winnersResult.error;
 
     return mapEvents(
@@ -31,6 +34,7 @@ export async function getEvents(season: SeasonSelection = ALL_TIME_SEASON): Prom
       participantsResult.data,
       guestsResult.data,
       podiumResult.data,
+      medalEventsResult.data,
       winnersResult.data,
     );
   }
@@ -42,17 +46,20 @@ export async function getEvents(season: SeasonSelection = ALL_TIME_SEASON): Prom
   if (selectedEventsResult.error) throw selectedEventsResult.error;
   if (selectedEventsResult.data.length === 0) return [];
   const eventIds = selectedEventsResult.data.map(({ id }) => id);
-  const [statsResult, participantsResult, guestsResult, podiumResult, winnersResult] = await Promise.all([
+  const [statsResult, participantsResult, guestsResult, podiumResult,
+    medalEventsResult, winnersResult] = await Promise.all([
     client.from("event_statistics").select("*").in("event_id", eventIds),
     client.from("event_participants").select("event_id,player_id").in("event_id", eventIds),
     client.from("event_guests").select("event_id,id").in("event_id", eventIds),
-    client.from("qualified_event_podium").select("*").in("event_id", eventIds),
+    client.from("event_podium").select("*").in("event_id", eventIds),
+    client.from("qualified_events").select("event_id").in("event_id", eventIds),
     client.from("event_winners").select("event_id,display_name").in("event_id", eventIds),
   ]);
   if (statsResult.error) throw statsResult.error;
   if (participantsResult.error) throw participantsResult.error;
   if (guestsResult.error) throw guestsResult.error;
   if (podiumResult.error) throw podiumResult.error;
+  if (medalEventsResult.error) throw medalEventsResult.error;
   if (winnersResult.error) throw winnersResult.error;
 
   return mapEvents(
@@ -61,6 +68,7 @@ export async function getEvents(season: SeasonSelection = ALL_TIME_SEASON): Prom
     participantsResult.data,
     guestsResult.data,
     podiumResult.data,
+    medalEventsResult.data,
     winnersResult.data,
   );
 }
@@ -77,10 +85,12 @@ function mapEvents(
     "event_id" | "id"
   >[],
   podiumByEvent: Database["public"]["Views"]["event_podium"]["Row"][],
+  medalEvents: Database["public"]["Views"]["qualified_events"]["Row"][],
   winnersByEvent: Pick<Database["public"]["Views"]["event_winners"]["Row"],
     "event_id" | "display_name">[],
 ): Event[] {
   const statsByEvent = new Map(statistics.map((row) => [row.event_id, row]));
+  const medalEventIds = new Set(medalEvents.map(({ event_id }) => event_id));
   return events.map((row) => {
     const participants = participantsByEvent
       .filter((participant) => participant.event_id === row.id)
@@ -99,7 +109,7 @@ function mapEvents(
         .filter((entry) => entry.event_id === row.id)
         .map((entry) => entry.display_name),
       podium: podiumByEvent
-        .filter((entry) => entry.event_id === row.id)
+        .filter((entry) => entry.event_id === row.id && medalEventIds.has(row.id))
         .sort((left, right) => left.rank - right.rank)
         .slice(0, 3)
         .map((entry) => ({

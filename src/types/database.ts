@@ -237,6 +237,10 @@ export interface Database {
       };
       event_podium: EventPodiumView;
       qualified_event_podium: EventPodiumView;
+      qualified_events: {
+        Row: { event_id: string };
+        Relationships: [];
+      };
       player_badge_awards: PlayerBadgeAwardsView;
       player_attempt_number_statistics: PlayerAttemptNumberStatisticsView;
       player_pb_progression: PlayerPbProgressionView;
