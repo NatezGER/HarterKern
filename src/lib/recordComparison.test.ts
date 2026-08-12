@@ -17,4 +17,12 @@ describe("world-record comparison", () => {
     expect(getRecordAt(records, "2025-03-01")?.id).toBe("new");
     expect(getRecordAt(records, "2024-12-31")).toBeNull();
   });
+
+  it("uses season progression order instead of UUID order at an equal moment", () => {
+    const sameMoment = [
+      { id: "z-older", achievedAt: "2026-03-01T00:00:00Z", timeHundredths: 350, sequenceNumber: 1 },
+      { id: "a-current", achievedAt: "2026-03-01T00:00:00Z", timeHundredths: 320, sequenceNumber: 2 },
+    ];
+    expect(getRecordAt(sameMoment, "2026-03-01T00:00:00Z")?.id).toBe("a-current");
+  });
 });

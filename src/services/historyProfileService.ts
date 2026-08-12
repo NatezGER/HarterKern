@@ -408,12 +408,25 @@ export async function getPlayerEventHistory(playerId: string): Promise<PlayerEve
   }));
 }
 
-export async function getPlayerProgression(playerId: string): Promise<PlayerProfileProgression> {
+export async function getPlayerProgression(
+  playerId: string,
+  seasonYear?: number,
+): Promise<PlayerProfileProgression> {
   const client = getSupabase();
+  const personalQuery = seasonYear == null
+    ? client.from("player_pb_history").select("*")
+      .eq("player_id", playerId).order("sequence_number")
+    : client.rpc("get_player_season_pb_history", {
+      p_player_id: playerId,
+      p_season_year: seasonYear,
+    });
+  const worldQuery = seasonYear == null
+    ? client.from("world_record_history").select("*").order("sequence_number")
+    : client.from("season_world_record_history").select("*")
+      .eq("season_year", seasonYear).order("sequence_number");
   const [personalResult, worldResult] = await Promise.all([
-    client.from("player_pb_history").select("*")
-      .eq("player_id", playerId).order("sequence_number"),
-    client.from("world_record_history").select("*").order("sequence_number"),
+    personalQuery,
+    worldQuery,
   ]);
   if (personalResult.error) throw personalResult.error;
   if (worldResult.error) throw worldResult.error;
@@ -430,6 +443,7 @@ export async function getPlayerProgression(playerId: string): Promise<PlayerProf
       improvementHundredths: row.improvement_hundredths,
       durationDays: row.duration_days,
       isCurrent: row.is_current,
+      sequenceNumber: seasonYear == null ? undefined : row.sequence_number,
     })),
     worldRecords: (worldResult.data ?? []).map((row) => ({
       id: row.record_id,

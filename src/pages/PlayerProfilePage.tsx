@@ -98,7 +98,7 @@ export function PlayerProfilePage() {
         const comparisonProgression = firstPbAt ? selectRecordsForPeriod(data.worldRecords, firstPbAt, new Date().toISOString()).map((record) => ({ id: record.id, playerId: record.playerId, playerName: record.playerName, avatarUrl: record.avatarUrl, timeHundredths: record.timeHundredths, achievedAt: record.achievedAt, achievedDate: record.achievedDate, axisAt: record.axisAt, eventId: record.eventId, sourceLabel: record.sourceLabel, improvementHundredths: record.improvementHundredths, durationDays: record.durationDays, isCurrent: record.isCurrent, hasExactTime: record.sourceType === "attempt" })) : [];
         return (
           <section className="panel p-5 sm:p-8">
-            <SectionHeading eyebrow="Persönliche Bestmarken" title="PB Progression" />
+            <SectionHeading eyebrow={isAllTime ? "Persönliche Bestmarken" : `Persönliche Bestmarken · Saison ${selectedSeason}`} title="PB Progression" />
             <ProgressionTimeline points={personalProgression} comparisonPoints={comparisonProgression} historyDisclosure={{ id: "personal-best-history", expanded: pbDetailsExpanded }} emptyLabel="Noch keine persönliche Bestzeit vorhanden." />
             {personalProgression.length > 0 && <PersonalBestDetailsToggle expanded={pbDetailsExpanded} controls="personal-best-history" onToggle={() => setPbDetailsExpanded((value) => !value)} />}
           </section>

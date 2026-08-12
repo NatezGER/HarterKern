@@ -246,6 +246,7 @@ export interface ProfileWorldRecord {
   improvementHundredths: number | null;
   durationDays: number;
   isCurrent: boolean;
+  sequenceNumber?: number;
 }
 
 export interface PlayerProfileProgression {

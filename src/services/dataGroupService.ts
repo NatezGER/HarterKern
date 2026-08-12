@@ -151,7 +151,7 @@ async function loadUncached(group: DataGroup, season: SeasonSelection): Promise<
           getPlayers(season),
           getLeaderboard(season),
           getDailyWinners(season),
-          getWorldRecordHistory(),
+          getWorldRecordHistory(season),
           getEvents(season),
         ]);
       const leader = leaderboard[0];
@@ -176,7 +176,7 @@ async function loadUncached(group: DataGroup, season: SeasonSelection): Promise<
       const [players, worldRecordHistory, events, statistics, recentAttempts] =
         await Promise.all([
           getPlayers(season),
-          getWorldRecordHistory(),
+          getWorldRecordHistory(season),
           getEvents(season),
           getGlobalStatistics(season),
           getRecentAttempts(),

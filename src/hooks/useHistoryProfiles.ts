@@ -95,7 +95,12 @@ export function usePlayerProfileDetail(playerId: string) {
     trophies: usePlayerProfileSection("trophies", playerId, "profile-trophies"),
     badges: usePlayerProfileSection("badges", playerId, "profile-badges"),
     prestige: usePlayerProfileSection("prestige", playerId, "profile-prestige"),
-    progression: usePlayerProfileSection("progression", playerId, "profile-progression"),
+    progression: usePlayerProfileSection(
+      "progression",
+      playerId,
+      "profile-progression",
+      seasonYear,
+    ),
     bingo: usePlayerProfileSection("bingo", playerId, "bingo"),
     attemptNumbers: usePlayerProfileSection(
       "attempt-numbers",

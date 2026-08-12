@@ -75,6 +75,10 @@ function loadSection<Section extends PlayerProfileSection>(
     return (seasonYear == null ? Promise.resolve(null) : getPlayerSeasonProfile(playerId, seasonYear)) as
       Promise<PlayerProfileSectionData[Section]>;
   }
+  if (section === "progression" && seasonYear != null) {
+    return getPlayerProgression(playerId, seasonYear) as
+      Promise<PlayerProfileSectionData[Section]>;
+  }
   if (section === "prestige") {
     return loadPlayerProfileSection("badges", playerId)
       .then((badges) => getPlayerPrestige(playerId, badges.length)) as

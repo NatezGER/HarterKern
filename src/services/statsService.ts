@@ -30,9 +30,14 @@ export async function getLeaderboard(season: SeasonSelection = ALL_TIME_SEASON):
   }));
 }
 
-export async function getWorldRecordHistory(): Promise<WorldRecord[]> {
+export async function getWorldRecordHistory(
+  season: SeasonSelection = ALL_TIME_SEASON,
+): Promise<WorldRecord[]> {
   const client = getSupabase();
-  const { data, error } = await client.from("world_record_history").select("*")
+  const query = season === ALL_TIME_SEASON
+    ? client.from("world_record_history").select("*")
+    : client.from("season_world_record_history").select("*").eq("season_year", season);
+  const { data, error } = await query
     .order("sequence_number", { ascending: false });
   if (error) throw error;
   return data.map((row) => ({

@@ -2,12 +2,16 @@ export interface DatedRecord {
   id: string;
   achievedAt: string;
   timeHundredths: number;
+  sequenceNumber?: number;
 }
 
 export function getRecordAt<T extends DatedRecord>(records: T[], at: string) {
   return [...records]
     .filter((record) => record.achievedAt <= at)
-    .sort((left, right) => right.achievedAt.localeCompare(left.achievedAt) || right.id.localeCompare(left.id))[0] ?? null;
+    .sort((left, right) => right.achievedAt.localeCompare(left.achievedAt) ||
+      (left.sequenceNumber != null && right.sequenceNumber != null
+        ? right.sequenceNumber - left.sequenceNumber
+        : right.id.localeCompare(left.id)))[0] ?? null;
 }
 
 export function selectRecordsForPeriod<T extends DatedRecord>(records: T[], startAt: string, endAt: string) {

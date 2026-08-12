@@ -375,6 +375,10 @@ export interface Database {
         };
         Relationships: [];
       };
+      season_world_record_history: {
+        Row: WorldRecordHistoryView["Row"] & { season_year: number };
+        Relationships: [];
+      };
     };
     Functions: DataPlatformFunctions & {
       get_player_season_profile: {
@@ -391,6 +395,10 @@ export interface Database {
           valid_attempts: number;
           dnf_count: number;
         }>;
+      };
+      get_player_season_pb_history: {
+        Args: { p_player_id: string; p_season_year: number };
+        Returns: PlayerPbHistoryView["Row"][];
       };
       get_visible_player_badges: {
         Args: { p_player_id: string };

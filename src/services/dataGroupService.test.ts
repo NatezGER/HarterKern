@@ -3,22 +3,25 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getPlayers: vi.fn(),
   getLeaderboard: vi.fn(),
+  getWorldRecordHistory: vi.fn(),
+  getDailyWinners: vi.fn(),
+  getEvents: vi.fn(),
 }));
 
 vi.mock("@/services/playerService", () => ({ getPlayers: mocks.getPlayers }));
 vi.mock("@/services/statsService", () => ({
   getLeaderboard: mocks.getLeaderboard,
   getBadgeRarity: vi.fn(),
-  getDailyWinners: vi.fn(),
+  getDailyWinners: mocks.getDailyWinners,
   getGlobalStatistics: vi.fn(),
   getGroupMilestones: vi.fn(),
   getLeagueTimeStatistics: vi.fn(),
   getMostWantedSnapshot: vi.fn(),
   getPrestigeActivities: vi.fn(),
-  getWorldRecordHistory: vi.fn(),
+  getWorldRecordHistory: mocks.getWorldRecordHistory,
 }));
 vi.mock("@/services/attemptService", () => ({ getRecentAttempts: vi.fn() }));
-vi.mock("@/services/eventService", () => ({ getEvents: vi.fn() }));
+vi.mock("@/services/eventService", () => ({ getEvents: mocks.getEvents }));
 vi.mock("@/services/dataPlatformRepository", () => ({
   loadHistoricalAttempts: vi.fn(),
   loadLiveState: vi.fn(),
@@ -96,6 +99,18 @@ describe("route data groups", () => {
     await loadDataGroup("leaderboard", 2026);
     expect(mocks.getPlayers).toHaveBeenCalledWith(2026);
     expect(mocks.getLeaderboard).toHaveBeenCalledWith(2026);
+  });
+
+  it("loads the matching WR progression for All-Time and season dashboards", async () => {
+    mocks.getPlayers.mockResolvedValue([]);
+    mocks.getLeaderboard.mockResolvedValue([]);
+    mocks.getDailyWinners.mockResolvedValue([]);
+    mocks.getWorldRecordHistory.mockResolvedValue([]);
+    mocks.getEvents.mockResolvedValue([]);
+    await loadDataGroup("dashboard");
+    await loadDataGroup("dashboard", 2026);
+    expect(mocks.getWorldRecordHistory).toHaveBeenNthCalledWith(1, "all-time");
+    expect(mocks.getWorldRecordHistory).toHaveBeenNthCalledWith(2, 2026);
   });
 
   it("invalidates only groups affected by the changed table", () => {

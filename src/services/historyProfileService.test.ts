@@ -18,6 +18,7 @@ import {
   getPlayerPrestige,
   getPlayerProfileCore,
   getPlayerSeasonProfile,
+  getPlayerProgression,
 } from "@/services/historyProfileService";
 
 describe("player profile core repository", () => {
@@ -180,5 +181,63 @@ describe("player profile core repository", () => {
       p_player_id: "player-1",
     });
     expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it("uses isolated season PB and WR read models for season progression", async () => {
+    const worldRows = [{
+      season_year: 2026,
+      record_id: "wr-1", player_id: "player-2", display_name: "Anna",
+      avatar_url: null, avatar_path: null, time_hundredths: 300,
+      achieved_at: "2026-01-01T10:00:00Z", achieved_date: "2026-01-01",
+      event_id: null, source_label: "Historischer Einzelversuch",
+      source_type: "historical_attempt", sequence_number: 1,
+      previous_record_hundredths: null, improvement_hundredths: null,
+      period_end_date: null, duration_days: 1, is_current: true,
+    }];
+    const order = vi.fn().mockResolvedValue({ data: worldRows, error: null });
+    const eq = vi.fn().mockReturnValue({ order });
+    const select = vi.fn().mockReturnValue({ eq });
+    mocks.from.mockReturnValueOnce({ select });
+    mocks.rpc.mockResolvedValueOnce({
+      data: [{
+        source_id: "pb-1", player_id: "player-1", display_name: "Paul",
+        time_hundredths: 320, achieved_at: "2026-01-02T10:00:00Z",
+        achieved_date: "2026-01-02", event_id: null,
+        source_label: "Historischer Einzelversuch", source_type: "historical_attempt",
+        sequence_number: 1, previous_best_hundredths: null,
+        improvement_hundredths: null, period_end_date: null,
+        duration_days: 1, is_current: true,
+      }],
+      error: null,
+    });
+
+    await expect(getPlayerProgression("player-1", 2026)).resolves.toMatchObject({
+      personal: [{ id: "pb-1", timeHundredths: 320 }],
+      worldRecords: [{ id: "wr-1", timeHundredths: 300 }],
+    });
+    expect(mocks.rpc).toHaveBeenCalledWith("get_player_season_pb_history", {
+      p_player_id: "player-1", p_season_year: 2026,
+    });
+    expect(mocks.from).toHaveBeenCalledWith("season_world_record_history");
+    expect(eq).toHaveBeenCalledWith("season_year", 2026);
+  });
+
+  it("keeps the existing All-Time progression views as the default", async () => {
+    const personalOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const personalEq = vi.fn().mockReturnValue({ order: personalOrder });
+    const personalSelect = vi.fn().mockReturnValue({ eq: personalEq });
+    const worldOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const worldSelect = vi.fn().mockReturnValue({ order: worldOrder });
+    mocks.from
+      .mockReturnValueOnce({ select: personalSelect })
+      .mockReturnValueOnce({ select: worldSelect });
+
+    await expect(getPlayerProgression("player-1")).resolves.toEqual({
+      personal: [], worldRecords: [],
+    });
+    expect(mocks.from.mock.calls.map(([table]) => table)).toEqual([
+      "player_pb_history", "world_record_history",
+    ]);
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 });
