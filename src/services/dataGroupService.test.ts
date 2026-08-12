@@ -111,6 +111,8 @@ describe("route data groups", () => {
     await loadDataGroup("dashboard", 2026);
     expect(mocks.getWorldRecordHistory).toHaveBeenNthCalledWith(1, "all-time");
     expect(mocks.getWorldRecordHistory).toHaveBeenNthCalledWith(2, 2026);
+    expect(mocks.getEvents).toHaveBeenNthCalledWith(1, "all-time", false);
+    expect(mocks.getEvents).toHaveBeenNthCalledWith(2, 2026, false);
   });
 
   it("invalidates only groups affected by the changed table", () => {

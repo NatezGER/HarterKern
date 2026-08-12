@@ -5,7 +5,10 @@ import type { Database } from "@/types/database";
 import { ALL_TIME_SEASON, getSeasonDateRange } from "@/lib/season";
 import type { SeasonSelection } from "@/lib/season";
 
-export async function getEvents(season: SeasonSelection = ALL_TIME_SEASON): Promise<Event[]> {
+export async function getEvents(
+  season: SeasonSelection = ALL_TIME_SEASON,
+  includeMedals = true,
+): Promise<Event[]> {
   const client = getSupabase();
   if (season === ALL_TIME_SEASON) {
     const [eventsResult, statsResult, participantsResult, guestsResult, podiumResult,
@@ -16,8 +19,10 @@ export async function getEvents(season: SeasonSelection = ALL_TIME_SEASON): Prom
       client.from("event_statistics").select("*"),
       client.from("event_participants").select("event_id,player_id"),
       client.from("event_guests").select("event_id,id"),
-      client.from("event_podium").select("*"),
-      client.from("qualified_events").select("event_id"),
+      includeMedals ? client.from("event_podium").select("*")
+        : Promise.resolve({ data: [], error: null }),
+      includeMedals ? client.rpc("get_medal_qualified_events", { p_event_ids: null })
+        : Promise.resolve({ data: [], error: null }),
       client.from("event_winners").select("event_id,display_name"),
     ]);
     if (eventsResult.error) throw eventsResult.error;
@@ -51,8 +56,10 @@ export async function getEvents(season: SeasonSelection = ALL_TIME_SEASON): Prom
     client.from("event_statistics").select("*").in("event_id", eventIds),
     client.from("event_participants").select("event_id,player_id").in("event_id", eventIds),
     client.from("event_guests").select("event_id,id").in("event_id", eventIds),
-    client.from("event_podium").select("*").in("event_id", eventIds),
-    client.from("qualified_events").select("event_id").in("event_id", eventIds),
+    includeMedals ? client.from("event_podium").select("*").in("event_id", eventIds)
+      : Promise.resolve({ data: [], error: null }),
+    includeMedals ? client.rpc("get_medal_qualified_events", { p_event_ids: eventIds })
+      : Promise.resolve({ data: [], error: null }),
     client.from("event_winners").select("event_id,display_name").in("event_id", eventIds),
   ]);
   if (statsResult.error) throw statsResult.error;

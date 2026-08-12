@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ from: vi.fn() }));
+const mocks = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn() }));
 
 vi.mock("@/lib/supabase", () => ({
-  getSupabase: () => ({ from: mocks.from }),
+  getSupabase: () => ({ from: mocks.from, rpc: mocks.rpc }),
 }));
 
 import { getEvents } from "@/services/eventService";
@@ -38,10 +38,10 @@ describe("event medal loading", () => {
       events,
       event_statistics: events.map(({ id }) => ({ event_id: id, participant_count: 0, valid_attempts: 1, dnf_count: 0, fastest_hundredths: 300, average_hundredths: 300 })),
       event_participants: [], event_guests: [], event_podium: podium,
-      qualified_events: [{ event_id: "three" }],
       event_winners: podium.map(({ event_id, display_name }) => ({ event_id, display_name })),
     };
     mocks.from.mockImplementation((table: string) => query(rows[table] ?? []));
+    mocks.rpc.mockImplementation(() => query([{ event_id: "three" }]));
   });
 
   it("loads raw event data while showing medals only for qualified normal events", async () => {
@@ -55,7 +55,18 @@ describe("event medal loading", () => {
       winnerNames: ["One"], podium: [], awardsTrophies: true,
     });
     expect(mocks.from).toHaveBeenCalledWith("event_podium");
-    expect(mocks.from).toHaveBeenCalledWith("qualified_events");
+    expect(mocks.rpc).toHaveBeenCalledWith("get_medal_qualified_events", {
+      p_event_ids: null,
+    });
     expect(mocks.from).not.toHaveBeenCalledWith("qualified_event_podium");
+  });
+
+  it("loads dashboard event data without any medal qualification query", async () => {
+    const events = await getEvents("all-time", false);
+
+    expect(events).toHaveLength(3);
+    expect(events[0].winnerNames).toEqual(["One"]);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(mocks.from).not.toHaveBeenCalledWith("event_podium");
   });
 });

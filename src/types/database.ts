@@ -386,6 +386,10 @@ export interface Database {
       };
     };
     Functions: DataPlatformFunctions & {
+      get_medal_qualified_events: {
+        Args: { p_event_ids: string[] | null };
+        Returns: Array<{ event_id: string }>;
+      };
       get_player_season_profile: {
         Args: { p_player_id: string; p_season_year: number };
         Returns: Array<{

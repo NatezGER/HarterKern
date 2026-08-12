@@ -6,9 +6,10 @@ import type { SeasonSelection } from "@/lib/season";
 
 export async function getPlayers(season: SeasonSelection = ALL_TIME_SEASON): Promise<Player[]> {
   const client = getSupabase();
+  const coreColumns = "player_id,personal_best_hundredths,approved_attempts,valid_attempts,dnf_count,average_hundredths,event_wins";
   const statisticsQuery = season === ALL_TIME_SEASON
-    ? client.from("player_statistics").select("*")
-    : client.from("season_player_statistics").select("*").eq("season_year", season);
+    ? client.from("player_statistics").select(coreColumns)
+    : client.from("season_player_statistics").select(coreColumns).eq("season_year", season);
   const [playersResult, statsResult] = await Promise.all([
     client.from("players").select("*").eq("is_archived", false).order("display_name"),
     statisticsQuery,

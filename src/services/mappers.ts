@@ -5,7 +5,9 @@ import { hundredthsToSeconds } from "@/utils/time";
 import { getSupabase } from "@/lib/supabase";
 
 type PlayerRow = Database["public"]["Tables"]["players"]["Row"];
-type PlayerStats = Database["public"]["Views"]["player_statistics"]["Row"];
+type PlayerStats = Pick<Database["public"]["Views"]["player_statistics"]["Row"],
+  "personal_best_hundredths" | "average_hundredths" | "approved_attempts" |
+  "valid_attempts" | "dnf_count" | "event_wins">;
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
 type AttemptRow = Database["public"]["Tables"]["attempts"]["Row"];
 

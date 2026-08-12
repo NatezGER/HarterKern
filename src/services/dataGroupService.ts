@@ -152,7 +152,7 @@ async function loadUncached(group: DataGroup, season: SeasonSelection): Promise<
           getLeaderboard(season),
           getDailyWinners(season),
           getWorldRecordHistory(season),
-          getEvents(season),
+          getEvents(season, false),
         ]);
       const leader = leaderboard[0];
       const leaderPlayer = leader && players.find(({ id }) => id === leader.playerId);
