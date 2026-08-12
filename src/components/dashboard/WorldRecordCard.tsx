@@ -6,14 +6,17 @@ import { formatDate, formatTime } from "@/utils/format";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { Avatar } from "@/components/common/Avatar";
 import { formatCurrentRecordDuration } from "@/lib/progression";
+import { useSeason } from "@/hooks/useSeason";
 
 export function WorldRecordCard() {
   const { data } = useEffectivePublicData();
-  const record = data.worldRecordHistory.find(({ isCurrent }) => isCurrent)
-    ?? data.worldRecordHistory[0];
+  const { season, isAllTime } = useSeason();
+  const record = isAllTime
+    ? data.worldRecordHistory.find(({ isCurrent }) => isCurrent) ?? data.worldRecordHistory[0]
+    : data.seasonRecord ?? undefined;
   const player = record ? getPlayerById(data.players, record.playerId) : null;
   if (!record || !player) {
-    return <AnimatedCard className="grid min-h-72 place-items-center p-8 text-center text-sm text-white/40" hover={false}>Noch kein offizieller Weltrekord.</AnimatedCard>;
+    return <AnimatedCard className="grid min-h-72 place-items-center p-8 text-center text-sm text-white/40" hover={false}>{isAllTime ? "Noch kein offizieller Weltrekord." : `Noch kein Saisonrekord ${season}.`}</AnimatedCard>;
   }
 
   return (
@@ -27,11 +30,11 @@ export function WorldRecordCard() {
               <Crown className="size-5" />
             </span>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-gold-300">Aktueller Weltrekord</p>
-              <p className="mt-0.5 text-xs text-white/35">{formatCurrentRecordDuration(record.durationDays)}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-gold-300">{isAllTime ? "Aktueller Weltrekord" : `Saisonrekord ${season}`}</p>
+              {isAllTime && <p className="mt-0.5 text-xs text-white/35">{formatCurrentRecordDuration(record.durationDays)}</p>}
             </div>
           </div>
-          <span className="rounded-full border border-gold-400/20 px-3 py-1 text-[9px] font-bold tracking-widest text-gold-300">WR</span>
+          <span className="rounded-full border border-gold-400/20 px-3 py-1 text-[9px] font-bold tracking-widest text-gold-300">{isAllTime ? "WR" : "SR"}</span>
         </div>
 
         <div className="my-8">

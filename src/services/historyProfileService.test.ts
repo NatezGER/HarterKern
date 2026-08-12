@@ -17,6 +17,7 @@ import {
   getPlayerBadges,
   getPlayerPrestige,
   getPlayerProfileCore,
+  getPlayerSeasonProfile,
 } from "@/services/historyProfileService";
 
 describe("player profile core repository", () => {
@@ -131,6 +132,24 @@ describe("player profile core repository", () => {
       p_player_id: "player-1",
     });
     expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it("loads an empty-safe player season profile through its isolated RPC", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        player_id: "player-1", personal_best_hundredths: null, season_rank: null,
+        average_hundredths: null, event_participations: 0, event_wins: 0,
+        second_places: 0, third_places: 0, valid_attempts: 0, dnf_count: 0,
+      },
+      error: null,
+    });
+    mocks.rpc.mockReturnValueOnce({ maybeSingle });
+    await expect(getPlayerSeasonProfile("player-1", 2026)).resolves.toMatchObject({
+      rank: null, personalBestHundredths: null, validAttempts: 0, dnfCount: 0,
+    });
+    expect(mocks.rpc).toHaveBeenCalledWith("get_player_season_profile", {
+      p_player_id: "player-1", p_season_year: 2026,
+    });
   });
 
   it("loads prestige without recalculating badges and uses the supplied count", async () => {

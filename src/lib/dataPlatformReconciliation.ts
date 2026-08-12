@@ -20,6 +20,7 @@ export function reconcileDataPlatformSnapshot(
       leaderboard: uniqueBy(remote.publicData.leaderboard, ({ playerId }) => playerId),
       dailyWinners: uniqueBy(remote.publicData.dailyWinners, ({ id }) => id),
       worldRecordHistory: uniqueBy(remote.publicData.worldRecordHistory, ({ id }) => id),
+      seasonRecord: remote.publicData.seasonRecord,
       events: uniqueBy(remote.publicData.events, ({ id }) => id),
       statistics: uniqueBy(remote.publicData.statistics, ({ id }) => id),
       recentAttempts: uniqueBy(remote.publicData.recentAttempts, ({ id }) => id),

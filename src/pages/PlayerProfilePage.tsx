@@ -22,6 +22,9 @@ import { useState } from "react";
 import { PersonalBestDetailsToggle } from "@/components/progression/PersonalBestDetailsToggle";
 import { TrophyCabinet } from "@/components/common/TrophyCabinet";
 import { PersonalBingo } from "@/components/players/PersonalBingo";
+import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
+import { useSeason } from "@/hooks/useSeason";
+import { getEventSeason } from "@/lib/season";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -29,22 +32,29 @@ export function PlayerProfilePage() {
   const { id = "" } = useParams();
   const [badgesExpanded, setBadgesExpanded] = useState(false);
   const [pbDetailsExpanded, setPbDetailsExpanded] = useState(false);
-  const { core, trophies, badges, prestige, progression, bingo, attemptNumbers, events } =
+  const { season: selectedSeason, isAllTime } = useSeason();
+  const { core, season, trophies, badges, prestige, progression, bingo, attemptNumbers, events } =
     usePlayerProfileDetail(id);
   if (core.loading) return <DataState><div /></DataState>;
   if (!core.data) return core.error
     ? <div className="panel p-8 text-center text-red-200">{core.error}</div>
     : <NotFoundPage />;
   const player = core.data;
+  const seasonStats = season.data ?? {
+    personalBestHundredths: null, rank: null, averageHundredths: null,
+    eventParticipations: 0, wins: 0, secondPlaces: 0, thirdPlaces: 0,
+    validAttempts: 0, dnfCount: 0,
+  };
+  const activeStats = isAllTime ? player : seasonStats;
   const coreMetrics = [
-    { label: "Persönliche Bestzeit", value: displayTime(player.personalBestHundredths), icon: Zap },
-    { label: "Hall of Fame", value: player.rank ? `#${player.rank}` : "—", icon: Medal },
-    { label: "Durchschnitt", value: displayTime(player.averageHundredths), icon: Timer },
-    { label: "Eventteilnahmen", value: String(player.eventParticipations), icon: Target },
-    { label: "Siege", value: String(player.wins), icon: Trophy },
-    { label: "Platz 2 / 3", value: `${player.secondPlaces} / ${player.thirdPlaces}`, icon: Medal },
-    { label: "Gültig / DNF", value: `${player.validAttempts} / ${player.dnfCount}`, icon: CircleX },
-    { label: "Getrunken", value: formatDrinkVolume(player.validAttempts, DRINK_MILLILITERS_PER_VALID_ATTEMPT), icon: Droplets },
+    { label: isAllTime ? "Persönliche Bestzeit" : `Saison-PB ${selectedSeason}`, value: displayTime(activeStats.personalBestHundredths), icon: Zap },
+    { label: isAllTime ? "Hall of Fame" : `Saisonrang ${selectedSeason}`, value: activeStats.rank ? `#${activeStats.rank}` : "—", icon: Medal },
+    { label: "Durchschnitt", value: displayTime(activeStats.averageHundredths), icon: Timer },
+    { label: "Eventteilnahmen", value: String(activeStats.eventParticipations), icon: Target },
+    { label: "Siege", value: String(activeStats.wins), icon: Trophy },
+    { label: "Platz 2 / 3", value: `${activeStats.secondPlaces} / ${activeStats.thirdPlaces}`, icon: Medal },
+    { label: "Gültig / DNF", value: `${activeStats.validAttempts} / ${activeStats.dnfCount}`, icon: CircleX },
+    { label: "Getrunken", value: formatDrinkVolume(activeStats.validAttempts, DRINK_MILLILITERS_PER_VALID_ATTEMPT), icon: Droplets },
   ];
   return (
     <div className="space-y-7 sm:space-y-10">
@@ -57,24 +67,26 @@ export function PlayerProfilePage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold-400">{player.rank ? `Weltrang #${player.rank}` : "Noch ohne Rang"}</p>
               <h1 className="display-title mt-2 break-words text-5xl sm:text-7xl">{player.name}</h1>
+              <div className="mt-3"><SeasonContextBadge /></div>
               {player.isAk && <p className="mt-2 text-sm text-white/40">Außer Konkurrenz</p>}
             </div>
           </div>
-          <div className="w-full text-center sm:w-auto sm:text-left md:text-right"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Personal Best</p><p className="gold-text font-display text-5xl font-black sm:text-6xl">{displayTime(player.personalBestHundredths)}</p></div>
+          <div className="w-full text-center sm:w-auto sm:text-left md:text-right"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">{isAllTime ? "Personal Best" : `Saison-PB ${selectedSeason}`}</p><p className="gold-text font-display text-5xl font-black sm:text-6xl">{displayTime(activeStats.personalBestHundredths)}</p></div>
         </div>
       </section>
 
       <ProfileOptionalState state={trophies}>{(data) => data.length > 0 ? (
-        <section><SectionHeading eyebrow="Podiumserfolge" title="Trophäenschrank" /><TrophyCabinet trophies={data} /></section>
+        <section><SectionHeading eyebrow={isAllTime ? "Podiumserfolge" : "All-Time · Podiumserfolge"} title="Trophäenschrank" /><TrophyCabinet trophies={data} /></section>
       ) : null}</ProfileOptionalState>
 
+      {!isAllTime && <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/35">Badges bleiben All-Time</p>}
       <ProfileOptionalState state={badges}>{(data) => data.length > 0 ? (
         <section><SectionHeading eyebrow="Verdient" title="Badge-Galerie" /><BadgeGallery badges={data} featured mobileLimit={2} mobileExpanded={badgesExpanded} />{data.length > 2 && <Button type="button" variant="outline" className="mt-4 w-full sm:hidden" aria-expanded={badgesExpanded} onClick={() => setBadgesExpanded((value) => !value)}>{badgesExpanded ? "Badges einklappen" : "Alle Badges anzeigen"}</Button>}</section>
       ) : null}</ProfileOptionalState>
 
       <section className="panel p-5 sm:p-8">
         <SectionHeading eyebrow="Offizielle Events" title="Podiumsmedaillen" />
-        <div className="grid grid-cols-3 gap-2 sm:gap-4">{getPodiumCounters(player).map((counter) => <article key={counter.rank} className="flex flex-col items-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3 text-center sm:flex-row sm:gap-5 sm:p-5 sm:text-left"><PodiumMedal rank={counter.rank} size="lg" /><div><p className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[10px] sm:tracking-[0.18em]">{counter.label} · Platz {counter.rank}</p><p className="mt-1 font-display text-3xl font-black sm:text-4xl">{counter.count}</p></div></article>)}</div>
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">{getPodiumCounters(activeStats).map((counter) => <article key={counter.rank} className="flex flex-col items-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3 text-center sm:flex-row sm:gap-5 sm:p-5 sm:text-left"><PodiumMedal rank={counter.rank} size="lg" /><div><p className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[10px] sm:tracking-[0.18em]">{counter.label} · Platz {counter.rank}</p><p className="mt-1 font-display text-3xl font-black sm:text-4xl">{counter.count}</p></div></article>)}</div>
       </section>
 
       <ProfileOptionalState state={progression}>{(data) => {
@@ -107,7 +119,7 @@ export function PlayerProfilePage() {
       )}</ProfileOptionalState>
 
       <section>
-        <SectionHeading eyebrow="Karrierewerte" title="Statistik" />
+        <SectionHeading eyebrow={isAllTime ? "Karrierewerte" : `Saisonwerte ${selectedSeason}`} title="Statistik" />
         <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">{coreMetrics.map(({ label, value, icon: Icon }, index) => <AnimatedCard key={label} delay={index * 0.04} className="min-w-0 p-4 last:col-span-2 sm:p-5 xl:last:col-span-1"><Icon className="size-5 text-gold-400" /><p className="mt-4 break-words text-[9px] font-bold uppercase tracking-[0.14em] text-white/30 sm:mt-6 sm:tracking-[0.18em]">{label}</p><p className="mt-1 break-words font-display text-2xl font-black sm:text-3xl">{value}</p></AnimatedCard>)}</div>
         <div className="mt-3 sm:mt-4"><ProfileOptionalState state={prestige}>{(data) => {
           const prestigeMetrics = [
@@ -125,10 +137,10 @@ export function PlayerProfilePage() {
 
       <ProfileOptionalState state={events}>{(data) => (
         <section>
-          <SectionHeading eyebrow="Event für Event" title="Historie" />
+          <SectionHeading eyebrow={isAllTime ? "Event für Event" : `Event für Event · Saison ${selectedSeason}`} title="Historie" />
           <div className="space-y-3">
-            {data.length === 0 && <div className="panel py-14 text-center text-sm text-white/40">Noch keine Eventteilnahme.</div>}
-            {data.map((event) => <Link key={event.eventId} to={`/events/${event.eventId}`} className="panel grid gap-3 p-5 transition hover:border-gold-400/20 sm:grid-cols-[1fr_repeat(3,8rem)] sm:items-center"><div><p className="font-display text-xl font-black uppercase">{event.eventName}</p><p className="text-xs text-white/35">{formatDate(event.eventDate)}</p></div><HistoryMetric label="Platz" value={event.rank ? `#${event.rank}` : "—"} /><HistoryMetric label="Bestzeit" value={displayTime(event.bestHundredths)} /><HistoryMetric label="Versuche / DNF" value={`${event.attempts} / ${event.dnfCount}`} /></Link>)}
+            {data.filter((event) => isAllTime || getEventSeason(event.eventDate) === selectedSeason).length === 0 && <div className="panel py-14 text-center text-sm text-white/40">Noch keine Eventteilnahme in dieser Saison.</div>}
+            {data.filter((event) => isAllTime || getEventSeason(event.eventDate) === selectedSeason).map((event) => <Link key={event.eventId} to={`/events/${event.eventId}`} className="panel grid gap-3 p-5 transition hover:border-gold-400/20 sm:grid-cols-[1fr_repeat(3,8rem)] sm:items-center"><div><p className="font-display text-xl font-black uppercase">{event.eventName}</p><p className="text-xs text-white/35">{formatDate(event.eventDate)}</p></div><HistoryMetric label="Platz" value={event.rank ? `#${event.rank}` : "—"} /><HistoryMetric label="Bestzeit" value={displayTime(event.bestHundredths)} /><HistoryMetric label="Versuche / DNF" value={`${event.attempts} / ${event.dnfCount}`} /></Link>)}
           </div>
         </section>
       )}</ProfileOptionalState>

@@ -17,14 +17,17 @@ import { badgeTierLabel } from "@/lib/badgePresentation";
 import { MostWantedMatrix } from "@/components/stats/MostWantedMatrix";
 import { LeagueTimeStatistics } from "@/components/stats/LeagueTimeStatistics";
 import { OptionalDataState } from "@/components/common/OptionalDataState";
+import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
+import { useSeason } from "@/hooks/useSeason";
 
 export function StatsPage() {
   const { data } = useEffectivePublicData();
   const { snapshot } = useDataPlatform();
+  const { season, isAllTime } = useSeason();
   const archivedEvents = data.events.filter(({ status }) => status === "closed");
   return (
     <div className="space-y-10">
-      <PageHeader eyebrow="League Intelligence" title="Statistiken" description={appMeta.statsDescription} />
+      <PageHeader eyebrow={isAllTime ? "League Intelligence" : `League Intelligence · Saison ${season}`} title="Statistiken" description={isAllTime ? appMeta.statsDescription : `Eventbasierte Ligawerte der Saison ${season}.`} action={<SeasonContextBadge />} />
       <DataState>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {data.statistics.map((statistic, index) => (
@@ -35,19 +38,19 @@ export function StatsPage() {
           <WRProgression collapsibleHistory />
         </section>
         <section className="mt-12">
-          <SectionHeading eyebrow="Gemeinsam erreicht" title="Liga-Meilensteine" />
+          <SectionHeading eyebrow={isAllTime ? "Gemeinsam erreicht" : "All-Time · Gemeinsam erreicht"} title="Liga-Meilensteine" />
           <OptionalDataState group="group-milestones"><GroupMilestones /></OptionalDataState>
         </section>
         <section className="mt-12">
-          <SectionHeading eyebrow="00 bis 99" title="Most Wanted" />
+          <SectionHeading eyebrow={isAllTime ? "00 bis 99" : "All-Time · 00 bis 99"} title="Most Wanted" />
           <OptionalDataState group="most-wanted"><MostWantedMatrix data={data.mostWanted} /></OptionalDataState>
         </section>
         <section className="mt-12">
-          <SectionHeading eyebrow="Offizielle Zeiten" title="Ligastatistiken" />
+          <SectionHeading eyebrow={isAllTime ? "Offizielle Zeiten" : "All-Time · Offizielle Zeiten"} title="Ligastatistiken" />
           <OptionalDataState group="league-time"><LeagueTimeStatistics data={data.leagueTimeStatistics} /></OptionalDataState>
         </section>
         <section className="mt-12">
-          <SectionHeading eyebrow="Prestige" title="Badge-Seltenheit" />
+          <SectionHeading eyebrow={isAllTime ? "Prestige" : "All-Time · Prestige"} title="Badge-Seltenheit" />
           <p className="-mt-4 mb-5 max-w-3xl text-sm leading-6 text-white/45">Anteil der aktiven, dauerhaften Spieler, die diese Schwelle mindestens einmal erreicht haben. Höhere Stufen zählen deshalb auch bei den darunterliegenden Schwellen mit; Gäste und AK-Spieler sind ausgeschlossen.</p>
           <OptionalDataState group="badge-rarity">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -84,7 +87,7 @@ export function StatsPage() {
             ))}
           </div>
         </section>
-        <section id="history" className="mt-12 scroll-mt-28">
+        {isAllTime && <section id="history" className="mt-12 scroll-mt-28">
           <SectionHeading eyebrow="Zeitarchiv" title="Historische Versuche" />
           <p className="-mt-4 mb-5 max-w-3xl text-sm leading-6 text-white/45">
             Diese offiziellen Einzelzeiten sind keiner vollständig dokumentierten
@@ -97,7 +100,7 @@ export function StatsPage() {
           <Button asChild variant="outline" className="mt-5">
             <Link to="/history">Alle historischen Versuche anzeigen</Link>
           </Button>
-        </section>
+        </section>}
       </DataState>
     </div>
   );

@@ -13,6 +13,7 @@ import type {
 } from "@/services/playerProfileService";
 import type { DataGroup } from "@/services/dataGroupService";
 import type { EventDetail } from "@/types/historyProfiles";
+import { useSeason } from "@/hooks/useSeason";
 
 interface DetailState<T> {
   data: T | null;
@@ -55,6 +56,7 @@ function usePlayerProfileSection<Section extends PlayerProfileSection>(
   section: Section,
   playerId: string,
   group: DataGroup,
+  seasonYear?: number,
 ): ProfileSectionState<PlayerProfileSectionData[Section]> {
   const { status: platformStatus } = useDataPlatform();
   const { status: groupStatus, version } = useDataGroup(group);
@@ -68,7 +70,7 @@ function usePlayerProfileSection<Section extends PlayerProfileSection>(
     }
     let active = true;
     setState(initialState);
-    void loadPlayerProfileSection(section, playerId, { force: run > 0 })
+    void loadPlayerProfileSection(section, playerId, { force: run > 0, seasonYear })
       .then((data) => active && setState({ data, loading: false, error: "" }))
       .catch(() => active && setState({
         data: null,
@@ -80,13 +82,16 @@ function usePlayerProfileSection<Section extends PlayerProfileSection>(
     return () => {
       active = false;
     };
-  }, [groupStatus, platformStatus, playerId, run, section, version]);
+  }, [groupStatus, platformStatus, playerId, run, seasonYear, section, version]);
   return { ...state, retry };
 }
 
 export function usePlayerProfileDetail(playerId: string) {
+  const { season } = useSeason();
+  const seasonYear = typeof season === "number" ? season : undefined;
   return {
     core: usePlayerProfileSection("core", playerId, "profile-core"),
+    season: usePlayerProfileSection("season", playerId, "profile-season", seasonYear),
     trophies: usePlayerProfileSection("trophies", playerId, "profile-trophies"),
     badges: usePlayerProfileSection("badges", playerId, "profile-badges"),
     prestige: usePlayerProfileSection("prestige", playerId, "profile-prestige"),

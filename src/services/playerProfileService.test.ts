@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   core: vi.fn(),
+  season: vi.fn(),
   badges: vi.fn(),
   trophies: vi.fn(),
   prestige: vi.fn(),
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/services/historyProfileService", () => ({
   getPlayerProfileCore: mocks.core,
+  getPlayerSeasonProfile: mocks.season,
   getPlayerBadges: mocks.badges,
   getPlayerTrophies: mocks.trophies,
   getPlayerPrestige: mocks.prestige,
@@ -34,6 +36,7 @@ describe("player profile section loading", () => {
     vi.clearAllMocks();
     clearPlayerProfileCache();
     mocks.core.mockResolvedValue({ id: "player-1" });
+    mocks.season.mockResolvedValue({ rank: 1 });
     mocks.badges.mockResolvedValue([]);
     mocks.trophies.mockResolvedValue([]);
     mocks.prestige.mockResolvedValue({});
@@ -49,6 +52,15 @@ describe("player profile section loading", () => {
     const badges = loadPlayerProfileSection("badges", "player-1");
     await expect(core).resolves.toEqual({ id: "player-1" });
     await expect(badges).rejects.toThrow("statement timeout");
+  });
+
+  it("isolates season profile cache entries by year", async () => {
+    await loadPlayerProfileSection("season", "player-1", { seasonYear: 2026 });
+    await loadPlayerProfileSection("season", "player-1", { seasonYear: 2027 });
+    expect(mocks.season).toHaveBeenNthCalledWith(1, "player-1", 2026);
+    expect(mocks.season).toHaveBeenNthCalledWith(2, "player-1", 2027);
+    await loadPlayerProfileSection("badges", "player-1");
+    expect(mocks.badges).toHaveBeenCalledWith("player-1");
   });
 
   it("starts optional sections independently", async () => {

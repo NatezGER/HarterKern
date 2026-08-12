@@ -15,12 +15,15 @@ import {
 } from "@/services/statsService";
 import type { PublicDataSnapshot } from "@/types";
 import type { LiveEventState } from "@/types/liveEvent";
+import { ALL_TIME_SEASON } from "@/lib/season";
+import type { SeasonSelection } from "@/lib/season";
 
 export type DataGroup =
   | "navigation"
   | "leaderboard"
   | "players"
   | "profile-core"
+  | "profile-season"
   | "profile-badges"
   | "profile-trophies"
   | "profile-prestige"
@@ -54,6 +57,7 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
   leaderboard: 3,
   players: 2,
   "profile-core": 0,
+  "profile-season": 0,
   "profile-badges": 0,
   "profile-trophies": 0,
   "profile-prestige": 0,
@@ -80,6 +84,7 @@ export function getRouteDataPlan(pathname: string): RouteDataPlan {
     return {
       required: ["profile-core"],
       optional: [
+        "profile-season",
         "profile-trophies",
         "profile-badges",
         "profile-prestige",
@@ -111,13 +116,14 @@ export function getRouteDataPlan(pathname: string): RouteDataPlan {
   return { required: ["navigation"], optional: [] };
 }
 
-const inFlight = new Map<DataGroup, Promise<DataGroupPatch>>();
+const inFlight = new Map<string, Promise<DataGroupPatch>>();
 
-async function loadUncached(group: DataGroup): Promise<DataGroupPatch> {
+async function loadUncached(group: DataGroup, season: SeasonSelection): Promise<DataGroupPatch> {
   switch (group) {
     case "navigation":
     case "event-detail":
     case "profile-core":
+    case "profile-season":
     case "profile-badges":
     case "profile-trophies":
     case "profile-prestige":
@@ -127,7 +133,7 @@ async function loadUncached(group: DataGroup): Promise<DataGroupPatch> {
     case "bingo":
       return {};
     case "leaderboard": {
-      const [players, leaderboard] = await Promise.all([getPlayers(), getLeaderboard()]);
+      const [players, leaderboard] = await Promise.all([getPlayers(season), getLeaderboard(season)]);
       return { publicData: { players, leaderboard } };
     }
     case "players":
@@ -142,21 +148,37 @@ async function loadUncached(group: DataGroup): Promise<DataGroupPatch> {
     case "dashboard": {
       const [players, leaderboard, dailyWinners, worldRecordHistory, events] =
         await Promise.all([
-          getPlayers(),
-          getLeaderboard(),
-          getDailyWinners(),
+          getPlayers(season),
+          getLeaderboard(season),
+          getDailyWinners(season),
           getWorldRecordHistory(),
-          getEvents(),
+          getEvents(season),
         ]);
-      return { publicData: { players, leaderboard, dailyWinners, worldRecordHistory, events } };
+      const leader = leaderboard[0];
+      const leaderPlayer = leader && players.find(({ id }) => id === leader.playerId);
+      const seasonRecord = season !== ALL_TIME_SEASON && leader && leaderPlayer ? {
+        id: `season-${season}-${leader.playerId}`,
+        playerId: leader.playerId,
+        time: leaderPlayer.personalBest,
+        date: leader.recordDate,
+        achievedAt: leader.recordDate,
+        location: `Saison ${season}`,
+        eventId: null,
+        sourceType: "attempt" as const,
+        previousTime: null,
+        improvementHundredths: null,
+        durationDays: 0,
+        isCurrent: true,
+      } : null;
+      return { publicData: { players, leaderboard, dailyWinners, worldRecordHistory, seasonRecord, events } };
     }
     case "statistics": {
       const [players, worldRecordHistory, events, statistics, recentAttempts] =
         await Promise.all([
-          getPlayers(),
+          getPlayers(season),
           getWorldRecordHistory(),
-          getEvents(),
-          getGlobalStatistics(),
+          getEvents(season),
+          getGlobalStatistics(season),
           getRecentAttempts(),
         ]);
       return {
@@ -178,27 +200,31 @@ async function loadUncached(group: DataGroup): Promise<DataGroupPatch> {
   }
 }
 
-export function loadDataGroup(group: DataGroup): Promise<DataGroupPatch> {
-  const existing = inFlight.get(group);
+export function loadDataGroup(
+  group: DataGroup,
+  season: SeasonSelection = ALL_TIME_SEASON,
+): Promise<DataGroupPatch> {
+  const key = `${group}:${season}`;
+  const existing = inFlight.get(key);
   if (existing) return existing;
-  const request = loadUncached(group).finally(() => {
-    if (inFlight.get(group) === request) inFlight.delete(group);
+  const request = loadUncached(group, season).finally(() => {
+    if (inFlight.get(key) === request) inFlight.delete(key);
   });
-  inFlight.set(group, request);
+  inFlight.set(key, request);
   return request;
 }
 
 export function groupsForRealtimeTable(table: string): DataGroup[] {
   switch (table) {
     case "players":
-      return ["leaderboard", "players", "profile-core", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "badge-rarity", "most-wanted", "bingo"];
+      return ["leaderboard", "players", "profile-core", "profile-season", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "badge-rarity", "most-wanted", "bingo"];
     case "attempts":
     case "historical_attempts":
-      return ["leaderboard", "players", "profile-core", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "historical", "event-detail"];
+      return ["leaderboard", "players", "profile-core", "profile-season", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "historical", "event-detail"];
     case "events":
     case "event_participants":
     case "event_guests":
-      return ["profile-core", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "event-detail"];
+      return ["profile-core", "profile-season", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "event-detail"];
     case "event_photos":
       return ["event-detail"];
     default:

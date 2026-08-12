@@ -196,6 +196,7 @@ export interface PublicDataSnapshot {
   leaderboard: LeaderboardEntry[];
   dailyWinners: DailyWinner[];
   worldRecordHistory: WorldRecord[];
+  seasonRecord: WorldRecord | null;
   events: Event[];
   statistics: Statistic[];
   recentAttempts: Attempt[];

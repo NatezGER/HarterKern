@@ -11,11 +11,14 @@ import type {
   WorldRecord,
 } from "@/types";
 import { hundredthsToSeconds } from "@/utils/time";
+import { ALL_TIME_SEASON, getSeasonDateRange } from "@/lib/season";
+import type { SeasonSelection } from "@/lib/season";
 
-export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
-  const { data, error } = await getSupabase()
-    .from("public_hall_of_fame")
-    .select("*")
+export async function getLeaderboard(season: SeasonSelection = ALL_TIME_SEASON): Promise<LeaderboardEntry[]> {
+  const query = season === ALL_TIME_SEASON
+    ? getSupabase().from("public_hall_of_fame").select("*")
+    : getSupabase().from("season_hall_of_fame").select("*").eq("season_year", season);
+  const { data, error } = await query
     .order("personal_best_hundredths", { ascending: true })
     .order("display_name", { ascending: true });
   if (error) throw error;
@@ -197,12 +200,23 @@ export async function getBadgeRarity(): Promise<BadgeRarity[]> {
   }));
 }
 
-export async function getDailyWinners(): Promise<DailyWinner[]> {
+export async function getDailyWinners(season: SeasonSelection = ALL_TIME_SEASON): Promise<DailyWinner[]> {
   const client = getSupabase();
+  let eventsQuery = client.from("events").select("id,start_date");
+  if (season !== ALL_TIME_SEASON) {
+    const range = getSeasonDateRange(season);
+    eventsQuery = eventsQuery.gte("start_date", range.start).lt("start_date", range.end);
+  }
+  const selectedEventsResult = await eventsQuery.order("started_at", { ascending: false }).limit(8);
+  if (selectedEventsResult.error) throw selectedEventsResult.error;
+  if (selectedEventsResult.data.length === 0) return [];
+  const ids = selectedEventsResult.data.map(({ id }) => id);
+  const winnerQuery = client.from("event_winners").select("*");
+  const statsQuery = client.from("event_statistics").select("*");
   const [winnerResult, eventsResult, statsResult] = await Promise.all([
-    client.from("event_winners").select("*"),
-    client.from("events").select("id,start_date").order("started_at", { ascending: false }).limit(8),
-    client.from("event_statistics").select("*"),
+    season === ALL_TIME_SEASON ? winnerQuery : winnerQuery.in("event_id", ids),
+    Promise.resolve({ data: selectedEventsResult.data, error: null }),
+    season === ALL_TIME_SEASON ? statsQuery : statsQuery.in("event_id", ids),
   ]);
   if (winnerResult.error) throw winnerResult.error;
   if (eventsResult.error) throw eventsResult.error;
@@ -223,16 +237,22 @@ export async function getDailyWinners(): Promise<DailyWinner[]> {
   }).slice(0, 4);
 }
 
-export async function getGlobalStatistics(): Promise<Statistic[]> {
-  const { data, error } = await getSupabase().from("global_statistics").select("*").single();
+export async function getGlobalStatistics(season: SeasonSelection = ALL_TIME_SEASON): Promise<Statistic[]> {
+  const { data, error } = season === ALL_TIME_SEASON
+    ? await getSupabase().from("global_statistics").select("*").single()
+    : await getSupabase().from("season_global_statistics").select("*")
+      .eq("season_year", season).maybeSingle();
   if (error) throw error;
+  const values = data ?? { regular_players: 0, event_count: 0, approved_attempts: 0,
+    valid_attempts: 0, dnf_count: 0, world_record_hundredths: null,
+    average_hundredths: null };
   const time = (value: number | null) => value == null ? "—" : `${hundredthsToSeconds(value).toLocaleString("de-DE", { minimumFractionDigits: 2 })} s`;
   return [
-    { id: "fastest", label: "Schnellste Zeit", value: time(data.world_record_hundredths), change: "Aktueller Weltrekord", icon: "timer" },
-    { id: "attempts", label: "Eventversuche", value: String(data.approved_attempts), change: "Nur reguläre Spieler", icon: "target" },
-    { id: "valid", label: "Gültige Zeiten", value: String(data.valid_attempts), change: "DNF ausgeschlossen", icon: "timer" },
-    { id: "dnf", label: "DNF", value: String(data.dnf_count), change: "Bestätigte Versuche", icon: "target" },
-    { id: "players", label: "Reguläre Spieler", value: String(data.regular_players), change: "Gäste ausgeschlossen", icon: "users" },
-    { id: "events", label: "Events", value: String(data.event_count), change: `Ø ${time(data.average_hundredths)}`, icon: "trophy" },
+    { id: "fastest", label: "Schnellste Zeit", value: time(values.world_record_hundredths), change: season === ALL_TIME_SEASON ? "Aktueller Weltrekord" : `Saisonrekord ${season}`, icon: "timer" },
+    { id: "attempts", label: "Eventversuche", value: String(values.approved_attempts), change: "Nur reguläre Spieler", icon: "target" },
+    { id: "valid", label: "Gültige Zeiten", value: String(values.valid_attempts), change: "DNF ausgeschlossen", icon: "timer" },
+    { id: "dnf", label: "DNF", value: String(values.dnf_count), change: "Bestätigte Versuche", icon: "target" },
+    { id: "players", label: "Reguläre Spieler", value: String(values.regular_players), change: "Gäste ausgeschlossen", icon: "users" },
+    { id: "events", label: "Events", value: String(values.event_count), change: `Ø ${time(values.average_hundredths)}`, icon: "trophy" },
   ];
 }

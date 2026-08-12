@@ -1,12 +1,17 @@
 import { getSupabase } from "@/lib/supabase";
 import { mapPlayer } from "@/services/mappers";
 import type { Player } from "@/types";
+import { ALL_TIME_SEASON } from "@/lib/season";
+import type { SeasonSelection } from "@/lib/season";
 
-export async function getPlayers(): Promise<Player[]> {
+export async function getPlayers(season: SeasonSelection = ALL_TIME_SEASON): Promise<Player[]> {
   const client = getSupabase();
+  const statisticsQuery = season === ALL_TIME_SEASON
+    ? client.from("player_statistics").select("*")
+    : client.from("season_player_statistics").select("*").eq("season_year", season);
   const [playersResult, statsResult] = await Promise.all([
     client.from("players").select("*").eq("is_archived", false).order("display_name"),
-    client.from("player_statistics").select("*"),
+    statisticsQuery,
   ]);
   if (playersResult.error) throw playersResult.error;
   if (statsResult.error) throw statsResult.error;

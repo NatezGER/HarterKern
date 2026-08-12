@@ -24,6 +24,7 @@ const profile = vi.hoisted(() => ({
     error: "",
     retry: vi.fn(),
   },
+  season: { data: null, loading: false, error: "", retry: vi.fn() },
   badges: { data: null, loading: false, error: "Dieser Bereich konnte nicht geladen werden.", retry: vi.fn() },
   trophies: { data: [], loading: false, error: "", retry: vi.fn() },
   prestige: { data: { pbCount: 0, largestPbImprovementHundredths: null, averagePbImprovementHundredths: null, worldRecordCount: 0, worldRecordDays: 0, longestWorldRecordDays: 0, visibleBadgeCount: 0 }, loading: false, error: "", retry: vi.fn() },
@@ -35,6 +36,9 @@ const profile = vi.hoisted(() => ({
 
 vi.mock("@/hooks/useHistoryProfiles", () => ({
   usePlayerProfileDetail: () => profile,
+}));
+vi.mock("@/hooks/useSeason", () => ({
+  useSeason: () => ({ season: "all-time", isAllTime: true }),
 }));
 
 import { PlayerProfilePage } from "@/pages/PlayerProfilePage";

@@ -5,6 +5,7 @@ import {
   getPlayerEventHistory,
   getPlayerPrestige,
   getPlayerProfileCore,
+  getPlayerSeasonProfile,
   getPlayerProgression,
   getPlayerTrophies,
 } from "@/services/historyProfileService";
@@ -15,6 +16,7 @@ import type {
   PlayerEventSummary,
   PlayerProfileCore,
   PlayerProfilePrestige,
+  PlayerSeasonProfile,
   PlayerProfileProgression,
   TrophyAward,
 } from "@/types/historyProfiles";
@@ -22,6 +24,7 @@ import type { DataGroup } from "@/services/dataGroupService";
 
 export type PlayerProfileSection =
   | "core"
+  | "season"
   | "badges"
   | "trophies"
   | "prestige"
@@ -32,6 +35,7 @@ export type PlayerProfileSection =
 
 export interface PlayerProfileSectionData {
   core: PlayerProfileCore | null;
+  season: PlayerSeasonProfile | null;
   badges: CompactBadge[];
   trophies: TrophyAward[];
   prestige: PlayerProfilePrestige;
@@ -52,6 +56,7 @@ const loaders: {
   ) => Promise<PlayerProfileSectionData[Section]>;
 } = {
   core: getPlayerProfileCore,
+  season: () => Promise.resolve(null),
   badges: getPlayerBadges,
   trophies: getPlayerTrophies,
   prestige: (playerId) => getPlayerPrestige(playerId, 0),
@@ -64,7 +69,12 @@ const loaders: {
 function loadSection<Section extends PlayerProfileSection>(
   section: Section,
   playerId: string,
+  seasonYear?: number,
 ): Promise<PlayerProfileSectionData[Section]> {
+  if (section === "season") {
+    return (seasonYear == null ? Promise.resolve(null) : getPlayerSeasonProfile(playerId, seasonYear)) as
+      Promise<PlayerProfileSectionData[Section]>;
+  }
   if (section === "prestige") {
     return loadPlayerProfileSection("badges", playerId)
       .then((badges) => getPlayerPrestige(playerId, badges.length)) as
@@ -73,16 +83,16 @@ function loadSection<Section extends PlayerProfileSection>(
   return loaders[section](playerId);
 }
 
-function cacheKey(section: PlayerProfileSection, playerId: string) {
-  return `${section}:${playerId}`;
+function cacheKey(section: PlayerProfileSection, playerId: string, seasonYear?: number) {
+  return `${section}:${playerId}${seasonYear == null ? "" : `:${seasonYear}`}`;
 }
 
 export function loadPlayerProfileSection<Section extends PlayerProfileSection>(
   section: Section,
   playerId: string,
-  options: { force?: boolean } = {},
+  options: { force?: boolean; seasonYear?: number } = {},
 ): Promise<PlayerProfileSectionData[Section]> {
-  const key = cacheKey(section, playerId);
+  const key = cacheKey(section, playerId, options.seasonYear);
   if (options.force) cache.delete(key);
   const cached = cache.get(key);
   if (cached && cached.expiresAt > Date.now()) {
@@ -93,7 +103,7 @@ export function loadPlayerProfileSection<Section extends PlayerProfileSection>(
   if (running) return running as Promise<PlayerProfileSectionData[Section]>;
 
   const generation = generations.get(key) ?? 0;
-  const request = loadSection(section, playerId)
+  const request = loadSection(section, playerId, options.seasonYear)
     .then((value) => {
       if ((generations.get(key) ?? 0) === generation) {
         cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
@@ -125,6 +135,7 @@ export function invalidatePlayerProfileSections(
 
 const sectionByGroup: Partial<Record<DataGroup, PlayerProfileSection>> = {
   "profile-core": "core",
+  "profile-season": "season",
   "profile-badges": "badges",
   "profile-trophies": "trophies",
   "profile-prestige": "prestige",

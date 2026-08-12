@@ -356,8 +356,42 @@ export interface Database {
         };
         Relationships: [];
       };
+      season_player_statistics: {
+        Row: Database["public"]["Views"]["player_statistics"]["Row"] & {
+          season_year: number;
+        };
+        Relationships: [];
+      };
+      season_hall_of_fame: {
+        Row: Database["public"]["Views"]["public_hall_of_fame"]["Row"] & {
+          season_year: number;
+          avatar_path: string | null;
+        };
+        Relationships: [];
+      };
+      season_global_statistics: {
+        Row: Database["public"]["Views"]["global_statistics"]["Row"] & {
+          season_year: number;
+        };
+        Relationships: [];
+      };
     };
     Functions: DataPlatformFunctions & {
+      get_player_season_profile: {
+        Args: { p_player_id: string; p_season_year: number };
+        Returns: Array<{
+          player_id: string;
+          personal_best_hundredths: number | null;
+          season_rank: number | null;
+          average_hundredths: number | null;
+          event_participations: number;
+          event_wins: number;
+          second_places: number;
+          third_places: number;
+          valid_attempts: number;
+          dnf_count: number;
+        }>;
+      };
       get_visible_player_badges: {
         Args: { p_player_id: string };
         Returns: VisiblePlayerBadgesView["Row"][];

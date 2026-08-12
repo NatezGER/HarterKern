@@ -210,6 +210,18 @@ export interface PlayerProfileCore {
   dnfCount: number;
 }
 
+export interface PlayerSeasonProfile {
+  personalBestHundredths: number | null;
+  rank: number | null;
+  averageHundredths: number | null;
+  eventParticipations: number;
+  wins: number;
+  secondPlaces: number;
+  thirdPlaces: number;
+  validAttempts: number;
+  dnfCount: number;
+}
+
 export interface PlayerProfilePrestige {
   pbCount: number;
   largestPbImprovementHundredths: number | null;

@@ -5,6 +5,7 @@ import {
   getAttemptSeason,
   getEventSeason,
   getSeasonOptions,
+  getSeasonDateRange,
   readStoredSeason,
   SEASON_STORAGE_KEY,
   storeSeason,
@@ -21,6 +22,7 @@ describe("season foundation", () => {
     expect(getEventSeason("2026-12-31")).toBe(2026);
     expect(getAttemptSeason("event_attempt", "2026-12-31")).toBe(2026);
     expect(getEventSeason("2025-12-31")).toBeNull();
+    expect(getSeasonDateRange(2026)).toEqual({ start: "2026-01-01", end: "2027-01-01" });
   });
 
   it("never assigns historical attempts to a season", () => {

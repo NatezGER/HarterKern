@@ -25,7 +25,7 @@ describe("SeasonSelector", () => {
     seasonState.season = 2026;
     seasonState.isAllTime = false;
     const markup = renderToStaticMarkup(<SeasonSelector />);
-    expect(markup).toContain("text-emerald-200");
+    expect(markup).toContain("text-emerald-100");
     expect(markup).toMatch(/value="2026"[^>]*selected=""/);
   });
 });

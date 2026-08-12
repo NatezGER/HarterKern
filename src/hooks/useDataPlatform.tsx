@@ -34,6 +34,7 @@ import {
   invalidatePlayerProfileSections,
   profileSectionsForDataGroups,
 } from "@/services/playerProfileService";
+import { useSeason } from "@/hooks/useSeason";
 
 export type DataStatus = "loading" | "ready" | "error" | "unconfigured";
 export type RealtimeStatus = "connecting" | "connected" | "disconnected";
@@ -90,6 +91,7 @@ function allPlanGroups(plan: RouteDataPlan) {
 }
 
 export function DataPlatformProvider({ children }: { children: ReactNode }) {
+  const { season } = useSeason();
   const { pathname } = useLocation();
   const plan = useMemo(() => getRouteDataPlan(pathname), [pathname]);
   const planRef = useRef(plan);
@@ -116,7 +118,7 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
   const loadGroup = useCallback(async (group: DataGroup) => {
     updateGroup(group, { status: "loading", error: null });
     try {
-      const patch = await loadDataGroup(group);
+      const patch = await loadDataGroup(group, season);
       setSnapshot((current) => mergePatch(current, patch));
       setGroups((current) => {
         const previous = current[group] ?? emptyGroupState();
@@ -130,7 +132,7 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
       updateGroup(group, { status: "error", error: message });
       throw caught;
     }
-  }, [updateGroup]);
+  }, [season, updateGroup]);
 
   const loadOptionalGroups = useCallback(async (optional: DataGroup[]) => {
     for (const group of optional) {

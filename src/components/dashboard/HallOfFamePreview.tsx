@@ -7,15 +7,17 @@ import { Avatar } from "@/components/common/Avatar";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Button } from "@/components/ui/button";
 import { HallOfFameRankEmblem } from "@/components/common/HallOfFameRankEmblem";
+import { useSeason } from "@/hooks/useSeason";
 
 export function HallOfFamePreview() {
   const { data } = useEffectivePublicData();
+  const { season, isAllTime } = useSeason();
   const entries = getRankedPlayers(data.players, data.leaderboard).slice(0, 10);
 
   return (
     <section>
       <SectionHeading
-        eyebrow="Ewige Rangliste"
+        eyebrow={isAllTime ? "Ewige Rangliste" : `Saisonrangliste ${season}`}
         title="Hall of Fame"
         action={<Button asChild variant="ghost" size="sm"><Link to="/leaderboard">Alle anzeigen <ArrowRight className="size-4" /></Link></Button>}
       />

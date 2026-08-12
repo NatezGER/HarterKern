@@ -55,6 +55,7 @@ describe("route data groups", () => {
     expect(getRouteDataPlan("/player/player-1")).toEqual({
       required: ["profile-core"],
       optional: [
+        "profile-season",
         "profile-trophies",
         "profile-badges",
         "profile-prestige",
@@ -65,6 +66,7 @@ describe("route data groups", () => {
       ],
     });
     expect(dataGroupRequestCounts["profile-core"]).toBe(0);
+    expect(dataGroupRequestCounts["profile-season"]).toBe(0);
   });
 
   it("loads live raw data only for live and management routes", () => {
@@ -86,6 +88,14 @@ describe("route data groups", () => {
     expect(mocks.getLeaderboard).toHaveBeenCalledOnce();
     resolvePlayers([]);
     await first;
+  });
+
+  it("keeps All-Time as the default and forwards an explicit season", async () => {
+    mocks.getPlayers.mockResolvedValue([]);
+    mocks.getLeaderboard.mockResolvedValue([]);
+    await loadDataGroup("leaderboard", 2026);
+    expect(mocks.getPlayers).toHaveBeenCalledWith(2026);
+    expect(mocks.getLeaderboard).toHaveBeenCalledWith(2026);
   });
 
   it("invalidates only groups affected by the changed table", () => {

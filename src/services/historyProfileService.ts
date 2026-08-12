@@ -323,6 +323,27 @@ export async function getPlayerProfileCore(playerId: string): Promise<PlayerProf
   };
 }
 
+export async function getPlayerSeasonProfile(playerId: string, seasonYear: number) {
+  const result = await getSupabase().rpc("get_player_season_profile", {
+    p_player_id: playerId,
+    p_season_year: seasonYear,
+  }).maybeSingle();
+  if (result.error) throw result.error;
+  const row = result.data;
+  if (!row) return null;
+  return {
+    personalBestHundredths: row.personal_best_hundredths,
+    rank: row.season_rank,
+    averageHundredths: row.average_hundredths,
+    eventParticipations: Number(row.event_participations),
+    wins: Number(row.event_wins),
+    secondPlaces: Number(row.second_places),
+    thirdPlaces: Number(row.third_places),
+    validAttempts: Number(row.valid_attempts),
+    dnfCount: Number(row.dnf_count),
+  };
+}
+
 export async function getPlayerBadges(playerId: string): Promise<CompactBadge[]> {
   const result = await getSupabase().rpc("get_visible_player_badges", {
     p_player_id: playerId,

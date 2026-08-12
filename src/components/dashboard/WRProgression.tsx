@@ -5,9 +5,11 @@ import { getPlayerById } from "@/data/selectors";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useSeason } from "@/hooks/useSeason";
 
 export function WRProgression({ compact = false, collapsibleHistory = false }: { compact?: boolean; collapsibleHistory?: boolean }) {
   const { data } = useEffectivePublicData();
+  const { isAllTime } = useSeason();
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const points = data.worldRecordHistory.map((record) => {
     const player = getPlayerById(data.players, record.playerId);
@@ -29,7 +31,7 @@ export function WRProgression({ compact = false, collapsibleHistory = false }: {
   });
   return (
     <section>
-      <SectionHeading eyebrow="Rekordgeschichte" title="WR Progression" />
+      <SectionHeading eyebrow={isAllTime ? "Rekordgeschichte" : "All-Time · Rekordgeschichte"} title="WR Progression" />
       <AnimatedCard className="overflow-hidden p-5 sm:p-8" hover={false}>
         <ProgressionTimeline points={compact ? points.slice(0, 6) : points} showHistory={!collapsibleHistory || historyExpanded} emptyLabel="Noch kein offizieller Weltrekord." />
         {collapsibleHistory && points.length > 0 && <Button type="button" variant="outline" className="mt-5 w-full sm:w-auto" aria-expanded={historyExpanded} onClick={() => setHistoryExpanded((value) => !value)}>{historyExpanded ? "Weltrekorde einklappen" : "Alle Weltrekorde anzeigen"}</Button>}

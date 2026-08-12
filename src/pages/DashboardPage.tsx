@@ -11,17 +11,21 @@ import { DataState } from "@/components/common/DataState";
 import { PrestigeActivityFeed } from "@/components/dashboard/PrestigeActivityFeed";
 import { LatestEventCard } from "@/components/dashboard/LatestEventCard";
 import { OptionalDataState } from "@/components/common/OptionalDataState";
+import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
+import { useSeason } from "@/hooks/useSeason";
 
 export function DashboardPage() {
+  const { season, isAllTime } = useSeason();
   return (
     <div className="space-y-8 sm:space-y-12 lg:space-y-16">
       <HeroCard />
+      <SeasonContextBadge />
       <DataState>
         <div className="space-y-8 sm:space-y-12 lg:space-y-16">
           <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
             <WorldRecordCard />
             <AnimatedCard className="px-4 pt-6 sm:px-8" hover={false}>
-              <SectionHeading eyebrow="Top 3 All-Time" title="Das Podium" />
+              <SectionHeading eyebrow={isAllTime ? "Top 3 All-Time" : `Top 3 · Saison ${season}`} title="Das Podium" />
               <Podium />
             </AnimatedCard>
           </div>

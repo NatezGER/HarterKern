@@ -46,6 +46,10 @@ export function getAttemptSeason(
   return getEventSeason(eventStartDate);
 }
 
+export function getSeasonDateRange(year: number) {
+  return { start: `${year}-01-01`, end: `${year + 1}-01-01` };
+}
+
 export function readStoredSeason(storage: Pick<Storage, "getItem">): SeasonSelection {
   try {
     const stored = storage.getItem(SEASON_STORAGE_KEY);
