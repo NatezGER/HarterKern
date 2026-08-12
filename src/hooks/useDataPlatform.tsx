@@ -27,7 +27,7 @@ import {
   groupsForRealtimeTable,
   loadDataGroup,
 } from "@/services/dataGroupService";
-import type { DataGroup, DataGroupPatch, RouteDataPlan } from "@/services/dataGroupService";
+import type { DataGroup, RouteDataPlan } from "@/services/dataGroupService";
 import type { LiveEventState } from "@/types/liveEvent";
 import { emptyPublicData } from "@/services/publicDataService";
 import {
@@ -35,6 +35,7 @@ import {
   profileSectionsForDataGroups,
 } from "@/services/playerProfileService";
 import { useSeason } from "@/hooks/useSeason";
+import { mergePatchForRun } from "@/hooks/dataPlatformRunGuard";
 
 export type DataStatus = "loading" | "ready" | "error" | "unconfigured";
 export type RealtimeStatus = "connecting" | "connected" | "disconnected";
@@ -75,17 +76,6 @@ interface DataPlatformContextValue {
 
 const DataPlatformContext = createContext<DataPlatformContextValue | null>(null);
 
-function mergePatch(snapshot: DataPlatformSnapshot, patch: DataGroupPatch): DataPlatformSnapshot {
-  return {
-    publicData: patch.publicData
-      ? { ...snapshot.publicData, ...patch.publicData }
-      : snapshot.publicData,
-    liveState: patch.liveState
-      ? { ...snapshot.liveState, ...patch.liveState }
-      : snapshot.liveState,
-  };
-}
-
 function allPlanGroups(plan: RouteDataPlan) {
   return [...new Set([...plan.required, ...plan.optional])];
 }
@@ -115,11 +105,15 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const loadGroup = useCallback(async (group: DataGroup) => {
+  const loadGroup = useCallback(async (group: DataGroup, expectedRun?: number) => {
+    if (expectedRun != null && routeRun.current !== expectedRun) return;
     updateGroup(group, { status: "loading", error: null });
     try {
       const patch = await loadDataGroup(group, season);
-      setSnapshot((current) => mergePatch(current, patch));
+      if (expectedRun != null && routeRun.current !== expectedRun) return;
+      setSnapshot((current) => mergePatchForRun(
+        current, patch, expectedRun, routeRun.current,
+      ));
       setGroups((current) => {
         const previous = current[group] ?? emptyGroupState();
         return {
@@ -128,16 +122,17 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
         };
       });
     } catch (caught) {
+      if (expectedRun != null && routeRun.current !== expectedRun) return;
       const message = getErrorMessage(caught);
       updateGroup(group, { status: "error", error: message });
       throw caught;
     }
   }, [season, updateGroup]);
 
-  const loadOptionalGroups = useCallback(async (optional: DataGroup[]) => {
+  const loadOptionalGroups = useCallback(async (optional: DataGroup[], expectedRun?: number) => {
     for (const group of optional) {
       try {
-        await loadGroup(group);
+        await loadGroup(group, expectedRun);
       } catch {
         // Optional module errors remain scoped to their section.
       }
@@ -146,12 +141,12 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
 
   const loadPlan = useCallback(async (nextPlan: RouteDataPlan, runId?: number) => {
     try {
-      await Promise.all(nextPlan.required.map(loadGroup));
+      await Promise.all(nextPlan.required.map((group) => loadGroup(group)));
       if (runId == null || routeRun.current === runId) {
         setStatus("ready");
         setError(null);
       }
-      void loadOptionalGroups(nextPlan.optional);
+      void loadOptionalGroups(nextPlan.optional, runId);
     } catch (caught) {
       if (runId == null || routeRun.current === runId) {
         setStatus("error");

@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { MostWantedMatrix } from "@/components/stats/MostWantedMatrix";
+import { selectionAfterSeasonChange } from "@/components/stats/mostWantedSelection";
 import type { MostWantedSnapshot } from "@/types";
 
 const data: MostWantedSnapshot = {
@@ -42,5 +43,21 @@ describe("MostWantedMatrix", () => {
     expect(markup).toContain("Endung 00");
     expect(markup).toContain("Endung 99");
     expect(markup).toContain("https://example.com/paul.webp");
+  });
+
+  it("marks a seasonal snapshot without changing the All-Time default", () => {
+    const allTime = renderToStaticMarkup(<MostWantedMatrix data={data} />);
+    const season = renderToStaticMarkup(<MostWantedMatrix data={data} season={2026} />);
+    expect(allTime).toContain("Liga-Jagd");
+    expect(season).toContain("Saison 2026");
+    expect(season).toContain("from-emerald-700");
+  });
+
+  it("closes an open All-Time hunter detail when switching to 2026", () => {
+    expect(selectionAfterSeasonChange(data.endings[0], "all-time", 2026)).toBeNull();
+  });
+
+  it("closes an open season hunter detail when switching back to All-Time", () => {
+    expect(selectionAfterSeasonChange(data.endings[0], 2026, "all-time")).toBeNull();
   });
 });

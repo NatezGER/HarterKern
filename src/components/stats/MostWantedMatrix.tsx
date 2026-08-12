@@ -1,28 +1,49 @@
 import { Check, Crosshair, LockKeyhole, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
+import { selectionAfterSeasonChange } from "@/components/stats/mostWantedSelection";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import type { MostWantedEnding, MostWantedSnapshot } from "@/types";
 import { formatDate, formatTime } from "@/utils/format";
+import { ALL_TIME_SEASON } from "@/lib/season";
+import type { SeasonSelection } from "@/lib/season";
 
-export function MostWantedMatrix({ data }: { data: MostWantedSnapshot }) {
+export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
+  data: MostWantedSnapshot;
+  season?: SeasonSelection;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [selected, setSelected] = useState<MostWantedEnding | null>(null);
+  const selectedSeason = useRef(season);
+  const visibleSelected = selectedSeason.current === season ? selected : null;
+  useEffect(() => {
+    setSelected((current) => selectionAfterSeasonChange(
+      current, selectedSeason.current, season,
+    ));
+    selectedSeason.current = season;
+  }, [season]);
   return (
     <div className="panel overflow-hidden p-4 sm:p-7">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-gold-300">Liga-Jagd</p>
+          <p className={cn("text-xs font-black uppercase tracking-[0.2em]",
+            season === ALL_TIME_SEASON ? "text-gold-300" : "text-emerald-300")}>
+            {season === ALL_TIME_SEASON ? "Liga-Jagd" : `Saison ${season}`}
+          </p>
           <h3 className="display-title mt-2 text-3xl sm:text-4xl">Most Wanted · 00–99</h3>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-white/45">
             Jede Nachkommastellen-Kombination zählt einmal. Der erste offizielle Treffer verewigt den Finder.
           </p>
         </div>
-        <p className="font-display text-4xl font-black text-gold-300">{data.reached}<span className="text-xl text-white/25">/{data.total}</span></p>
+        <p className={cn("font-display text-4xl font-black",
+          season === ALL_TIME_SEASON ? "text-gold-300" : "text-emerald-300")}>{data.reached}<span className="text-xl text-white/25">/{data.total}</span></p>
       </div>
       <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.07]" role="progressbar" aria-label="Most-Wanted-Fortschritt" aria-valuemin={0} aria-valuemax={data.total} aria-valuenow={data.reached}>
-        <div className="h-full rounded-full bg-gradient-to-r from-amber-600 to-yellow-300 transition-[width]" style={{ width: `${data.percent}%` }} />
+        <div className={cn("h-full rounded-full transition-[width]",
+          season === ALL_TIME_SEASON
+            ? "bg-gradient-to-r from-amber-600 to-yellow-300"
+            : "bg-gradient-to-r from-emerald-700 to-emerald-300")} style={{ width: `${data.percent}%` }} />
       </div>
       <Button type="button" variant="outline" className="mt-5 w-full sm:w-auto" aria-expanded={expanded} aria-controls="most-wanted-grid" onClick={() => setExpanded((value) => !value)}>{expanded ? "Matrix einklappen" : "10×10-Matrix anzeigen"}</Button>
       <div id="most-wanted-grid" hidden={!expanded} className="mt-5 grid grid-cols-10 gap-1 sm:gap-1.5" role="grid" aria-label="Matrix der Nachkommastellen 00 bis 99">
@@ -49,7 +70,7 @@ export function MostWantedMatrix({ data }: { data: MostWantedSnapshot }) {
       <ul className="sr-only">
         {data.endings.map((ending) => <li key={`text-${ending.ending}`}>Endung {ending.label}: {ending.achieved ? `zuerst von ${ending.playerName} mit ${ending.timeHundredths == null ? "unbekannter Zeit" : formatTime(ending.timeHundredths / 100)}` : "offen"}</li>)}
       </ul>
-      {selected && <EndingDetail ending={selected} onClose={() => setSelected(null)} />}
+      {visibleSelected && <EndingDetail ending={visibleSelected} onClose={() => setSelected(null)} />}
       <div className="mt-5 grid gap-3 text-xs text-white/40 sm:grid-cols-3">
         <p><strong className="text-white/75">Offen:</strong> {data.openEndings.length}</p>
         <p><strong className="text-white/75">Häufigste Endung:</strong> {data.mostCommonEnding == null ? "—" : String(data.mostCommonEnding).padStart(2, "0")} ({data.mostCommonHits}×)</p>

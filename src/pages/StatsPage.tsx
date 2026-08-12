@@ -42,8 +42,8 @@ export function StatsPage() {
           <OptionalDataState group="group-milestones"><GroupMilestones /></OptionalDataState>
         </section>
         <section className="mt-12">
-          <SectionHeading eyebrow={isAllTime ? "00 bis 99" : "All-Time · 00 bis 99"} title="Most Wanted" />
-          <OptionalDataState group="most-wanted"><MostWantedMatrix data={data.mostWanted} /></OptionalDataState>
+          <SectionHeading eyebrow={isAllTime ? "00 bis 99" : `Saison ${season} · 00 bis 99`} title="Most Wanted" />
+          <OptionalDataState group="most-wanted"><MostWantedMatrix data={data.mostWanted} season={season} /></OptionalDataState>
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow={isAllTime ? "Offizielle Zeiten" : "All-Time · Offizielle Zeiten"} title="Ligastatistiken" />

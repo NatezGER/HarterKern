@@ -93,11 +93,21 @@ export async function getPrestigeActivities(): Promise<PrestigeActivity[]> {
     right.priority - left.priority).slice(0, 12);
 }
 
-export async function getMostWantedSnapshot(): Promise<MostWantedSnapshot> {
+export async function getMostWantedSnapshot(
+  season: SeasonSelection = ALL_TIME_SEASON,
+): Promise<MostWantedSnapshot> {
   const client = getSupabase();
+  const endingsQuery = season === ALL_TIME_SEASON
+    ? client.from("most_wanted_endings").select("*").order("ending")
+    : client.from("season_most_wanted_endings").select("*")
+      .eq("season_year", season).order("ending");
+  const progressQuery = season === ALL_TIME_SEASON
+    ? client.from("most_wanted_progress").select("*").single()
+    : client.from("season_most_wanted_progress").select("*")
+      .eq("season_year", season).single();
   const [endingsResult, progressResult] = await Promise.all([
-    client.from("most_wanted_endings").select("*").order("ending"),
-    client.from("most_wanted_progress").select("*").single(),
+    endingsQuery,
+    progressQuery,
   ]);
   if (endingsResult.error) throw endingsResult.error;
   if (progressResult.error) throw progressResult.error;

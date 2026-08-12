@@ -27,6 +27,8 @@ import type {
   LeagueTimeThresholdStatisticsView,
   MostWantedEndingView,
   MostWantedProgressView,
+  SeasonMostWantedEndingView,
+  SeasonMostWantedProgressView,
   PlayerBingoFieldView,
   PlayerBingoHitView,
   PlayerBingoLineView,
@@ -308,6 +310,8 @@ export interface Database {
       player_trophies: PlayerTrophyView;
       most_wanted_endings: MostWantedEndingView;
       most_wanted_progress: MostWantedProgressView;
+      season_most_wanted_endings: SeasonMostWantedEndingView;
+      season_most_wanted_progress: SeasonMostWantedProgressView;
       player_bingo_hits: PlayerBingoHitView;
       player_bingo_fields: PlayerBingoFieldView;
       player_bingo_lines: PlayerBingoLineView;

@@ -62,6 +62,16 @@ export interface MostWantedProgressView {
   Relationships: [];
 }
 
+export interface SeasonMostWantedEndingView {
+  Row: MostWantedEndingView["Row"] & { season_year: number };
+  Relationships: [];
+}
+
+export interface SeasonMostWantedProgressView {
+  Row: MostWantedProgressView["Row"] & { season_year: number };
+  Relationships: [];
+}
+
 export type BingoTier = "open" | "bronze" | "silver" | "gold";
 
 export interface PlayerBingoHitView {

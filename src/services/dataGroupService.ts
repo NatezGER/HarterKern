@@ -192,7 +192,7 @@ async function loadUncached(group: DataGroup, season: SeasonSelection): Promise<
     case "badge-rarity":
       return { publicData: { badgeRarity: await getBadgeRarity() } };
     case "most-wanted":
-      return { publicData: { mostWanted: await getMostWantedSnapshot() } };
+      return { publicData: { mostWanted: await getMostWantedSnapshot(season) } };
     case "league-time":
       return { publicData: { leagueTimeStatistics: await getLeagueTimeStatistics() } };
     case "historical":

@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getWorldRecordHistory: vi.fn(),
   getDailyWinners: vi.fn(),
   getEvents: vi.fn(),
+  getMostWantedSnapshot: vi.fn(),
 }));
 
 vi.mock("@/services/playerService", () => ({ getPlayers: mocks.getPlayers }));
@@ -16,7 +17,7 @@ vi.mock("@/services/statsService", () => ({
   getGlobalStatistics: vi.fn(),
   getGroupMilestones: vi.fn(),
   getLeagueTimeStatistics: vi.fn(),
-  getMostWantedSnapshot: vi.fn(),
+  getMostWantedSnapshot: mocks.getMostWantedSnapshot,
   getPrestigeActivities: vi.fn(),
   getWorldRecordHistory: mocks.getWorldRecordHistory,
 }));
@@ -113,6 +114,14 @@ describe("route data groups", () => {
     expect(mocks.getWorldRecordHistory).toHaveBeenNthCalledWith(2, 2026);
     expect(mocks.getEvents).toHaveBeenNthCalledWith(1, "all-time", false);
     expect(mocks.getEvents).toHaveBeenNthCalledWith(2, 2026, false);
+  });
+
+  it("loads Most Wanted for the globally selected season", async () => {
+    mocks.getMostWantedSnapshot.mockResolvedValue({});
+    await loadDataGroup("most-wanted");
+    await loadDataGroup("most-wanted", 2026);
+    expect(mocks.getMostWantedSnapshot).toHaveBeenNthCalledWith(1, "all-time");
+    expect(mocks.getMostWantedSnapshot).toHaveBeenNthCalledWith(2, 2026);
   });
 
   it("invalidates only groups affected by the changed table", () => {
