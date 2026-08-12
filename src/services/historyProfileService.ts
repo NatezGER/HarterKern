@@ -194,7 +194,7 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
     badgeResult, photoResult, attemptNumbersResult, trophyResult] = await Promise.all([
     client.from("events").select("*").eq("id", eventId).is("deleted_at", null).maybeSingle(),
     client.from("event_statistics").select("*").eq("event_id", eventId).maybeSingle(),
-    client.from("event_podium").select("*").eq("event_id", eventId).order("rank"),
+    client.from("qualified_event_podium").select("*").eq("event_id", eventId).order("rank"),
     client.from("event_attempt_details").select("*").eq("event_id", eventId).order("submitted_at"),
     client.from("event_participant_statistics").select("*").eq("event_id", eventId),
     client.from("event_badge_unlocks").select("*").eq("source_event_id", eventId)

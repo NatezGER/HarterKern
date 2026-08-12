@@ -236,6 +236,7 @@ export interface Database {
         Relationships: [];
       };
       event_podium: EventPodiumView;
+      qualified_event_podium: EventPodiumView;
       player_badge_awards: PlayerBadgeAwardsView;
       player_attempt_number_statistics: PlayerAttemptNumberStatisticsView;
       player_pb_progression: PlayerPbProgressionView;

@@ -8,20 +8,22 @@ import type { SeasonSelection } from "@/lib/season";
 export async function getEvents(season: SeasonSelection = ALL_TIME_SEASON): Promise<Event[]> {
   const client = getSupabase();
   if (season === ALL_TIME_SEASON) {
-    const [eventsResult, statsResult, participantsResult, guestsResult, podiumResult] =
+    const [eventsResult, statsResult, participantsResult, guestsResult, podiumResult, winnersResult] =
       await Promise.all([
       client.from("events").select("*").is("deleted_at", null)
         .order("started_at", { ascending: false }),
       client.from("event_statistics").select("*"),
       client.from("event_participants").select("event_id,player_id"),
       client.from("event_guests").select("event_id,id"),
-      client.from("event_podium").select("*"),
+      client.from("qualified_event_podium").select("*"),
+      client.from("event_winners").select("event_id,display_name"),
     ]);
     if (eventsResult.error) throw eventsResult.error;
     if (statsResult.error) throw statsResult.error;
     if (participantsResult.error) throw participantsResult.error;
     if (guestsResult.error) throw guestsResult.error;
     if (podiumResult.error) throw podiumResult.error;
+    if (winnersResult.error) throw winnersResult.error;
 
     return mapEvents(
       eventsResult.data,
@@ -29,6 +31,7 @@ export async function getEvents(season: SeasonSelection = ALL_TIME_SEASON): Prom
       participantsResult.data,
       guestsResult.data,
       podiumResult.data,
+      winnersResult.data,
     );
   }
 
@@ -39,16 +42,18 @@ export async function getEvents(season: SeasonSelection = ALL_TIME_SEASON): Prom
   if (selectedEventsResult.error) throw selectedEventsResult.error;
   if (selectedEventsResult.data.length === 0) return [];
   const eventIds = selectedEventsResult.data.map(({ id }) => id);
-  const [statsResult, participantsResult, guestsResult, podiumResult] = await Promise.all([
+  const [statsResult, participantsResult, guestsResult, podiumResult, winnersResult] = await Promise.all([
     client.from("event_statistics").select("*").in("event_id", eventIds),
     client.from("event_participants").select("event_id,player_id").in("event_id", eventIds),
     client.from("event_guests").select("event_id,id").in("event_id", eventIds),
-    client.from("event_podium").select("*").in("event_id", eventIds),
+    client.from("qualified_event_podium").select("*").in("event_id", eventIds),
+    client.from("event_winners").select("event_id,display_name").in("event_id", eventIds),
   ]);
   if (statsResult.error) throw statsResult.error;
   if (participantsResult.error) throw participantsResult.error;
   if (guestsResult.error) throw guestsResult.error;
   if (podiumResult.error) throw podiumResult.error;
+  if (winnersResult.error) throw winnersResult.error;
 
   return mapEvents(
     selectedEventsResult.data,
@@ -56,6 +61,7 @@ export async function getEvents(season: SeasonSelection = ALL_TIME_SEASON): Prom
     participantsResult.data,
     guestsResult.data,
     podiumResult.data,
+    winnersResult.data,
   );
 }
 
@@ -71,6 +77,8 @@ function mapEvents(
     "event_id" | "id"
   >[],
   podiumByEvent: Database["public"]["Views"]["event_podium"]["Row"][],
+  winnersByEvent: Pick<Database["public"]["Views"]["event_winners"]["Row"],
+    "event_id" | "display_name">[],
 ): Event[] {
   const statsByEvent = new Map(statistics.map((row) => [row.event_id, row]));
   return events.map((row) => {
@@ -87,8 +95,8 @@ function mapEvents(
       dnfCount: Number(stats?.dnf_count ?? 0),
       fastest: Number(stats?.fastest_hundredths ?? 0) / 100,
       average: Number(stats?.average_hundredths ?? 0) / 100,
-      winnerNames: podiumByEvent
-        .filter((entry) => entry.event_id === row.id && entry.rank === 1)
+      winnerNames: winnersByEvent
+        .filter((entry) => entry.event_id === row.id)
         .map((entry) => entry.display_name),
       podium: podiumByEvent
         .filter((entry) => entry.event_id === row.id)
