@@ -94,7 +94,10 @@ select r.season_year, r.player_id, r.display_name, r.avatar_url, r.avatar_path,
   r.personal_best_hundredths, min(va.record_date) record_date,
   r.rank
 from ranked r
-join valid_attempts va using (season_year, player_id, personal_best_hundredths)
+join valid_attempts va
+  on va.season_year = r.season_year
+  and va.player_id = r.player_id
+  and va.time_hundredths = r.personal_best_hundredths
 group by r.season_year, r.player_id, r.display_name, r.avatar_url,
   r.avatar_path, r.personal_best_hundredths, r.rank;
 
