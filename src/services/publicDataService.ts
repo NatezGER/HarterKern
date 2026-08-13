@@ -28,7 +28,7 @@ export const emptyPublicData: PublicDataSnapshot = {
   badgeRarity: [],
   mostWanted: {
     endings: [], reached: 0, total: 100, percent: 0, openEndings: [],
-    mostCommonEnding: null, mostCommonHits: 0, rarestAchievedEndings: [],
+    mostCommonEnding: null, mostCommonHits: 0, rarestAchievedEndings: [], topHunters: [],
   },
   leagueTimeStatistics: {
     totalValidTimes: 0, mostCommonTimeHundredths: null, mostCommonTimeHits: 0,

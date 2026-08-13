@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { MostWantedMatrix } from "@/components/stats/MostWantedMatrix";
+import { EndingDetail, MostWantedMatrix } from "@/components/stats/MostWantedMatrix";
 import { selectionAfterSeasonChange } from "@/components/stats/mostWantedSelection";
 import type { MostWantedSnapshot } from "@/types";
 
@@ -12,6 +12,7 @@ const data: MostWantedSnapshot = {
   mostCommonEnding: 0,
   mostCommonHits: 2,
   rarestAchievedEndings: [0],
+  topHunters: [{ id: "player-1", playerId: "player-1", playerName: "Paul", avatarUrl: null, endingCount: 7 }],
   endings: Array.from({ length: 100 }, (_, ending) => ({
     ending,
     label: String(ending).padStart(2, "0"),
@@ -30,6 +31,12 @@ const data: MostWantedSnapshot = {
     eventId: null,
     sourceType: ending === 0 ? "attempt" : null,
     sourceLabel: null,
+    additionalHits: ending === 0 ? [{
+      id: "hit-2", playerId: "player-2", guestId: null, playerName: "Anna",
+      avatarUrl: null, isGuest: false, timeHundredths: 400,
+      occurredAt: "2026-01-02T12:00:00Z", occurredDate: "2026-01-02",
+      hasExactTime: true,
+    }] : [],
   })),
 };
 
@@ -51,6 +58,8 @@ describe("MostWantedMatrix", () => {
     expect(allTime).toContain("Liga-Jagd");
     expect(season).toContain("Saison 2026");
     expect(season).toContain("from-emerald-700");
+    expect(season).toContain("Top 5 Hunter");
+    expect(season).toContain("Paul");
   });
 
   it("shows a compact empty state for a season with zero hunters", () => {
@@ -62,6 +71,7 @@ describe("MostWantedMatrix", () => {
       mostCommonEnding: null,
       mostCommonHits: 0,
       rarestAchievedEndings: [],
+      topHunters: [],
       endings: data.endings.map((ending) => ({
         ...ending,
         achieved: false,
@@ -74,6 +84,26 @@ describe("MostWantedMatrix", () => {
     const markup = renderToStaticMarkup(<MostWantedMatrix data={empty} season={2026} />);
     expect(markup).toContain('aria-valuenow="0"');
     expect(markup).toContain("In Saison 2026 wurde noch keine Endung gefunden.");
+  });
+
+  it("shows the first hit prominently and lists later hits compactly", () => {
+    const markup = renderToStaticMarkup(<EndingDetail ending={data.endings[0]} onClose={() => undefined} />);
+    expect(markup).toContain("Erster Treffer");
+    expect(markup).toContain("Weitere Treffer");
+    expect(markup).toContain("Anna");
+    expect(markup).toContain("4,00 s");
+  });
+
+  it("omits the additional list when only the first hit exists", () => {
+    const markup = renderToStaticMarkup(<EndingDetail ending={{ ...data.endings[0], additionalHits: [] }} onClose={() => undefined} />);
+    expect(markup).not.toContain("Weitere Treffer");
+  });
+
+  it("keeps the common ending and removes the rarest-hit module", () => {
+    const markup = renderToStaticMarkup(<MostWantedMatrix data={data} />);
+    expect(markup).toContain("Häufigste Endung");
+    expect(markup).not.toContain("Seltenste Treffer");
+    expect(markup).toContain("max-w-3xl");
   });
 
   it("closes an open All-Time hunter detail when switching to 2026", () => {

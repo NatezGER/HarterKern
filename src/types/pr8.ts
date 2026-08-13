@@ -72,6 +72,32 @@ export interface SeasonMostWantedProgressView {
   Relationships: [];
 }
 
+export interface QualifiedOfficialTimeView {
+  Row: {
+    source_id: string;
+    player_id: string | null;
+    guest_id: string | null;
+    display_name: string;
+    avatar_url: string | null;
+    avatar_path: string | null;
+    is_guest: boolean;
+    event_id: string | null;
+    time_hundredths: number;
+    occurred_at: string;
+    occurred_date: string;
+    source_type: "attempt" | "historical_attempt";
+    source_priority: number;
+    source_order: number;
+    has_exact_time: boolean;
+  };
+  Relationships: [];
+}
+
+export interface SeasonQualifiedOfficialTimeView {
+  Row: QualifiedOfficialTimeView["Row"] & { season_year: number };
+  Relationships: [];
+}
+
 export type BingoTier = "open" | "bronze" | "silver" | "gold";
 
 export interface PlayerBingoHitView {

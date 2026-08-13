@@ -49,7 +49,7 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
         <p className="mt-4 text-sm text-white/40">In Saison {season} wurde noch keine Endung gefunden.</p>
       )}
       <Button type="button" variant="outline" className="mt-5 w-full sm:w-auto" aria-expanded={expanded} aria-controls="most-wanted-grid" onClick={() => setExpanded((value) => !value)}>{expanded ? "Matrix einklappen" : "10×10-Matrix anzeigen"}</Button>
-      <div id="most-wanted-grid" hidden={!expanded} className="mt-5 grid grid-cols-10 gap-1 sm:gap-1.5" role="grid" aria-label="Matrix der Nachkommastellen 00 bis 99">
+      <div id="most-wanted-grid" hidden={!expanded} className="mx-auto mt-5 grid max-w-3xl grid-cols-10 gap-1" role="grid" aria-label="Matrix der Nachkommastellen 00 bis 99">
         {data.endings.map((ending) => (
           <button
             key={ending.ending}
@@ -58,14 +58,14 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
             aria-label={`${ending.label}: ${ending.achieved ? `gefunden von ${ending.playerName}` : "noch offen"}`}
             role="gridcell"
             className={cn(
-              "group relative aspect-square min-w-0 rounded-md border text-[9px] font-black tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300 sm:rounded-lg sm:text-xs",
+              "group relative aspect-square min-w-0 rounded-md border text-[9px] font-black tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300 sm:text-[11px]",
               ending.achieved
                 ? "border-emerald-300/25 bg-emerald-300/[0.09] text-emerald-100 hover:bg-emerald-300/[0.16]"
                 : "border-white/[0.07] bg-black/25 text-white/25 hover:border-white/15 hover:text-white/45",
             )}
           >
             <span className="absolute left-0.5 top-0.5 sm:left-1 sm:top-1">{ending.label}</span>
-            {ending.achieved && ending.playerName && <ProfileAvatar id={ending.playerId ?? ending.guestId ?? ending.label} name={ending.playerName} url={ending.avatarUrl} className="absolute bottom-0.5 left-1/2 size-3.5 -translate-x-1/2 text-[5px] ring-0 sm:bottom-1 sm:size-5" />}
+            {ending.achieved && ending.playerName && <ProfileAvatar id={ending.playerId ?? ending.guestId ?? ending.label} name={ending.playerName} url={ending.avatarUrl} className="absolute bottom-0.5 left-1/2 size-4 -translate-x-1/2 text-[5px] ring-0 sm:bottom-1 sm:size-6" />}
             {ending.achieved && !ending.playerName && <Check className="absolute bottom-0.5 left-1/2 size-2.5 -translate-x-1/2 text-emerald-300 sm:bottom-1 sm:size-3" />}
           </button>
         ))}
@@ -74,16 +74,26 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
         {data.endings.map((ending) => <li key={`text-${ending.ending}`}>Endung {ending.label}: {ending.achieved ? `zuerst von ${ending.playerName} mit ${ending.timeHundredths == null ? "unbekannter Zeit" : formatTime(ending.timeHundredths / 100)}` : "offen"}</li>)}
       </ul>
       {visibleSelected && <EndingDetail ending={visibleSelected} onClose={() => setSelected(null)} />}
-      <div className="mt-5 grid gap-3 text-xs text-white/40 sm:grid-cols-3">
+      <div className="mt-5 grid gap-3 text-xs text-white/40 sm:grid-cols-2">
         <p><strong className="text-white/75">Offen:</strong> {data.openEndings.length}</p>
         <p><strong className="text-white/75">Häufigste Endung:</strong> {data.mostCommonEnding == null ? "—" : String(data.mostCommonEnding).padStart(2, "0")} ({data.mostCommonHits}×)</p>
-        <p><strong className="text-white/75">Seltenste Treffer:</strong> {data.rarestAchievedEndings.length ? data.rarestAchievedEndings.map((value) => String(value).padStart(2, "0")).join(", ") : "—"}</p>
       </div>
+      {data.topHunters.length > 0 && <section className="mt-5 border-t border-white/[0.07] pt-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">Top 5 Hunter</p>
+        <ol className="mt-3 grid gap-2 sm:grid-cols-5">
+          {data.topHunters.map((hunter, index) => <li key={hunter.id} className="flex min-w-0 items-center gap-2 rounded-xl bg-white/[0.035] px-3 py-2">
+            <span className="w-4 text-[10px] font-black text-white/25">{index + 1}</span>
+            <ProfileAvatar id={hunter.playerId} name={hunter.playerName} url={hunter.avatarUrl} className="size-7" />
+            <span className="min-w-0 flex-1 truncate text-xs font-bold text-white/70">{hunter.playerName}</span>
+            <strong className="font-display text-lg text-gold-300">{hunter.endingCount}</strong>
+          </li>)}
+        </ol>
+      </section>}
     </div>
   );
 }
 
-function EndingDetail({ ending, onClose }: { ending: MostWantedEnding; onClose: () => void }) {
+export function EndingDetail({ ending, onClose }: { ending: MostWantedEnding; onClose: () => void }) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -110,6 +120,16 @@ function EndingDetail({ ending, onClose }: { ending: MostWantedEnding; onClose: 
         <Detail label="Quelle" value={ending.sourceLabel ?? (ending.sourceType === "historical_attempt" ? "Historischer Versuch" : "—")} />
         <Detail label="Treffer gesamt" value={String(ending.hitCount)} />
         <Detail label="Spieler/Gäste" value={String(ending.participantCount)} />
+      </div>}
+      {ending.additionalHits.length > 0 && <div className="mt-4 border-t border-white/[0.07] pt-4">
+        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/30">Weitere Treffer</p>
+        <ul className="mt-2 divide-y divide-white/[0.05]">
+          {ending.additionalHits.map((hit) => <li key={hit.id} className="flex items-center gap-2 py-2 text-xs">
+            <ProfileAvatar id={hit.playerId ?? hit.guestId ?? hit.id} name={hit.playerName} url={hit.avatarUrl} className="size-7" />
+            <span className="min-w-0 flex-1 truncate font-semibold text-white/65">{hit.playerName}{hit.isGuest ? " · Gast" : ""}</span>
+            <strong className="font-display text-sm text-white/80">{formatTime(hit.timeHundredths / 100)}</strong>
+          </li>)}
+        </ul>
       </div>}
       {!ending.achieved && <p className="mt-4 flex items-center gap-2 text-xs text-white/35"><Crosshair className="size-4" /> Diese Endung steht noch auf der Fahndungsliste.</p>}
     </div>

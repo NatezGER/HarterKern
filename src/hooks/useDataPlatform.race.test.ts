@@ -17,7 +17,7 @@ const snapshot = (reached: number): DataPlatformSnapshot => ({
     },
     mostWanted: { endings: [], reached, total: 100, percent: reached,
       openEndings: [], mostCommonEnding: null, mostCommonHits: 0,
-      rarestAchievedEndings: [] },
+      rarestAchievedEndings: [], topHunters: [] },
   },
   liveState: { version: 2, players: [], events: [], attempts: [], historicalAttempts: [] },
 });

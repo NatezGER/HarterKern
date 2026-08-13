@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
 import { BadgeGallery } from "@/components/common/BadgeGallery";
+import { badgeGalleryToggleLabel } from "@/components/common/badgeGalleryState";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { DataState } from "@/components/common/DataState";
 import { AttemptNumberChart } from "@/components/players/AttemptNumberChart";
@@ -81,7 +82,7 @@ export function PlayerProfilePage() {
       ) : null}</ProfileOptionalState>
 
       <ProfileOptionalState state={badges}>{(data) => data.length > 0 ? (
-        <section><SectionHeading eyebrow={isAllTime ? "Verdient" : "Karriere · All-Time"} title="Badge-Galerie" /><BadgeGallery badges={data} featured mobileLimit={2} mobileExpanded={badgesExpanded} />{data.length > 2 && <Button type="button" variant="outline" className="mt-4 w-full sm:hidden" aria-expanded={badgesExpanded} onClick={() => setBadgesExpanded((value) => !value)}>{badgesExpanded ? "Badges einklappen" : "Alle Badges anzeigen"}</Button>}</section>
+        <section><SectionHeading eyebrow={isAllTime ? "Verdient" : "Karriere · All-Time"} title="Badge-Galerie" /><BadgeGallery badges={data} featured mobileLimit={2} desktopLimit={3} expanded={badgesExpanded} />{data.length > 2 && <Button type="button" variant="outline" className="mt-4 w-full sm:w-auto" aria-expanded={badgesExpanded} onClick={() => setBadgesExpanded((value) => !value)}>{badgeGalleryToggleLabel(badgesExpanded)}</Button>}</section>
       ) : null}</ProfileOptionalState>
 
       <section className="panel p-5 sm:p-8">

@@ -133,6 +133,28 @@ export interface MostWantedEnding {
   eventId: string | null;
   sourceType: "attempt" | "historical_attempt" | null;
   sourceLabel: string | null;
+  additionalHits: MostWantedHit[];
+}
+
+export interface MostWantedHit {
+  id: string;
+  playerId: string | null;
+  guestId: string | null;
+  playerName: string;
+  avatarUrl: string | null;
+  isGuest: boolean;
+  timeHundredths: number;
+  occurredAt: string;
+  occurredDate: string;
+  hasExactTime: boolean;
+}
+
+export interface MostWantedHunter {
+  id: string;
+  playerId: string;
+  playerName: string;
+  avatarUrl: string | null;
+  endingCount: number;
 }
 
 export interface MostWantedSnapshot {
@@ -144,6 +166,7 @@ export interface MostWantedSnapshot {
   mostCommonEnding: number | null;
   mostCommonHits: number;
   rarestAchievedEndings: number[];
+  topHunters: MostWantedHunter[];
 }
 
 export interface TimeThresholdStatistic {

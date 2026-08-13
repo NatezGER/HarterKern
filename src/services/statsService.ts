@@ -105,13 +105,39 @@ export async function getMostWantedSnapshot(
     ? client.from("most_wanted_progress").select("*").single()
     : client.from("season_most_wanted_progress").select("*")
       .eq("season_year", season).single();
-  const [endingsResult, progressResult] = await Promise.all([
+  const hitsQuery = season === ALL_TIME_SEASON
+    ? client.from("qualified_official_times").select("source_id,player_id,guest_id,display_name,avatar_url,avatar_path,is_guest,time_hundredths,occurred_at,occurred_date,has_exact_time,source_priority,source_order")
+    : client.from("season_qualified_official_times").select("source_id,player_id,guest_id,display_name,avatar_url,avatar_path,is_guest,time_hundredths,occurred_at,occurred_date,has_exact_time,source_priority,source_order")
+      .eq("season_year", season);
+  const [endingsResult, progressResult, hitsResult] = await Promise.all([
     endingsQuery,
     progressQuery,
+    hitsQuery,
   ]);
   if (endingsResult.error) throw endingsResult.error;
   if (progressResult.error) throw progressResult.error;
+  if (hitsResult.error) throw hitsResult.error;
   const progress = progressResult.data;
+  const hits = [...hitsResult.data].sort((left, right) =>
+    left.occurred_at.localeCompare(right.occurred_at) ||
+    left.source_priority - right.source_priority ||
+    left.source_order - right.source_order ||
+    left.source_id.localeCompare(right.source_id));
+  const hitsByEnding = new Map<number, typeof hits>();
+  const hunterEndings = new Map<string, { name: string; avatarUrl: string | null; endings: Set<number> }>();
+  for (const hit of hits) {
+    const ending = hit.time_hundredths % 100;
+    hitsByEnding.set(ending, [...(hitsByEnding.get(ending) ?? []), hit]);
+    if (!hit.is_guest && hit.player_id) {
+      const hunter = hunterEndings.get(hit.player_id) ?? {
+        name: hit.display_name,
+        avatarUrl: resolveAvatar(hit.avatar_path, hit.avatar_url),
+        endings: new Set<number>(),
+      };
+      hunter.endings.add(ending);
+      hunterEndings.set(hit.player_id, hunter);
+    }
+  }
   return {
     endings: endingsResult.data.map((row) => ({
       ending: row.ending,
@@ -131,6 +157,18 @@ export async function getMostWantedSnapshot(
       eventId: row.first_event_id,
       sourceType: row.first_source_type,
       sourceLabel: row.source_label,
+      additionalHits: (hitsByEnding.get(row.ending) ?? []).slice(1).map((hit) => ({
+        id: hit.source_id,
+        playerId: hit.player_id,
+        guestId: hit.guest_id,
+        playerName: hit.display_name,
+        avatarUrl: resolveAvatar(hit.avatar_path, hit.avatar_url),
+        isGuest: hit.is_guest,
+        timeHundredths: hit.time_hundredths,
+        occurredAt: hit.occurred_at,
+        occurredDate: hit.occurred_date,
+        hasExactTime: hit.has_exact_time,
+      })),
     })),
     reached: Number(progress.reached_count),
     total: Number(progress.total_count),
@@ -139,6 +177,15 @@ export async function getMostWantedSnapshot(
     mostCommonEnding: progress.most_common_ending,
     mostCommonHits: Number(progress.most_common_hit_count),
     rarestAchievedEndings: progress.rarest_achieved_endings ?? [],
+    topHunters: [...hunterEndings.entries()].map(([playerId, hunter]) => ({
+      id: playerId,
+      playerId,
+      playerName: hunter.name,
+      avatarUrl: hunter.avatarUrl,
+      endingCount: hunter.endings.size,
+    })).sort((left, right) => right.endingCount - left.endingCount ||
+      left.playerName.localeCompare(right.playerName, "de") ||
+      left.playerId.localeCompare(right.playerId)).slice(0, 5),
   };
 }
 

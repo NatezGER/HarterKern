@@ -29,6 +29,8 @@ import type {
   MostWantedProgressView,
   SeasonMostWantedEndingView,
   SeasonMostWantedProgressView,
+  QualifiedOfficialTimeView,
+  SeasonQualifiedOfficialTimeView,
   PlayerBingoFieldView,
   PlayerBingoHitView,
   PlayerBingoLineView,
@@ -312,6 +314,8 @@ export interface Database {
       most_wanted_progress: MostWantedProgressView;
       season_most_wanted_endings: SeasonMostWantedEndingView;
       season_most_wanted_progress: SeasonMostWantedProgressView;
+      qualified_official_times: QualifiedOfficialTimeView;
+      season_qualified_official_times: SeasonQualifiedOfficialTimeView;
       player_bingo_hits: PlayerBingoHitView;
       player_bingo_fields: PlayerBingoFieldView;
       player_bingo_lines: PlayerBingoLineView;
