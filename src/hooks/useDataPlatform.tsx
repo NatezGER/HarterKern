@@ -141,7 +141,7 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
 
   const loadPlan = useCallback(async (nextPlan: RouteDataPlan, runId?: number) => {
     try {
-      await Promise.all(nextPlan.required.map((group) => loadGroup(group)));
+      await Promise.all(nextPlan.required.map((group) => loadGroup(group, runId)));
       if (runId == null || routeRun.current === runId) {
         setStatus("ready");
         setError(null);

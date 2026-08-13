@@ -46,15 +46,16 @@ export function PlayerProfilePage() {
     validAttempts: 0, dnfCount: 0,
   };
   const activeStats = isAllTime ? player : seasonStats;
+  const hasSeasonTime = isAllTime || seasonStats.personalBestHundredths != null;
   const coreMetrics = [
     { label: isAllTime ? "Persönliche Bestzeit" : `Saison-PB ${selectedSeason}`, value: displayTime(activeStats.personalBestHundredths), icon: Zap },
     { label: isAllTime ? "Hall of Fame" : `Saisonrang ${selectedSeason}`, value: activeStats.rank ? `#${activeStats.rank}` : "—", icon: Medal },
-    { label: "Durchschnitt", value: displayTime(activeStats.averageHundredths), icon: Timer },
-    { label: "Eventteilnahmen", value: String(activeStats.eventParticipations), icon: Target },
-    { label: "Siege", value: String(activeStats.wins), icon: Trophy },
-    { label: "Platz 2 / 3", value: `${activeStats.secondPlaces} / ${activeStats.thirdPlaces}`, icon: Medal },
-    { label: "Gültig / DNF", value: `${activeStats.validAttempts} / ${activeStats.dnfCount}`, icon: CircleX },
-    { label: "Getrunken", value: formatDrinkVolume(activeStats.validAttempts, DRINK_MILLILITERS_PER_VALID_ATTEMPT), icon: Droplets },
+    { label: isAllTime ? "Durchschnitt" : "Saison-Durchschnitt", value: displayTime(activeStats.averageHundredths), icon: Timer },
+    { label: isAllTime ? "Eventteilnahmen" : "Saison-Events", value: String(activeStats.eventParticipations), icon: Target },
+    { label: isAllTime ? "Siege" : "Saison-Siege", value: String(activeStats.wins), icon: Trophy },
+    { label: isAllTime ? "Platz 2 / 3" : "Saison Platz 2 / 3", value: `${activeStats.secondPlaces} / ${activeStats.thirdPlaces}`, icon: Medal },
+    { label: isAllTime ? "Gültig / DNF" : "Saison gültig / DNF", value: `${activeStats.validAttempts} / ${activeStats.dnfCount}`, icon: CircleX },
+    { label: isAllTime ? "Getrunken" : "Saison getrunken", value: !isAllTime && !hasSeasonTime ? "—" : formatDrinkVolume(activeStats.validAttempts, DRINK_MILLILITERS_PER_VALID_ATTEMPT), icon: Droplets },
   ];
   return (
     <div className="space-y-7 sm:space-y-10">
@@ -76,16 +77,15 @@ export function PlayerProfilePage() {
       </section>
 
       <ProfileOptionalState state={trophies}>{(data) => data.length > 0 ? (
-        <section><SectionHeading eyebrow={isAllTime ? "Podiumserfolge" : "All-Time · Podiumserfolge"} title="Trophäenschrank" /><TrophyCabinet trophies={data} /></section>
+        <section><SectionHeading eyebrow="Karriere-Auszeichnungen" title="Trophäenschrank" /><TrophyCabinet trophies={data} /></section>
       ) : null}</ProfileOptionalState>
 
-      {!isAllTime && <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/35">Badges bleiben All-Time</p>}
       <ProfileOptionalState state={badges}>{(data) => data.length > 0 ? (
-        <section><SectionHeading eyebrow="Verdient" title="Badge-Galerie" /><BadgeGallery badges={data} featured mobileLimit={2} mobileExpanded={badgesExpanded} />{data.length > 2 && <Button type="button" variant="outline" className="mt-4 w-full sm:hidden" aria-expanded={badgesExpanded} onClick={() => setBadgesExpanded((value) => !value)}>{badgesExpanded ? "Badges einklappen" : "Alle Badges anzeigen"}</Button>}</section>
+        <section><SectionHeading eyebrow={isAllTime ? "Verdient" : "Karriere · All-Time"} title="Badge-Galerie" /><BadgeGallery badges={data} featured mobileLimit={2} mobileExpanded={badgesExpanded} />{data.length > 2 && <Button type="button" variant="outline" className="mt-4 w-full sm:hidden" aria-expanded={badgesExpanded} onClick={() => setBadgesExpanded((value) => !value)}>{badgesExpanded ? "Badges einklappen" : "Alle Badges anzeigen"}</Button>}</section>
       ) : null}</ProfileOptionalState>
 
       <section className="panel p-5 sm:p-8">
-        <SectionHeading eyebrow="Offizielle Events" title="Podiumsmedaillen" />
+        <SectionHeading eyebrow={isAllTime ? "Offizielle Events" : `Saison ${selectedSeason} · Offizielle Events`} title="Podiumsmedaillen" />
         <div className="grid grid-cols-3 gap-2 sm:gap-4">{getPodiumCounters(activeStats).map((counter) => <article key={counter.rank} className="flex flex-col items-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3 text-center sm:flex-row sm:gap-5 sm:p-5 sm:text-left"><PodiumMedal rank={counter.rank} size="lg" /><div><p className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[10px] sm:tracking-[0.18em]">{counter.label} · Platz {counter.rank}</p><p className="mt-1 font-display text-3xl font-black sm:text-4xl">{counter.count}</p></div></article>)}</div>
       </section>
 
@@ -98,30 +98,31 @@ export function PlayerProfilePage() {
         const comparisonProgression = firstPbAt ? selectRecordsForPeriod(data.worldRecords, firstPbAt, new Date().toISOString()).map((record) => ({ id: record.id, playerId: record.playerId, playerName: record.playerName, avatarUrl: record.avatarUrl, timeHundredths: record.timeHundredths, achievedAt: record.achievedAt, achievedDate: record.achievedDate, axisAt: record.axisAt, eventId: record.eventId, sourceLabel: record.sourceLabel, improvementHundredths: record.improvementHundredths, durationDays: record.durationDays, isCurrent: record.isCurrent, hasExactTime: record.sourceType === "attempt" })) : [];
         return (
           <section className="panel p-5 sm:p-8">
-            <SectionHeading eyebrow={isAllTime ? "Persönliche Bestmarken" : `Persönliche Bestmarken · Saison ${selectedSeason}`} title="PB Progression" />
-            <ProgressionTimeline points={personalProgression} comparisonPoints={comparisonProgression} historyDisclosure={{ id: "personal-best-history", expanded: pbDetailsExpanded }} emptyLabel="Noch keine persönliche Bestzeit vorhanden." />
+            <SectionHeading eyebrow={isAllTime ? "Persönliche Bestmarken" : `Saison ${selectedSeason}`} title={isAllTime ? "PB Progression" : "Saison-PB-Progression"} />
+            <ProgressionTimeline points={personalProgression} comparisonPoints={comparisonProgression} comparisonLabel={isAllTime ? "Weltrekord" : "Saisonrekord"} historyDisclosure={{ id: "personal-best-history", expanded: pbDetailsExpanded }} emptyLabel={isAllTime ? "Noch keine persönliche Bestzeit vorhanden." : `Noch keine Saison-PB ${selectedSeason} vorhanden.`} />
             {personalProgression.length > 0 && <PersonalBestDetailsToggle expanded={pbDetailsExpanded} controls="personal-best-history" onToggle={() => setPbDetailsExpanded((value) => !value)} />}
           </section>
         );
       }}</ProfileOptionalState>
 
       <section className="panel overflow-hidden p-4 sm:p-8">
-        <SectionHeading eyebrow="Persönliche Langzeitjagd" title="BINGO" />
+        <SectionHeading eyebrow={isAllTime ? "Persönliche Langzeitjagd" : "Karriere · All-Time"} title="BINGO" />
         <p className="mb-5 max-w-2xl text-sm leading-6 text-white/45">Jede eigene Hundertstel-Endung steigt vom ersten Treffer in Bronze über Silber bis Gold. Im persönlichen BINGO werden bewusst keine Profilbilder gezeigt.</p>
         <ProfileOptionalState state={bingo}>{(data) => <PersonalBingo data={data} />}</ProfileOptionalState>
       </section>
 
       <ProfileOptionalState state={attemptNumbers}>{(data) => (
         <section className="panel p-6 sm:p-8">
-          <SectionHeading eyebrow="Leistung im Event" title="Nach Versuchsnummer" />
+          <SectionHeading eyebrow={isAllTime ? "Leistung im Event" : "Karriere · All-Time"} title="Nach Versuchsnummer" />
           <AttemptNumberChart points={data} />
         </section>
       )}</ProfileOptionalState>
 
       <section>
         <SectionHeading eyebrow={isAllTime ? "Karrierewerte" : `Saisonwerte ${selectedSeason}`} title="Statistik" />
+        {!hasSeasonTime && <div className="panel mb-4 border-emerald-300/15 px-5 py-4 text-sm text-white/45">Noch keine qualifizierte Saisonzeit {selectedSeason}. Zeitbasierte Saisonwerte bleiben leer.</div>}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">{coreMetrics.map(({ label, value, icon: Icon }, index) => <AnimatedCard key={label} delay={index * 0.04} className="min-w-0 p-4 last:col-span-2 sm:p-5 xl:last:col-span-1"><Icon className="size-5 text-gold-400" /><p className="mt-4 break-words text-[9px] font-bold uppercase tracking-[0.14em] text-white/30 sm:mt-6 sm:tracking-[0.18em]">{label}</p><p className="mt-1 break-words font-display text-2xl font-black sm:text-3xl">{value}</p></AnimatedCard>)}</div>
-        <div className="mt-3 sm:mt-4"><ProfileOptionalState state={prestige}>{(data) => {
+        <div className="mt-3 sm:mt-4">{!isAllTime && <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">Karriere · All-Time</p>}<ProfileOptionalState state={prestige}>{(data) => {
           const prestigeMetrics = [
             { label: "PB-Verbesserungen", value: String(data.pbCount), icon: Zap },
             { label: "Größter PB-Sprung", value: displayTime(data.largestPbImprovementHundredths), icon: Zap },

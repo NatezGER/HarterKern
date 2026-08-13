@@ -60,30 +60,37 @@ function usePlayerProfileSection<Section extends PlayerProfileSection>(
 ): ProfileSectionState<PlayerProfileSectionData[Section]> {
   const { status: platformStatus } = useDataPlatform();
   const { status: groupStatus, version } = useDataGroup(group);
-  const [state, setState] = useState<DetailState<PlayerProfileSectionData[Section]>>(initialState);
+  const requestKey = `${section}:${playerId}:${seasonYear ?? "all-time"}`;
+  const [state, setState] = useState<DetailState<PlayerProfileSectionData[Section]> & {
+    requestKey: string;
+  }>(() => ({ ...initialState(), requestKey }));
   const [run, setRun] = useState(0);
   const retry = useCallback(() => setRun((current) => current + 1), []);
   useEffect(() => {
     if (platformStatus !== "ready" || groupStatus !== "ready") {
-      setState(initialState);
+      setState({ ...initialState(), requestKey });
       return;
     }
     let active = true;
-    setState(initialState);
+    setState({ ...initialState(), requestKey });
     void loadPlayerProfileSection(section, playerId, { force: run > 0, seasonYear })
-      .then((data) => active && setState({ data, loading: false, error: "" }))
+      .then((data) => active && setState({ data, loading: false, error: "", requestKey }))
       .catch(() => active && setState({
         data: null,
         loading: false,
         error: section === "core"
           ? "Profil konnte nicht geladen werden."
           : "Dieser Bereich konnte nicht geladen werden.",
+        requestKey,
       }));
     return () => {
       active = false;
     };
-  }, [groupStatus, platformStatus, playerId, run, seasonYear, section, version]);
-  return { ...state, retry };
+  }, [groupStatus, platformStatus, playerId, requestKey, run, seasonYear, section, version]);
+  const currentState = state.requestKey === requestKey
+    ? state
+    : initialState<PlayerProfileSectionData[Section]>();
+  return { ...currentState, retry };
 }
 
 export function usePlayerProfileDetail(playerId: string) {

@@ -42,7 +42,7 @@ export function StatsPage() {
           <OptionalDataState group="group-milestones"><GroupMilestones /></OptionalDataState>
         </section>
         <section className="mt-12">
-          <SectionHeading eyebrow={isAllTime ? "00 bis 99" : `Saison ${season} · 00 bis 99`} title="Most Wanted" />
+          <SectionHeading eyebrow="00 bis 99" title="Most Wanted" />
           <OptionalDataState group="most-wanted"><MostWantedMatrix data={data.mostWanted} season={season} /></OptionalDataState>
         </section>
         <section className="mt-12">

@@ -52,7 +52,9 @@ describe("TrophyCabinet", () => {
     );
     expect(markup).toContain("Finale");
     expect(markup).toContain('href="/events/event-1"');
-    expect(markup).toContain("Saisonmeister 2026");
+    expect(markup).toContain("Saisonmeister");
+    expect(markup).toContain("Saison 2026");
+    expect(markup).toContain("Karriere-Trophäe");
     expect(markup).toContain("1. Platz");
     expect(markup).not.toContain("/events/season-2026");
     expect(markup.match(/href=/g)).toHaveLength(1);

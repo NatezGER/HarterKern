@@ -19,6 +19,9 @@ describe("SeasonSelector", () => {
     expect(markup).toContain("2026");
     expect(markup).not.toContain('class="hidden');
     expect(markup).toContain("text-gold-300");
+    expect(markup).toContain("h-10");
+    expect(markup).toContain("w-[4.75rem]");
+    expect(markup).toContain("shrink-0");
   });
 
   it("uses subtle green accents for a year season", () => {

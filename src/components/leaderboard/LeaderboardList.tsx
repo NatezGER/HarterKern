@@ -5,9 +5,12 @@ import { formatDate, formatTime } from "@/utils/format";
 import { Avatar } from "@/components/common/Avatar";
 import { HallOfFameRankEmblem } from "@/components/common/HallOfFameRankEmblem";
 
-export function LeaderboardList({ entries }: { entries: ReturnTypeRankedPlayers }) {
+export function LeaderboardList({ entries, emptyLabel = "Kein Spieler gefunden." }: {
+  entries: ReturnTypeRankedPlayers;
+  emptyLabel?: string;
+}) {
   if (entries.length === 0) {
-    return <div className="panel py-20 text-center text-sm text-white/40">Kein Spieler gefunden.</div>;
+    return <div className="panel py-20 text-center text-sm text-white/40">{emptyLabel}</div>;
   }
 
   return (

@@ -42,4 +42,27 @@ describe("season request merge protection", () => {
     }, 2, 3);
     expect(lateSeason.publicData.mostWanted.reached).toBe(99);
   });
+
+  it("protects required page snapshots across repeated fast season switches", () => {
+    const statistic = (value: string) => ({
+      id: "events",
+      label: "Events",
+      value,
+      change: "",
+      icon: "trophy" as const,
+    });
+    const season2026 = mergePatchForRun(snapshot(0), {
+      publicData: { statistics: [statistic("2026")] },
+    }, 4, 4);
+    const lateAllTime = mergePatchForRun(season2026, {
+      publicData: { statistics: [statistic("Ewig-alt")] },
+    }, 3, 4);
+    const allTimeAgain = mergePatchForRun(lateAllTime, {
+      publicData: { statistics: [statistic("Ewig-neu")] },
+    }, 5, 5);
+    const lateSeason = mergePatchForRun(allTimeAgain, {
+      publicData: { statistics: [statistic("2026-alt")] },
+    }, 4, 5);
+    expect(lateSeason.publicData.statistics[0]?.value).toBe("Ewig-neu");
+  });
 });

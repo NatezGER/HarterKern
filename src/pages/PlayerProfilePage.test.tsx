@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import type { TrophyAward } from "@/types/historyProfiles";
+import type { PlayerSeasonProfile, TrophyAward } from "@/types/historyProfiles";
 
 const selectedSeason = vi.hoisted(() => ({
   season: "all-time" as "all-time" | 2026,
@@ -30,7 +30,12 @@ const profile = vi.hoisted(() => ({
     error: "",
     retry: vi.fn(),
   },
-  season: { data: null, loading: false, error: "", retry: vi.fn() },
+  season: {
+    data: null as PlayerSeasonProfile | null,
+    loading: false,
+    error: "",
+    retry: vi.fn(),
+  },
   badges: { data: null, loading: false, error: "Dieser Bereich konnte nicht geladen werden.", retry: vi.fn() },
   trophies: { data: [] as TrophyAward[], loading: false, error: "", retry: vi.fn() },
   prestige: { data: { pbCount: 0, largestPbImprovementHundredths: null, averagePbImprovementHundredths: null, worldRecordCount: 0, worldRecordDays: 0, longestWorldRecordDays: 0, visibleBadgeCount: 0 }, loading: false, error: "", retry: vi.fn() },
@@ -85,9 +90,36 @@ describe("PlayerProfilePage optional failures", () => {
     selectedSeason.season = 2026;
     selectedSeason.isAllTime = false;
     const seasonMarkup = renderProfile();
-    expect(allTimeMarkup).toContain("Saisonmeister 2026");
-    expect(seasonMarkup).toContain("Saisonmeister 2026");
+    expect(allTimeMarkup).toContain("Saisonmeister");
+    expect(allTimeMarkup).toContain("Saison 2026");
+    expect(seasonMarkup).toContain("Saisonmeister");
+    expect(seasonMarkup).toContain("Saison 2026");
     profile.trophies.data = [];
+    selectedSeason.season = "all-time";
+    selectedSeason.isAllTime = true;
+  });
+
+  it("shows clear season labels and an empty state without fake time values", () => {
+    selectedSeason.season = 2026;
+    selectedSeason.isAllTime = false;
+    profile.season.data = {
+      personalBestHundredths: null,
+      rank: null,
+      averageHundredths: null,
+      eventParticipations: 0,
+      wins: 0,
+      secondPlaces: 0,
+      thirdPlaces: 0,
+      validAttempts: 0,
+      dnfCount: 0,
+    };
+    const markup = renderProfile();
+    expect(markup).toContain("Saison-PB-Progression");
+    expect(markup).toContain("Noch keine Saison-PB 2026 vorhanden.");
+    expect(markup).toContain("Noch keine qualifizierte Saisonzeit 2026.");
+    expect(markup).toContain("Karriere · All-Time");
+    expect(markup).not.toContain("0,00");
+    profile.season.data = null;
     selectedSeason.season = "all-time";
     selectedSeason.isAllTime = true;
   });

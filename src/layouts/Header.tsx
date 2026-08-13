@@ -16,8 +16,8 @@ export function Header() {
       "sticky top-0 z-40 border-b bg-background/85 backdrop-blur-2xl transition-colors",
       isAllTime ? "border-white/[0.07]" : "border-emerald-300/20",
     )}>
-      <div className="mx-auto flex h-20 max-w-[1600px] items-center justify-between px-5 sm:px-8 lg:px-12">
-        <NavLink to="/" onClick={() => setIsOpen(false)} className="flex items-center gap-3">
+      <div className="mx-auto flex h-20 max-w-[1600px] items-center justify-between gap-2 px-4 sm:gap-4 sm:px-8 lg:px-12">
+        <NavLink to="/" onClick={() => setIsOpen(false)} className="flex shrink-0 items-center gap-3">
           <span className="grid size-10 skew-x-[-8deg] place-items-center rounded-lg bg-gold-400 font-display text-lg font-black text-black shadow-gold-sm">
             {brand.shortName}
           </span>
@@ -47,7 +47,7 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <SeasonSelector />
           <Button size="sm" asChild>
             <Link to="/events/live">

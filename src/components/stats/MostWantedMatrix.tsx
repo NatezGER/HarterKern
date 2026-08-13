@@ -45,6 +45,9 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
             ? "bg-gradient-to-r from-amber-600 to-yellow-300"
             : "bg-gradient-to-r from-emerald-700 to-emerald-300")} style={{ width: `${data.percent}%` }} />
       </div>
+      {season !== ALL_TIME_SEASON && data.reached === 0 && (
+        <p className="mt-4 text-sm text-white/40">In Saison {season} wurde noch keine Endung gefunden.</p>
+      )}
       <Button type="button" variant="outline" className="mt-5 w-full sm:w-auto" aria-expanded={expanded} aria-controls="most-wanted-grid" onClick={() => setExpanded((value) => !value)}>{expanded ? "Matrix einklappen" : "10×10-Matrix anzeigen"}</Button>
       <div id="most-wanted-grid" hidden={!expanded} className="mt-5 grid grid-cols-10 gap-1 sm:gap-1.5" role="grid" aria-label="Matrix der Nachkommastellen 00 bis 99">
         {data.endings.map((ending) => (

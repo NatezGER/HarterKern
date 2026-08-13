@@ -33,4 +33,16 @@ describe("ProgressionTimeline mobile history disclosure", () => {
     expect(markup).toContain("grid-rows-[1fr]");
     expect(markup).toContain("Paul");
   });
+
+  it("labels the comparison as a season record in season mode", () => {
+    const markup = renderToStaticMarkup(
+      <ProgressionTimeline
+        points={[point]}
+        comparisonPoints={[{ ...point, id: "season-record-1" }]}
+        comparisonLabel="Saisonrekord"
+      />,
+    );
+    expect(markup).toContain("Mit Saisonrekord vergleichen");
+    expect(markup).not.toContain("Mit Weltrekord vergleichen");
+  });
 });

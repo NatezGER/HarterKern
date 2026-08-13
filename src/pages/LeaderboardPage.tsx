@@ -16,7 +16,7 @@ export function LeaderboardPage() {
 
   return (
     <div className="space-y-10">
-      <PageHeader eyebrow={isAllTime ? "Hall of Fame" : `Hall of Fame · Saison ${season}`} title={isAllTime ? "Die Besten" : `Die Besten ${season}`} description={isAllTime ? appMeta.leaderboardDescription : `Die schnellsten gültigen Eventzeiten der Saison ${season}.`} action={<SeasonContextBadge />} />
+      <PageHeader eyebrow={isAllTime ? "Hall of Fame" : `Saison ${season}`} title={isAllTime ? "Die Besten" : "Saison-Hall-of-Fame"} description={isAllTime ? appMeta.leaderboardDescription : `Die schnellsten qualifizierten Einzelzeiten der Saison ${season}.`} action={<SeasonContextBadge />} />
       <DataState>
         <div className="space-y-10">
           <section className="panel px-4 pt-8 sm:px-10">
@@ -33,7 +33,12 @@ export function LeaderboardPage() {
                 <Button variant="outline" aria-label="Filter vorbereiten"><Filter className="size-4" /> Filter</Button>
               </div>
             </div>
-            <LeaderboardList entries={entries} />
+            <LeaderboardList
+              entries={entries}
+              emptyLabel={!isAllTime && !query.trim()
+                ? `Noch keine qualifizierten Zeiten in Saison ${season}.`
+                : "Kein Spieler gefunden."}
+            />
           </section>
         </div>
       </DataState>

@@ -30,12 +30,13 @@ export interface TimelinePoint {
 
 type PlottedPoint = TimelinePoint & { x: number; y: number; series: "primary" | "comparison" };
 
-export function ProgressionTimeline({ points, comparisonPoints = [], domainStartAt, domainEndAt, emptyLabel = "Noch keine Progression vorhanden.", showHistory = true, historyDisclosure }: {
+export function ProgressionTimeline({ points, comparisonPoints = [], domainStartAt, domainEndAt, emptyLabel = "Noch keine Progression vorhanden.", comparisonLabel = "Weltrekord", showHistory = true, historyDisclosure }: {
   points: TimelinePoint[];
   comparisonPoints?: TimelinePoint[];
   domainStartAt?: string;
   domainEndAt?: string;
   emptyLabel?: string;
+  comparisonLabel?: string;
   showHistory?: boolean;
   historyDisclosure?: { id: string; expanded: boolean };
 }) {
@@ -69,8 +70,8 @@ export function ProgressionTimeline({ points, comparisonPoints = [], domainStart
   return (
     <div ref={rootRef} className="space-y-5">
       {comparisonPoints.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.16em] text-white/45"><span className="flex items-center gap-2"><i className="h-0.5 w-7 bg-gold-400" /> PB</span>{showComparison && <span className="flex items-center gap-2"><i className="h-0.5 w-7 border-t-2 border-dashed border-cyan-300" /> Weltrekord</span>}</div>
-        <Button type="button" variant={showComparison ? "default" : "outline"} size="sm" onClick={() => { setShowComparison((value) => !value); setPinnedId(null); }}>{showComparison ? "Nur meine Progression" : "Mit Weltrekord vergleichen"}</Button>
+        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.16em] text-white/45"><span className="flex items-center gap-2"><i className="h-0.5 w-7 bg-gold-400" /> PB</span>{showComparison && <span className="flex items-center gap-2"><i className="h-0.5 w-7 border-t-2 border-dashed border-cyan-300" /> {comparisonLabel}</span>}</div>
+        <Button type="button" variant={showComparison ? "default" : "outline"} size="sm" onClick={() => { setShowComparison((value) => !value); setPinnedId(null); }}>{showComparison ? "Nur meine Progression" : `Mit ${comparisonLabel} vergleichen`}</Button>
       </div>}
       <div data-progression-chart className="overflow-x-auto pb-2">
         <div className="relative h-64 min-w-[42rem] overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20 sm:h-72 sm:min-w-[52rem]">
@@ -98,7 +99,7 @@ export function ProgressionTimeline({ points, comparisonPoints = [], domainStart
           <TrendingDown className="absolute right-4 top-4 size-5 text-gold-400/40" />
         </div>
       </div>
-      <TimelineDetail point={active} pinned={Boolean(pinnedId)} />
+      <TimelineDetail point={active} pinned={Boolean(pinnedId)} comparisonLabel={comparisonLabel} />
       {showHistory && <ProgressionHistory points={points} disclosure={historyDisclosure} />}
     </div>
   );
@@ -132,14 +133,14 @@ function TimelineNode({ point, active, onHover, onPin }: { point: PlottedPoint; 
   </button>;
 }
 
-function TimelineDetail({ point, pinned }: { point: PlottedPoint | null; pinned: boolean }) {
+function TimelineDetail({ point, pinned, comparisonLabel }: { point: PlottedPoint | null; pinned: boolean; comparisonLabel: string }) {
   if (!point) return null;
   return <div role="status" className={cn("min-h-24 rounded-2xl border p-4", point.series === "comparison" ? "border-cyan-300/20 bg-cyan-300/[0.04]" : "border-gold-400/20 bg-gold-400/[0.04]")}>
     <div className="flex items-center gap-4"><ProfileAvatar id={point.playerId ?? point.id} name={point.playerName ?? point.sourceLabel} url={point.avatarUrl ?? null} className="size-12" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><strong className="font-display text-xl uppercase">{point.playerName ?? point.sourceLabel}</strong>{point.isCurrent && <span className="rounded-full bg-gold-400 px-2 py-0.5 text-[8px] font-black uppercase text-black">Aktuell</span>}{pinned && <span className="text-[9px] text-white/35">Fixiert</span>}</div><p className="mt-1 text-xs text-white/45">{formatTimelineMoment(point.achievedAt, point.achievedDate, Boolean(point.hasExactTime))} · {point.sourceLabel}{point.attemptNumber ? ` · Versuch ${point.attemptNumber}` : ""}</p></div><strong className="font-display text-3xl text-gold-300">{formatTime(point.timeHundredths / 100)}</strong></div>
     <div className="mt-3 flex flex-wrap gap-4 border-t border-white/[0.06] pt-3 text-xs text-white/45">
       {point.improvementHundredths != null && <span>−{formatTime(point.improvementHundredths / 100)} Verbesserung</span>}
       <span>{point.durationLabel ?? `${formatRecordDuration(point.durationDays)} gehalten`}</span>
-      {point.distanceToComparisonHundredths != null && <span>Abstand zum damaligen WR: {formatTime(point.distanceToComparisonHundredths / 100)}</span>}
+      {point.distanceToComparisonHundredths != null && <span>Abstand zum damaligen {comparisonLabel}: {formatTime(point.distanceToComparisonHundredths / 100)}</span>}
       {point.eventId && <Link to={`/events/${point.eventId}`} className="text-gold-300 hover:underline">Zum Event</Link>}
     </div>
   </div>;

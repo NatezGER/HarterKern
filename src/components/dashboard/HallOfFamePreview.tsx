@@ -22,7 +22,7 @@ export function HallOfFamePreview() {
         action={<Button asChild variant="ghost" size="sm"><Link to="/leaderboard">Alle anzeigen <ArrowRight className="size-4" /></Link></Button>}
       />
       <div className="panel overflow-hidden">
-        {entries.length === 0 && <p className="py-16 text-center text-sm text-white/35">Noch keine bestätigten Bestzeiten.</p>}
+        {entries.length === 0 && <p className="py-16 text-center text-sm text-white/35">{isAllTime ? "Noch keine bestätigten Bestzeiten." : `Noch keine qualifizierten Zeiten in Saison ${season}.`}</p>}
         {entries.map(({ player, rank }) => (
           <Link
             key={player.id}

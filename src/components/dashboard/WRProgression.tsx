@@ -31,10 +31,13 @@ export function WRProgression({ compact = false, collapsibleHistory = false }: {
   });
   return (
     <section>
-      <SectionHeading eyebrow={isAllTime ? "Rekordgeschichte" : `Rekordgeschichte · Saison ${season}`} title="WR Progression" />
+      <SectionHeading
+        eyebrow={isAllTime ? "Rekordgeschichte" : `Saison ${season}`}
+        title={isAllTime ? "WR Progression" : "Saison-WR-Progression"}
+      />
       <AnimatedCard className="overflow-hidden p-5 sm:p-8" hover={false}>
-        <ProgressionTimeline points={compact ? points.slice(0, 6) : points} showHistory={!collapsibleHistory || historyExpanded} emptyLabel="Noch kein offizieller Weltrekord." />
-        {collapsibleHistory && points.length > 0 && <Button type="button" variant="outline" className="mt-5 w-full sm:w-auto" aria-expanded={historyExpanded} onClick={() => setHistoryExpanded((value) => !value)}>{historyExpanded ? "Weltrekorde einklappen" : "Alle Weltrekorde anzeigen"}</Button>}
+        <ProgressionTimeline points={compact ? points.slice(0, 6) : points} showHistory={!collapsibleHistory || historyExpanded} emptyLabel={isAllTime ? "Noch kein offizieller Weltrekord." : `Noch kein Saisonrekord ${season}.`} />
+        {collapsibleHistory && points.length > 0 && <Button type="button" variant="outline" className="mt-5 w-full sm:w-auto" aria-expanded={historyExpanded} onClick={() => setHistoryExpanded((value) => !value)}>{historyExpanded ? (isAllTime ? "Weltrekorde einklappen" : "Saisonrekorde einklappen") : (isAllTime ? "Alle Weltrekorde anzeigen" : "Alle Saisonrekorde anzeigen")}</Button>}
       </AnimatedCard>
     </section>
   );

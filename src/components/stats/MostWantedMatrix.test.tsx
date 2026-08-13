@@ -53,6 +53,29 @@ describe("MostWantedMatrix", () => {
     expect(season).toContain("from-emerald-700");
   });
 
+  it("shows a compact empty state for a season with zero hunters", () => {
+    const empty = {
+      ...data,
+      reached: 0,
+      percent: 0,
+      openEndings: Array.from({ length: 100 }, (_, ending) => ending),
+      mostCommonEnding: null,
+      mostCommonHits: 0,
+      rarestAchievedEndings: [],
+      endings: data.endings.map((ending) => ({
+        ...ending,
+        achieved: false,
+        hitCount: 0,
+        participantCount: 0,
+        playerId: null,
+        playerName: null,
+      })),
+    };
+    const markup = renderToStaticMarkup(<MostWantedMatrix data={empty} season={2026} />);
+    expect(markup).toContain('aria-valuenow="0"');
+    expect(markup).toContain("In Saison 2026 wurde noch keine Endung gefunden.");
+  });
+
   it("closes an open All-Time hunter detail when switching to 2026", () => {
     expect(selectionAfterSeasonChange(data.endings[0], "all-time", 2026)).toBeNull();
   });
