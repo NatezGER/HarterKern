@@ -354,8 +354,9 @@ export async function getPlayerBadges(playerId: string): Promise<CompactBadge[]>
 }
 
 export async function getPlayerTrophies(playerId: string): Promise<TrophyAward[]> {
-  const result = await getSupabase().from("player_trophies").select("*")
-    .eq("player_id", playerId).order("awarded_at", { ascending: false });
+  const result = await getSupabase().rpc("get_player_trophies", {
+    p_player_id: playerId,
+  });
   if (result.error) throw result.error;
   return (result.data ?? []).map(mapTrophy);
 }

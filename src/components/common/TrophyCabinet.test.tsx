@@ -35,4 +35,26 @@ describe("TrophyCabinet", () => {
     expect(markup).toContain('aria-expanded="false"');
     expect(markup).toContain("Alle Trophäen anzeigen");
   });
+
+  it("shows a season trophy as a career award without an event link", () => {
+    const seasonTrophy: TrophyAward = {
+      ...trophy(1),
+      key: "season-trophy-2026",
+      competitionType: "season",
+      scopeType: "season",
+      competitionId: "season-2026",
+      seasonKey: "2026",
+      competitionName: "Saisonmeister 2026",
+      eventDate: "2026-12-31",
+    };
+    const markup = renderToStaticMarkup(
+      <TrophyCabinet trophies={[trophy(1), seasonTrophy]} />,
+    );
+    expect(markup).toContain("Finale");
+    expect(markup).toContain('href="/events/event-1"');
+    expect(markup).toContain("Saisonmeister 2026");
+    expect(markup).toContain("1. Platz");
+    expect(markup).not.toContain("/events/season-2026");
+    expect(markup.match(/href=/g)).toHaveLength(1);
+  });
 });

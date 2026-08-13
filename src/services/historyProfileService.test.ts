@@ -19,6 +19,7 @@ import {
   getPlayerProfileCore,
   getPlayerSeasonProfile,
   getPlayerProgression,
+  getPlayerTrophies,
 } from "@/services/historyProfileService";
 
 describe("player profile core repository", () => {
@@ -130,6 +131,60 @@ describe("player profile core repository", () => {
       }),
     ]);
     expect(mocks.rpc).toHaveBeenCalledWith("get_visible_player_badges", {
+      p_player_id: "player-1",
+    });
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it("loads event and season trophies through the player-scoped career RPC", async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: [{
+        trophy_key: "event-trophy:event-1:player-1:1",
+        competition_type: "event",
+        scope_type: "event",
+        competition_id: "event-1",
+        season_key: null,
+        competition_name: "Special Finale",
+        competition_year: 2026,
+        event_date: "2026-07-31",
+        placement: 1,
+        trophy_tier: "gold",
+        player_id: "player-1",
+        guest_id: null,
+        display_name: "Paul",
+        awarded_at: "2026-07-31T20:00:00Z",
+      }, {
+        trophy_key: "season-trophy:2026:player-1:1",
+        competition_type: "season",
+        scope_type: "season",
+        competition_id: "00000000-0000-0000-0000-000000002026",
+        season_key: "2026",
+        competition_name: "Saisonmeister 2026",
+        competition_year: 2026,
+        event_date: "2026-12-31",
+        placement: 1,
+        trophy_tier: "gold",
+        player_id: "player-1",
+        guest_id: null,
+        display_name: "Paul",
+        awarded_at: "2027-01-02T18:00:00Z",
+      }],
+      error: null,
+    });
+
+    await expect(getPlayerTrophies("player-1")).resolves.toEqual([
+      expect.objectContaining({
+        competitionType: "event",
+        competitionName: "Special Finale",
+      }),
+      expect.objectContaining({
+        competitionType: "season",
+        seasonKey: "2026",
+        competitionName: "Saisonmeister 2026",
+        placement: 1,
+      }),
+    ]);
+    expect(mocks.rpc).toHaveBeenCalledWith("get_player_trophies", {
       p_player_id: "player-1",
     });
     expect(mocks.from).not.toHaveBeenCalled();

@@ -388,6 +388,15 @@ export interface Database {
         Row: WorldRecordHistoryView["Row"] & { season_year: number };
         Relationships: [];
       };
+      season_finalization_status: {
+        Row: {
+          season_year: number;
+          is_finalized: boolean;
+          finalized_at: string | null;
+        };
+        Relationships: [];
+      };
+      season_trophies: PlayerTrophyView;
     };
     Functions: DataPlatformFunctions & {
       get_medal_qualified_events: {
@@ -412,6 +421,22 @@ export interface Database {
       get_player_season_pb_history: {
         Args: { p_player_id: string; p_season_year: number };
         Returns: PlayerPbHistoryView["Row"][];
+      };
+      get_player_trophies: {
+        Args: { p_player_id: string };
+        Returns: PlayerTrophyView["Row"][];
+      };
+      get_season_finalization_status: {
+        Args: { p_as_of?: string };
+        Returns: Array<{
+          season_year: number;
+          is_finalized: boolean;
+          finalized_at: string | null;
+        }>;
+      };
+      get_season_trophies: {
+        Args: { p_as_of?: string };
+        Returns: PlayerTrophyView["Row"][];
       };
       get_visible_player_badges: {
         Args: { p_player_id: string };
