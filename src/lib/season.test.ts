@@ -6,6 +6,7 @@ import {
   getEventSeason,
   getSeasonOptions,
   getSeasonDateRange,
+  getSeasonTheme,
   readStoredSeason,
   SEASON_STORAGE_KEY,
   storeSeason,
@@ -16,6 +17,12 @@ describe("season foundation", () => {
     expect(FIRST_SEASON_YEAR).toBe(2026);
     expect(getSeasonOptions(2025)).toEqual([ALL_TIME_SEASON, 2026]);
     expect(getSeasonOptions(2027)).toEqual([ALL_TIME_SEASON, 2026, 2027]);
+  });
+
+  it("maps season selections to a central visual theme", () => {
+    expect(getSeasonTheme(ALL_TIME_SEASON)).toBe("all-time");
+    expect(getSeasonTheme(2026)).toBe("dark-forest");
+    expect(getSeasonTheme(2027)).toBe("dark-forest");
   });
 
   it("assigns an event completely to the year of its start date", () => {

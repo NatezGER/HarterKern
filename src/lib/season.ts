@@ -4,6 +4,16 @@ export const SEASON_STORAGE_KEY = "harter-kern:season";
 
 export type SeasonSelection = typeof ALL_TIME_SEASON | number;
 export type SeasonSource = "event_attempt" | "historical_attempt";
+export type SeasonTheme = "all-time" | "dark-forest";
+
+const SEASON_THEMES: Partial<Record<number, SeasonTheme>> = {
+  2026: "dark-forest",
+};
+
+export function getSeasonTheme(season: SeasonSelection): SeasonTheme {
+  if (season === ALL_TIME_SEASON) return "all-time";
+  return SEASON_THEMES[season] ?? "dark-forest";
+}
 
 export function isSeasonSelection(value: unknown): value is SeasonSelection {
   return value === ALL_TIME_SEASON || (

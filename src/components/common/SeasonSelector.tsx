@@ -1,9 +1,8 @@
 import { getSeasonOptions } from "@/lib/season";
 import { useSeason } from "@/hooks/useSeason";
-import { cn } from "@/lib/cn";
 
 export function SeasonSelector() {
-  const { season, setSeason, isAllTime } = useSeason();
+  const { season, setSeason } = useSeason();
   const options = getSeasonOptions(new Date().getFullYear(), season);
 
   return (
@@ -16,12 +15,7 @@ export function SeasonSelector() {
           const value = event.target.value;
           setSeason(value === "all-time" ? "all-time" : Number(value));
         }}
-        className={cn(
-          "h-10 w-[4.75rem] cursor-pointer appearance-none rounded-full border bg-black/30 py-1 pl-3 pr-7 text-[10px] font-bold uppercase tracking-[0.1em] outline-none transition sm:h-auto sm:w-auto sm:py-1.5 sm:tracking-[0.12em]",
-          isAllTime
-            ? "border-gold-400/20 bg-gold-400/[0.07] text-gold-300 focus:border-gold-400/60"
-            : "border-emerald-300/55 bg-emerald-300/[0.14] text-emerald-100 shadow-[0_0_22px_rgba(110,231,183,0.14)] focus:border-emerald-200/80",
-        )}
+        className="season-selector h-10 w-[4.75rem] cursor-pointer appearance-none rounded-full border py-1 pl-3 pr-7 text-[10px] font-bold uppercase tracking-[0.1em] outline-none transition sm:h-auto sm:w-auto sm:py-1.5 sm:tracking-[0.12em]"
       >
         {options.map((option) => (
           <option key={option} value={option} className="bg-[#171917] text-white">
@@ -31,10 +25,7 @@ export function SeasonSelector() {
       </select>
       <span
         aria-hidden="true"
-        className={cn(
-          "pointer-events-none absolute right-2.5 top-1/2 size-1.5 -translate-y-1/2 rotate-45 border-b border-r",
-          isAllTime ? "border-gold-300" : "border-emerald-200",
-        )}
+        className="season-selector-chevron pointer-events-none absolute right-2.5 top-1/2 size-1.5 -translate-y-1/2 rotate-45 border-b border-r"
       />
     </label>
   );
