@@ -18,7 +18,7 @@ describe("SeasonSelector", () => {
     expect(markup).toContain("Ewig");
     expect(markup).toContain("2026");
     expect(markup).not.toContain('class="hidden');
-    expect(markup).toContain("text-gold-300");
+    expect(markup).toContain("season-selector");
     expect(markup).toContain("h-10");
     expect(markup).toContain("w-[4.75rem]");
     expect(markup).toContain("shrink-0");
@@ -28,7 +28,7 @@ describe("SeasonSelector", () => {
     seasonState.season = 2026;
     seasonState.isAllTime = false;
     const markup = renderToStaticMarkup(<SeasonSelector />);
-    expect(markup).toContain("text-emerald-100");
+    expect(markup).toContain("season-selector");
     expect(markup).toMatch(/value="2026"[^>]*selected=""/);
   });
 });

@@ -29,6 +29,87 @@ body {
   font-family: "Inter", sans-serif;
 }
 
+.app-frame {
+  --context-accent: #e7ba4b;
+  --context-accent-soft: rgba(231, 186, 75, 0.1);
+  --context-accent-text: #f1cf72;
+  --context-border: rgba(255, 255, 255, 0.07);
+  --context-glow: rgba(201, 147, 34, 0.22);
+  --context-panel: rgba(255, 255, 255, 0.035);
+  --context-panel-border: rgba(255, 255, 255, 0.08);
+  --context-header: rgba(8, 9, 9, 0.85);
+  --context-nav-active: rgba(255, 255, 255, 0.07);
+  --context-mobile-nav-active: rgba(231, 186, 75, 0.1);
+  --context-control-border: rgba(231, 186, 75, 0.2);
+  --context-control-background: rgba(231, 186, 75, 0.07);
+  --context-control-shadow: none;
+}
+
+.app-frame[data-season-theme="dark-forest"] {
+  --context-accent: #78d6a6;
+  --context-accent-soft: rgba(120, 214, 166, 0.12);
+  --context-accent-text: #b7e9cf;
+  --context-border: rgba(183, 233, 207, 0.17);
+  --context-glow: rgba(120, 214, 166, 0.22);
+  --context-panel: rgba(183, 233, 207, 0.045);
+  --context-panel-border: rgba(183, 233, 207, 0.11);
+  --context-header: rgba(7, 16, 12, 0.88);
+  --context-nav-active: rgba(120, 214, 166, 0.1);
+  --context-mobile-nav-active: rgba(120, 214, 166, 0.12);
+  --context-control-border: rgba(120, 214, 166, 0.55);
+  --context-control-background: rgba(120, 214, 166, 0.14);
+  --context-control-shadow: 0 0 22px rgba(120, 214, 166, 0.14);
+  background:
+    radial-gradient(circle at 75% 0%, rgba(120, 214, 166, 0.12), transparent 28rem),
+    #07100c;
+}
+
+.app-header {
+  border-color: var(--context-border);
+  background-color: var(--context-header);
+}
+
+.season-nav-active {
+  background-color: var(--context-nav-active);
+}
+
+.season-mobile-nav-active {
+  background-color: var(--context-mobile-nav-active);
+  color: var(--context-accent-text);
+}
+
+.season-nav-indicator {
+  background-color: var(--context-accent);
+  box-shadow: 0 0 14px var(--context-glow);
+}
+
+.season-selector {
+  border-color: var(--context-control-border);
+  background-color: var(--context-control-background);
+  color: var(--context-accent-text);
+  box-shadow: var(--context-control-shadow);
+}
+
+.season-selector:focus {
+  border-color: var(--context-accent);
+}
+
+.season-selector-chevron {
+  border-color: var(--context-accent-text);
+}
+
+.season-context-badge {
+  border-color: var(--context-control-border);
+  background-color: var(--context-accent-soft);
+  color: var(--context-accent-text);
+  box-shadow: 0 0 24px var(--context-glow);
+}
+
+.season-context-dot {
+  background-color: var(--context-accent);
+  box-shadow: 0 0 10px var(--context-accent);
+}
+
 ::selection {
   background: rgba(231, 186, 75, 0.28);
   color: white;
@@ -50,6 +131,8 @@ body {
 @layer components {
   .panel {
     @apply rounded-3xl border border-white/[0.08] bg-white/[0.035] backdrop-blur-xl;
+    border-color: var(--context-panel-border);
+    background-color: var(--context-panel);
   }
 
   .display-title {

@@ -10,6 +10,7 @@ import { SyncStatusNotice } from "@/components/common/SyncStatusNotice";
 import { AdminSessionProvider } from "@/hooks/useAdminSession";
 import { ManagementModeProvider } from "@/hooks/useManagementMode";
 import { SeasonProvider, useSeason } from "@/hooks/useSeason";
+import { getSeasonTheme } from "@/lib/season";
 
 function AppFrame() {
   const { season } = useSeason();
@@ -17,7 +18,8 @@ function AppFrame() {
   return (
     <div
       data-season={season}
-      className="flex min-h-screen flex-col overflow-x-clip"
+      data-season-theme={getSeasonTheme(season)}
+      className="app-frame flex min-h-screen flex-col overflow-x-clip"
     >
       <Header />
       <LiveEventBanner />

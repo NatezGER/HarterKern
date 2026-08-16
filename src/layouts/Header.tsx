@@ -5,17 +5,12 @@ import { brand, navigationItems } from "@/constants/navigation";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
 import { SeasonSelector } from "@/components/common/SeasonSelector";
-import { useSeason } from "@/hooks/useSeason";
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
-  const { isAllTime } = useSeason();
 
   return (
-    <header className={cn(
-      "sticky top-0 z-40 border-b bg-background/85 backdrop-blur-2xl transition-colors",
-      isAllTime ? "border-white/[0.07]" : "border-emerald-300/20",
-    )}>
+    <header className="app-header sticky top-0 z-40 border-b backdrop-blur-2xl transition-colors">
       <div className="mx-auto flex h-20 max-w-[1600px] items-center justify-between gap-2 px-4 sm:gap-4 sm:px-8 lg:px-12">
         <NavLink to="/" onClick={() => setIsOpen(false)} className="flex shrink-0 items-center gap-3">
           <span className="grid size-10 skew-x-[-8deg] place-items-center rounded-lg bg-gold-400 font-display text-lg font-black text-black shadow-gold-sm">
@@ -34,13 +29,13 @@ export function Header() {
               to={href}
               className={({ isActive }) => cn(
                 "relative rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-[0.08em] text-white/45 transition hover:text-white",
-                isActive && "bg-white/[0.07] text-white",
+                isActive && "season-nav-active text-white",
               )}
             >
               {({ isActive }) => (
                 <>
                   {label}
-                  {isActive && <span className="absolute inset-x-5 -bottom-[21px] h-0.5 bg-gold-400 shadow-gold-sm" />}
+                  {isActive && <span className="season-nav-indicator absolute inset-x-5 -bottom-[21px] h-0.5" />}
                 </>
               )}
             </NavLink>
@@ -76,7 +71,7 @@ export function Header() {
                 onClick={() => setIsOpen(false)}
                 className={({ isActive }) => cn(
                   "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/55",
-                  isActive && "bg-gold-400/10 text-gold-300",
+                  isActive && "season-mobile-nav-active",
                 )}
               >
                 <Icon className="size-4" />
