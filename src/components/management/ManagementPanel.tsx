@@ -10,6 +10,7 @@ import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { useManagementMode } from "@/hooks/useManagementMode";
 import { formatTime } from "@/utils/format";
 import type { LiveAttempt } from "@/types/liveEvent";
+import { AwardAssetManagement } from "@/components/management/AwardAssetManagement";
 
 export function ManagementPanel() {
   const { unlocked, unlock, lock } = useManagementMode();
@@ -81,6 +82,7 @@ export function ManagementPanel() {
               <ShieldCheck className="size-4" /> Verwaltungsmodus aktiv
             </p>
             <HistoricalAttemptManagement />
+            <AwardAssetManagement />
             <section className="rounded-2xl border border-white/10 p-5">
               <h3 className="display-title text-2xl">Versuche verwalten</h3>
               <div className="mt-4 max-h-96 space-y-2 overflow-y-auto">
