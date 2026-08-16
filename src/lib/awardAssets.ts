@@ -1,5 +1,10 @@
 import type { BadgeTier } from "@/types/pr7Foundation";
 import type { TrophyTier } from "@/types/pr8";
+import {
+  TROPHY_COMPETITIONS,
+  trophySlotAssetId,
+} from "../../supabase/functions/_shared/trophySlots";
+import type { TrophyCompetitionKey } from "../../supabase/functions/_shared/trophySlots";
 
 export type AwardAssetType = "medal" | "badge" | "trophy";
 export type MedalRank = 1 | 2 | 3;
@@ -19,12 +24,21 @@ export interface BadgeAssetDefinition {
 }
 
 export interface TrophyAssetDefinition {
-  competitionType: "event" | "season";
-  competitionId: string;
+  competitionKey: TrophyCompetitionKey;
   competitionName: string;
   year: number;
   tier: TrophyTier;
 }
+
+export const TROPHY_ASSET_DEFINITIONS: TrophyAssetDefinition[] =
+  TROPHY_COMPETITIONS.flatMap((competition) => competition.editions.flatMap((edition) =>
+    edition.tiers.map((tier) => ({
+      competitionKey: competition.key,
+      competitionName: competition.name,
+      year: edition.year,
+      tier,
+    })),
+  ));
 
 export function medalAssetId(rank: MedalRank) {
   return `medal:podium:${medalTierByRank[rank]}`;
@@ -35,8 +49,18 @@ export function badgeAssetId(badgeKey: string) {
 }
 
 export function trophyAssetId(trophy: Pick<TrophyAssetDefinition,
-  "competitionType" | "competitionId" | "year" | "tier">) {
-  return `trophy:${trophy.competitionType}:${trophy.competitionId}:${trophy.year}:${trophy.tier}`;
+  "competitionKey" | "year" | "tier">) {
+  return trophySlotAssetId(trophy.competitionKey, trophy.year, trophy.tier);
+}
+
+export function trophyAssetIdForAward(trophy: {
+  competitionType: "event" | "season";
+  year: number;
+  tier: TrophyTier;
+}) {
+  return trophy.competitionType === "season"
+    ? trophySlotAssetId("season", trophy.year, trophy.tier)
+    : null;
 }
 
 export function awardAssetType(assetId: string): AwardAssetType | null {

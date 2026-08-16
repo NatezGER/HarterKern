@@ -8,6 +8,7 @@ import {
   badgeAssetId,
   groupBadgeDefinitions,
   medalAssetId,
+  TROPHY_ASSET_DEFINITIONS,
   trophyAssetId,
 } from "@/lib/awardAssets";
 import type {
@@ -19,7 +20,6 @@ import type {
 import type { TrophyTier } from "@/types/pr8";
 import {
   getBadgeAssetDefinitions,
-  getTrophyAssetDefinitions,
 } from "@/services/awardAssetService";
 import { removeAwardAsset, uploadAwardAsset } from "@/services/mediaService";
 
@@ -35,7 +35,7 @@ export function AwardAssetManagement() {
   const [type, setType] = useState<AwardAssetType>("medal");
   const [rank, setRank] = useState<MedalRank>(1);
   const [badges, setBadges] = useState<BadgeAssetDefinition[]>([]);
-  const [trophies, setTrophies] = useState<TrophyAssetDefinition[]>([]);
+  const trophies: TrophyAssetDefinition[] = TROPHY_ASSET_DEFINITIONS;
   const [familyKey, setFamilyKey] = useState("");
   const [badgeKey, setBadgeKey] = useState("");
   const [trophyCompetitionKey, setTrophyCompetitionKey] = useState("");
@@ -49,17 +49,17 @@ export function AwardAssetManagement() {
     ?? family?.variants[0];
   const trophyCompetitions = useMemo(() => {
     const unique = new Map<string, TrophyAssetDefinition>();
-    for (const item of trophies) unique.set(`${item.competitionType}:${item.competitionId}`, item);
+    for (const item of trophies) unique.set(item.competitionKey, item);
     return [...unique.entries()].map(([key, item]) => ({ key, ...item }));
   }, [trophies]);
   const trophyCompetition = trophyCompetitions.find(({ key }) => key === trophyCompetitionKey)
     ?? trophyCompetitions[0];
   const trophyYears = [...new Set(trophies
-    .filter((item) => `${item.competitionType}:${item.competitionId}` === trophyCompetition?.key)
+    .filter((item) => item.competitionKey === trophyCompetition?.key)
     .map(({ year }) => year))].sort((a, b) => b - a);
   const selectedTrophyYear = trophyYears.includes(trophyYear) ? trophyYear : trophyYears[0];
   const trophyTiers = trophies.filter((item) =>
-    `${item.competitionType}:${item.competitionId}` === trophyCompetition?.key
+    item.competitionKey === trophyCompetition?.key
     && item.year === selectedTrophyYear);
   const trophy = trophyTiers.find((item) => item.tier === trophyTier) ?? trophyTiers[0];
   const assetId = type === "medal" ? medalAssetId(rank)
@@ -69,11 +69,10 @@ export function AwardAssetManagement() {
 
   useEffect(() => {
     let active = true;
-    void Promise.all([getBadgeAssetDefinitions(), getTrophyAssetDefinitions()])
-      .then(([nextBadges, nextTrophies]) => {
+    void getBadgeAssetDefinitions()
+      .then((nextBadges) => {
         if (!active) return;
         setBadges(nextBadges);
-        setTrophies(nextTrophies);
       })
       .catch((error) => active && setMessage(error instanceof Error
         ? error.message : "Award-Auswahl konnte nicht geladen werden."));

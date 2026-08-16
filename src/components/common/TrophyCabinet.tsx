@@ -6,7 +6,7 @@ import type { TrophyAward } from "@/types/historyProfiles";
 import { formatDate } from "@/utils/format";
 import { Button } from "@/components/ui/button";
 import { AwardAssetImage } from "@/components/common/AwardAssetImage";
-import { trophyAssetId } from "@/lib/awardAssets";
+import { trophyAssetIdForAward } from "@/lib/awardAssets";
 
 const trophyStyles = {
   gold: "from-yellow-100 via-yellow-400 to-amber-700 text-yellow-100",
@@ -37,7 +37,7 @@ export function TrophyCabinet({
               trophyStyles[trophy.tier],
             )}>
               <AwardAssetImage
-                assetId={trophyAssetId(trophy)}
+                assetId={trophyAssetIdForAward(trophy) ?? ""}
                 alt={`${trophy.competitionName}, ${trophy.placement}. Platz`}
                 className="p-1"
                 fallback={<Trophy className="size-9 drop-shadow-[0_2px_2px_rgba(0,0,0,.45)] sm:size-11" />}

@@ -1,5 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
-import type { BadgeAssetDefinition, TrophyAssetDefinition } from "@/lib/awardAssets";
+import type { BadgeAssetDefinition } from "@/lib/awardAssets";
 
 export async function getAwardAssetMapping() {
   const client = getSupabase();
@@ -25,22 +25,4 @@ export async function getBadgeAssetDefinitions(): Promise<BadgeAssetDefinition[]
     tier: row.tier,
     sortOrder: row.sort_order,
   }));
-}
-
-export async function getTrophyAssetDefinitions(): Promise<TrophyAssetDefinition[]> {
-  const { data, error } = await getSupabase().from("player_trophies")
-    .select("competition_type,competition_id,competition_name,competition_year,trophy_tier");
-  if (error) throw error;
-  const unique = new Map<string, TrophyAssetDefinition>();
-  for (const row of data ?? []) {
-    const definition: TrophyAssetDefinition = {
-      competitionType: row.competition_type,
-      competitionId: row.competition_id,
-      competitionName: row.competition_name,
-      year: row.competition_year,
-      tier: row.trophy_tier,
-    };
-    unique.set(`${definition.competitionType}:${definition.competitionId}:${definition.year}:${definition.tier}`, definition);
-  }
-  return [...unique.values()];
 }

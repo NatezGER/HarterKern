@@ -4,7 +4,7 @@ create table public.award_assets (
   asset_id text primary key check (
     asset_id ~ '^medal:podium:(gold|silver|bronze)$'
     or asset_id ~ '^badge:[a-z0-9][a-z0-9-]{1,119}$'
-    or asset_id ~ '^trophy:(event|season):[a-z0-9-]{2,80}:[0-9]{4}:(gold|silver|bronze)$'
+    or asset_id ~ '^trophy:(season|denmark):2026:(gold|silver|bronze)$'
   ),
   asset_type text not null check (asset_type in ('medal', 'badge', 'trophy')),
   storage_path text not null unique check (

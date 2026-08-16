@@ -4,7 +4,9 @@ import {
   groupBadgeDefinitions,
   medalAssetId,
   resolveAwardAsset,
+  TROPHY_ASSET_DEFINITIONS,
   trophyAssetId,
+  trophyAssetIdForAward,
 } from "@/lib/awardAssets";
 
 describe("award asset identity and fallback", () => {
@@ -13,11 +15,28 @@ describe("award asset identity and fallback", () => {
     expect(medalAssetId(2)).toBe("medal:podium:silver");
     expect(medalAssetId(3)).toBe("medal:podium:bronze");
     expect(trophyAssetId({
-      competitionType: "season",
-      competitionId: "season-2026",
+      competitionKey: "season",
       year: 2026,
       tier: "gold",
-    })).toBe("trophy:season:season-2026:2026:gold");
+    })).toBe("trophy:season:2026:gold");
+  });
+
+  it("defines all six trophy slots without awarded trophy data", () => {
+    expect(TROPHY_ASSET_DEFINITIONS.map(trophyAssetId)).toEqual([
+      "trophy:season:2026:gold",
+      "trophy:season:2026:silver",
+      "trophy:season:2026:bronze",
+      "trophy:denmark:2026:gold",
+      "trophy:denmark:2026:silver",
+      "trophy:denmark:2026:bronze",
+    ]);
+  });
+
+  it("maps season awards to their slot and keeps unsupported event trophies generic", () => {
+    expect(trophyAssetIdForAward({ competitionType: "season", year: 2026, tier: "silver" }))
+      .toBe("trophy:season:2026:silver");
+    expect(trophyAssetIdForAward({ competitionType: "event", year: 2026, tier: "gold" }))
+      .toBeNull();
   });
 
   it("keeps normal and special badge variants distinct", () => {

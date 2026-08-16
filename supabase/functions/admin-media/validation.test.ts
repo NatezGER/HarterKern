@@ -46,12 +46,18 @@ describe("admin award validation", () => {
   it("accepts stable existing asset ID shapes", () => {
     expect(requireAwardAssetId("medal:podium:gold")).toBe("medal:podium:gold");
     expect(requireAwardAssetId("badge:first-sub3")).toBe("badge:first-sub3");
-    expect(requireAwardAssetId("trophy:season:season-2026:2026:gold"))
-      .toBe("trophy:season:season-2026:2026:gold");
+    for (const competition of ["season", "denmark"]) {
+      for (const tier of ["gold", "silver", "bronze"]) {
+        const id = `trophy:${competition}:2026:${tier}`;
+        expect(requireAwardAssetId(id)).toBe(id);
+      }
+    }
   });
 
   it("rejects unknown asset identities", () => {
     expect(() => requireAwardAssetId("medal:podium:diamond")).toThrow(/ungültig/);
+    expect(() => requireAwardAssetId("trophy:world-cup:2026:gold")).toThrow(/ungültig/);
+    expect(() => requireAwardAssetId("trophy:season:2027:gold")).toThrow(/ungültig/);
   });
 
   it("reads PNG dimensions for server-side validation", () => {

@@ -130,7 +130,8 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Direkte Abhängigkeiten:** Dashboard, Spielerprofil und Statistiken.
 - **Award-Grafiken:** ein nicht blockierender globaler Request lädt das kleine
   `award_assets`-Mapping; nur im geöffneten Verwaltungsmodus folgen je ein
-  Request für aktive Badge-Definitionen und vorhandene Trophäenvarianten.
+  Request für aktive Badge-Definitionen. Trophäen-Slots sind lokal definiert
+  und hängen nicht von bereits vergebenen Trophäen ab.
 - **Nicht enthalten:** Kernladung von Hall of Fame und Spielerübersicht.
 
 ## 10. Most Wanted und BINGO

@@ -1,3 +1,5 @@
+import { isTrophySlotAssetId } from "../_shared/trophySlots.ts";
+
 export const postgresUuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -11,7 +13,7 @@ export function requireAwardAssetId(value: FormDataEntryValue | null) {
   const id = typeof value === "string" ? value : "";
   const valid = /^medal:podium:(gold|silver|bronze)$/.test(id)
     || /^badge:[a-z0-9][a-z0-9-]{1,119}$/.test(id)
-    || /^trophy:(event|season):[a-z0-9-]{2,80}:\d{4}:(gold|silver|bronze)$/.test(id);
+    || isTrophySlotAssetId(id);
   if (!valid) throw new Error("Award-Auswahl ist ungültig.");
   return id;
 }

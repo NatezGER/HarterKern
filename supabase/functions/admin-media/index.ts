@@ -254,16 +254,6 @@ Deno.serve(async (request) => {
           .select("badge_key").eq("badge_key", badgeKey).eq("is_active", true).maybeSingle();
         if (badge.error) throw badge.error;
         if (!badge.data) throw new Error("Diese Badge-Variante existiert nicht.");
-      } else if (assetType === "trophy") {
-        const [, competitionType, competitionId, year, tier] = assetId.split(":");
-        const trophy = await supabase.from("player_trophies").select("trophy_key")
-          .eq("competition_type", competitionType)
-          .eq("competition_id", competitionId)
-          .eq("competition_year", Number(year))
-          .eq("trophy_tier", tier)
-          .limit(1).maybeSingle();
-        if (trophy.error) throw trophy.error;
-        if (!trophy.data) throw new Error("Diese Trophäen-Variante existiert nicht.");
       }
 
       const current = await supabase.from("award_assets")
