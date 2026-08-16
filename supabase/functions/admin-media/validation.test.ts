@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { requirePostgresUuid } from "./validation";
+import {
+  readAwardImageDimensions,
+  requireAwardAssetId,
+  requirePostgresUuid,
+  validateAwardImageMetadata,
+} from "./validation.ts";
 
 describe("PostgreSQL UUID validation for admin media", () => {
   it("accepts existing seed player IDs without RFC version bits", () => {
@@ -24,5 +29,47 @@ describe("PostgreSQL UUID validation for admin media", () => {
     "11000000-0000-0000-0000-000000000001/extra",
   ])("rejects malformed or injected values: %s", (id) => {
     expect(() => requirePostgresUuid(id, "Spieler")).toThrow("Spieler ist ungültig.");
+  });
+});
+
+function pngHeader(width: number, height: number) {
+  const bytes = new Uint8Array(24);
+  bytes.set([137, 80, 78, 71], 0);
+  bytes.set([73, 72, 68, 82], 12);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(16, width);
+  view.setUint32(20, height);
+  return bytes;
+}
+
+describe("admin award validation", () => {
+  it("accepts stable existing asset ID shapes", () => {
+    expect(requireAwardAssetId("medal:podium:gold")).toBe("medal:podium:gold");
+    expect(requireAwardAssetId("badge:first-sub3")).toBe("badge:first-sub3");
+    for (const competition of ["season", "denmark"]) {
+      for (const tier of ["gold", "silver", "bronze"]) {
+        const id = `trophy:${competition}:2026:${tier}`;
+        expect(requireAwardAssetId(id)).toBe(id);
+      }
+    }
+  });
+
+  it("rejects unknown asset identities", () => {
+    expect(() => requireAwardAssetId("medal:podium:diamond")).toThrow(/ungültig/);
+    expect(() => requireAwardAssetId("trophy:world-cup:2026:gold")).toThrow(/ungültig/);
+    expect(() => requireAwardAssetId("trophy:season:2027:gold")).toThrow(/ungültig/);
+  });
+
+  it("reads PNG dimensions for server-side validation", () => {
+    expect(readAwardImageDimensions(pngHeader(1024, 1024), "image/png"))
+      .toEqual({ width: 1024, height: 1024 });
+  });
+
+  it("enforces server-side type, size and dimensions", () => {
+    expect(validateAwardImageMetadata({ mimeType: "image/jpeg", size: 1000 })).toMatch(/PNG- oder WebP/);
+    expect(validateAwardImageMetadata({ mimeType: "image/png", size: 2 * 1024 * 1024 + 1 })).toMatch(/2 MB/);
+    expect(validateAwardImageMetadata({ mimeType: "image/webp", size: 1000, width: 900, height: 800 })).toMatch(/quadratisch/);
+    expect(validateAwardImageMetadata({ mimeType: "image/webp", size: 1000, width: 500, height: 500 })).toMatch(/512/);
+    expect(validateAwardImageMetadata({ mimeType: "image/webp", size: 1000, width: 1024, height: 1024 })).toBeNull();
   });
 });

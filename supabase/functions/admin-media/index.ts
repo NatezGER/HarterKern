@@ -1,5 +1,10 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { requirePostgresUuid } from "./validation.ts";
+import {
+  readAwardImageDimensions,
+  requireAwardAssetId,
+  requirePostgresUuid,
+  validateAwardImageMetadata,
+} from "./validation.ts";
 
 declare const Deno: {
   env: { get(name: string): string | undefined };
@@ -83,6 +88,23 @@ function requireImage(value: FormDataEntryValue | null, limit: number) {
     throw new Error(`Die Bilddatei darf maximal ${limit / 1024 / 1024} MB groß sein.`);
   }
   return value;
+}
+
+async function requireAwardImage(value: FormDataEntryValue | null) {
+  if (!(value instanceof File)) throw new Error("Bitte eine Bilddatei auswählen.");
+  const fileError = validateAwardImageMetadata({ mimeType: value.type, size: value.size });
+  if (fileError) throw new Error(fileError);
+  const dimensions = readAwardImageDimensions(
+    new Uint8Array(await value.arrayBuffer()),
+    value.type,
+  );
+  const dimensionsError = validateAwardImageMetadata({
+    mimeType: value.type,
+    size: value.size,
+    ...dimensions,
+  });
+  if (dimensionsError) throw new Error(dimensionsError);
+  return { file: value, ...dimensions };
 }
 
 Deno.serve(async (request) => {
@@ -217,6 +239,66 @@ Deno.serve(async (request) => {
         .from("event-photos").remove([photo.data.storage_path]);
       if (removed.error) {
         throw new Error("Foto ausgeblendet, die Datei konnte nicht entfernt werden.");
+      }
+      return json({ ok: true });
+    }
+
+    if (action === "upload-award-asset") {
+      const assetId = requireAwardAssetId(form.get("assetId"));
+      const assetType = assetId.split(":", 1)[0];
+      const { file, width, height } = await requireAwardImage(form.get("file"));
+
+      if (assetType === "badge") {
+        const badgeKey = assetId.slice("badge:".length);
+        const badge = await supabase.from("badge_definitions")
+          .select("badge_key").eq("badge_key", badgeKey).eq("is_active", true).maybeSingle();
+        if (badge.error) throw badge.error;
+        if (!badge.data) throw new Error("Diese Badge-Variante existiert nicht.");
+      }
+
+      const current = await supabase.from("award_assets")
+        .select("storage_path").eq("asset_id", assetId).maybeSingle();
+      if (current.error) throw current.error;
+      const path = `${assetId}/${crypto.randomUUID()}.${extensionFor(file.type)}`;
+      const uploaded = await supabase.storage.from("award-assets").upload(path, file, {
+        cacheControl: "31536000",
+        contentType: file.type,
+        upsert: false,
+      });
+      if (uploaded.error) throw uploaded.error;
+      const saved = await supabase.from("award_assets").upsert({
+        asset_id: assetId,
+        asset_type: assetType,
+        storage_path: path,
+        mime_type: file.type,
+        size_bytes: file.size,
+        width,
+        height,
+        updated_at: new Date().toISOString(),
+      });
+      if (saved.error) {
+        await supabase.storage.from("award-assets").remove([path]);
+        throw saved.error;
+      }
+      if (current.data?.storage_path) {
+        await supabase.storage.from("award-assets").remove([current.data.storage_path]);
+      }
+      const publicUrl = supabase.storage.from("award-assets").getPublicUrl(path).data.publicUrl;
+      return json({ ok: true, publicUrl });
+    }
+
+    if (action === "remove-award-asset") {
+      const assetId = requireAwardAssetId(form.get("assetId"));
+      const current = await supabase.from("award_assets")
+        .select("storage_path").eq("asset_id", assetId).maybeSingle();
+      if (current.error) throw current.error;
+      if (!current.data) return json({ ok: true });
+      const deleted = await supabase.from("award_assets").delete().eq("asset_id", assetId);
+      if (deleted.error) throw deleted.error;
+      const removed = await supabase.storage.from("award-assets")
+        .remove([current.data.storage_path]);
+      if (removed.error) {
+        throw new Error("Custom-Grafik entfernt, die alte Datei konnte nicht bereinigt werden.");
       }
       return json({ ok: true });
     }

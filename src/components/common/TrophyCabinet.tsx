@@ -5,6 +5,8 @@ import { cn } from "@/lib/cn";
 import type { TrophyAward } from "@/types/historyProfiles";
 import { formatDate } from "@/utils/format";
 import { Button } from "@/components/ui/button";
+import { AwardAssetImage } from "@/components/common/AwardAssetImage";
+import { trophyAssetIdForAward } from "@/lib/awardAssets";
 
 const trophyStyles = {
   gold: "from-yellow-100 via-yellow-400 to-amber-700 text-yellow-100",
@@ -34,7 +36,12 @@ export function TrophyCabinet({
               "mx-auto grid size-16 place-items-center rounded-2xl bg-gradient-to-br shadow-lg sm:size-20",
               trophyStyles[trophy.tier],
             )}>
-              <Trophy className="size-9 drop-shadow-[0_2px_2px_rgba(0,0,0,.45)] sm:size-11" />
+              <AwardAssetImage
+                assetId={trophyAssetIdForAward(trophy) ?? ""}
+                alt={`${trophy.competitionName}, ${trophy.placement}. Platz`}
+                className="p-1"
+                fallback={<Trophy className="size-9 drop-shadow-[0_2px_2px_rgba(0,0,0,.45)] sm:size-11" />}
+              />
             </span>
             <p className="mt-3 font-display text-lg font-black uppercase sm:text-xl">
               {isSeasonTrophy && trophy.placement === 1 ? "Saisonmeister" : `${trophy.placement}. Platz`}

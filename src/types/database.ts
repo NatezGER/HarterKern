@@ -37,6 +37,7 @@ import type {
   PlayerBingoStatisticsView,
   PlayerTrophyView,
 } from "@/types/pr8";
+import type { AwardAssetsTable } from "@/types/awardAssets";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -165,6 +166,7 @@ export interface Database {
       historical_attempts: HistoricalAttemptsTable;
       event_photos: EventPhotosTable;
       badge_definitions: BadgeDefinitionsTable;
+      award_assets: AwardAssetsTable;
       admin_roles: {
         Row: { user_id: string; created_at: string };
         Insert: { user_id: string };

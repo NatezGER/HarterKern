@@ -11,6 +11,7 @@ import { AdminSessionProvider } from "@/hooks/useAdminSession";
 import { ManagementModeProvider } from "@/hooks/useManagementMode";
 import { SeasonProvider, useSeason } from "@/hooks/useSeason";
 import { getSeasonTheme } from "@/lib/season";
+import { AwardAssetProvider } from "@/hooks/useAwardAssets";
 
 function AppFrame() {
   const { season } = useSeason();
@@ -39,13 +40,15 @@ export function AppLayout() {
   return (
     <SeasonProvider>
       <DataPlatformProvider>
-        <AdminSessionProvider>
-          <LiveEventProvider>
-            <ManagementModeProvider>
-              <AppFrame />
-            </ManagementModeProvider>
-          </LiveEventProvider>
-        </AdminSessionProvider>
+        <AwardAssetProvider>
+          <AdminSessionProvider>
+            <LiveEventProvider>
+              <ManagementModeProvider>
+                <AppFrame />
+              </ManagementModeProvider>
+            </LiveEventProvider>
+          </AdminSessionProvider>
+        </AwardAssetProvider>
       </DataPlatformProvider>
     </SeasonProvider>
   );
