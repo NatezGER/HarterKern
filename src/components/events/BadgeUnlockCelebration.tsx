@@ -6,17 +6,17 @@ import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
 import { badgeTierLabel } from "@/lib/badgePresentation";
 
 export function BadgeUnlockCelebration() {
-  const { badgeUnlock, celebration, dismissBadgeUnlock } = useLiveEvent();
+  const { badgeUnlock, celebration, postAttempt, dismissBadgeUnlock } = useLiveEvent();
   const reduced = useReducedMotion();
   useEffect(() => {
-    if (!badgeUnlock || celebration) return;
+    if (!badgeUnlock || celebration || postAttempt) return;
     const dismissOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") dismissBadgeUnlock();
     };
     window.addEventListener("keydown", dismissOnEscape);
     return () => window.removeEventListener("keydown", dismissOnEscape);
-  }, [badgeUnlock, celebration, dismissBadgeUnlock]);
-  if (!badgeUnlock || celebration) return null;
+  }, [badgeUnlock, celebration, dismissBadgeUnlock, postAttempt]);
+  if (!badgeUnlock || celebration || postAttempt) return null;
   return (
     <motion.aside
       role="status"

@@ -10,11 +10,11 @@ import type { ReactNode } from "react";
 import { useDataPlatform } from "@/hooks/useDataPlatform";
 import { getErrorMessage } from "@/lib/errors";
 import { takeUnseenUnlocks } from "@/lib/badgeUnlocks";
+import { createLiveAttempt, getActiveLiveEvent } from "@/lib/liveEventCalculations";
 import {
-  createLiveAttempt,
-  getActiveLiveEvent,
-  getOfficialWorldRecord,
-} from "@/lib/liveEventCalculations";
+  derivePostAttemptResult,
+  recordCelebrationFor,
+} from "@/lib/postAttemptExperience";
 import {
   addEventGuest,
   addExistingEventPlayer,
@@ -32,11 +32,11 @@ import { getAttemptBadgeUnlocks } from "@/services/historyProfileService";
 import type {
   AttemptInput,
   AttemptUpdate,
-  LiveAttempt,
   LiveEvent,
   LiveEventState,
   LiveParticipant,
   RecordCelebration,
+  PostAttemptResult,
   BadgeUnlockCelebration,
   StartLiveEventInput,
   StartLiveEventResult,
@@ -47,6 +47,7 @@ interface LiveEventContextValue {
   activeEvent?: LiveEvent;
   celebration: RecordCelebration | null;
   badgeUnlock: BadgeUnlockCelebration | null;
+  postAttempt: PostAttemptResult | null;
   mutationError: string | null;
   startingEvent: boolean;
   endingEvent: boolean;
@@ -68,6 +69,7 @@ interface LiveEventContextValue {
   endEvent: () => Promise<string | null>;
   refresh: () => Promise<void>;
   dismissCelebration: () => void;
+  dismissPostAttempt: () => void;
   dismissBadgeUnlock: () => void;
   clearMutationError: () => void;
 }
@@ -79,6 +81,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
   const state = snapshot.liveState;
   const activeEvent = getActiveLiveEvent(state.events);
   const [celebration, setCelebration] = useState<RecordCelebration | null>(null);
+  const [postAttempt, setPostAttempt] = useState<PostAttemptResult | null>(null);
   const [badgeUnlocks, setBadgeUnlocks] = useState<BadgeUnlockCelebration[]>([]);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [startingEvent, setStartingEvent] = useState(false);
@@ -98,35 +101,6 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
       await refresh();
     }
   }, [refresh]);
-
-  const detectRecord = useCallback((attempt: LiveAttempt) => {
-    if (attempt.result !== "time" || attempt.timeSeconds == null || attempt.outOfCompetition) return;
-    const player = state.players.find(({ id }) => id === attempt.playerId);
-    if (!player) return;
-    const previousWr = getOfficialWorldRecord(state.players, state.attempts);
-    const previousPb = Math.min(
-      player.personalBest > 0 ? player.personalBest : Infinity,
-      ...state.attempts.flatMap((item) =>
-        item.playerId === player.id && !item.outOfCompetition &&
-        item.result === "time" && item.timeSeconds != null ? [item.timeSeconds] : [],
-      ),
-    );
-    if (previousWr == null || attempt.timeSeconds < previousWr) {
-      setCelebration({
-        kind: "wr",
-        playerName: player.name,
-        time: attempt.timeSeconds,
-        previousTime: previousWr ?? undefined,
-      });
-    } else if (attempt.timeSeconds < previousPb) {
-      setCelebration({
-        kind: "pb",
-        playerName: player.name,
-        time: attempt.timeSeconds,
-        previousTime: previousPb === Infinity ? undefined : previousPb,
-      });
-    }
-  }, [state.attempts, state.players]);
 
   const startEvent = useCallback(async (input: StartLiveEventInput) => {
     if (input.participants.length === 0) {
@@ -176,25 +150,34 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     try {
       setMutationError(null);
       const id = await createRemoteAttempt(input);
-      detectRecord(createLiveAttempt(input, id, new Date().toISOString()));
+      const attempt = createLiveAttempt(input, id, new Date().toISOString());
       const player = state.players.find(({ id: playerId }) => playerId === input.playerId);
-      if (player && input.participantKind !== "guest" && !input.outOfCompetition) {
+      const event = input.eventId
+        ? state.events.find(({ id: eventId }) => eventId === input.eventId)
+        : undefined;
+      if (player && event) {
         try {
-          const unlocks = await getAttemptBadgeUnlocks(id, player.name);
-          const unseen = takeUnseenUnlocks(unlocks, presentedBadgeAwards.current);
-          if (unseen.length) setBadgeUnlocks((current) => [...current, ...unseen]);
+          const result = derivePostAttemptResult({ before: state, event, player, attempt });
+          setPostAttempt(result);
+          setCelebration(recordCelebrationFor(result));
         } catch {
-          // The attempt is already confirmed. A presentation-only badge lookup
-          // must never turn a successful save into a failed submission.
+          // The attempt is already persisted. Presentation analysis must never
+          // turn a successful save into a failed submission.
         }
       }
-      await refreshAfterMutation();
+      if (player && input.participantKind !== "guest" && !input.outOfCompetition) {
+        void getAttemptBadgeUnlocks(id, player.name).then((unlocks) => {
+          const unseen = takeUnseenUnlocks(unlocks, presentedBadgeAwards.current);
+          if (unseen.length) setBadgeUnlocks((current) => [...current, ...unseen]);
+        }).catch(() => undefined);
+      }
+      void refreshAfterMutation().catch(() => undefined);
       return true;
     } catch (error) {
       recentSubmissions.current.delete(key);
       return fail(error);
     }
-  }, [detectRecord, fail, refreshAfterMutation, state.players]);
+  }, [fail, refreshAfterMutation, state]);
 
   const submitAttempt = useCallback(async (
     playerId: string,
@@ -353,6 +336,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     state,
     activeEvent,
     celebration,
+    postAttempt,
     badgeUnlock: badgeUnlocks[0] ?? null,
     mutationError,
     startingEvent,
@@ -371,6 +355,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     endEvent,
     refresh,
     dismissCelebration: () => setCelebration(null),
+    dismissPostAttempt: () => setPostAttempt(null),
     dismissBadgeUnlock: () => setBadgeUnlocks((current) => current.slice(1)),
     clearMutationError: () => setMutationError(null),
   }), [
@@ -379,6 +364,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     addGuest,
     addAttempt,
     celebration,
+    postAttempt,
     badgeUnlocks,
     deleteAttempt,
     endEvent,

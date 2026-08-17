@@ -84,6 +84,10 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   src/services/eventLifecycleRepository.test.ts
   src/components/events/NumericTimePad.test.ts`.
 - **Direkte Abhängigkeiten:** Datenplattform, Realtime, Badge-Unlock-Anzeige.
+- **Post-Attempt:** Ergebnis, Rekord und Badge-Queue werden aus dem bereits
+  gespeicherten Versuch und dem Live-Vorzustand präsentiert. Es entstehen
+  keine zusätzlichen Pflichtrequests; Badge-Lookup und Refresh bleiben
+  nachgelagerte, nicht blockierende Präsentations-/Synchronisationsschritte.
 - **Nicht enthalten:** Eventarchiv-Auswertung und globale Statistiken.
 
 ## 7. Eventarchiv und Eventdetail

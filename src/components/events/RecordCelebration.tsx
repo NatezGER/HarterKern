@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Crown, Sparkles, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { formatTime } from "@/utils/format";
 
@@ -11,10 +12,11 @@ const confetti = Array.from({ length: 14 }, (_, index) => ({
 }));
 
 export function RecordCelebration() {
-  const { celebration, dismissCelebration } = useLiveEvent();
+  const { celebration, postAttempt, dismissCelebration } = useLiveEvent();
   const reduced = useReducedMotion();
-  if (!celebration) return null;
+  if (!celebration || postAttempt) return null;
   const worldRecord = celebration.kind === "wr";
+  const seasonRecord = celebration.kind === "season";
   return (
     <motion.aside
       role="status"
@@ -43,15 +45,17 @@ export function RecordCelebration() {
       >
         <X className="size-5" />
       </button>
-      {worldRecord ? <Crown className="mx-auto size-10 text-gold-400" /> : <Sparkles className="mx-auto size-8 text-emerald-300" />}
+      {worldRecord || seasonRecord ? <Crown className="mx-auto size-10 text-gold-400" /> : <Sparkles className="mx-auto size-8 text-emerald-300" />}
       <p className="mt-4 text-xs font-black uppercase tracking-[0.24em] text-gold-300">
-        {worldRecord ? "Neuer Weltrekord" : "Neue persönliche Bestzeit"}
+        {worldRecord ? "Neuer Weltrekord" : seasonRecord
+          ? `Neuer Saisonrekord ${celebration.seasonYear}` : "Neue persönliche Bestzeit"}
       </p>
       <h2 className="display-title mt-2 text-4xl">{celebration.playerName}</h2>
       <p className="gold-text mt-2 font-display text-5xl font-black">{formatTime(celebration.time)}</p>
       {celebration.previousTime && (
         <p className="mt-3 text-xs text-white/40">Vorheriger Rekord: {formatTime(celebration.previousTime)}</p>
       )}
+      <Button className="mt-5" onClick={dismissCelebration}>Weiter</Button>
     </motion.aside>
   );
 }

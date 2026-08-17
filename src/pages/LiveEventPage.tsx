@@ -1,4 +1,4 @@
-import { ArrowLeft, Crown, Flag } from "lucide-react";
+import { ArrowLeft, Crown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { EndEventDialog } from "@/components/events/EndEventDialog";
@@ -112,11 +112,6 @@ export function LiveEventPage() {
       <LiveParticipantManager />
       <AttemptHistory event={activeEvent} attempts={attempts} />
       <TimeEntrySheet standing={selected} onClose={() => setSelected(null)} onSaved={(id, result) => setSaved({ id, result })} />
-      {saved?.result === "dns" && (
-        <div role="status" aria-live="polite" className="fixed bottom-5 left-1/2 z-[80] flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-red-400/25 bg-[#211111]/95 px-5 py-4 text-sm font-bold text-red-100 shadow-2xl motion-safe:animate-pulse">
-          <Flag className="size-5 text-red-300" /> DNF wurde gespeichert.
-        </div>
-      )}
       <EndEventDialog
         open={endOpen}
         onClose={() => setEndOpen(false)}
