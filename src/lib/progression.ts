@@ -41,7 +41,7 @@ export function buildProgressionCoordinates<T extends ProgressionDatum>(
   const dateRange = endedAt - startedAt;
   return points.map((point) => ({
     ...point,
-    x: points.length === 1
+    x: points.length === 1 && !domain?.startAt && !domain?.endAt
       ? 50
       : dateRange === 0
         ? 50

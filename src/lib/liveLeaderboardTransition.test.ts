@@ -3,10 +3,14 @@ import { buildEventLeadProgression } from "@/lib/eventLeadProgression";
 import { isEventEligibleLiveAttempt } from "@/lib/liveEventCalculations";
 import {
   canPresentLiveLeaderboardTransition,
+  advanceLeaderboardPresentation,
+  beginLeaderboardScroll,
   completeLiveLeaderboardTransition,
   deriveLiveLeaderboardTransition,
   enqueueLiveLeaderboardTransition,
   getLiveLeaderboardMotion,
+  getLeaderboardPresentationSettings,
+  isLeaderboardAnimationReady,
 } from "@/lib/liveLeaderboardTransition";
 import type {
   LiveAttempt,
@@ -195,5 +199,42 @@ describe("live leaderboard transition", () => {
       highlightDuration: 0,
     });
     expect(getLiveLeaderboardMotion(false).layoutDuration).toBeGreaterThan(0);
+    expect(getLeaderboardPresentationSettings(true)).toEqual({
+      behavior: "auto",
+      scrollDelay: 0,
+    });
+    expect(getLeaderboardPresentationSettings(false).behavior).toBe("smooth");
+  });
+
+  it("scrolls only after P10C and animates only after scrolling", () => {
+    expect(advanceLeaderboardPresentation("waiting", "scroll-complete")).toBe("waiting");
+    const scrolling = advanceLeaderboardPresentation("waiting", "p10c-complete");
+    expect(scrolling).toBe("scrolling");
+    expect(isLeaderboardAnimationReady({
+      transitionReady: true,
+      transitionAttemptId: "attempt",
+      presentationAttemptId: "attempt",
+      stage: scrolling,
+    })).toBe(false);
+    const animating = advanceLeaderboardPresentation(scrolling, "scroll-complete");
+    expect(isLeaderboardAnimationReady({
+      transitionReady: true,
+      transitionAttemptId: "attempt",
+      presentationAttemptId: "attempt",
+      stage: animating,
+    })).toBe(true);
+    expect(advanceLeaderboardPresentation(animating, "animation-complete")).toBe("complete");
+    expect(advanceLeaderboardPresentation("complete", "reset")).toBe("waiting");
+  });
+
+  it("uses a direct focused scroll for reduced motion", () => {
+    const calls: ScrollIntoViewOptions[] = [];
+    const target = {
+      scrollIntoView: (options?: boolean | ScrollIntoViewOptions) => {
+        if (typeof options === "object") calls.push(options);
+      },
+    };
+    expect(beginLeaderboardScroll(target, true)).toBe(0);
+    expect(calls).toEqual([{ behavior: "auto", block: "start" }]);
   });
 });

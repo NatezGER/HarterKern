@@ -1,5 +1,6 @@
 import { ArrowLeft, Crown } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useReducedMotion } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { EndEventDialog } from "@/components/events/EndEventDialog";
 import { AttemptHistory } from "@/components/events/AttemptHistory";
@@ -20,6 +21,12 @@ import {
   isEventEligibleLiveAttempt,
   sortStandingsForEntry,
 } from "@/lib/liveEventCalculations";
+import {
+  advanceLeaderboardPresentation,
+  beginLeaderboardScroll,
+  isLeaderboardAnimationReady,
+  type LeaderboardPresentationStage,
+} from "@/lib/liveLeaderboardTransition";
 import { formatTime } from "@/utils/format";
 import type {
   LiveStanding,
@@ -43,6 +50,12 @@ export function LiveEventPage() {
   const [selected, setSelected] = useState<LiveStanding | null>(null);
   const [saved, setSaved] = useState<{ id: string; result: "time" | "dns" } | null>(null);
   const [endOpen, setEndOpen] = useState(false);
+  const reducedMotion = Boolean(useReducedMotion());
+  const leaderboardRef = useRef<HTMLDivElement>(null);
+  const [leaderboardPresentation, setLeaderboardPresentation] = useState<{
+    attemptId: string | null;
+    stage: LeaderboardPresentationStage;
+  }>({ attemptId: null, stage: "waiting" });
   const candidates = useMemo<StartLiveEventParticipant[]>(() => data.players.map((player) => ({
       id: player.id,
       name: player.name,
@@ -64,6 +77,36 @@ export function LiveEventPage() {
   useEffect(() => {
     void refresh().catch(() => undefined);
   }, [refresh]);
+
+  const transitionAttemptId = leaderboardTransition?.attempt.id ?? null;
+  useEffect(() => {
+    if (!transitionAttemptId) {
+      setLeaderboardPresentation((current) => current.attemptId == null &&
+        current.stage === "waiting" ? current : { attemptId: null, stage: "waiting" });
+      return;
+    }
+    if (!leaderboardTransitionReady) return;
+    setLeaderboardPresentation((current) => current.attemptId === transitionAttemptId
+      ? current
+      : {
+          attemptId: transitionAttemptId,
+          stage: advanceLeaderboardPresentation("waiting", "p10c-complete"),
+        });
+    const scrollDelay = beginLeaderboardScroll(leaderboardRef.current, reducedMotion);
+    const timeout = window.setTimeout(() => {
+      setLeaderboardPresentation((current) => current.attemptId === transitionAttemptId
+        ? { ...current, stage: advanceLeaderboardPresentation(current.stage, "scroll-complete") }
+        : current);
+    }, scrollDelay);
+    return () => window.clearTimeout(timeout);
+  }, [leaderboardTransitionReady, reducedMotion, transitionAttemptId]);
+
+  const leaderboardAnimationReady = isLeaderboardAnimationReady({
+    transitionReady: leaderboardTransitionReady,
+    transitionAttemptId,
+    presentationAttemptId: leaderboardPresentation.attemptId,
+    stage: leaderboardPresentation.stage,
+  });
 
   if (status !== "ready") return <DataState><div /></DataState>;
 
@@ -91,12 +134,12 @@ export function LiveEventPage() {
   const attempts = state.attempts.filter(({ eventId }) => eventId === activeEvent.id);
   const standings = getLiveStandings(activeEvent, attempts, state.players);
   const displayedStandings = leaderboardTransition
-    ? leaderboardTransitionReady
+    ? leaderboardAnimationReady
       ? leaderboardTransition.afterStandings
       : leaderboardTransition.beforeStandings
     : standings;
   const timelineAttempts = leaderboardTransition
-    ? leaderboardTransitionReady
+    ? leaderboardAnimationReady
       ? [
           ...attempts.filter(({ id }) => id !== leaderboardTransition.attempt.id),
           leaderboardTransition.attempt,
@@ -141,14 +184,23 @@ export function LiveEventPage() {
           <p className="font-display text-3xl font-black">{formatTime(worldRecord ?? 0)}</p>
         </div>
       </section>
-      <LiveLeaderboard
-        standings={displayedStandings}
-        transition={leaderboardTransitionReady ? leaderboardTransition : null}
-        onTransitionComplete={completeLeaderboardTransition}
-      />
+      <div ref={leaderboardRef} className="scroll-mt-28">
+        <LiveLeaderboard
+          standings={displayedStandings}
+          transition={leaderboardAnimationReady ? leaderboardTransition : null}
+          onTransitionComplete={() => {
+            setLeaderboardPresentation((current) => ({
+              ...current,
+              stage: advanceLeaderboardPresentation(current.stage, "animation-complete"),
+            }));
+            completeLeaderboardTransition();
+          }}
+        />
+      </div>
       <LiveLeadProgression
         attempts={leadAttempts}
-        highlightAttemptId={leaderboardTransitionReady && leaderboardTransition?.tookLead
+        eventStartedAt={activeEvent.startedAt}
+        highlightAttemptId={leaderboardAnimationReady && leaderboardTransition?.tookLead
           ? leaderboardTransition.attempt.id : undefined}
       />
       <section>

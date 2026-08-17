@@ -77,3 +77,52 @@ export function getLiveLeaderboardMotion(reducedMotion: boolean) {
     ? { layoutDuration: 0, highlightDuration: 0, completionDelay: 1_300 }
     : { layoutDuration: 0.65, highlightDuration: 1.15, completionDelay: 1_300 };
 }
+
+export type LeaderboardPresentationStage =
+  | "waiting"
+  | "scrolling"
+  | "animating"
+  | "complete";
+
+export type LeaderboardPresentationEvent =
+  | "p10c-complete"
+  | "scroll-complete"
+  | "animation-complete"
+  | "reset";
+
+export function advanceLeaderboardPresentation(
+  stage: LeaderboardPresentationStage,
+  event: LeaderboardPresentationEvent,
+): LeaderboardPresentationStage {
+  if (event === "reset") return "waiting";
+  if (stage === "waiting" && event === "p10c-complete") return "scrolling";
+  if (stage === "scrolling" && event === "scroll-complete") return "animating";
+  if (stage === "animating" && event === "animation-complete") return "complete";
+  return stage;
+}
+
+export function getLeaderboardPresentationSettings(reducedMotion: boolean) {
+  return reducedMotion
+    ? { behavior: "auto" as const, scrollDelay: 0 }
+    : { behavior: "smooth" as const, scrollDelay: 450 };
+}
+
+export function beginLeaderboardScroll(
+  target: Pick<Element, "scrollIntoView"> | null,
+  reducedMotion: boolean,
+) {
+  const settings = getLeaderboardPresentationSettings(reducedMotion);
+  target?.scrollIntoView({ behavior: settings.behavior, block: "start" });
+  return settings.scrollDelay;
+}
+
+export function isLeaderboardAnimationReady(input: {
+  transitionReady: boolean;
+  transitionAttemptId: string | null;
+  presentationAttemptId: string | null;
+  stage: LeaderboardPresentationStage;
+}) {
+  return input.transitionReady && input.stage === "animating" &&
+    input.transitionAttemptId != null &&
+    input.transitionAttemptId === input.presentationAttemptId;
+}
