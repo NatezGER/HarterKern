@@ -6,6 +6,7 @@ import { LiveEventProvider } from "@/hooks/useLiveEvent";
 import { LiveEventBanner } from "@/components/events/LiveEventBanner";
 import { RecordCelebration } from "@/components/events/RecordCelebration";
 import { BadgeUnlockCelebration } from "@/components/events/BadgeUnlockCelebration";
+import { PostAttemptResult } from "@/components/events/PostAttemptResult";
 import { SyncStatusNotice } from "@/components/common/SyncStatusNotice";
 import { AdminSessionProvider } from "@/hooks/useAdminSession";
 import { ManagementModeProvider } from "@/hooks/useManagementMode";
@@ -29,6 +30,7 @@ function AppFrame() {
         <Outlet />
       </main>
       <Footer />
+      <PostAttemptResult />
       <RecordCelebration />
       <BadgeUnlockCelebration />
       <ScrollRestoration />

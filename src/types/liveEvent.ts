@@ -119,10 +119,25 @@ export interface AttemptUpdate {
 }
 
 export interface RecordCelebration {
-  kind: "pb" | "wr";
+  kind: "pb" | "season" | "wr";
   playerName: string;
   time: number;
   previousTime?: number;
+  seasonYear?: number;
+}
+
+export interface PostAttemptResult {
+  attemptId: string;
+  playerName: string;
+  result: LiveAttemptResult;
+  time?: number;
+  primaryKind: "normal" | "event-tie" | "event-best" | "pb" | "season-record" | "wr" | "dnf";
+  primaryMessage: string;
+  achievements: string[];
+  improvementHundredths?: number | null;
+  eventDeltaHundredths?: number | null;
+  seasonYear?: number | null;
+  previousRecordTime?: number;
 }
 
 export interface BadgeUnlockCelebration {
