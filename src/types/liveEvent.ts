@@ -153,3 +153,25 @@ export interface AttemptMilestone {
   isPersonalBest: boolean;
   isWorldRecord: boolean;
 }
+
+export type LiveLeaderboardTransitionIntensity =
+  | "best-time"
+  | "position"
+  | "multi-position"
+  | "lead";
+
+export interface LiveLeaderboardTransition {
+  attempt: LiveAttempt;
+  playerId: string;
+  previousBestTime: number | null;
+  nextBestTime: number;
+  previousRank: number | null;
+  nextRank: number;
+  gainedPositions: number;
+  isNewPersonalEventBest: true;
+  isNewEventBest: boolean;
+  tookLead: boolean;
+  intensity: LiveLeaderboardTransitionIntensity;
+  beforeStandings: LiveStanding[];
+  afterStandings: LiveStanding[];
+}

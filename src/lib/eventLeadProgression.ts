@@ -27,7 +27,11 @@ export function formatLeadDuration(startAt: string, endAt: string) {
   return rest ? `${hours} Std. ${rest} Min.` : `${hours} Std.`;
 }
 
-export function buildEventLeadProgression(attempts: EventLeadAttempt[], eventEndAt: string | null) {
+export function buildEventLeadProgression(
+  attempts: EventLeadAttempt[],
+  eventEndAt: string | null,
+  nowAt?: string,
+) {
   const ordered = [...attempts]
     .filter((attempt): attempt is EventLeadAttempt & { timeHundredths: number } =>
       !attempt.isDnf && !attempt.isAk && attempt.timeHundredths != null)
@@ -41,8 +45,10 @@ export function buildEventLeadProgression(attempts: EventLeadAttempt[], eventEnd
   }
   return leaders.map((leader, index): EventLeadPoint => {
     const nextAt = leaders[index + 1]?.submittedAt;
-    const periodEndAt = nextAt ?? eventEndAt ?? leader.submittedAt;
+    const periodEndAt = nextAt ?? eventEndAt ?? nowAt ?? leader.submittedAt;
     const duration = formatLeadDuration(leader.submittedAt, periodEndAt);
-    return { ...leader, periodEndAt, durationLabel: nextAt ? duration : `bis Eventende · ${duration}` };
+    const durationLabel = nextAt ? duration
+      : eventEndAt ? `bis Eventende · ${duration}` : `führt seit ${duration}`;
+    return { ...leader, periodEndAt, durationLabel };
   });
 }

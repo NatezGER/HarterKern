@@ -28,4 +28,12 @@ describe("event lead progression", () => {
     expect(buildEventLeadProgression([attempt("1", null, "2026-01-01T18:00:00Z", { isDnf: true })], null)).toEqual([]);
     expect(formatLeadDuration("2026-01-01T18:00:00Z", "2026-01-01T18:19:00Z")).toBe("19 Min.");
   });
+
+  it("labels the current live leader duration differently from a closed event", () => {
+    const attempts = [attempt("1", 300, "2026-01-01T18:00:00Z")];
+    expect(buildEventLeadProgression(attempts, null, "2026-01-01T18:20:00Z")[0])
+      .toMatchObject({ periodEndAt: "2026-01-01T18:20:00Z", durationLabel: "führt seit 20 Min." });
+    expect(buildEventLeadProgression(attempts, "2026-01-01T18:20:00Z")[0])
+      .toMatchObject({ durationLabel: "bis Eventende · 20 Min." });
+  });
 });
