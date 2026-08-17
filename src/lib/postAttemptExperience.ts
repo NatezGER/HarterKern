@@ -1,4 +1,9 @@
 import { getEventSeason } from "@/lib/season";
+import {
+  isEventEligibleLiveAttempt,
+  isOfficialLiveAttempt,
+  isOfficialLiveParticipant,
+} from "@/lib/liveEventCalculations";
 import type {
   BadgeUnlockCelebration,
   LiveAttempt,
@@ -11,22 +16,12 @@ import type {
 
 const hundredths = (seconds: number) => Math.round(seconds * 100);
 
-function isOfficialParticipant(player: LiveParticipant | undefined) {
-  return player?.kind === "permanent" && !player.isAk;
-}
-
 function isOfficialAttempt(attempt: LiveAttempt, state: LiveEventState) {
   return attempt.result === "time" && attempt.timeSeconds != null &&
-    !attempt.outOfCompetition &&
-    isOfficialParticipant(state.players.find(({ id }) => id === attempt.playerId));
-}
-
-function isEventEligibleAttempt(attempt: LiveAttempt, state: LiveEventState) {
-  if (attempt.result !== "time" || attempt.timeSeconds == null || attempt.outOfCompetition) {
-    return false;
-  }
-  const player = state.players.find(({ id }) => id === attempt.playerId);
-  return player?.kind === "guest" || isOfficialParticipant(player);
+    isOfficialLiveAttempt(
+      attempt,
+      state.players.find(({ id }) => id === attempt.playerId),
+    );
 }
 
 function minimumHundredths(values: number[]) {
@@ -52,13 +47,13 @@ export function derivePostAttemptResult(input: {
   }
 
   const attemptHundredths = hundredths(attempt.timeSeconds);
-  const eventEligible = !attempt.outOfCompetition &&
-    (player.kind === "guest" || isOfficialParticipant(player));
+  const eventEligible = isEventEligibleLiveAttempt(attempt, player);
   const eventBest = minimumHundredths(before.attempts.flatMap((item) =>
-    item.eventId === event.id && isEventEligibleAttempt(item, before)
+    item.eventId === event.id && item.result === "time" && item.timeSeconds != null &&
+      isEventEligibleLiveAttempt(item, before.players.find(({ id }) => id === item.playerId))
       ? [item.timeSeconds!] : [],
   ));
-  const official = !attempt.outOfCompetition && isOfficialParticipant(player);
+  const official = isOfficialLiveAttempt(attempt, player);
   const previousPb = official ? minimumHundredths([
     ...(player.personalBest > 0 ? [player.personalBest] : []),
     ...before.attempts.flatMap((item) =>
@@ -68,7 +63,7 @@ export function derivePostAttemptResult(input: {
   ]) : null;
   const previousWr = official ? minimumHundredths([
     ...before.players.flatMap((item) =>
-      isOfficialParticipant(item) && item.personalBest > 0 ? [item.personalBest] : [],
+      isOfficialLiveParticipant(item) && item.personalBest > 0 ? [item.personalBest] : [],
     ),
     ...before.attempts.flatMap((item) =>
       isOfficialAttempt(item, before) ? [item.timeSeconds!] : [],

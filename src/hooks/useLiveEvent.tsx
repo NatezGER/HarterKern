@@ -194,7 +194,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
       result,
       timeSeconds: time,
       date: activeEvent.date,
-      outOfCompetition: false,
+      outOfCompetition: player.isAk,
     });
   }, [activeEvent, addAttempt, state.players]);
 

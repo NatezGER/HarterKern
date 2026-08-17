@@ -11,6 +11,7 @@ import type {
   LiveEvent,
   LiveEventState,
 } from "@/types/liveEvent";
+import { getLiveStandings, getOfficialWorldRecord } from "@/lib/liveEventCalculations";
 
 const event: LiveEvent = {
   id: "event-live",
@@ -100,6 +101,36 @@ describe("post-attempt result derivation", () => {
     expect(value.primaryKind).toBe("normal");
     expect(value.primaryMessage).toBe("Versuch gespeichert");
     expect(value.achievements).toEqual([]);
+  });
+
+  it("matches standings and WR eligibility for an AK player", () => {
+    const akPlayer = { ...before.players[0], isAk: true };
+    const akBefore = {
+      ...before,
+      players: [akPlayer, before.players[1]],
+    };
+    const akAttempt: LiveAttempt = {
+      id: "ak-new",
+      playerId: akPlayer.id,
+      eventId: event.id,
+      result: "time",
+      timeSeconds: 1,
+      date: event.date,
+      submittedAt: "2026-08-17T18:04:00Z",
+      outOfCompetition: false,
+    };
+    const postAttempt = derivePostAttemptResult({
+      before: akBefore,
+      event,
+      player: akPlayer,
+      attempt: akAttempt,
+    });
+    const withAttempt = [...akBefore.attempts, akAttempt];
+    expect(postAttempt.primaryKind).toBe("normal");
+    expect(postAttempt.achievements).toEqual([]);
+    expect(getLiveStandings(event, withAttempt, akBefore.players)
+      .find(({ player }) => player.id === akPlayer.id)?.bestTime).toBeNull();
+    expect(getOfficialWorldRecord(akBefore.players, withAttempt)).toBe(2);
   });
 });
 

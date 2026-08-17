@@ -21,6 +21,25 @@ const average = (attempts: LiveAttempt[]) => {
   return times.length ? times.reduce((sum, time) => sum + time, 0) / times.length : null;
 };
 
+export function isOfficialLiveParticipant(player: LiveParticipant | undefined) {
+  return player?.kind === "permanent" && !player.isAk;
+}
+
+export function isOfficialLiveAttempt(
+  attempt: LiveAttempt,
+  player: LiveParticipant | undefined,
+) {
+  return isOfficialLiveParticipant(player) && !attempt.outOfCompetition;
+}
+
+export function isEventEligibleLiveAttempt(
+  attempt: LiveAttempt,
+  player: LiveParticipant | undefined,
+) {
+  return !attempt.outOfCompetition &&
+    (player?.kind === "guest" || isOfficialLiveParticipant(player));
+}
+
 export function createLiveAttempt(input: AttemptInput, id: string, now: string): LiveAttempt {
   return {
     id,
@@ -57,10 +76,10 @@ export function getLiveStandings(
       player,
       rank: null,
       bestTime: fastest(playerAttempts.filter((attempt) =>
-        player.kind === "guest" || !attempt.outOfCompetition,
+        isEventEligibleLiveAttempt(attempt, player),
       )),
       averageTime: average(playerAttempts.filter((attempt) =>
-        player.kind === "guest" || !attempt.outOfCompetition,
+        isEventEligibleLiveAttempt(attempt, player),
       )),
       attempts: playerAttempts.length,
       lastAttempt: [...playerAttempts].sort(
@@ -115,13 +134,15 @@ export const getOfficialWorldRecord = (
   attempts: LiveAttempt[],
 ) => {
   const historical = players.flatMap((player) =>
-    player.kind === "permanent" && !player.isAk && player.personalBest > 0
+    isOfficialLiveParticipant(player) && player.personalBest > 0
       ? [player.personalBest]
       : [],
   );
   const live = attempts.flatMap((attempt) =>
-    players.find(({ id }) => id === attempt.playerId)?.kind === "permanent" &&
-    !attempt.outOfCompetition &&
+    isOfficialLiveAttempt(
+      attempt,
+      players.find(({ id }) => id === attempt.playerId),
+    ) &&
     attempt.result === "time" &&
     attempt.timeSeconds != null
       ? [attempt.timeSeconds]
@@ -141,8 +162,8 @@ export function getAttemptMilestones(
   const milestones = new Map<string, AttemptMilestone>();
   [...attempts].sort((a, b) => a.submittedAt.localeCompare(b.submittedAt)).forEach((attempt) => {
     const participant = playersById.get(attempt.playerId);
-    if (participant?.kind !== "permanent" || attempt.result !== "time" ||
-      attempt.timeSeconds == null || attempt.outOfCompetition) {
+    if (!isOfficialLiveAttempt(attempt, participant) || attempt.result !== "time" ||
+      attempt.timeSeconds == null) {
       milestones.set(attempt.id, { isPersonalBest: false, isWorldRecord: false });
       return;
     }

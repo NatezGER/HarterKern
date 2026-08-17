@@ -9,10 +9,15 @@ import {
 } from "@/lib/liveEventCalculations";
 import type { LiveAttempt, LiveEvent, LiveParticipant } from "@/types/liveEvent";
 
-const participant = (id: string, personalBest = 3, isAk = false): LiveParticipant => ({
+const participant = (
+  id: string,
+  personalBest = 3,
+  isAk = false,
+  kind: LiveParticipant["kind"] = "permanent",
+): LiveParticipant => ({
   id,
   name: id,
-  kind: isAk ? "guest" : "permanent",
+  kind,
   initials: id.slice(0, 2),
   avatarGradient: "",
   avatarUrl: null,
@@ -24,6 +29,7 @@ const players = [
   participant("paul", 2.06),
   participant("mats", 2.4),
   participant("ak", 1.5, true),
+  participant("guest", 0, false, "guest"),
 ];
 
 const event: LiveEvent = {
@@ -105,7 +111,7 @@ describe("live event rules", () => {
       attempt("2", "mats", 2.2),
       attempt("3", "paul", 2.1),
     ], players);
-    expect(standings.map(({ player }) => player.id)).toEqual(["paul", "mats", "ak"]);
+    expect(standings.map(({ player }) => player.id)).toEqual(["paul", "mats", "ak", "guest"]);
     expect(standings[0]).toMatchObject({ rank: 1, bestTime: 2.1, averageTime: 2.2, attempts: 2 });
   });
 
@@ -119,11 +125,11 @@ describe("live event rules", () => {
 
   it("lets an event-only guest rank and win without affecting official records", () => {
     const attempts = [
-      attempt("1", "ak", 1.2, "time", true),
+      attempt("1", "guest", 1.2),
       attempt("2", "paul", 2.2),
     ];
-    expect(getLiveStandings(event, attempts, players).find(({ player }) => player.id === "ak")?.rank).toBe(1);
-    expect(finalizeLiveEvent(event, attempts, players, "manual", event.endsAt).winnerPlayerId).toBe("ak");
+    expect(getLiveStandings(event, attempts, players).find(({ player }) => player.id === "guest")?.rank).toBe(1);
+    expect(finalizeLiveEvent(event, attempts, players, "manual", event.endsAt).winnerPlayerId).toBe("guest");
     expect(getOfficialWorldRecord(players, attempts)).toBe(2.06);
   });
 
@@ -153,9 +159,29 @@ describe("live event rules", () => {
   it("uses every valid regular attempt for the official world record", () => {
     expect(getOfficialWorldRecord(players, [
       attempt("1", "paul", 1.8),
-      attempt("2", "ak", 1.1, "time", true),
-      attempt("3", "mats", undefined, "dns"),
+      attempt("2", "ak", 1.1),
+      attempt("3", "mats", 1.2, "time", true),
+      attempt("4", "mats", undefined, "dns"),
     ])).toBe(1.8);
+  });
+
+  it("applies the same permanent-player eligibility to standings, WR and milestones", () => {
+    const attempts = [
+      attempt("1", "ak", 1.1),
+      attempt("2", "mats", 1.2, "time", true),
+      attempt("3", "paul", 1.9),
+    ];
+    const standings = getLiveStandings(event, attempts, players);
+    expect(standings.find(({ player }) => player.id === "ak")?.bestTime).toBeNull();
+    expect(standings.find(({ player }) => player.id === "mats")?.bestTime).toBeNull();
+    expect(standings.find(({ player }) => player.id === "paul")?.bestTime).toBe(1.9);
+    expect(getOfficialWorldRecord(players, attempts)).toBe(1.9);
+    expect(getAttemptMilestones(players, attempts).get("1"))
+      .toEqual({ isPersonalBest: false, isWorldRecord: false });
+    expect(getAttemptMilestones(players, attempts).get("2"))
+      .toEqual({ isPersonalBest: false, isWorldRecord: false });
+    expect(getAttemptMilestones(players, attempts).get("3"))
+      .toEqual({ isPersonalBest: true, isWorldRecord: true });
   });
 
   it("marks PB and WR milestones chronologically", () => {
