@@ -50,6 +50,17 @@ describe("progression chart", () => {
     expect(formatTimelineMoment("2025-01-01T18:42:00Z", "2025-01-01", true)).toContain("19:42 Uhr");
   });
 
+  it("places a single live point on the shared event time axis", () => {
+    const [point] = buildProgressionCoordinates([
+      { id: "only", achievedAt: "2025-01-01T10:15:00Z", timeHundredths: 300 },
+    ], {
+      startAt: "2025-01-01T10:00:00Z",
+      endAt: "2025-01-01T11:00:00Z",
+    });
+    expect(point.x).toBeGreaterThan(7);
+    expect(point.x).toBeLessThan(50);
+  });
+
   it("formats summer timestamps in Europe/Berlin daylight saving time", () => {
     expect(formatTimelineMoment("2025-07-01T18:42:00Z", "2025-07-01", true)).toContain("20:42 Uhr");
   });

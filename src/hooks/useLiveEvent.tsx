@@ -12,6 +12,12 @@ import { getErrorMessage } from "@/lib/errors";
 import { takeUnseenUnlocks } from "@/lib/badgeUnlocks";
 import { createLiveAttempt, getActiveLiveEvent } from "@/lib/liveEventCalculations";
 import {
+  canPresentLiveLeaderboardTransition,
+  completeLiveLeaderboardTransition,
+  deriveLiveLeaderboardTransition,
+  enqueueLiveLeaderboardTransition,
+} from "@/lib/liveLeaderboardTransition";
+import {
   derivePostAttemptResult,
   recordCelebrationFor,
 } from "@/lib/postAttemptExperience";
@@ -38,6 +44,7 @@ import type {
   RecordCelebration,
   PostAttemptResult,
   BadgeUnlockCelebration,
+  LiveLeaderboardTransition,
   StartLiveEventInput,
   StartLiveEventResult,
 } from "@/types/liveEvent";
@@ -48,6 +55,8 @@ interface LiveEventContextValue {
   celebration: RecordCelebration | null;
   badgeUnlock: BadgeUnlockCelebration | null;
   postAttempt: PostAttemptResult | null;
+  leaderboardTransition: LiveLeaderboardTransition | null;
+  leaderboardTransitionReady: boolean;
   mutationError: string | null;
   startingEvent: boolean;
   endingEvent: boolean;
@@ -71,6 +80,7 @@ interface LiveEventContextValue {
   dismissCelebration: () => void;
   dismissPostAttempt: () => void;
   dismissBadgeUnlock: () => void;
+  completeLeaderboardTransition: () => void;
   clearMutationError: () => void;
 }
 
@@ -83,6 +93,8 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
   const [celebration, setCelebration] = useState<RecordCelebration | null>(null);
   const [postAttempt, setPostAttempt] = useState<PostAttemptResult | null>(null);
   const [badgeUnlocks, setBadgeUnlocks] = useState<BadgeUnlockCelebration[]>([]);
+  const [pendingBadgeLookups, setPendingBadgeLookups] = useState(0);
+  const [leaderboardTransitions, setLeaderboardTransitions] = useState<LiveLeaderboardTransition[]>([]);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [startingEvent, setStartingEvent] = useState(false);
   const [endingEvent, setEndingEvent] = useState(false);
@@ -121,6 +133,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
       setMutationError(null);
       const { eventId } = await startRemoteEvent(input);
       await refreshAfterMutation();
+      setLeaderboardTransitions([]);
       return { eventId, error: null };
     } catch (error) {
       const message = getErrorMessage(error);
@@ -156,6 +169,11 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
         ? state.events.find(({ id: eventId }) => eventId === input.eventId)
         : undefined;
       if (player && event) {
+        const transition = deriveLiveLeaderboardTransition({ before: state, event, attempt });
+        if (transition) {
+          setLeaderboardTransitions((current) =>
+            enqueueLiveLeaderboardTransition(current, transition));
+        }
         try {
           const result = derivePostAttemptResult({ before: state, event, player, attempt });
           setPostAttempt(result);
@@ -166,10 +184,14 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
         }
       }
       if (player && input.participantKind !== "guest" && !input.outOfCompetition) {
-        void getAttemptBadgeUnlocks(id, player.name).then((unlocks) => {
-          const unseen = takeUnseenUnlocks(unlocks, presentedBadgeAwards.current);
-          if (unseen.length) setBadgeUnlocks((current) => [...current, ...unseen]);
-        }).catch(() => undefined);
+        setPendingBadgeLookups((current) => current + 1);
+        void getAttemptBadgeUnlocks(id, player.name)
+          .then((unlocks) => {
+            const unseen = takeUnseenUnlocks(unlocks, presentedBadgeAwards.current);
+            if (unseen.length) setBadgeUnlocks((current) => [...current, ...unseen]);
+          })
+          .catch(() => undefined)
+          .finally(() => setPendingBadgeLookups((current) => Math.max(0, current - 1)));
       }
       void refreshAfterMutation().catch(() => undefined);
       return true;
@@ -322,6 +344,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
       setMutationError(null);
       const id = await closeRemoteEvent(activeEvent.id, "manual");
       await refreshAfterMutation();
+      setLeaderboardTransitions([]);
       return id;
     } catch (error) {
       fail(error);
@@ -332,11 +355,21 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     }
   }, [activeEvent, fail, refreshAfterMutation]);
 
+  const leaderboardTransition = leaderboardTransitions[0] ?? null;
+  const leaderboardTransitionReady = Boolean(leaderboardTransition) &&
+    canPresentLiveLeaderboardTransition({
+      hasPostAttempt: Boolean(postAttempt),
+      hasCelebration: Boolean(celebration),
+      hasBadgeUnlock: badgeUnlocks.length > 0,
+      badgeLookupPending: pendingBadgeLookups > 0,
+    });
   const value = useMemo(() => ({
     state,
     activeEvent,
     celebration,
     postAttempt,
+    leaderboardTransition,
+    leaderboardTransitionReady,
     badgeUnlock: badgeUnlocks[0] ?? null,
     mutationError,
     startingEvent,
@@ -357,6 +390,8 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     dismissCelebration: () => setCelebration(null),
     dismissPostAttempt: () => setPostAttempt(null),
     dismissBadgeUnlock: () => setBadgeUnlocks((current) => current.slice(1)),
+    completeLeaderboardTransition: () => setLeaderboardTransitions((current) =>
+      completeLiveLeaderboardTransition(current)),
     clearMutationError: () => setMutationError(null),
   }), [
     activeEvent,
@@ -366,6 +401,8 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     celebration,
     postAttempt,
     badgeUnlocks,
+    leaderboardTransition,
+    leaderboardTransitionReady,
     deleteAttempt,
     endEvent,
     endingEvent,
