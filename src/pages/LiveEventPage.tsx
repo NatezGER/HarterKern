@@ -23,7 +23,7 @@ import {
 } from "@/lib/liveEventCalculations";
 import {
   advanceLeaderboardPresentation,
-  beginLeaderboardScroll,
+  startLeaderboardScroll,
   isLeaderboardAnimationReady,
   type LeaderboardPresentationStage,
 } from "@/lib/liveLeaderboardTransition";
@@ -92,13 +92,11 @@ export function LiveEventPage() {
           attemptId: transitionAttemptId,
           stage: advanceLeaderboardPresentation("waiting", "p10c-complete"),
         });
-    const scrollDelay = beginLeaderboardScroll(leaderboardRef.current, reducedMotion);
-    const timeout = window.setTimeout(() => {
+    return startLeaderboardScroll(leaderboardRef.current, reducedMotion, () => {
       setLeaderboardPresentation((current) => current.attemptId === transitionAttemptId
         ? { ...current, stage: advanceLeaderboardPresentation(current.stage, "scroll-complete") }
         : current);
-    }, scrollDelay);
-    return () => window.clearTimeout(timeout);
+    });
   }, [leaderboardTransitionReady, reducedMotion, transitionAttemptId]);
 
   const leaderboardAnimationReady = isLeaderboardAnimationReady({

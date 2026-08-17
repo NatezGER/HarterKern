@@ -4,13 +4,13 @@ import { isEventEligibleLiveAttempt } from "@/lib/liveEventCalculations";
 import {
   canPresentLiveLeaderboardTransition,
   advanceLeaderboardPresentation,
-  beginLeaderboardScroll,
   completeLiveLeaderboardTransition,
   deriveLiveLeaderboardTransition,
   enqueueLiveLeaderboardTransition,
   getLiveLeaderboardMotion,
   getLeaderboardPresentationSettings,
   isLeaderboardAnimationReady,
+  startLeaderboardScroll,
 } from "@/lib/liveLeaderboardTransition";
 import type {
   LiveAttempt,
@@ -201,7 +201,7 @@ describe("live leaderboard transition", () => {
     expect(getLiveLeaderboardMotion(false).layoutDuration).toBeGreaterThan(0);
     expect(getLeaderboardPresentationSettings(true)).toEqual({
       behavior: "auto",
-      scrollDelay: 0,
+      fallbackTimeout: 0,
     });
     expect(getLeaderboardPresentationSettings(false).behavior).toBe("smooth");
   });
@@ -227,14 +227,92 @@ describe("live leaderboard transition", () => {
     expect(advanceLeaderboardPresentation("complete", "reset")).toBe("waiting");
   });
 
+  it("does not finish scrolling before the leaderboard reaches its target", () => {
+    const harness = createScrollHarness();
+    let completed = false;
+    startLeaderboardScroll(harness.target, false, () => { completed = true; }, harness.runtime);
+    harness.runFrame();
+    expect(completed).toBe(false);
+    harness.sample.top = 112;
+    harness.sample.bottom = 512;
+    harness.sample.scrollY = 788;
+    harness.runFrame();
+    expect(completed).toBe(false);
+    harness.runFrame();
+    expect(completed).toBe(true);
+  });
+
+  it("uses the safety fallback when the browser never reports a settled position", () => {
+    const harness = createScrollHarness();
+    let completed = false;
+    startLeaderboardScroll(harness.target, false, () => { completed = true; }, harness.runtime);
+    harness.runFrame();
+    expect(completed).toBe(false);
+    harness.runFallback();
+    expect(completed).toBe(true);
+  });
+
   it("uses a direct focused scroll for reduced motion", () => {
     const calls: ScrollIntoViewOptions[] = [];
     const target = {
       scrollIntoView: (options?: boolean | ScrollIntoViewOptions) => {
         if (typeof options === "object") calls.push(options);
       },
+      getBoundingClientRect: () => ({}) as DOMRect,
     };
-    expect(beginLeaderboardScroll(target, true)).toBe(0);
+    let completed = false;
+    startLeaderboardScroll(target as unknown as Element, true, () => { completed = true; });
     expect(calls).toEqual([{ behavior: "auto", block: "start" }]);
+    expect(completed).toBe(true);
   });
 });
+
+function createScrollHarness() {
+  let nextHandle = 1;
+  const frames = new Map<number, FrameRequestCallback>();
+  const fallbacks = new Map<number, () => void>();
+  const sample = {
+    top: 900,
+    bottom: 1_300,
+    height: 400,
+    scrollY: 0,
+    viewportHeight: 800,
+    scrollMarginTop: 112,
+  };
+  const target = {
+    scrollIntoView: () => undefined,
+    getBoundingClientRect: () => ({}) as DOMRect,
+  };
+  const runtime = {
+    requestFrame: (callback: FrameRequestCallback) => {
+      const handle = nextHandle++;
+      frames.set(handle, callback);
+      return handle;
+    },
+    cancelFrame: (handle: number) => { frames.delete(handle); },
+    setFallback: (callback: () => void) => {
+      const handle = nextHandle++;
+      fallbacks.set(handle, callback);
+      return handle;
+    },
+    clearFallback: (handle: number) => { fallbacks.delete(handle); },
+    read: () => ({ ...sample }),
+  };
+  return {
+    target: target as unknown as Element,
+    runtime,
+    sample,
+    runFrame: () => {
+      const entry = frames.entries().next().value as [number, FrameRequestCallback] | undefined;
+      if (!entry) return;
+      frames.delete(entry[0]);
+      entry[1](0);
+    },
+    runFallback: () => {
+      const entry = fallbacks.entries().next().value as [number, () => void] | undefined;
+      if (!entry) return;
+      fallbacks.delete(entry[0]);
+      entry[1]();
+    },
+  };
+}

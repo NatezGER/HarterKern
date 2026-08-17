@@ -103,17 +103,100 @@ export function advanceLeaderboardPresentation(
 
 export function getLeaderboardPresentationSettings(reducedMotion: boolean) {
   return reducedMotion
-    ? { behavior: "auto" as const, scrollDelay: 0 }
-    : { behavior: "smooth" as const, scrollDelay: 450 };
+    ? { behavior: "auto" as const, fallbackTimeout: 0 }
+    : { behavior: "smooth" as const, fallbackTimeout: 2_000 };
 }
 
-export function beginLeaderboardScroll(
-  target: Pick<Element, "scrollIntoView"> | null,
+interface LeaderboardScrollSample {
+  top: number;
+  bottom: number;
+  height: number;
+  scrollY: number;
+  viewportHeight: number;
+  scrollMarginTop: number;
+}
+
+interface LeaderboardScrollRuntime {
+  requestFrame: (callback: FrameRequestCallback) => number;
+  cancelFrame: (handle: number) => void;
+  setFallback: (callback: () => void, delay: number) => number;
+  clearFallback: (handle: number) => void;
+  read: () => LeaderboardScrollSample;
+}
+
+function browserScrollRuntime(target: Element): LeaderboardScrollRuntime {
+  return {
+    requestFrame: window.requestAnimationFrame.bind(window),
+    cancelFrame: window.cancelAnimationFrame.bind(window),
+    setFallback: window.setTimeout.bind(window),
+    clearFallback: window.clearTimeout.bind(window),
+    read: () => {
+      const rect = target.getBoundingClientRect();
+      return {
+        top: rect.top,
+        bottom: rect.bottom,
+        height: rect.height,
+        scrollY: window.scrollY,
+        viewportHeight: window.innerHeight,
+        scrollMarginTop: Number.parseFloat(window.getComputedStyle(target).scrollMarginTop) || 0,
+      };
+    },
+  };
+}
+
+export function startLeaderboardScroll(
+  target: Element | null,
   reducedMotion: boolean,
+  onComplete: () => void,
+  runtime?: LeaderboardScrollRuntime,
 ) {
   const settings = getLeaderboardPresentationSettings(reducedMotion);
   target?.scrollIntoView({ behavior: settings.behavior, block: "start" });
-  return settings.scrollDelay;
+  if (reducedMotion || !target) {
+    onComplete();
+    return () => undefined;
+  }
+
+  const activeRuntime = runtime ?? browserScrollRuntime(target);
+  const initialScrollY = activeRuntime.read().scrollY;
+  let previousScrollY = initialScrollY;
+  let stableFrames = 0;
+  let frameHandle = 0;
+  let fallbackHandle = 0;
+  let completed = false;
+
+  const finish = () => {
+    if (completed) return;
+    completed = true;
+    if (frameHandle) activeRuntime.cancelFrame(frameHandle);
+    if (fallbackHandle) activeRuntime.clearFallback(fallbackHandle);
+    onComplete();
+  };
+  const checkPosition = () => {
+    const sample = activeRuntime.read();
+    const stable = Math.abs(sample.scrollY - previousScrollY) < 0.5;
+    stableFrames = stable ? stableFrames + 1 : 0;
+    previousScrollY = sample.scrollY;
+    const atRequestedPosition = Math.abs(sample.top - sample.scrollMarginTop) <= 12;
+    const meaningfullyVisible = sample.top >= 0 &&
+      sample.top <= sample.viewportHeight * 0.6 &&
+      sample.bottom >= Math.min(sample.viewportHeight, sample.top + Math.min(160, sample.height));
+    const scrollMoved = Math.abs(sample.scrollY - initialScrollY) >= 1;
+    if ((atRequestedPosition && stableFrames >= 1) ||
+      (meaningfullyVisible && scrollMoved && stableFrames >= 3)) {
+      finish();
+      return;
+    }
+    frameHandle = activeRuntime.requestFrame(checkPosition);
+  };
+
+  frameHandle = activeRuntime.requestFrame(checkPosition);
+  fallbackHandle = activeRuntime.setFallback(finish, settings.fallbackTimeout);
+  return () => {
+    completed = true;
+    if (frameHandle) activeRuntime.cancelFrame(frameHandle);
+    if (fallbackHandle) activeRuntime.clearFallback(fallbackHandle);
+  };
 }
 
 export function isLeaderboardAnimationReady(input: {
