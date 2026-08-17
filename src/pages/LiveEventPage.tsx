@@ -1,10 +1,11 @@
-import { ArrowLeft, Crown } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { EndEventDialog } from "@/components/events/EndEventDialog";
 import { AttemptHistory } from "@/components/events/AttemptHistory";
 import { LiveEventHeader } from "@/components/events/LiveEventHeader";
+import { LiveEventContentOrder } from "@/components/events/LiveEventContentOrder";
 import { LiveLeadProgression } from "@/components/events/LiveLeadProgression";
 import { LiveLeaderboard } from "@/components/events/LiveLeaderboard";
 import { LiveParticipantManager } from "@/components/events/LiveParticipantManager";
@@ -17,7 +18,6 @@ import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { usePublicData } from "@/hooks/usePublicData";
 import {
   getLiveStandings,
-  getOfficialWorldRecord,
   isEventEligibleLiveAttempt,
   sortStandingsForEntry,
 } from "@/lib/liveEventCalculations";
@@ -27,7 +27,6 @@ import {
   isLeaderboardAnimationReady,
   type LeaderboardPresentationStage,
 } from "@/lib/liveLeaderboardTransition";
-import { formatTime } from "@/utils/format";
 import type {
   LiveStanding,
   StartLiveEventParticipant,
@@ -166,7 +165,6 @@ export function LiveEventPage() {
       };
     });
   const entryStandings = sortStandingsForEntry(displayedStandings);
-  const worldRecord = getOfficialWorldRecord(state.players, state.attempts);
   const confirmEnd = async () => {
     const id = await endEvent();
     if (id) navigate(`/events/${id}/results`);
@@ -175,47 +173,41 @@ export function LiveEventPage() {
   return (
     <div className="space-y-7 lg:space-y-10">
       <LiveEventHeader event={activeEvent} attempts={attempts.length} onEnd={() => setEndOpen(true)} />
-      <section className="panel flex items-center gap-4 border-gold-400/20 p-5 sm:p-6">
-        <Crown className="size-7 text-gold-400" />
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-300">Offizieller Weltrekord</p>
-          <p className="font-display text-3xl font-black">{formatTime(worldRecord ?? 0)}</p>
-        </div>
-      </section>
-      <div ref={leaderboardRef} className="scroll-mt-28">
-        <LiveLeaderboard
-          standings={displayedStandings}
-          transition={leaderboardAnimationReady ? leaderboardTransition : null}
-          onTransitionComplete={() => {
-            setLeaderboardPresentation((current) => ({
-              ...current,
-              stage: advanceLeaderboardPresentation(current.stage, "animation-complete"),
-            }));
-            completeLeaderboardTransition();
-          }}
-        />
-      </div>
-      <LiveLeadProgression
-        attempts={leadAttempts}
-        eventStartedAt={activeEvent.startedAt}
-        highlightAttemptId={leaderboardAnimationReady && leaderboardTransition?.tookLead
-          ? leaderboardTransition.attempt.id : undefined}
+      <LiveEventContentOrder
+        leaderboard={<div ref={leaderboardRef} className="scroll-mt-28">
+          <LiveLeaderboard
+            standings={displayedStandings}
+            transition={leaderboardAnimationReady ? leaderboardTransition : null}
+            onTransitionComplete={() => {
+              setLeaderboardPresentation((current) => ({
+                ...current,
+                stage: advanceLeaderboardPresentation(current.stage, "animation-complete"),
+              }));
+              completeLeaderboardTransition();
+            }}
+          />
+        </div>}
+        attemptEntry={<section>
+          <h2 className="display-title mb-4 text-3xl sm:mb-5">Versuch hinzufügen</h2>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
+            {entryStandings.map((standing) => (
+              <ParticipantCard
+                key={standing.player.id}
+                standing={standing}
+                saved={saved?.id === standing.player.id}
+                onAdd={() => setSelected(standing)}
+              />
+            ))}
+          </div>
+        </section>}
+        leadStory={<LiveLeadProgression
+          attempts={leadAttempts}
+          highlightAttemptId={leaderboardAnimationReady && leaderboardTransition?.tookLead
+            ? leaderboardTransition.attempt.id : undefined}
+        />}
+        participantManagement={<LiveParticipantManager />}
+        attemptHistory={<AttemptHistory event={activeEvent} attempts={attempts} />}
       />
-      <section>
-        <h2 className="display-title mb-4 text-3xl sm:mb-5">Versuch hinzufügen</h2>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
-          {entryStandings.map((standing) => (
-            <ParticipantCard
-              key={standing.player.id}
-              standing={standing}
-              saved={saved?.id === standing.player.id}
-              onAdd={() => setSelected(standing)}
-            />
-          ))}
-        </div>
-      </section>
-      <LiveParticipantManager />
-      <AttemptHistory event={activeEvent} attempts={attempts} />
       <TimeEntrySheet standing={selected} onClose={() => setSelected(null)} onSaved={(id, result) => setSaved({ id, result })} />
       <EndEventDialog
         open={endOpen}

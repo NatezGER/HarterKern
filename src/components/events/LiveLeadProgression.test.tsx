@@ -43,30 +43,27 @@ const attempts: EventLeadAttempt[] = [
 ];
 
 describe("LiveLeadProgression", () => {
-  it("renders one responsive step curve from the complete central progression", () => {
+  it("renders the complete compact lead list without the large curve", () => {
     const markup = renderToStaticMarkup(
-      <LiveLeadProgression
-        attempts={attempts}
-        eventStartedAt="2026-08-17T10:00:00.000Z"
-      />,
+      <LiveLeadProgression attempts={attempts} />,
     );
-    expect(markup).toContain("data-live-lead-curve");
+    expect(markup).toContain("data-live-lead-list");
     expect(markup).toContain('data-lead-points="2"');
-    expect(markup).toMatch(/d="M [^"]+ H [^"]+ V [^"]+ H 93"/);
-    expect(markup.match(/data-live-lead-curve/g)).toHaveLength(1);
+    expect(markup).not.toContain("data-live-lead-curve");
+    expect(markup).toContain("Paul");
+    expect(markup).toContain("Gast");
   });
 
   it("marks the latest real lead as current and exposes its details", () => {
     const markup = renderToStaticMarkup(
       <LiveLeadProgression
         attempts={attempts}
-        eventStartedAt="2026-08-17T10:00:00.000Z"
         highlightAttemptId="current"
       />,
     );
     expect(markup).toContain("Aktueller Leader");
     expect(markup).toContain("Gast");
     expect(markup).toContain("Versuch 2");
-    expect(markup).toContain("data-live-lead-detail");
+    expect(markup).toContain("Aktuell");
   });
 });
