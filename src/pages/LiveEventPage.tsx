@@ -172,7 +172,7 @@ export function LiveEventPage() {
 
   return (
     <div className="space-y-7 lg:space-y-10">
-      <LiveEventHeader event={activeEvent} attempts={attempts.length} onEnd={() => setEndOpen(true)} />
+      <LiveEventHeader event={activeEvent} attempts={attempts.length} />
       <LiveEventContentOrder
         leaderboard={<div ref={leaderboardRef} className="scroll-mt-28">
           <LiveLeaderboard
@@ -207,6 +207,11 @@ export function LiveEventPage() {
         />}
         participantManagement={<LiveParticipantManager />}
         attemptHistory={<AttemptHistory event={activeEvent} attempts={attempts} />}
+        endAction={<section className="border-t border-red-400/10 pt-5 text-center sm:pt-7">
+          <Button variant="ghost" className="text-xs text-red-300/60 hover:bg-red-400/5 hover:text-red-200" onClick={() => setEndOpen(true)}>
+            Event beenden
+          </Button>
+        </section>}
       />
       <TimeEntrySheet standing={selected} onClose={() => setSelected(null)} onSaved={(id, result) => setSaved({ id, result })} />
       <EndEventDialog

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Flag, Timer } from "lucide-react";
+import { Check, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EventModal } from "@/components/events/EventModal";
 import { LiveAvatar } from "@/components/events/LiveAvatar";
 import { NumericTimePad } from "@/components/events/NumericTimePad";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { appendTimeKey } from "@/lib/numericTimeInput";
+import { claimAttemptSave } from "@/lib/attemptSaveGuard";
 import { formatTime } from "@/utils/format";
 import { parseTimeToHundredths } from "@/utils/time";
 import type { LiveStanding } from "@/types/liveEvent";
@@ -23,6 +24,7 @@ export function TimeEntrySheet({
   const [value, setValue] = useState("");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmingDnf, setConfirmingDnf] = useState(false);
   const savingRef = useRef(false);
   const parsed = parseTimeToHundredths(value);
 
@@ -30,6 +32,7 @@ export function TimeEntrySheet({
     if (!standing) return;
     setValue("");
     setMessage("");
+    setConfirmingDnf(false);
     savingRef.current = false;
     setSaving(false);
     const onKey = (event: KeyboardEvent) => {
@@ -47,14 +50,14 @@ export function TimeEntrySheet({
 
   if (!standing) return null;
   const save = async (result: "time" | "dns") => {
-    if (savingRef.current) return;
-    savingRef.current = true;
+    if (!claimAttemptSave(savingRef)) return;
     setSaving(true);
     const seconds = result === "time" && parsed != null ? parsed / 100 : undefined;
     const saved = await submitAttempt(standing.player.id, result, seconds);
     if (!saved) {
       savingRef.current = false;
       setSaving(false);
+      if (result === "dns") setConfirmingDnf(false);
       setMessage("Eingabe ungültig oder bereits gespeichert.");
       return;
     }
@@ -63,8 +66,9 @@ export function TimeEntrySheet({
   };
 
   return (
-    <EventModal open title="Neue Zeit" onClose={onClose}>
-      <div className="mb-5 flex items-center gap-4 rounded-2xl bg-white/[0.035] p-4">
+    <>
+    <EventModal open title="Neue Zeit" onClose={onClose} className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-7">
+      <div className="mb-3 flex items-center gap-3 rounded-2xl bg-white/[0.035] p-3 sm:mb-5 sm:gap-4 sm:p-4">
         <LiveAvatar player={standing.player} />
         <div className="min-w-0">
           <p className="truncate text-lg font-bold">{standing.player.name}</p>
@@ -73,21 +77,21 @@ export function TimeEntrySheet({
           </p>
         </div>
       </div>
-      <div className="mb-4 grid grid-cols-3 gap-2">
+      <div className="mb-3 grid grid-cols-3 gap-2 sm:mb-4">
         <EntryMetric label="Event-Bestzeit" value={formatTime(standing.bestTime ?? 0)} />
         <EntryMetric label="Versuche" value={String(standing.attempts)} />
         <EntryMetric label="Event-Ø" value={formatTime(standing.averageTime ?? 0)} />
       </div>
       <div
-        className="mb-4 grid min-h-20 place-items-center rounded-2xl border border-gold-400/20 bg-gold-400/[0.06]"
+        className="mb-3 grid min-h-16 place-items-center rounded-2xl border border-gold-400/20 bg-gold-400/[0.06] sm:mb-4 sm:min-h-20"
         aria-live="polite"
       >
-        <span className="font-display text-4xl font-black text-gold-300">
+        <span className="font-display text-3xl font-black text-gold-300 sm:text-4xl">
           {value || "0,00"} <small className="text-lg">s</small>
         </span>
       </div>
       <NumericTimePad value={value} onChange={setValue} />
-      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4">
         <Button
           size="lg"
           disabled={parsed == null || saving}
@@ -96,15 +100,42 @@ export function TimeEntrySheet({
         >
           <Check className="size-5" /> Zeit speichern
         </Button>
-        <Button size="lg" variant="outline" disabled={saving} onClick={() => void save("dns")} className="h-14">
+        <Button size="lg" variant="outline" disabled={saving} onClick={() => setConfirmingDnf(true)} className="h-14">
           <Flag className="size-5" /> DNF
         </Button>
       </div>
-      <p className="mt-4 flex items-center justify-center gap-2 text-center text-xs text-white/40">
-        <Timer className="size-3.5" />
-        Die Zeit ist nach dem Speichern sofort offiziell.
-      </p>
-      <p aria-live="assertive" className="mt-2 text-center text-sm text-red-300">{message}</p>
+      {message && <p aria-live="assertive" className="mt-2 text-center text-sm text-red-300">{message}</p>}
+    </EventModal>
+    <DnfConfirmationDialog
+      open={confirmingDnf}
+      saving={saving}
+      onCancel={() => setConfirmingDnf(false)}
+      onConfirm={() => void save("dns")}
+    />
+    </>
+  );
+}
+
+export function DnfConfirmationDialog({
+  open,
+  saving,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  saving: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <EventModal open={open} title="DNF eintragen" onClose={() => !saving && onCancel()}>
+      <p className="text-sm text-white/65">Wirklich DNF eintragen?</p>
+      <div className="mt-5 grid grid-cols-2 gap-2">
+        <Button variant="ghost" disabled={saving} onClick={onCancel}>Abbrechen</Button>
+        <Button disabled={saving} onClick={onConfirm}>
+          <Flag className="size-4" /> {saving ? "Wird gespeichert …" : "DNF bestätigen"}
+        </Button>
+      </div>
     </EventModal>
   );
 }

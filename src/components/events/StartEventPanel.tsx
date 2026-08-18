@@ -95,14 +95,14 @@ export function StartEventPanel({
       <h1 className="display-title mt-5 text-4xl">Live-Event starten</h1>
       <p className="mt-2 text-sm text-white/40">Ein Event läuft exakt 24 Stunden. Parallelstarts sind gesperrt.</p>
       <>
-          <div className="mt-7 grid gap-3 sm:grid-cols-2">
-            <label className="text-xs font-semibold text-white/45">
+          <div className="mt-7 grid min-w-0 gap-3 sm:grid-cols-2">
+            <label className="min-w-0 text-xs font-semibold text-white/45">
               Eventname
               <Input className="mt-2 rounded-xl" value={name} onChange={(event) => setName(event.target.value)} placeholder="Optional" />
             </label>
-            <label className="text-xs font-semibold text-white/45">
+            <label className="min-w-0 text-xs font-semibold text-white/45">
               Datum
-              <Input className="mt-2 rounded-xl" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+              <Input className="mt-2 min-w-0 max-w-full rounded-xl" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
             </label>
           </div>
           <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-gold-400/15 bg-gold-400/[0.04] p-4">
