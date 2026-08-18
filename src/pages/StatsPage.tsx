@@ -4,8 +4,6 @@ import { DataState } from "@/components/common/DataState";
 import { PageHeader } from "@/components/common/PageHeader";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { StatCard } from "@/components/stats/StatCard";
-import { HistoricalAttemptList } from "@/components/history/HistoricalAttemptList";
-import { Button } from "@/components/ui/button";
 import { appMeta } from "@/constants/content";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { useDataPlatform } from "@/hooks/useDataPlatform";
@@ -19,11 +17,14 @@ import { LeagueTimeStatistics } from "@/components/stats/LeagueTimeStatistics";
 import { OptionalDataState } from "@/components/common/OptionalDataState";
 import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { useSeason } from "@/hooks/useSeason";
+import { useState } from "react";
+import { HistoricalAttemptsDisclosure } from "@/components/history/HistoricalAttemptsDisclosure";
 
 export function StatsPage() {
   const { data } = useEffectivePublicData();
   const { snapshot } = useDataPlatform();
   const { season, isAllTime } = useSeason();
+  const [historyExpanded, setHistoryExpanded] = useState(false);
   const archivedEvents = data.events.filter(({ status }) => status === "closed");
   return (
     <div className="space-y-10">
@@ -93,13 +94,11 @@ export function StatsPage() {
             Diese offiziellen Einzelzeiten sind keiner vollständig dokumentierten
             Veranstaltung zugeordnet und erzeugen deshalb keine Eventwertung.
           </p>
-          <HistoricalAttemptList
+          <HistoricalAttemptsDisclosure
             attempts={snapshot.liveState.historicalAttempts}
-            limit={6}
+            expanded={historyExpanded}
+            onToggle={() => setHistoryExpanded((value) => !value)}
           />
-          <Button asChild variant="outline" className="mt-5">
-            <Link to="/history">Alle historischen Versuche anzeigen</Link>
-          </Button>
         </section>}
       </DataState>
     </div>

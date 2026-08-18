@@ -19,6 +19,7 @@ export function ManagementPanel() {
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(false);
   const [editing, setEditing] = useState<LiveAttempt | null>(null);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
   return (
     <section>
       <div className="panel p-7">
@@ -81,8 +82,6 @@ export function ManagementPanel() {
             <p className="flex items-center gap-2 text-sm text-emerald-300">
               <ShieldCheck className="size-4" /> Verwaltungsmodus aktiv
             </p>
-            <HistoricalAttemptManagement />
-            <AwardAssetManagement />
             <section className="rounded-2xl border border-white/10 p-5">
               <h3 className="display-title text-2xl">Versuche verwalten</h3>
               <div className="mt-4 max-h-96 space-y-2 overflow-y-auto">
@@ -110,13 +109,41 @@ export function ManagementPanel() {
               </div>
             </section>
             <div className="grid gap-5 xl:grid-cols-2">
-              <PlayerManagement />
               <EventManagement />
+              <PlayerManagement />
             </div>
+            <AwardAssetManagement />
+            <HistoricalManagementDisclosure
+              expanded={historyExpanded}
+              onToggle={() => setHistoryExpanded((value) => !value)}
+            />
           </div>
         )}
       </div>
       <AttemptEditDialog attempt={editing} onClose={() => setEditing(null)} />
+    </section>
+  );
+}
+
+export function HistoricalManagementDisclosure({
+  expanded,
+  onToggle,
+}: {
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <section className="rounded-2xl border border-white/10 p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="display-title text-2xl">Historische Versuche</h3>
+          <p className="mt-1 text-sm text-white/40">Altdaten manuell eintragen oder korrigieren.</p>
+        </div>
+        <Button type="button" variant="outline" aria-expanded={expanded} onClick={onToggle}>
+          {expanded ? "Historische Verwaltung schließen" : "Historische Verwaltung öffnen"}
+        </Button>
+      </div>
+      {expanded && <div className="mt-5"><HistoricalAttemptManagement /></div>}
     </section>
   );
 }
