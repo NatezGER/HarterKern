@@ -17,12 +17,23 @@ vi.mock("@/hooks/useEffectivePublicData", () => ({
 }));
 
 import { HallOfFamePreview } from "@/components/dashboard/HallOfFamePreview";
+import { HeroCard } from "@/components/dashboard/HeroCard";
 import { WRProgression } from "@/components/dashboard/WRProgression";
 
 describe("season dashboard polish", () => {
+  it("keeps the compact brand hierarchy without marketing copy", () => {
+    const markup = renderToStaticMarkup(<HeroCard />);
+    expect(markup).toContain("Harter Kern");
+    expect(markup).toContain("2 Fast 2 Drink");
+    expect(markup).toContain("Saison 2026");
+    expect(markup).not.toContain("THE ORIGINAL SPEED DRINKING LEAGUE");
+    expect(markup).not.toContain("Wo Sekunden zu Legenden werden.");
+    expect(markup).not.toContain("min-h-[430px]");
+  });
+
   it("labels season record progression and its empty state", () => {
     const markup = renderToStaticMarkup(<WRProgression />);
-    expect(markup).toContain("Saison-WR-Progression");
+    expect(markup).toContain("Saisonrekord-Progression");
     expect(markup).toContain("Noch kein Saisonrekord 2026.");
     expect(markup).not.toContain("Noch kein offizieller Weltrekord.");
   });

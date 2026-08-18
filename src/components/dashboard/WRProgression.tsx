@@ -33,7 +33,7 @@ export function WRProgression({ compact = false, collapsibleHistory = false }: {
     <section>
       <SectionHeading
         eyebrow={isAllTime ? "Rekordgeschichte" : `Saison ${season}`}
-        title={isAllTime ? "WR Progression" : "Saison-WR-Progression"}
+        title={isAllTime ? "WR Progression" : "Saisonrekord-Progression"}
       />
       <AnimatedCard className="overflow-hidden p-5 sm:p-8" hover={false}>
         <ProgressionTimeline points={compact ? points.slice(0, 6) : points} showHistory={!collapsibleHistory || historyExpanded} emptyLabel={isAllTime ? "Noch kein offizieller Weltrekord." : `Noch kein Saisonrekord ${season}.`} />
