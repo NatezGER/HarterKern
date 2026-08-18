@@ -6,12 +6,14 @@ export function LiveEventContentOrder({
   leadStory,
   participantManagement,
   attemptHistory,
+  endAction,
 }: {
   leaderboard: ReactNode;
   attemptEntry: ReactNode;
   leadStory: ReactNode;
   participantManagement: ReactNode;
   attemptHistory: ReactNode;
+  endAction: ReactNode;
 }) {
   return <>
     {leaderboard}
@@ -19,5 +21,6 @@ export function LiveEventContentOrder({
     {leadStory}
     {participantManagement}
     {attemptHistory}
+    {endAction}
   </>;
 }

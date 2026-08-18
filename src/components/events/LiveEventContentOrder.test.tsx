@@ -10,6 +10,7 @@ describe("LiveEventContentOrder", () => {
       leadStory={<div>Live-Führungsstory</div>}
       participantManagement={<div>Teilnehmerverwaltung</div>}
       attemptHistory={<div>Versuchshistorie</div>}
+      endAction={<div>Event beenden</div>}
     />);
     const labels = [
       "Live-Rangliste",
@@ -17,6 +18,7 @@ describe("LiveEventContentOrder", () => {
       "Live-Führungsstory",
       "Teilnehmerverwaltung",
       "Versuchshistorie",
+      "Event beenden",
     ];
     expect(labels.map((label) => markup.indexOf(label)))
       .toEqual([...labels.map((label) => markup.indexOf(label))].sort((a, b) => a - b));
