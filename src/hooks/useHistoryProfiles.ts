@@ -3,6 +3,7 @@ import { useDataGroup, useDataPlatform } from "@/hooks/useDataPlatform";
 import { getErrorMessage } from "@/lib/errors";
 import {
   getEventDetail,
+  getEventDetailExtras,
 } from "@/services/historyProfileService";
 import {
   loadPlayerProfileSection,
@@ -39,7 +40,33 @@ export function useEventDetail(eventId: string) {
     let active = true;
     setState(initialState);
     void getEventDetail(eventId)
-      .then((data) => active && setState({ data, loading: false, error: "" }))
+      .then((data) => {
+        if (!active) return;
+        setState({ data, loading: false, error: "" });
+        if (!data) return;
+        void getEventDetailExtras(eventId).then((extras) => {
+          if (!active) return;
+          setState((current) => current.data
+            ? { ...current, data: { ...current.data, ...extras } }
+            : current);
+        }).catch(() => {
+          if (!active) return;
+          setState((current) => current.data ? {
+            ...current,
+            data: {
+              ...current.data,
+              extras: {
+                loading: false,
+                errors: {
+                  badges: "Badge-Unlocks konnten nicht geladen werden.",
+                  photos: "Eventfotos konnten nicht geladen werden.",
+                  trophies: "Trophäen konnten nicht geladen werden.",
+                },
+              },
+            },
+          } : current);
+        });
+      })
       .catch((error) => active && setState({
         data: null,
         loading: false,

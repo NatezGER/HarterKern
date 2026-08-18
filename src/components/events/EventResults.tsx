@@ -51,8 +51,11 @@ export function EventResults({ detail }: { detail: EventDetail }) {
       </section>
 
       {detail.trophies.length > 0 && <section className="order-3"><h2 className="display-title mb-4 text-2xl sm:text-3xl">Vergebene Trophäen</h2><TrophyCabinet trophies={detail.trophies} mobileLimit={3} /></section>}
+      {detail.extras?.errors.trophies && <OptionalEventSectionError className="order-3" message={detail.extras.errors.trophies} />}
 
       {detail.badges.length > 0 && <section className="order-5 lg:order-4"><h2 className="display-title mb-4 text-2xl sm:mb-5 sm:text-3xl">Freigeschaltet</h2><BadgeGallery badges={detail.badges} compact showPlayer /></section>}
+      {detail.extras?.errors.badges && <OptionalEventSectionError className="order-5 lg:order-4" message={detail.extras.errors.badges} />}
+      {detail.extras?.loading && <section className="panel order-5 p-4 text-sm text-white/40 lg:order-4">Badges, Fotos und Trophäen werden nachgeladen …</section>}
 
       {detail.status === "closed" && <section className="panel order-3 p-4 sm:p-8 lg:order-4"><h2 className="display-title text-2xl sm:text-3xl">Event-Führungsprogression</h2><p className="mt-2 text-xs text-white/40 sm:text-sm">Wer führte zu welchem Zeitpunkt mit welcher Eventbestzeit?</p><div className="mt-4 sm:mt-6"><ProgressionTimeline points={eventProgression} domainStartAt={detail.startedAt} domainEndAt={detail.closedAt ?? undefined} emptyLabel="Dieses Event hat keine gültige Führungszeit." /></div></section>}
 
@@ -72,11 +75,21 @@ export function EventResults({ detail }: { detail: EventDetail }) {
 
       <div className="order-6"><EventAttemptList attempts={detail.attempts} /></div>
       <section className="panel order-7 p-5 sm:p-8"><h2 className="display-title text-2xl sm:text-3xl">Nach Versuchsnummer</h2><p className="mt-2 text-sm text-white/40">Durchschnitt aller gültigen regulären Spieler- und Gastzeiten dieses Events.</p><div className="mt-5 sm:mt-6"><EventAttemptNumberChart points={detail.attemptNumbers} /></div></section>
-      <div className="order-8"><EventPhotoGallery eventId={detail.id} photos={detail.photos} /></div>
+      <div className="order-8">
+        {detail.extras?.loading
+          ? null
+          : detail.extras?.errors.photos
+          ? <OptionalEventSectionError message={detail.extras.errors.photos} />
+          : <EventPhotoGallery eventId={detail.id} photos={detail.photos} />}
+      </div>
     </div>
   );
 }
 
 function Metric({ icon: Icon, label, value, className }: { icon: typeof Users; label: string; value: string; className?: string }) {
   return <div className={cn("panel min-w-0 p-4 sm:p-5", className)}><Icon className="size-5 text-gold-400" /><p className="mt-4 break-words font-display text-2xl font-black sm:mt-5">{value}</p><p className="mt-1 text-xs text-white/35">{label}</p></div>;
+}
+
+function OptionalEventSectionError({ message, className }: { message: string; className?: string }) {
+  return <section className={cn("panel p-4 text-sm text-amber-200/80", className)}>{message}</section>;
 }
