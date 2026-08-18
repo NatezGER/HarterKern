@@ -190,42 +190,25 @@ function mapTrophy(row: {
 
 export async function getEventDetail(eventId: string): Promise<EventDetail | null> {
   const client = getSupabase();
-  const [eventResult, statsResult, podiumResult, medalEventResult, attemptsResult, participantResult,
-    badgeResult, photoResult, attemptNumbersResult, trophyResult] = await Promise.all([
-    client.from("events").select("*").eq("id", eventId).is("deleted_at", null).maybeSingle(),
+  const eventResult = await client.from("events").select("*")
+    .eq("id", eventId).is("deleted_at", null).maybeSingle();
+  if (eventResult.error) throw eventResult.error;
+  const event = eventResult.data;
+  if (!event) return null;
+  const [statsResult, podiumResult, medalEventResult, attemptsResult, participantResult] = await Promise.all([
     client.from("event_statistics").select("*").eq("event_id", eventId).maybeSingle(),
     client.from("event_podium").select("*").eq("event_id", eventId).order("rank"),
     client.rpc("get_medal_qualified_events", { p_event_ids: [eventId] }).maybeSingle(),
     client.from("event_attempt_details").select("*").eq("event_id", eventId).order("submitted_at"),
     client.from("event_participant_statistics").select("*").eq("event_id", eventId),
-    client.from("event_badge_unlocks").select("*").eq("source_event_id", eventId)
-      .order("tier_rank", { ascending: false })
-      .order("is_special_event_badge", { ascending: false })
-      .order("awarded_at"),
-    client.from("event_photos").select("*").eq("event_id", eventId)
-      .order("sort_order").order("created_at"),
-    client.from("event_attempt_number_statistics").select("*").eq("event_id", eventId)
-      .order("attempt_number"),
-    client.from("player_trophies").select("*").eq("competition_id", eventId)
-      .order("placement"),
   ]);
-  for (const result of [eventResult, statsResult, podiumResult, medalEventResult, attemptsResult,
-    participantResult, badgeResult, photoResult, attemptNumbersResult, trophyResult]) {
+  for (const result of [statsResult, podiumResult, medalEventResult, attemptsResult,
+    participantResult]) {
     if (result.error) throw result.error;
   }
-  const event = eventResult.data;
-  if (!event) return null;
-  const photoRows = photoResult.data ?? [];
   const podiumRows = medalEventResult.data ? (podiumResult.data ?? []) : [];
   const attemptRows = attemptsResult.data ?? [];
   const participantRows = participantResult.data ?? [];
-  const badgeRows = badgeResult.data ?? [];
-  const signed = photoRows.length
-    ? await client.storage.from("event-photos")
-      .createSignedUrls(photoRows.map(({ storage_path }) => storage_path), 3600)
-    : { data: [], error: null };
-  if (signed.error) throw signed.error;
-  const urls = new Map((signed.data ?? []).map((item) => [item.path, item.signedUrl]));
   const attempts: EventAttemptDetail[] = attemptRows.map((row) => ({
     id: row.attempt_id,
     playerId: row.player_id,
@@ -243,6 +226,13 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
     isWr: row.is_world_record,
     isEb: row.is_event_best,
   }));
+  const attemptNumbers = new Map<number, number[]>();
+  for (const attempt of attempts) {
+    if (attempt.isDnf || attempt.isAk || attempt.timeHundredths == null) continue;
+    const times = attemptNumbers.get(attempt.attemptNumber) ?? [];
+    times.push(attempt.timeHundredths);
+    attemptNumbers.set(attempt.attemptNumber, times);
+  }
   const participantStats = participantRows.map(mapParticipant);
   const stats = statsResult.data;
   return {
@@ -274,22 +264,67 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
     }),
     participantStats,
     attempts,
-    badges: badgeRows.map(mapBadge),
-    photos: photoRows.map((row) => ({
-      id: row.id,
-      path: row.storage_path,
-      url: urls.get(row.storage_path) ?? "",
-      caption: row.caption,
-    })).filter(({ url }) => Boolean(url)),
-    attemptNumbers: (attemptNumbersResult.data ?? []).map((row) => ({
-      attemptNumber: row.attempt_number,
-      samples: Number(row.sample_count),
-      averageHundredths: row.average_hundredths,
-      bestHundredths: row.best_hundredths,
-      slowestHundredths: row.slowest_hundredths,
-    })),
-    trophies: (trophyResult.data ?? []).map(mapTrophy),
+    badges: [],
+    photos: [],
+    attemptNumbers: [...attemptNumbers.entries()]
+      .sort(([left], [right]) => left - right)
+      .map(([attemptNumber, times]) => ({
+        attemptNumber,
+        samples: times.length,
+        averageHundredths: Math.round(times.reduce((sum, time) => sum + time, 0) / times.length),
+        bestHundredths: Math.min(...times),
+        slowestHundredths: Math.max(...times),
+      })),
+    trophies: [],
+    extras: { loading: true, errors: {} },
   };
+}
+
+export async function getEventDetailExtras(eventId: string) {
+  const client = getSupabase();
+  const [badgeResult, photoResult, trophyResult] = await Promise.allSettled([
+    client.from("event_badge_unlocks").select("*").eq("source_event_id", eventId)
+      .order("tier_rank", { ascending: false })
+      .order("is_special_event_badge", { ascending: false })
+      .order("awarded_at"),
+    client.from("event_photos").select("*").eq("event_id", eventId)
+      .order("sort_order").order("created_at"),
+    client.from("player_trophies").select("*").eq("competition_id", eventId)
+      .order("placement"),
+  ]);
+  const errors: NonNullable<EventDetail["extras"]>["errors"] = {};
+  const badges = badgeResult.status === "fulfilled" && !badgeResult.value.error
+    ? (badgeResult.value.data ?? []).map(mapBadge) : [];
+  if (badgeResult.status === "rejected" || badgeResult.value.error) {
+    errors.badges = "Badge-Unlocks konnten nicht geladen werden.";
+  }
+  const trophies = trophyResult.status === "fulfilled" && !trophyResult.value.error
+    ? (trophyResult.value.data ?? []).map(mapTrophy) : [];
+  if (trophyResult.status === "rejected" || trophyResult.value.error) {
+    errors.trophies = "Trophäen konnten nicht geladen werden.";
+  }
+  let photos: EventDetail["photos"] = [];
+  if (photoResult.status === "fulfilled" && !photoResult.value.error) {
+    const rows = photoResult.value.data ?? [];
+    const signed = rows.length
+      ? await client.storage.from("event-photos")
+        .createSignedUrls(rows.map(({ storage_path }) => storage_path), 3600)
+      : { data: [], error: null };
+    if (signed.error) {
+      errors.photos = "Eventfotos konnten nicht geladen werden.";
+    } else {
+      const urls = new Map((signed.data ?? []).map((item) => [item.path, item.signedUrl]));
+      photos = rows.map((row) => ({
+        id: row.id,
+        path: row.storage_path,
+        url: urls.get(row.storage_path) ?? "",
+        caption: row.caption,
+      })).filter(({ url }) => Boolean(url));
+    }
+  } else {
+    errors.photos = "Eventfotos konnten nicht geladen werden.";
+  }
+  return { badges, photos, trophies, extras: { loading: false, errors } };
 }
 
 export async function getPlayerProfileCore(playerId: string): Promise<PlayerProfileCore | null> {

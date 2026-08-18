@@ -137,6 +137,10 @@ export interface EventDetail {
   photos: MediaPhoto[];
   attemptNumbers: EventAttemptNumberPoint[];
   trophies: TrophyAward[];
+  extras?: {
+    loading: boolean;
+    errors: Partial<Record<"badges" | "photos" | "trophies", string>>;
+  };
 }
 
 export interface PlayerEventSummary {
