@@ -87,6 +87,13 @@ export interface BadgeRarity {
   recipients: number;
   playerCount: number;
   percent: number | null;
+  recipientsList: BadgeRecipient[];
+}
+
+export interface BadgeRecipient {
+  playerId: string;
+  playerName: string;
+  avatarUrl: string | null;
 }
 
 export interface Event {

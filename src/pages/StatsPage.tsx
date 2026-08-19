@@ -7,8 +7,7 @@ import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { useDataPlatform } from "@/hooks/useDataPlatform";
 import { WRProgression } from "@/components/dashboard/WRProgression";
 import { GroupMilestones } from "@/components/stats/GroupMilestones";
-import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
-import { badgeTierLabel } from "@/lib/badgePresentation";
+import { BadgeRarityGrid } from "@/components/stats/BadgeRarityGrid";
 import { MostWantedMatrix } from "@/components/stats/MostWantedMatrix";
 import { LeagueTimeStatistics } from "@/components/stats/LeagueTimeStatistics";
 import { OptionalDataState } from "@/components/common/OptionalDataState";
@@ -27,7 +26,7 @@ export function StatsPage() {
     <div className="space-y-10">
       <PageHeader eyebrow={isAllTime ? "League Intelligence" : `League Intelligence · Saison ${season}`} title="Statistiken" description={isAllTime ? appMeta.statsDescription : `Eventbasierte Ligawerte der Saison ${season}.`} action={<SeasonContextBadge />} />
       <DataState>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
           {data.statistics.map((statistic, index) => (
             <StatCard key={statistic.id} statistic={statistic} delay={index * 0.06} />
           ))}
@@ -56,9 +55,7 @@ export function StatsPage() {
           <SectionHeading eyebrow={isAllTime ? "Prestige" : "All-Time · Prestige"} title="Badge-Seltenheit" />
           <p className="-mt-4 mb-5 max-w-3xl text-sm leading-6 text-white/45">Anteil der aktiven, dauerhaften Spieler, die diese Schwelle mindestens einmal erreicht haben. Höhere Stufen zählen deshalb auch bei den darunterliegenden Schwellen mit; Gäste und AK-Spieler sind ausgeschlossen.</p>
           <OptionalDataState group="badge-rarity">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {data.badgeRarity.map((badge) => <article key={badge.key} className="panel flex items-center gap-4 p-4"><PrestigeBadgeEmblem badge={{ badgeKey: badge.key, tier: badge.tier, name: badge.name }} size="sm" /><div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[0.18em] text-gold-300">{badgeTierLabel[badge.tier]}</p><h3 className="mt-1 truncate font-display text-lg font-black uppercase">{badge.name}</h3><p className="mt-2 font-display text-2xl font-black">{badge.percent == null ? "—" : `${badge.percent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`}</p><p className="mt-1 text-[10px] text-white/35">{badge.recipients} von {badge.playerCount} Spielern</p></div></article>)}
-            </div>
+            <BadgeRarityGrid badges={data.badgeRarity} />
           </OptionalDataState>
         </section>
         {isAllTime && <section id="history" className="mt-12 scroll-mt-28">

@@ -14,8 +14,8 @@ export function LeagueTimeStatistics({ data }: { data: LeagueTimeStatisticsData 
   ];
   return (
     <div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map(({ label, value, detail, icon: Icon }, index) => <article key={label} className="panel p-5"><div className="flex items-center justify-between"><Icon className="size-5 text-gold-400" />{index === 2 && data.topSmoothPlayerName && <ProfileAvatar id={data.topSmoothPlayerId ?? data.topSmoothPlayerName} name={data.topSmoothPlayerName} url={data.topSmoothPlayerAvatarUrl} className="size-8" />}</div><p className="mt-6 text-[9px] font-black uppercase tracking-[0.18em] text-white/30">{label}</p><p className="mt-1 break-words font-display text-2xl font-black">{value}</p><p className="mt-2 text-xs text-white/35">{detail}</p></article>)}
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {cards.map(({ label, value, detail, icon: Icon }, index) => <article key={label} className="panel min-w-0 p-3 sm:p-5"><div className="flex items-center justify-between"><Icon className="size-5 text-gold-400" />{index === 2 && data.topSmoothPlayerName && <ProfileAvatar id={data.topSmoothPlayerId ?? data.topSmoothPlayerName} name={data.topSmoothPlayerName} url={data.topSmoothPlayerAvatarUrl} className="size-8" />}</div><p className="mt-4 text-[9px] font-black uppercase tracking-[0.18em] text-white/30 sm:mt-6">{label}</p><p className="mt-1 break-words font-display text-xl font-black sm:text-2xl">{value}</p><p className="mt-2 break-words text-xs text-white/35">{detail}</p></article>)}
       </div>
     </div>
   );

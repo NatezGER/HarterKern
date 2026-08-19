@@ -13,7 +13,6 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
   data: MostWantedSnapshot;
   season?: SeasonSelection;
 }) {
-  const [expanded, setExpanded] = useState(false);
   const [selected, setSelected] = useState<MostWantedEnding | null>(null);
   const selectedSeason = useRef(season);
   const visibleSelected = selectedSeason.current === season ? selected : null;
@@ -48,8 +47,7 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
       {season !== ALL_TIME_SEASON && data.reached === 0 && (
         <p className="mt-4 text-sm text-white/40">In Saison {season} wurde noch keine Endung gefunden.</p>
       )}
-      <Button type="button" variant="outline" className="mt-5 w-full sm:w-auto" aria-expanded={expanded} aria-controls="most-wanted-grid" onClick={() => setExpanded((value) => !value)}>{expanded ? "Matrix einklappen" : "10×10-Matrix anzeigen"}</Button>
-      <div id="most-wanted-grid" hidden={!expanded} className="mx-auto mt-5 grid max-w-3xl grid-cols-10 gap-1" role="grid" aria-label="Matrix der Nachkommastellen 00 bis 99">
+      <div id="most-wanted-grid" className="mx-auto mt-5 grid max-w-3xl grid-cols-10 gap-1" role="grid" aria-label="Matrix der Nachkommastellen 00 bis 99">
         {data.endings.map((ending) => (
           <button
             key={ending.ending}
@@ -65,16 +63,11 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
             )}
           >
             {!ending.achieved && <span className="absolute left-0.5 top-0.5 sm:left-1 sm:top-1">{ending.label}</span>}
-            {ending.achieved && ending.playerName && ending.avatarUrl && <img
-              src={ending.avatarUrl}
-              alt=""
-              className="absolute inset-0.5 size-[calc(100%-0.25rem)] rounded-[0.3rem] object-cover object-center opacity-90 transition group-hover:opacity-100"
-            />}
-            {ending.achieved && ending.playerName && !ending.avatarUrl && <ProfileAvatar
+            {ending.achieved && ending.playerName && <ProfileAvatar
               id={ending.playerId ?? ending.guestId ?? ending.label}
               name={ending.playerName}
-              url={null}
-              className="absolute inset-1 size-[calc(100%-0.5rem)] text-[8px] ring-0 sm:text-xs"
+              url={ending.avatarUrl}
+              className="absolute left-1/2 top-1/2 size-[76%] -translate-x-1/2 -translate-y-1/2 text-[8px] ring-1 transition-transform group-hover:scale-105 sm:size-[80%] sm:text-xs"
             />}
             {ending.achieved && !ending.playerName && <Check className="absolute left-1/2 top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 text-emerald-300 sm:size-7" />}
           </button>

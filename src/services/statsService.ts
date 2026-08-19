@@ -251,18 +251,47 @@ export async function getGroupMilestones(): Promise<GroupMilestone[]> {
 }
 
 export async function getBadgeRarity(): Promise<BadgeRarity[]> {
-  const { data, error } = await getSupabase().from("badge_rarity_statistics").select("*")
-    .order("tier_rank", { ascending: false })
-    .order("recipient_count", { ascending: true })
-    .order("sort_order");
-  if (error) throw error;
-  return data.map((row) => ({
+  const client = getSupabase();
+  const [rarityResult, recipientsResult] = await Promise.all([
+    client.from("badge_rarity_statistics").select("*")
+      .order("tier_rank", { ascending: false })
+      .order("recipient_count", { ascending: true })
+      .order("sort_order"),
+    client.from("public_player_badges")
+      .select("badge_key,player_id,display_name,avatar_url")
+      .order("display_name"),
+  ]);
+  if (rarityResult.error) throw rarityResult.error;
+  if (recipientsResult.error) throw recipientsResult.error;
+  const badges = rarityResult.data.map((row) => ({
     key: row.badge_key,
     name: row.name,
     tier: row.tier,
     recipients: row.recipient_count,
     playerCount: row.regular_player_count,
     percent: row.rarity_percent,
+  }));
+  return attachBadgeRecipients(badges, recipientsResult.data.map((row) => ({
+    badgeKey: row.badge_key,
+    playerId: row.player_id,
+    playerName: row.display_name,
+    avatarUrl: row.avatar_url,
+  })));
+}
+
+export function attachBadgeRecipients(
+  badges: Array<Omit<BadgeRarity, "recipientsList">>,
+  recipients: Array<BadgeRarity["recipientsList"][number] & { badgeKey: string }>,
+): BadgeRarity[] {
+  const recipientsByBadge = new Map<string, Map<string, BadgeRarity["recipientsList"][number]>>();
+  recipients.forEach(({ badgeKey, ...recipient }) => {
+    const badgeRecipients = recipientsByBadge.get(badgeKey) ?? new Map();
+    badgeRecipients.set(recipient.playerId, recipient);
+    recipientsByBadge.set(badgeKey, badgeRecipients);
+  });
+  return badges.map((badge) => ({
+    ...badge,
+    recipientsList: [...(recipientsByBadge.get(badge.key)?.values() ?? [])],
   }));
 }
 

@@ -44,10 +44,12 @@ const data: MostWantedSnapshot = {
 };
 
 describe("MostWantedMatrix", () => {
-  it("starts collapsed while keeping accessible progress and all text alternatives", () => {
+  it("shows the matrix immediately without a disclosure toggle", () => {
     const markup = renderToStaticMarkup(<MostWantedMatrix data={data} />);
-    expect(markup).toContain('aria-expanded="false"');
-    expect(markup).toContain('aria-controls="most-wanted-grid"');
+    expect(markup).toContain('role="grid"');
+    expect(markup).not.toContain("10×10-Matrix anzeigen");
+    expect(markup).not.toContain("Matrix einklappen");
+    expect(markup).not.toContain("hidden=\"\"");
     expect(markup).toContain('aria-valuenow="1"');
     expect(markup).toContain('aria-valuemax="100"');
     expect(markup).toContain("Endung 00");
@@ -97,12 +99,14 @@ describe("MostWantedMatrix", () => {
     expect(markup).toContain("4,00 s");
   });
 
-  it("shows numbers only for open cells and fills achieved cells with portraits", () => {
+  it("shows numbers only for open cells and uses a large ProfileAvatar for hits", () => {
     const markup = renderToStaticMarkup(<MostWantedMatrix data={data} />);
     const achieved = markup.match(/<button[^>]*aria-label="00:[\s\S]*?<\/button>/)?.[0] ?? "";
     const open = markup.match(/<button[^>]*aria-label="01:[\s\S]*?<\/button>/)?.[0] ?? "";
     expect(achieved).not.toContain(">00<");
-    expect(achieved).toContain("object-cover");
+    expect(achieved).toContain("Profilbild von Paul");
+    expect(achieved).toContain("size-[76%]");
+    expect(achieved).not.toContain("absolute inset-0.5");
     expect(achieved).toContain("https://example.com/paul.webp");
     expect(open).toContain(">01<");
     expect(achieved).toContain("00: gefunden von Paul");
@@ -114,7 +118,8 @@ describe("MostWantedMatrix", () => {
       : ending) };
     const markup = renderToStaticMarkup(<MostWantedMatrix data={fallback} />);
     const achieved = markup.match(/<button[^>]*aria-label="00:[\s\S]*?<\/button>/)?.[0] ?? "";
-    expect(achieved).toContain("size-[calc(100%-0.5rem)]");
+    expect(achieved).toContain("Profilbild von Paul");
+    expect(achieved).toContain("size-[76%]");
     expect(achieved).toContain("P");
   });
 

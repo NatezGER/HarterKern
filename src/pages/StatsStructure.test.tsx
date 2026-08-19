@@ -27,6 +27,8 @@ describe("StatsPage structure", () => {
     expect(markup.indexOf("Most Wanted Matrix")).toBeLessThan(markup.indexOf("Liga-Meilensteine Inhalt"));
     expect(markup).toContain("Versuchnummern-Chart");
     expect(markup).toContain("Badge-Seltenheit");
+    expect(markup).toContain("grid grid-cols-2 gap-3");
+    expect(markup).not.toContain("col-span-2");
     expect(markup).not.toContain("Vergangene Events");
     expect(markup).not.toContain("Eventarchiv");
   });

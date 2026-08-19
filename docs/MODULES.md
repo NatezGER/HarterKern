@@ -148,6 +148,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   `award_assets`-Mapping; nur im geöffneten Verwaltungsmodus folgen je ein
   Request für aktive Badge-Definitionen. Trophäen-Slots sind lokal definiert
   und hängen nicht von bereits vergebenen Trophäen ab.
+- **Badge-Seltenheit:** lädt die bestehende Rarity-View und in einem zweiten,
+  gebündelten Request `public_player_badges` für die Empfänger-Disclosure;
+  keine Badge-Einzelrequests und keine zusätzliche globale Datenladung.
 - **Nicht enthalten:** Kernladung von Hall of Fame und Spielerübersicht.
 
 ## 10. Most Wanted und BINGO
