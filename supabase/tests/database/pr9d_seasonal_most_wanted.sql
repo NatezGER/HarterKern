@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap;
-select plan(12);
+select plan(14);
 
 insert into public.players (id, display_name, is_ak) values
   ('9d000000-0000-0000-0000-000000000001', 'Season Hunter', false),
@@ -43,22 +43,26 @@ insert into public.historical_attempts (
   is_guest, out_of_competition
 ) values
   ('9d000000-0000-0000-0000-000000000201', '9d000000-0000-0000-0000-000000000001',
-   'Season Hunter', date '2026-05-01', 328, 1, false, false),
+   'Season Hunter', date '2026-05-01', 207, 1, false, false),
   ('9d000000-0000-0000-0000-000000000202', '9d000000-0000-0000-0000-000000000001',
-   'Season Hunter', date '2025-05-01', 329, 2, false, false);
+   'Season Hunter', date '2025-05-01', 199, 2, false, false),
+  ('9d000000-0000-0000-0000-000000000203', '9d000000-0000-0000-0000-000000000001',
+   'Season Hunter', date '2026-05-02', 180, 3, false, true);
 
 select is((select count(*) from public.season_most_wanted_endings where season_year = 2026), 100::bigint, 'season starts with all 100 endings');
 select ok((select achieved from public.season_most_wanted_endings where season_year = 2026 and ending = 26), 'event attempt hits season ending');
 select is((select first_source_id from public.season_most_wanted_endings where season_year = 2026 and ending = 26), '9d000000-0000-0000-0000-000000000101'::uuid, 'event is assigned by start year despite later submission');
-select ok((select achieved from public.season_most_wanted_endings where season_year = 2026 and ending = 28), 'historical 2026 time hits season ending');
-select ok(not (select achieved from public.season_most_wanted_endings where season_year = 2026 and ending = 29), 'historical pre-2026 time does not hit season ending');
+select ok((select achieved from public.season_most_wanted_endings where season_year = 2026 and ending = 7), 'historical 2026 time hits season ending');
+select ok(not (select achieved from public.season_most_wanted_endings where season_year = 2026 and ending = 99), 'historical pre-2026 time does not hit season ending');
 select ok(not (select achieved from public.season_most_wanted_endings where season_year = 2026 and ending = 27), 'AK time does not hit season ending');
+select ok(not (select achieved from public.season_most_wanted_endings where season_year = 2026 and ending = 80), 'out-of-competition history does not hit season ending');
 select ok(not (select achieved from public.season_most_wanted_endings where season_year = 2026 and ending = 30), 'deleted time does not hit season ending');
 select ok(not (select achieved from public.season_most_wanted_endings where season_year = 2026 and ending = 31), 'unapproved time does not hit season ending');
 select is((select reached_count from public.season_most_wanted_progress where season_year = 2026), 2, 'season progress counts only season hits');
 select is((select first_display_name from public.season_most_wanted_endings where season_year = 2026 and ending = 26), 'Season Hunter', 'season hunter comes from season data');
-select ok(exists (select 1 from public.most_wanted_endings where ending = 29 and achieved), 'all-time remains independent and includes older qualified history');
+select ok(exists (select 1 from public.most_wanted_endings where ending = 99 and achieved), 'all-time remains independent and includes older qualified history');
 select ok(not exists (select 1 from public.season_qualified_official_times where season_year < 2026), 'season source has no season before 2026');
+select is((select min(time_hundredths) from public.season_qualified_official_times where season_year = 2026), 207, 'season best includes qualified historical time and excludes faster AK/OOC sources');
 
 select * from finish();
 rollback;

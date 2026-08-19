@@ -67,6 +67,12 @@ describe("MostWantedMatrix", () => {
     expect(season).toContain("Paul");
   });
 
+  it("derives the progress width from reached and total instead of the DB percent", () => {
+    const markup = renderToStaticMarkup(<MostWantedMatrix data={{ ...data, reached: 24, percent: 100 }} />);
+    expect(markup).toContain("width:24%");
+    expect(markup).not.toContain("width:100%");
+  });
+
   it("shows a compact empty state for a season with zero hunters", () => {
     const empty = {
       ...data,

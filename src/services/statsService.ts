@@ -333,15 +333,34 @@ export async function getDailyWinners(season: SeasonSelection = ALL_TIME_SEASON)
 }
 
 export async function getGlobalStatistics(season: SeasonSelection = ALL_TIME_SEASON): Promise<Statistic[]> {
-  const { data, error } = season === ALL_TIME_SEASON
-    ? await getSupabase().from("global_statistics").select("*").single()
-    : await getSupabase().from("season_global_statistics").select("*")
-      .eq("season_year", season).maybeSingle();
-  if (error) throw error;
-  const values = data ?? { regular_players: 0, event_count: 0, approved_attempts: 0,
+  const client = getSupabase();
+  if (season === ALL_TIME_SEASON) {
+    const { data, error } = await client.from("global_statistics").select("*").single();
+    if (error) throw error;
+    return mapGlobalStatistics(data, season);
+  }
+  const [statisticsResult, bestTimeResult] = await Promise.all([
+    client.from("season_global_statistics").select("*")
+      .eq("season_year", season).maybeSingle(),
+    client.from("season_qualified_official_times").select("time_hundredths")
+      .eq("season_year", season).order("time_hundredths").limit(1).maybeSingle(),
+  ]);
+  if (statisticsResult.error) throw statisticsResult.error;
+  if (bestTimeResult.error) throw bestTimeResult.error;
+  const values = statisticsResult.data ?? { regular_players: 0, event_count: 0, approved_attempts: 0,
     valid_attempts: 0, dnf_count: 0, world_record_hundredths: null,
     average_hundredths: null };
-  return mapGlobalStatistics(values, season);
+  return mapGlobalStatistics(withQualifiedSeasonBest(
+    values,
+    bestTimeResult.data?.time_hundredths ?? null,
+  ), season);
+}
+
+export function withQualifiedSeasonBest<T extends { world_record_hundredths: number | null }>(
+  eventStatistics: T,
+  qualifiedBestHundredths: number | null,
+): T {
+  return { ...eventStatistics, world_record_hundredths: qualifiedBestHundredths };
 }
 
 export function mapGlobalStatistics(values: {

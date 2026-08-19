@@ -53,7 +53,7 @@ describe("route data groups", () => {
       "badge-rarity",
     ]);
     expect(getRouteDataPlan("/").optional).toEqual(["prestige-activities"]);
-    expect(dataGroupRequestCounts.statistics).toBe(4);
+    expect(dataGroupRequestCounts.statistics).toBe(5);
     expect(dataGroupRequestCounts["badge-rarity"]).toBe(2);
   });
 

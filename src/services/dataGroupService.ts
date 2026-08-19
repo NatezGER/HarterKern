@@ -69,7 +69,7 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
   "event-detail": 0,
   live: 8,
   dashboard: 12,
-  statistics: 4,
+  statistics: 5,
   "prestige-activities": 2,
   "group-milestones": 1,
   "badge-rarity": 2,
