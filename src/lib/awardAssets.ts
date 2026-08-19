@@ -20,6 +20,7 @@ export interface BadgeAssetDefinition {
   familyKey: string | null;
   name: string;
   tier: BadgeTier;
+  designVariant: "standard" | "positive_special" | "consolation";
   sortOrder: number;
 }
 
@@ -54,7 +55,7 @@ export function trophyAssetId(trophy: Pick<TrophyAssetDefinition,
 }
 
 export function trophyAssetIdForAward(trophy: {
-  competitionType: "event" | "season";
+  competitionType: "event" | "season" | "historical";
   year: number;
   tier: TrophyTier;
 }) {
@@ -69,7 +70,7 @@ export function awardAssetType(assetId: string): AwardAssetType | null {
 }
 
 export function badgeFamilyLabel(definitions: BadgeAssetDefinition[]) {
-  return definitions[0]?.name.replace(/\s+(Bronze|Silber|Gold|Diamond|Platinum)$/i, "")
+  return definitions[0]?.name.replace(/\s+(Bronze|Silber|Gold|Diamond|Platinum|Smaragd|Holz)$/i, "")
     ?? "Badge";
 }
 

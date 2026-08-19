@@ -33,6 +33,20 @@ describe("BadgeGallery responsive collapse", () => {
     expect(markup).toContain("sm:p-5 hidden border");
   });
 
+  it("labels positive specials as Smaragd and consolation badges as Holz", () => {
+    const specialBadges = [{
+      ...badges[0], tier: "special", badgeKind: "single",
+      designVariant: "positive_special", name: "Positiv",
+    }, {
+      ...badges[1], tier: "special", badgeKind: "single",
+      designVariant: "consolation", name: "Negativ",
+    }] as CompactBadge[];
+    const markup = renderToStaticMarkup(<BadgeGallery badges={specialBadges} />);
+    expect(markup).toContain("Smaragd");
+    expect(markup).toContain("Holz");
+    expect(markup).not.toContain("Platinum");
+  });
+
   it("renders every card without collapse classes when expanded", () => {
     const markup = renderToStaticMarkup(<BadgeGallery badges={badges} mobileLimit={2} desktopLimit={3} expanded />);
     expect(markup).not.toContain("sm:p-5 hidden sm:block");

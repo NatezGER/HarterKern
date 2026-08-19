@@ -5,8 +5,17 @@ export const badgeTierLabel: Record<BadgeTier, string> = {
   silver: "Silber",
   gold: "Gold",
   diamond: "Diamond",
-  special: "Platinum",
+  special: "Smaragd",
 };
+
+export function getBadgeMaterialLabel(badge: {
+  tier: BadgeTier;
+  designVariant?: "standard" | "positive_special" | "consolation";
+}) {
+  if (badge.designVariant === "consolation") return "Holz";
+  if (badge.designVariant === "positive_special") return "Smaragd";
+  return badgeTierLabel[badge.tier];
+}
 
 export function getBadgeCenterMark(badge: {
   badgeKey: string;
@@ -18,6 +27,9 @@ export function getBadgeCenterMark(badge: {
   if (badge.badgeKey === "official-world-record") return "WR";
   if (badge.badgeKey === "false-starter") return "DNF";
   if (badge.badgeKey === "matrix-glitch") return "==";
+  if (badge.badgeKey === "photo-finish") return "+.01";
+  if (badge.badgeKey === "reverse-gear") return "⇣5";
+  if (badge.badgeKey === "wooden-bronze-medal") return "#4×5";
   if (badge.badgeKey === "first-official-attempt") return "#1";
   if (badge.badgeKey === "first-win") return "W1";
   if (badge.badgeKey === "time-stopper" || badge.badgeKey === "almost" ||
@@ -29,6 +41,7 @@ export function getBadgeCenterMark(badge: {
         maximumFractionDigits: 2,
       });
   }
+  if (badge.badgeKey.startsWith("bingo-completion-")) return "100";
   if (badge.category === "bingo") return "BI";
   if (badge.category === "precision") return "±";
   if (badge.category === "podiums") return "TOP3";

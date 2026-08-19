@@ -3,7 +3,7 @@ export type TrophyTier = "gold" | "silver" | "bronze";
 export interface PlayerTrophyView {
   Row: {
     trophy_key: string;
-    competition_type: "event" | "season";
+    competition_type: "event" | "season" | "historical";
     scope_type: "all_time" | "season" | "event";
     competition_id: string;
     season_key: string | null;

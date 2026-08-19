@@ -41,9 +41,9 @@ describe("award asset identity and fallback", () => {
 
   it("keeps normal and special badge variants distinct", () => {
     const groups = groupBadgeDefinitions([
-      { badgeKey: "wins-bronze", familyKey: "wins", name: "Siege Bronze", tier: "bronze", sortOrder: 1 },
-      { badgeKey: "wins-gold", familyKey: "wins", name: "Siege Gold", tier: "gold", sortOrder: 2 },
-      { badgeKey: "world-record", familyKey: null, name: "Weltrekord", tier: "special", sortOrder: 3 },
+      { badgeKey: "wins-bronze", familyKey: "wins", name: "Siege Bronze", tier: "bronze", designVariant: "standard", sortOrder: 1 },
+      { badgeKey: "wins-gold", familyKey: "wins", name: "Siege Gold", tier: "gold", designVariant: "standard", sortOrder: 2 },
+      { badgeKey: "world-record", familyKey: null, name: "Weltrekord", tier: "special", designVariant: "positive_special", sortOrder: 3 },
     ]);
     expect(groups[0].variants.map(({ tier }) => tier)).toEqual(["bronze", "gold"]);
     expect(groups[1].variants[0].tier).toBe("special");
