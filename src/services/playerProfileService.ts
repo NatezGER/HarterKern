@@ -4,6 +4,7 @@ import {
   getPlayerBingo,
   getPlayerEventHistory,
   getPlayerPrestige,
+  getPlayerTimePerformance,
   getPlayerProfileCore,
   getPlayerSeasonProfile,
   getPlayerProgression,
@@ -18,6 +19,7 @@ import type {
   PlayerProfilePrestige,
   PlayerSeasonProfile,
   PlayerProfileProgression,
+  PlayerTimePerformance,
   TrophyAward,
 } from "@/types/historyProfiles";
 import type { DataGroup } from "@/services/dataGroupService";
@@ -29,6 +31,7 @@ export type PlayerProfileSection =
   | "trophies"
   | "prestige"
   | "progression"
+  | "performance"
   | "attempt-numbers"
   | "events"
   | "bingo";
@@ -40,6 +43,7 @@ export interface PlayerProfileSectionData {
   trophies: TrophyAward[];
   prestige: PlayerProfilePrestige;
   progression: PlayerProfileProgression;
+  performance: PlayerTimePerformance;
   "attempt-numbers": AttemptNumberPoint[];
   events: PlayerEventSummary[];
   bingo: PlayerBingo;
@@ -61,6 +65,7 @@ const loaders: {
   trophies: getPlayerTrophies,
   prestige: (playerId) => getPlayerPrestige(playerId, 0),
   progression: getPlayerProgression,
+  performance: getPlayerTimePerformance,
   "attempt-numbers": getPlayerAttemptNumbers,
   events: getPlayerEventHistory,
   bingo: getPlayerBingo,
@@ -77,6 +82,10 @@ function loadSection<Section extends PlayerProfileSection>(
   }
   if (section === "progression" && seasonYear != null) {
     return getPlayerProgression(playerId, seasonYear) as
+      Promise<PlayerProfileSectionData[Section]>;
+  }
+  if (section === "performance") {
+    return getPlayerTimePerformance(playerId, seasonYear) as
       Promise<PlayerProfileSectionData[Section]>;
   }
   if (section === "prestige") {
@@ -144,6 +153,7 @@ const sectionByGroup: Partial<Record<DataGroup, PlayerProfileSection>> = {
   "profile-trophies": "trophies",
   "profile-prestige": "prestige",
   "profile-progression": "progression",
+  "profile-performance": "performance",
   "profile-attempt-numbers": "attempt-numbers",
   "profile-events": "events",
   bingo: "bingo",

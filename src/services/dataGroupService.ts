@@ -1,4 +1,3 @@
-import { getRecentAttempts } from "@/services/attemptService";
 import { loadHistoricalAttempts, loadLiveState } from "@/services/dataPlatformRepository";
 import { getEvents } from "@/services/eventService";
 import { getPlayers } from "@/services/playerService";
@@ -28,6 +27,7 @@ export type DataGroup =
   | "profile-trophies"
   | "profile-prestige"
   | "profile-progression"
+  | "profile-performance"
   | "profile-attempt-numbers"
   | "profile-events"
   | "event-detail"
@@ -40,7 +40,8 @@ export type DataGroup =
   | "most-wanted"
   | "league-time"
   | "bingo"
-  | "historical";
+  | "historical"
+  | "events";
 
 export interface DataGroupPatch {
   publicData?: Partial<PublicDataSnapshot>;
@@ -62,19 +63,21 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
   "profile-trophies": 0,
   "profile-prestige": 0,
   "profile-progression": 0,
+  "profile-performance": 0,
   "profile-attempt-numbers": 0,
   "profile-events": 0,
   "event-detail": 0,
   live: 8,
   dashboard: 12,
-  statistics: 10,
+  statistics: 4,
   "prestige-activities": 2,
   "group-milestones": 1,
-  "badge-rarity": 1,
+  "badge-rarity": 2,
   "most-wanted": 2,
   "league-time": 2,
   bingo: 3,
   historical: 1,
+  events: 7,
 };
 
 export function getRouteDataPlan(pathname: string): RouteDataPlan {
@@ -89,13 +92,15 @@ export function getRouteDataPlan(pathname: string): RouteDataPlan {
         "profile-badges",
         "profile-prestige",
         "profile-progression",
+        "profile-performance",
         "bingo",
         "profile-attempt-numbers",
         "profile-events",
       ],
     };
   }
-  if (pathname === "/stats" || pathname === "/events") {
+  if (pathname === "/events") return { required: ["events"], optional: [] };
+  if (pathname === "/stats") {
     return {
       required: ["statistics", "historical"],
       optional: ["group-milestones", "most-wanted", "league-time", "badge-rarity"],
@@ -128,10 +133,13 @@ async function loadUncached(group: DataGroup, season: SeasonSelection): Promise<
     case "profile-trophies":
     case "profile-prestige":
     case "profile-progression":
+    case "profile-performance":
     case "profile-attempt-numbers":
     case "profile-events":
     case "bingo":
       return {};
+    case "events":
+      return { publicData: { events: await getEvents(season) } };
     case "leaderboard": {
       const [players, leaderboard] = await Promise.all([getPlayers(season), getLeaderboard(season)]);
       return { publicData: { players, leaderboard } };
@@ -173,16 +181,14 @@ async function loadUncached(group: DataGroup, season: SeasonSelection): Promise<
       return { publicData: { players, leaderboard, dailyWinners, worldRecordHistory, seasonRecord, events } };
     }
     case "statistics": {
-      const [players, worldRecordHistory, events, statistics, recentAttempts] =
+      const [players, worldRecordHistory, statistics] =
         await Promise.all([
           getPlayers(season),
           getWorldRecordHistory(season),
-          getEvents(season),
           getGlobalStatistics(season),
-          getRecentAttempts(),
         ]);
       return {
-        publicData: { players, worldRecordHistory, events, statistics, recentAttempts },
+        publicData: { players, worldRecordHistory, statistics },
       };
     }
     case "prestige-activities":
@@ -217,14 +223,14 @@ export function loadDataGroup(
 export function groupsForRealtimeTable(table: string): DataGroup[] {
   switch (table) {
     case "players":
-      return ["leaderboard", "players", "profile-core", "profile-season", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "badge-rarity", "most-wanted", "bingo"];
+      return ["leaderboard", "players", "profile-core", "profile-season", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-performance", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "badge-rarity", "most-wanted", "bingo", "events"];
     case "attempts":
     case "historical_attempts":
-      return ["leaderboard", "players", "profile-core", "profile-season", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "historical", "event-detail"];
+      return ["leaderboard", "players", "profile-core", "profile-season", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-performance", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "historical", "event-detail", "events"];
     case "events":
     case "event_participants":
     case "event_guests":
-      return ["profile-core", "profile-season", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "event-detail"];
+      return ["profile-core", "profile-season", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-performance", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "event-detail", "events"];
     case "event_photos":
       return ["event-detail"];
     default:

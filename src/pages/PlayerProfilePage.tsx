@@ -26,6 +26,7 @@ import { PersonalBingo } from "@/components/players/PersonalBingo";
 import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { useSeason } from "@/hooks/useSeason";
 import { getEventSeason } from "@/lib/season";
+import { dnfPercentage } from "@/lib/officialTimePerformance";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -34,7 +35,7 @@ export function PlayerProfilePage() {
   const [badgesExpanded, setBadgesExpanded] = useState(false);
   const [pbDetailsExpanded, setPbDetailsExpanded] = useState(false);
   const { season: selectedSeason, isAllTime } = useSeason();
-  const { core, season, trophies, badges, prestige, progression, bingo, attemptNumbers, events } =
+  const { core, season, trophies, badges, prestige, progression, performance, bingo, attemptNumbers, events } =
     usePlayerProfileDetail(id);
   if (core.loading) return <DataState><div /></DataState>;
   if (!core.data) return core.error
@@ -48,14 +49,12 @@ export function PlayerProfilePage() {
   };
   const activeStats = isAllTime ? player : seasonStats;
   const hasSeasonTime = isAllTime || seasonStats.personalBestHundredths != null;
+  const activeDnfPercent = dnfPercentage(activeStats.validAttempts, activeStats.dnfCount);
   const coreMetrics = [
-    { label: isAllTime ? "Persönliche Bestzeit" : `Saison-PB ${selectedSeason}`, value: displayTime(activeStats.personalBestHundredths), icon: Zap },
-    { label: isAllTime ? "Hall of Fame" : `Saisonrang ${selectedSeason}`, value: activeStats.rank ? `#${activeStats.rank}` : "—", icon: Medal },
     { label: isAllTime ? "Durchschnitt" : "Saison-Durchschnitt", value: displayTime(activeStats.averageHundredths), icon: Timer },
     { label: isAllTime ? "Eventteilnahmen" : "Saison-Events", value: String(activeStats.eventParticipations), icon: Target },
-    { label: isAllTime ? "Siege" : "Saison-Siege", value: String(activeStats.wins), icon: Trophy },
-    { label: isAllTime ? "Platz 2 / 3" : "Saison Platz 2 / 3", value: `${activeStats.secondPlaces} / ${activeStats.thirdPlaces}`, icon: Medal },
-    { label: isAllTime ? "Gültig / DNF" : "Saison gültig / DNF", value: `${activeStats.validAttempts} / ${activeStats.dnfCount}`, icon: CircleX },
+    { label: "Gültige Versuche", value: String(activeStats.validAttempts), icon: Timer },
+    { label: "DNF", value: `${activeStats.dnfCount} · ${activeDnfPercent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`, icon: CircleX },
     { label: isAllTime ? "Getrunken" : "Saison getrunken", value: !isAllTime && !hasSeasonTime ? "—" : formatDrinkVolume(activeStats.validAttempts, DRINK_MILLILITERS_PER_VALID_ATTEMPT), icon: Droplets },
   ];
   return (
@@ -67,13 +66,13 @@ export function PlayerProfilePage() {
           <div className="flex w-full flex-col items-center gap-5 text-center sm:w-auto sm:flex-row sm:items-center sm:text-left">
             <ProfileAvatar id={player.id} name={player.name} url={player.avatarUrl} className="size-24 ring-gold-400/35 max-sm:p-0.5 max-sm:[&>img]:h-auto max-sm:[&>img]:w-full sm:size-32" />
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold-400">{player.rank ? `Weltrang #${player.rank}` : "Noch ohne Rang"}</p>
+              <p className="context-accent-text text-xs font-bold uppercase tracking-[0.22em]">{activeStats.rank ? `${isAllTime ? "Weltrang" : "Saisonrang"} #${activeStats.rank}` : isAllTime ? "Noch ohne Rang" : `Noch ohne Saisonrang ${selectedSeason}`}</p>
               <h1 className="display-title mt-2 break-words text-5xl sm:text-7xl">{player.name}</h1>
               <div className="mt-3"><SeasonContextBadge /></div>
               {player.isAk && <p className="mt-2 text-sm text-white/40">Außer Konkurrenz</p>}
             </div>
           </div>
-          <div className="w-full text-center sm:w-auto sm:text-left md:text-right"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">{isAllTime ? "Personal Best" : `Saison-PB ${selectedSeason}`}</p><p className="gold-text font-display text-5xl font-black sm:text-6xl">{displayTime(activeStats.personalBestHundredths)}</p></div>
+          <div className="w-full text-center sm:w-auto sm:text-left md:text-right"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">{isAllTime ? "Personal Best" : `Saison-PB ${selectedSeason}`}</p><p className="context-gradient-text font-display text-5xl font-black sm:text-6xl">{displayTime(activeStats.personalBestHundredths)}</p></div>
         </div>
       </section>
 
@@ -122,18 +121,18 @@ export function PlayerProfilePage() {
       <section>
         <SectionHeading eyebrow={isAllTime ? "Karrierewerte" : `Saisonwerte ${selectedSeason}`} title="Statistik" />
         {!hasSeasonTime && <div className="panel mb-4 border-emerald-300/15 px-5 py-4 text-sm text-white/45">Noch keine qualifizierte Saisonzeit {selectedSeason}. Zeitbasierte Saisonwerte bleiben leer.</div>}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">{coreMetrics.map(({ label, value, icon: Icon }, index) => <AnimatedCard key={label} delay={index * 0.04} className="min-w-0 p-4 last:col-span-2 sm:p-5 xl:last:col-span-1"><Icon className="size-5 text-gold-400" /><p className="mt-4 break-words text-[9px] font-bold uppercase tracking-[0.14em] text-white/30 sm:mt-6 sm:tracking-[0.18em]">{label}</p><p className="mt-1 break-words font-display text-2xl font-black sm:text-3xl">{value}</p></AnimatedCard>)}</div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">{coreMetrics.map(({ label, value, icon: Icon }, index) => <AnimatedCard key={label} delay={index * 0.04} className="min-w-0 p-4 sm:p-5"><Icon className="context-accent-text size-5" /><p className="mt-4 break-words text-[9px] font-bold uppercase tracking-[0.14em] text-white/30 sm:mt-6 sm:tracking-[0.18em]">{label}</p><p className="mt-1 break-words font-display text-2xl font-black sm:text-3xl">{value}</p></AnimatedCard>)}</div>
+        <div className="mt-3 sm:mt-4"><ProfileOptionalState state={performance}>{(data) => <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">{data.thresholds.map((threshold, index) => <AnimatedCard key={threshold.seconds} delay={index * 0.04} className="min-w-0 p-4 sm:p-5"><Target className="context-accent-text size-5" /><p className="mt-4 text-[9px] font-bold uppercase tracking-[0.14em] text-white/30 sm:mt-6">Unter {threshold.seconds} s</p><p className="mt-1 font-display text-2xl font-black sm:text-3xl">{threshold.percent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %</p></AnimatedCard>)}</div>}</ProfileOptionalState></div>
         <div className="mt-3 sm:mt-4">{!isAllTime && <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">Karriere · All-Time</p>}<ProfileOptionalState state={prestige}>{(data) => {
           const prestigeMetrics = [
             { label: "PB-Verbesserungen", value: String(data.pbCount), icon: Zap },
             { label: "Größter PB-Sprung", value: displayTime(data.largestPbImprovementHundredths), icon: Zap },
-            { label: "Ø PB-Sprung", value: displayTime(data.averagePbImprovementHundredths), icon: Timer },
             { label: "Weltrekorde", value: String(data.worldRecordCount), icon: Trophy },
             { label: "Tage mit WR", value: String(data.worldRecordDays), icon: Timer },
             { label: "Längste WR-Phase", value: `${data.longestWorldRecordDays} Tage`, icon: Crown },
             { label: "Sichtbare Badges", value: String(data.visibleBadgeCount), icon: Medal },
           ];
-          return <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">{prestigeMetrics.map(({ label, value, icon: Icon }, index) => <AnimatedCard key={label} delay={index * 0.04} className="min-w-0 p-4 last:col-span-2 sm:p-5 xl:last:col-span-1"><Icon className="size-5 text-gold-400" /><p className="mt-4 break-words text-[9px] font-bold uppercase tracking-[0.14em] text-white/30 sm:mt-6 sm:tracking-[0.18em]">{label}</p><p className="mt-1 break-words font-display text-2xl font-black sm:text-3xl">{value}</p></AnimatedCard>)}</div>;
+          return <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">{prestigeMetrics.map(({ label, value, icon: Icon }, index) => <AnimatedCard key={label} delay={index * 0.04} className="min-w-0 p-4 sm:p-5"><Icon className="size-5 text-gold-400" /><p className="mt-4 break-words text-[9px] font-bold uppercase tracking-[0.14em] text-white/30 sm:mt-6 sm:tracking-[0.18em]">{label}</p><p className="mt-1 break-words font-display text-2xl font-black sm:text-3xl">{value}</p></AnimatedCard>)}</div>;
         }}</ProfileOptionalState></div>
       </section>
 

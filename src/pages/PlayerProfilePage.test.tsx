@@ -40,6 +40,11 @@ const profile = vi.hoisted(() => ({
   trophies: { data: [] as TrophyAward[], loading: false, error: "", retry: vi.fn() },
   prestige: { data: { pbCount: 0, largestPbImprovementHundredths: null, averagePbImprovementHundredths: null, worldRecordCount: 0, worldRecordDays: 0, longestWorldRecordDays: 0, visibleBadgeCount: 0 }, loading: false, error: "", retry: vi.fn() },
   progression: { data: { personal: [], worldRecords: [] }, loading: false, error: "", retry: vi.fn() },
+  performance: { data: { thresholds: [
+    { seconds: 5, count: 9, total: 10, percent: 90 },
+    { seconds: 4, count: 7, total: 10, percent: 70 },
+    { seconds: 3, count: 2, total: 10, percent: 20 },
+  ] }, loading: false, error: "", retry: vi.fn() },
   bingo: { data: { fields: [], summary: { collectedEndings: 0, bronzeFields: 0, silverFields: 0, goldFields: 0, bronzeLines: 0, silverLines: 0, goldLines: 0, highestBadgeTier: null } }, loading: false, error: "", retry: vi.fn() },
   attemptNumbers: { data: [], loading: false, error: "", retry: vi.fn() },
   events: { data: [], loading: false, error: "", retry: vi.fn() },
@@ -63,6 +68,12 @@ describe("PlayerProfilePage optional failures", () => {
     );
     expect(markup).toContain("Paul");
     expect(markup).toContain("Weltrang #2");
+    expect(markup).toContain("Personal Best");
+    expect(markup).toContain("Gültige Versuche");
+    expect(markup).toContain("2 · 16,7 %");
+    expect(markup).toContain("Unter 5 s");
+    expect(markup).not.toContain("Gültig / DNF");
+    expect(markup).not.toContain("last:col-span-2");
     expect(markup).toContain("Dieser Bereich konnte nicht geladen werden.");
     expect(markup).not.toContain("statement timeout");
   });
@@ -119,6 +130,30 @@ describe("PlayerProfilePage optional failures", () => {
     expect(markup).toContain("Noch keine qualifizierte Saisonzeit 2026.");
     expect(markup).toContain("Karriere · All-Time");
     expect(markup).not.toContain("0,00");
+    profile.season.data = null;
+    selectedSeason.season = "all-time";
+    selectedSeason.isAllTime = true;
+  });
+
+  it("uses season rank and season PB in the profile hero", () => {
+    selectedSeason.season = 2026;
+    selectedSeason.isAllTime = false;
+    profile.season.data = {
+      personalBestHundredths: 280,
+      rank: 4,
+      averageHundredths: 350,
+      eventParticipations: 2,
+      wins: 1,
+      secondPlaces: 0,
+      thirdPlaces: 0,
+      validAttempts: 5,
+      dnfCount: 1,
+    };
+    const markup = renderProfile();
+    expect(markup).toContain("Saisonrang #4");
+    expect(markup).toContain("Saison-PB 2026");
+    expect(markup).toContain("2,80 s");
+    expect(markup).not.toContain("Weltrang #2");
     profile.season.data = null;
     selectedSeason.season = "all-time";
     selectedSeason.isAllTime = true;

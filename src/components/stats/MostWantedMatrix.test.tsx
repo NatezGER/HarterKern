@@ -30,21 +30,26 @@ const data: MostWantedSnapshot = {
     hasExactTime: ending === 0,
     eventId: null,
     sourceType: ending === 0 ? "attempt" : null,
+    sourceOrder: ending === 0 ? 1 : null,
     sourceLabel: null,
     additionalHits: ending === 0 ? [{
       id: "hit-2", playerId: "player-2", guestId: null, playerName: "Anna",
       avatarUrl: null, isGuest: false, timeHundredths: 400,
       occurredAt: "2026-01-02T12:00:00Z", occurredDate: "2026-01-02",
       hasExactTime: true,
+      sourceType: "attempt",
+      sourceOrder: 2,
     }] : [],
   })),
 };
 
 describe("MostWantedMatrix", () => {
-  it("starts collapsed while keeping accessible progress and all text alternatives", () => {
+  it("shows the matrix immediately without a disclosure toggle", () => {
     const markup = renderToStaticMarkup(<MostWantedMatrix data={data} />);
-    expect(markup).toContain('aria-expanded="false"');
-    expect(markup).toContain('aria-controls="most-wanted-grid"');
+    expect(markup).toContain('role="grid"');
+    expect(markup).not.toContain("10×10-Matrix anzeigen");
+    expect(markup).not.toContain("Matrix einklappen");
+    expect(markup).not.toContain("hidden=\"\"");
     expect(markup).toContain('aria-valuenow="1"');
     expect(markup).toContain('aria-valuemax="100"');
     expect(markup).toContain("Endung 00");
@@ -92,6 +97,30 @@ describe("MostWantedMatrix", () => {
     expect(markup).toContain("Weitere Treffer");
     expect(markup).toContain("Anna");
     expect(markup).toContain("4,00 s");
+  });
+
+  it("shows numbers only for open cells and uses a large ProfileAvatar for hits", () => {
+    const markup = renderToStaticMarkup(<MostWantedMatrix data={data} />);
+    const achieved = markup.match(/<button[^>]*aria-label="00:[\s\S]*?<\/button>/)?.[0] ?? "";
+    const open = markup.match(/<button[^>]*aria-label="01:[\s\S]*?<\/button>/)?.[0] ?? "";
+    expect(achieved).not.toContain(">00<");
+    expect(achieved).toContain("Profilbild von Paul");
+    expect(achieved).toContain("size-[76%]");
+    expect(achieved).not.toContain("absolute inset-0.5");
+    expect(achieved).toContain("https://example.com/paul.webp");
+    expect(open).toContain(">01<");
+    expect(achieved).toContain("00: gefunden von Paul");
+  });
+
+  it("uses a large visible initials fallback for an achieved cell without a photo", () => {
+    const fallback = { ...data, endings: data.endings.map((ending) => ending.ending === 0
+      ? { ...ending, avatarUrl: null }
+      : ending) };
+    const markup = renderToStaticMarkup(<MostWantedMatrix data={fallback} />);
+    const achieved = markup.match(/<button[^>]*aria-label="00:[\s\S]*?<\/button>/)?.[0] ?? "";
+    expect(achieved).toContain("Profilbild von Paul");
+    expect(achieved).toContain("size-[76%]");
+    expect(achieved).toContain("P");
   });
 
   it("omits the additional list when only the first hit exists", () => {

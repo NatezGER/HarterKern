@@ -22,4 +22,11 @@ describe("PodiumMedal", () => {
     expect(compact).toContain("w-[78%]");
     expect(featured).toContain("w-[78%]");
   });
+
+  it("keeps semantic medal gold independent from the season context", () => {
+    const markup = renderToStaticMarkup(<PodiumMedal rank={1} />);
+    expect(markup).toContain("from-yellow-100");
+    expect(markup).toContain("via-yellow-400");
+    expect(markup).not.toContain("context-accent");
+  });
 });

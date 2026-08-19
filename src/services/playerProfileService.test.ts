@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   trophies: vi.fn(),
   prestige: vi.fn(),
   progression: vi.fn(),
+  performance: vi.fn(),
   attemptNumbers: vi.fn(),
   events: vi.fn(),
   bingo: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock("@/services/historyProfileService", () => ({
   getPlayerTrophies: mocks.trophies,
   getPlayerPrestige: mocks.prestige,
   getPlayerProgression: mocks.progression,
+  getPlayerTimePerformance: mocks.performance,
   getPlayerAttemptNumbers: mocks.attemptNumbers,
   getPlayerEventHistory: mocks.events,
   getPlayerBingo: mocks.bingo,
@@ -41,6 +43,7 @@ describe("player profile section loading", () => {
     mocks.trophies.mockResolvedValue([]);
     mocks.prestige.mockResolvedValue({});
     mocks.progression.mockResolvedValue({ personal: [], worldRecords: [] });
+    mocks.performance.mockResolvedValue({ thresholds: [] });
     mocks.attemptNumbers.mockResolvedValue([]);
     mocks.events.mockResolvedValue([]);
     mocks.bingo.mockResolvedValue({ fields: [], summary: {} });
@@ -61,6 +64,11 @@ describe("player profile section loading", () => {
     expect(mocks.season).toHaveBeenNthCalledWith(2, "player-1", 2027);
     await loadPlayerProfileSection("badges", "player-1");
     expect(mocks.badges).toHaveBeenCalledWith("player-1");
+  });
+
+  it("loads time performance with the selected season scope", async () => {
+    await loadPlayerProfileSection("performance", "player-1", { seasonYear: 2026 });
+    expect(mocks.performance).toHaveBeenCalledWith("player-1", 2026);
   });
 
   it("starts optional sections independently", async () => {
