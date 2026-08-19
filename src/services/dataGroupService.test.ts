@@ -53,6 +53,7 @@ describe("route data groups", () => {
       "badge-rarity",
     ]);
     expect(getRouteDataPlan("/").optional).toEqual(["prestige-activities"]);
+    expect(dataGroupRequestCounts.statistics).toBe(4);
   });
 
   it("keeps player profile reads player-scoped and independently optional", () => {
@@ -64,6 +65,7 @@ describe("route data groups", () => {
         "profile-badges",
         "profile-prestige",
         "profile-progression",
+        "profile-performance",
         "bingo",
         "profile-attempt-numbers",
         "profile-events",
@@ -71,6 +73,13 @@ describe("route data groups", () => {
     });
     expect(dataGroupRequestCounts["profile-core"]).toBe(0);
     expect(dataGroupRequestCounts["profile-season"]).toBe(0);
+  });
+
+  it("loads the event archive as its own season-aware route group", async () => {
+    expect(getRouteDataPlan("/events")).toEqual({ required: ["events"], optional: [] });
+    mocks.getEvents.mockResolvedValue([]);
+    await loadDataGroup("events", 2026);
+    expect(mocks.getEvents).toHaveBeenCalledWith(2026);
   });
 
   it("loads live raw data only for live and management routes", () => {

@@ -226,6 +226,17 @@ export interface PlayerSeasonProfile {
   dnfCount: number;
 }
 
+export interface TimeThresholdSummary {
+  seconds: 5 | 4 | 3;
+  count: number;
+  total: number;
+  percent: number;
+}
+
+export interface PlayerTimePerformance {
+  thresholds: TimeThresholdSummary[];
+}
+
 export interface PlayerProfilePrestige {
   pbCount: number;
   largestPbImprovementHundredths: number | null;

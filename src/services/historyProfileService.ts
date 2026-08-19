@@ -13,6 +13,7 @@ import type {
   TrophyAward,
 } from "@/types/historyProfiles";
 import type { BadgeUnlockCelebration } from "@/types/liveEvent";
+import { calculateTimeThresholds } from "@/lib/officialTimePerformance";
 
 export async function getAttemptBadgeUnlocks(
   attemptId: string,
@@ -378,6 +379,19 @@ export async function getPlayerSeasonProfile(playerId: string, seasonYear: numbe
     validAttempts: Number(row.valid_attempts),
     dnfCount: Number(row.dnf_count),
   };
+}
+
+export async function getPlayerTimePerformance(playerId: string, seasonYear?: number) {
+  const query = seasonYear == null
+    ? getSupabase().from("qualified_official_times")
+      .select("time_hundredths").eq("player_id", playerId)
+    : getSupabase().from("season_qualified_official_times")
+      .select("time_hundredths").eq("player_id", playerId).eq("season_year", seasonYear);
+  const result = await query;
+  if (result.error) throw result.error;
+  return { thresholds: calculateTimeThresholds((result.data ?? []).map((row) => ({
+    timeHundredths: row.time_hundredths,
+  }))) };
 }
 
 export async function getPlayerBadges(playerId: string): Promise<CompactBadge[]> {

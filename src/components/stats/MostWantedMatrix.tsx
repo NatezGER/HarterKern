@@ -64,9 +64,19 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
                 : "border-white/[0.07] bg-black/25 text-white/25 hover:border-white/15 hover:text-white/45",
             )}
           >
-            <span className="absolute left-0.5 top-0.5 sm:left-1 sm:top-1">{ending.label}</span>
-            {ending.achieved && ending.playerName && <ProfileAvatar id={ending.playerId ?? ending.guestId ?? ending.label} name={ending.playerName} url={ending.avatarUrl} className="absolute bottom-0.5 left-1/2 size-4 -translate-x-1/2 text-[5px] ring-0 sm:bottom-1 sm:size-6" />}
-            {ending.achieved && !ending.playerName && <Check className="absolute bottom-0.5 left-1/2 size-2.5 -translate-x-1/2 text-emerald-300 sm:bottom-1 sm:size-3" />}
+            {!ending.achieved && <span className="absolute left-0.5 top-0.5 sm:left-1 sm:top-1">{ending.label}</span>}
+            {ending.achieved && ending.playerName && ending.avatarUrl && <img
+              src={ending.avatarUrl}
+              alt=""
+              className="absolute inset-0.5 size-[calc(100%-0.25rem)] rounded-[0.3rem] object-cover object-center opacity-90 transition group-hover:opacity-100"
+            />}
+            {ending.achieved && ending.playerName && !ending.avatarUrl && <ProfileAvatar
+              id={ending.playerId ?? ending.guestId ?? ending.label}
+              name={ending.playerName}
+              url={null}
+              className="absolute inset-1 size-[calc(100%-0.5rem)] text-[8px] ring-0 sm:text-xs"
+            />}
+            {ending.achieved && !ending.playerName && <Check className="absolute left-1/2 top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 text-emerald-300 sm:size-7" />}
           </button>
         ))}
       </div>

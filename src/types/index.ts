@@ -132,6 +132,7 @@ export interface MostWantedEnding {
   hasExactTime: boolean;
   eventId: string | null;
   sourceType: "attempt" | "historical_attempt" | null;
+  sourceOrder: number | null;
   sourceLabel: string | null;
   additionalHits: MostWantedHit[];
 }
@@ -147,6 +148,8 @@ export interface MostWantedHit {
   occurredAt: string;
   occurredDate: string;
   hasExactTime: boolean;
+  sourceType: "attempt" | "historical_attempt";
+  sourceOrder: number;
 }
 
 export interface MostWantedHunter {

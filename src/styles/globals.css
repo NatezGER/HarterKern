@@ -43,6 +43,8 @@ body {
   --context-control-border: rgba(231, 186, 75, 0.2);
   --context-control-background: rgba(231, 186, 75, 0.07);
   --context-control-shadow: none;
+  --context-hero-glow: rgba(231, 186, 75, 0.13);
+  --context-hero-beam: rgba(201, 147, 34, 0.4);
 }
 
 .app-frame[data-season-theme="dark-forest"] {
@@ -59,6 +61,8 @@ body {
   --context-control-border: rgba(120, 214, 166, 0.55);
   --context-control-background: rgba(120, 214, 166, 0.14);
   --context-control-shadow: 0 0 22px rgba(120, 214, 166, 0.14);
+  --context-hero-glow: rgba(52, 211, 153, 0.2);
+  --context-hero-beam: rgba(52, 211, 153, 0.48);
   background:
     radial-gradient(circle at 75% 0%, rgba(120, 214, 166, 0.12), transparent 28rem),
     #07100c;
@@ -108,6 +112,30 @@ body {
 .season-context-dot {
   background-color: var(--context-accent);
   box-shadow: 0 0 10px var(--context-accent);
+}
+
+.context-accent-text {
+  color: var(--context-accent-text);
+}
+
+.context-accent-background {
+  background-color: var(--context-accent-soft);
+  color: var(--context-accent-text);
+}
+
+.context-gradient-text {
+  background-image: linear-gradient(to right, var(--context-accent-text), var(--context-accent), var(--context-accent-text));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.context-hero-glow {
+  background-color: var(--context-hero-glow);
+}
+
+.context-hero-beam {
+  background-image: linear-gradient(to top, var(--context-hero-beam), transparent);
 }
 
 ::selection {

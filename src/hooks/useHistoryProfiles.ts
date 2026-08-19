@@ -135,6 +135,12 @@ export function usePlayerProfileDetail(playerId: string) {
       "profile-progression",
       seasonYear,
     ),
+    performance: usePlayerProfileSection(
+      "performance",
+      playerId,
+      "profile-performance",
+      seasonYear,
+    ),
     bingo: usePlayerProfileSection("bingo", playerId, "bingo"),
     attemptNumbers: usePlayerProfileSection(
       "attempt-numbers",

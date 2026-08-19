@@ -13,6 +13,7 @@ import type {
 import { hundredthsToSeconds } from "@/utils/time";
 import { ALL_TIME_SEASON, getSeasonDateRange } from "@/lib/season";
 import type { SeasonSelection } from "@/lib/season";
+import { dnfPercentage } from "@/lib/officialTimePerformance";
 
 export async function getLeaderboard(season: SeasonSelection = ALL_TIME_SEASON): Promise<LeaderboardEntry[]> {
   const query = season === ALL_TIME_SEASON
@@ -106,8 +107,8 @@ export async function getMostWantedSnapshot(
     : client.from("season_most_wanted_progress").select("*")
       .eq("season_year", season).single();
   const hitsQuery = season === ALL_TIME_SEASON
-    ? client.from("qualified_official_times").select("source_id,player_id,guest_id,display_name,avatar_url,avatar_path,is_guest,time_hundredths,occurred_at,occurred_date,has_exact_time,source_priority,source_order")
-    : client.from("season_qualified_official_times").select("source_id,player_id,guest_id,display_name,avatar_url,avatar_path,is_guest,time_hundredths,occurred_at,occurred_date,has_exact_time,source_priority,source_order")
+    ? client.from("qualified_official_times").select("source_id,player_id,guest_id,display_name,avatar_url,avatar_path,is_guest,time_hundredths,occurred_at,occurred_date,has_exact_time,source_type,source_priority,source_order")
+    : client.from("season_qualified_official_times").select("source_id,player_id,guest_id,display_name,avatar_url,avatar_path,is_guest,time_hundredths,occurred_at,occurred_date,has_exact_time,source_type,source_priority,source_order")
       .eq("season_year", season);
   const [endingsResult, progressResult, hitsResult] = await Promise.all([
     endingsQuery,
@@ -156,6 +157,7 @@ export async function getMostWantedSnapshot(
       hasExactTime: row.first_has_exact_time,
       eventId: row.first_event_id,
       sourceType: row.first_source_type,
+      sourceOrder: hitsByEnding.get(row.ending)?.[0]?.source_order ?? null,
       sourceLabel: row.source_label,
       additionalHits: (hitsByEnding.get(row.ending) ?? []).slice(1).map((hit) => ({
         id: hit.source_id,
@@ -168,6 +170,8 @@ export async function getMostWantedSnapshot(
         occurredAt: hit.occurred_at,
         occurredDate: hit.occurred_date,
         hasExactTime: hit.has_exact_time,
+        sourceType: hit.source_type,
+        sourceOrder: hit.source_order,
       })),
     })),
     reached: Number(progress.reached_count),
@@ -308,13 +312,26 @@ export async function getGlobalStatistics(season: SeasonSelection = ALL_TIME_SEA
   const values = data ?? { regular_players: 0, event_count: 0, approved_attempts: 0,
     valid_attempts: 0, dnf_count: 0, world_record_hundredths: null,
     average_hundredths: null };
+  return mapGlobalStatistics(values, season);
+}
+
+export function mapGlobalStatistics(values: {
+  regular_players: number;
+  event_count: number;
+  approved_attempts: number;
+  valid_attempts: number;
+  dnf_count: number;
+  world_record_hundredths: number | null;
+  average_hundredths: number | null;
+}, season: SeasonSelection): Statistic[] {
   const time = (value: number | null) => value == null ? "—" : `${hundredthsToSeconds(value).toLocaleString("de-DE", { minimumFractionDigits: 2 })} s`;
+  const dnfPercent = dnfPercentage(Number(values.valid_attempts), Number(values.dnf_count));
   return [
     { id: "fastest", label: "Schnellste Zeit", value: time(values.world_record_hundredths), change: season === ALL_TIME_SEASON ? "Aktueller Weltrekord" : `Saisonrekord ${season}`, icon: "timer" },
-    { id: "attempts", label: "Eventversuche", value: String(values.approved_attempts), change: "Nur reguläre Spieler", icon: "target" },
-    { id: "valid", label: "Gültige Zeiten", value: String(values.valid_attempts), change: "DNF ausgeschlossen", icon: "timer" },
-    { id: "dnf", label: "DNF", value: String(values.dnf_count), change: "Bestätigte Versuche", icon: "target" },
+    { id: "valid", label: "Gültige Eventversuche", value: String(values.valid_attempts), change: "Offizielle Zeiten", icon: "timer" },
+    { id: "dnf", label: "DNF", value: `${values.dnf_count} · ${dnfPercent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`, change: "Anteil aller Eventversuche", icon: "target" },
     { id: "players", label: "Reguläre Spieler", value: String(values.regular_players), change: "Gäste ausgeschlossen", icon: "users" },
-    { id: "events", label: "Events", value: String(values.event_count), change: `Ø ${time(values.average_hundredths)}`, icon: "trophy" },
+    { id: "events", label: "Events", value: String(values.event_count), change: "Abgeschlossene Abende", icon: "trophy" },
+    { id: "average", label: "Durchschnitt", value: time(values.average_hundredths), change: "Reguläre offizielle Eventzeiten", icon: "timer" },
   ];
 }

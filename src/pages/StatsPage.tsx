@@ -1,5 +1,3 @@
-import { ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
 import { DataState } from "@/components/common/DataState";
 import { PageHeader } from "@/components/common/PageHeader";
 import { SectionHeading } from "@/components/common/SectionHeading";
@@ -7,7 +5,6 @@ import { StatCard } from "@/components/stats/StatCard";
 import { appMeta } from "@/constants/content";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { useDataPlatform } from "@/hooks/useDataPlatform";
-import { formatDate, formatTime } from "@/utils/format";
 import { WRProgression } from "@/components/dashboard/WRProgression";
 import { GroupMilestones } from "@/components/stats/GroupMilestones";
 import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
@@ -19,13 +16,13 @@ import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { useSeason } from "@/hooks/useSeason";
 import { useState } from "react";
 import { HistoricalAttemptsDisclosure } from "@/components/history/HistoricalAttemptsDisclosure";
+import { LeagueAttemptNumberChart, OfficialTimeThresholds } from "@/components/stats/OfficialTimePerformance";
 
 export function StatsPage() {
   const { data } = useEffectivePublicData();
   const { snapshot } = useDataPlatform();
   const { season, isAllTime } = useSeason();
   const [historyExpanded, setHistoryExpanded] = useState(false);
-  const archivedEvents = data.events.filter(({ status }) => status === "closed");
   return (
     <div className="space-y-10">
       <PageHeader eyebrow={isAllTime ? "League Intelligence" : `League Intelligence · Saison ${season}`} title="Statistiken" description={isAllTime ? appMeta.statsDescription : `Eventbasierte Ligawerte der Saison ${season}.`} action={<SeasonContextBadge />} />
@@ -39,16 +36,21 @@ export function StatsPage() {
           <WRProgression collapsibleHistory />
         </section>
         <section className="mt-12">
-          <SectionHeading eyebrow={isAllTime ? "Gemeinsam erreicht" : "All-Time · Gemeinsam erreicht"} title="Liga-Meilensteine" />
-          <OptionalDataState group="group-milestones"><GroupMilestones /></OptionalDataState>
-        </section>
-        <section className="mt-12">
           <SectionHeading eyebrow="00 bis 99" title="Most Wanted" />
           <OptionalDataState group="most-wanted"><MostWantedMatrix data={data.mostWanted} season={season} /></OptionalDataState>
         </section>
         <section className="mt-12">
+          <SectionHeading eyebrow={isAllTime ? "Gemeinsam erreicht" : "All-Time · Gemeinsam erreicht"} title="Liga-Meilensteine" />
+          <OptionalDataState group="group-milestones"><GroupMilestones /></OptionalDataState>
+        </section>
+        <section className="mt-12">
           <SectionHeading eyebrow={isAllTime ? "Offizielle Zeiten" : "All-Time · Offizielle Zeiten"} title="Ligastatistiken" />
           <OptionalDataState group="league-time"><LeagueTimeStatistics data={data.leagueTimeStatistics} /></OptionalDataState>
+          <div className="mt-3"><OptionalDataState group="most-wanted"><OfficialTimeThresholds data={data.mostWanted} /></OptionalDataState></div>
+        </section>
+        <section className="panel mt-12 p-5 sm:p-8">
+          <SectionHeading eyebrow={isAllTime ? "Ligaweit" : `Ligaweit · Saison ${season}`} title="Durchschnitt nach Versuchsnummer" />
+          <OptionalDataState group="most-wanted"><LeagueAttemptNumberChart data={data.mostWanted} /></OptionalDataState>
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow={isAllTime ? "Prestige" : "All-Time · Prestige"} title="Badge-Seltenheit" />
@@ -58,35 +60,6 @@ export function StatsPage() {
               {data.badgeRarity.map((badge) => <article key={badge.key} className="panel flex items-center gap-4 p-4"><PrestigeBadgeEmblem badge={{ badgeKey: badge.key, tier: badge.tier, name: badge.name }} size="sm" /><div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[0.18em] text-gold-300">{badgeTierLabel[badge.tier]}</p><h3 className="mt-1 truncate font-display text-lg font-black uppercase">{badge.name}</h3><p className="mt-2 font-display text-2xl font-black">{badge.percent == null ? "—" : `${badge.percent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`}</p><p className="mt-1 text-[10px] text-white/35">{badge.recipients} von {badge.playerCount} Spielern</p></div></article>)}
             </div>
           </OptionalDataState>
-        </section>
-        <section id="events" className="mt-10 scroll-mt-28">
-          <SectionHeading eyebrow="Eventarchiv" title="Vergangene Events" />
-          <div className="space-y-3">
-            {archivedEvents.length === 0 && (
-              <p className="panel py-14 text-center text-sm text-white/35">
-                Noch keine abgeschlossenen Events.
-              </p>
-            )}
-            {archivedEvents.map((event) => (
-              <Link
-                key={event.id}
-                to={`/events/${event.id}`}
-                className="panel group grid gap-4 p-5 transition hover:border-gold-400/25 sm:grid-cols-[minmax(0,1fr)_repeat(4,auto)_auto] sm:items-center sm:gap-7"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-display text-xl font-black uppercase">
-                    {event.title}
-                  </p>
-                  <p className="mt-1 text-xs text-white/35">{formatDate(event.date)}</p>
-                </div>
-                <EventValue label="Sieger" value={event.winnerNames.join(" & ") || "—"} />
-                <EventValue label="Siegerzeit" value={formatTime(event.fastest)} />
-                <EventValue label="Teilnehmer" value={String(event.participantIds.length)} />
-                <EventValue label="Versuche" value={String(event.attempts)} />
-                <ChevronRight className="hidden size-5 text-white/20 transition group-hover:translate-x-1 group-hover:text-gold-300 sm:block" />
-              </Link>
-            ))}
-          </div>
         </section>
         {isAllTime && <section id="history" className="mt-12 scroll-mt-28">
           <SectionHeading eyebrow="Zeitarchiv" title="Historische Versuche" />
@@ -102,14 +75,5 @@ export function StatsPage() {
         </section>}
       </DataState>
     </div>
-  );
-}
-
-function EventValue({ label, value }: { label: string; value: string }) {
-  return (
-    <p className="text-sm">
-      <span className="block text-[9px] uppercase tracking-widest text-white/30">{label}</span>
-      <span className="font-semibold text-white/70">{value}</span>
-    </p>
   );
 }

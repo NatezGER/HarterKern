@@ -29,6 +29,8 @@ describe("season dashboard polish", () => {
     expect(markup).not.toContain("THE ORIGINAL SPEED DRINKING LEAGUE");
     expect(markup).not.toContain("Wo Sekunden zu Legenden werden.");
     expect(markup).not.toContain("min-h-[430px]");
+    expect(markup).toContain("context-hero-glow");
+    expect(markup).toContain("context-gradient-text");
   });
 
   it("labels season record progression and its empty state", () => {

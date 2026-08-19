@@ -68,6 +68,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   src/components/progression/PersonalBestDetailsToggle.test.tsx`.
 - **Direkte Abhängigkeiten:** Spielerübersicht, Prestige/Badges/Trophäen, BINGO.
 - **Nicht enthalten:** globale Statistikmodule und Live-Verwaltung.
+- **Zeitquoten:** Eine zusätzliche spielerbezogene, season-aware Abfrage auf den
+  bestehenden qualifizierten offiziellen Zeiten liefert die kumulativen
+  Unter-5-/Unter-4-/Unter-3-Anteile; keine globale Abfrage und kein N+1.
 
 ## 6. Live-Event und Eventverwaltung
 
@@ -105,6 +108,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Tests:** `npm test -- src/services/historicalAttemptRepository.test.ts`.
 - **Direkte Abhängigkeiten:** Statistikroute, Badges/Trophäen, Storage-Fotos.
 - **Nicht enthalten:** Live-Erfassung und Spieler-BINGO.
+- **Archivroute:** `/events` lädt als eigene season-aware Datengruppe nur die
+  vorhandenen Eventmodelle (7 gebündelte Requests) und rendert keinen
+  Statistik-Redirect mehr.
 
 ## 8. Statistiken
 
@@ -119,6 +125,12 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Tests:** `npm test -- src/services/dataGroupService.test.ts`.
 - **Direkte Abhängigkeiten:** historische Versuche und optionale Statistikmodule.
 - **Nicht enthalten:** Spielerprofil und Live-Verwaltung.
+- **Route Load:** Der Statistik-Kern benötigt 4 Requests; Events und die nicht
+  mehr verwendete Recent-Attempt-Vorschau werden dort nicht geladen.
+- **Zeitquoten/Versuchsnummern:** Werden ohne weiteren Request aus den bereits
+  für Most Wanted geladenen qualifizierten offiziellen Zeiten des gewählten
+  Scopes abgeleitet. Historische Zeiten zählen für Quoten, aber nicht für die
+  eventbasierte Versuchnummer.
 
 ## 9. Prestige, Badges, Trophäen und Liga-Momente
 
