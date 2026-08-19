@@ -8,11 +8,13 @@ import type { MostWantedEnding, MostWantedSnapshot } from "@/types";
 import { formatDate, formatTime } from "@/utils/format";
 import { ALL_TIME_SEASON } from "@/lib/season";
 import type { SeasonSelection } from "@/lib/season";
+import { mostWantedProgressPercent } from "@/lib/mostWantedProgress";
 
 export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
   data: MostWantedSnapshot;
   season?: SeasonSelection;
 }) {
+  const progressPercent = mostWantedProgressPercent(data.reached, data.total);
   const [selected, setSelected] = useState<MostWantedEnding | null>(null);
   const selectedSeason = useRef(season);
   const visibleSelected = selectedSeason.current === season ? selected : null;
@@ -42,7 +44,7 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
         <div className={cn("h-full rounded-full transition-[width]",
           season === ALL_TIME_SEASON
             ? "bg-gradient-to-r from-amber-600 to-yellow-300"
-            : "bg-gradient-to-r from-emerald-700 to-emerald-300")} style={{ width: `${data.percent}%` }} />
+            : "bg-gradient-to-r from-emerald-700 to-emerald-300")} style={{ width: `${progressPercent}%` }} />
       </div>
       {season !== ALL_TIME_SEASON && data.reached === 0 && (
         <p className="mt-4 text-sm text-white/40">In Saison {season} wurde noch keine Endung gefunden.</p>

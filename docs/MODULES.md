@@ -125,7 +125,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Tests:** `npm test -- src/services/dataGroupService.test.ts`.
 - **Direkte Abhängigkeiten:** historische Versuche und optionale Statistikmodule.
 - **Nicht enthalten:** Spielerprofil und Live-Verwaltung.
-- **Route Load:** Der Statistik-Kern benötigt 4 Requests; Events und die nicht
+- **Route Load:** Der Statistik-Kern benötigt All-Time 4 und saisonal 5
+  Requests; der saisonale Zusatzrequest liest nur die Bestzeit aus
+  `season_qualified_official_times`. Events und die nicht
   mehr verwendete Recent-Attempt-Vorschau werden dort nicht geladen.
 - **Zeitquoten/Versuchsnummern:** Werden ohne weiteren Request aus den bereits
   für Most Wanted geladenen qualifizierten offiziellen Zeiten des gewählten

@@ -5,14 +5,17 @@ export function AccessibleTooltip({
   label,
   description,
   className,
+  showLabelInTooltip = true,
 }: {
   label: string;
   description: string;
   className?: string;
+  showLabelInTooltip?: boolean;
 }) {
   const id = useId();
   const [open, setOpen] = useState(false);
   const explanation = `${label}: ${description}`;
+  const tooltipText = showLabelInTooltip ? explanation : description;
   return (
     <span className="group/tooltip relative inline-flex">
       <button
@@ -42,7 +45,7 @@ export function AccessibleTooltip({
             : "invisible opacity-0 group-hover/tooltip:visible group-hover/tooltip:opacity-100 group-focus-within/tooltip:visible group-focus-within/tooltip:opacity-100",
         )}
       >
-        {explanation}
+        {tooltipText}
       </span>
     </span>
   );
