@@ -14,7 +14,7 @@ export async function getAwardAssetMapping() {
 
 export async function getBadgeAssetDefinitions(): Promise<BadgeAssetDefinition[]> {
   const { data, error } = await getSupabase().from("badge_definitions")
-    .select("badge_key,family_key,name,tier,sort_order")
+    .select("badge_key,family_key,name,tier,design_variant,sort_order")
     .eq("is_active", true)
     .order("sort_order");
   if (error) throw error;
@@ -23,6 +23,7 @@ export async function getBadgeAssetDefinitions(): Promise<BadgeAssetDefinition[]
     familyKey: row.family_key,
     name: row.name,
     tier: row.tier,
+    designVariant: row.design_variant,
     sortOrder: row.sort_order,
   }));
 }

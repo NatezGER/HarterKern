@@ -78,7 +78,7 @@ export interface CompactBadge {
 
 export interface TrophyAward {
   key: string;
-  competitionType: "event" | "season";
+  competitionType: "event" | "season" | "historical";
   scopeType: "all_time" | "season" | "event";
   competitionId: string;
   seasonKey: string | null;

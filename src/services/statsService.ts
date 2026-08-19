@@ -258,15 +258,19 @@ export async function getBadgeRarity(): Promise<BadgeRarity[]> {
       .order("recipient_count", { ascending: true })
       .order("sort_order"),
     client.from("public_player_badges")
-      .select("badge_key,player_id,display_name,avatar_url")
+      .select("badge_key,player_id,display_name,avatar_url,design_variant")
       .order("display_name"),
   ]);
   if (rarityResult.error) throw rarityResult.error;
   if (recipientsResult.error) throw recipientsResult.error;
+  const variants = new Map(recipientsResult.data.map((row) => [
+    row.badge_key, row.design_variant,
+  ]));
   const badges = rarityResult.data.map((row) => ({
     key: row.badge_key,
     name: row.name,
     tier: row.tier,
+    designVariant: variants.get(row.badge_key) ?? "standard",
     recipients: row.recipient_count,
     playerCount: row.regular_player_count,
     percent: row.rarity_percent,

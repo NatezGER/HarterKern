@@ -153,6 +153,12 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Badge-Seltenheit:** lädt die bestehende Rarity-View und in einem zweiten,
   gebündelten Request `public_player_badges` für die Empfänger-Disclosure;
   keine Badge-Einzelrequests und keine zusätzliche globale Datenladung.
+- **Pre-P11 Awards:** Die additive Award-Erweiterung ergänzt die vollständige
+  BINGO-Kartenfamilie, drei Holz-/Trostpreis-Badges und deterministisch aus
+  qualifizierten Zeiten beziehungsweise BINGO-Treffern ermittelte historische
+  Trophäen. Bestehende Award-Views bleiben die Grundlage; ein ergänzender
+  Read-Model-Zweig wird in `public_player_badges` und `player_trophies`
+  zusammengeführt.
 - **Nicht enthalten:** Kernladung von Hall of Fame und Spielerübersicht.
 
 ## 10. Most Wanted und BINGO

@@ -11,6 +11,7 @@ import {
   TROPHY_ASSET_DEFINITIONS,
   trophyAssetId,
 } from "@/lib/awardAssets";
+import { getBadgeMaterialLabel } from "@/lib/badgePresentation";
 import type {
   AwardAssetType,
   BadgeAssetDefinition,
@@ -143,7 +144,7 @@ export function AwardAssetManagement() {
             {badgeFamilies.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
           </select>
           <select value={badge?.badgeKey ?? ""} onChange={(event) => setBadgeKey(event.target.value)} className={selectClass} aria-label="Badge-Tier">
-            {family?.variants.map((variant) => <option key={variant.badgeKey} value={variant.badgeKey}>{variant.tier === "special" ? "Special" : variant.tier}</option>)}
+            {family?.variants.map((variant) => <option key={variant.badgeKey} value={variant.badgeKey}>{getBadgeMaterialLabel({ tier: variant.tier, designVariant: variant.designVariant })}</option>)}
           </select>
         </>}
         {type === "trophy" && <>

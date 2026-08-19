@@ -1,5 +1,5 @@
 import { Crown, Gem, ShieldCheck, Sparkles, Star } from "lucide-react";
-import { badgeTierLabel, getBadgeCenterMark } from "@/lib/badgePresentation";
+import { getBadgeCenterMark, getBadgeMaterialLabel } from "@/lib/badgePresentation";
 import { cn } from "@/lib/cn";
 import type { BadgeTier } from "@/types/pr7Foundation";
 import { AwardAssetImage } from "@/components/common/AwardAssetImage";
@@ -19,15 +19,13 @@ export function PrestigeBadgeEmblem({ badge, size = "md", className }: {
   className?: string;
 }) {
   const style = badge.designVariant === "consolation"
-    ? { shell: "from-slate-300 via-rose-400 to-slate-800", inner: "from-slate-800 via-rose-900 to-slate-400", glow: "shadow-[0_0_24px_rgba(251,113,133,.18)]", Icon: ShieldCheck }
+    ? { shell: "from-amber-200 via-amber-700 to-stone-950", inner: "from-stone-950 via-amber-900 to-amber-300", glow: "shadow-[0_0_24px_rgba(180,83,9,.2)]", Icon: ShieldCheck }
     : badge.designVariant === "positive_special"
       ? { shell: "from-emerald-50 via-emerald-300 to-teal-800", inner: "from-teal-900 via-emerald-500 to-emerald-50", glow: "shadow-[0_0_34px_rgba(52,211,153,.28)]", Icon: Sparkles }
       : tierStyles[badge.tier];
   const Icon = style.Icon;
   const mark = getBadgeCenterMark(badge);
-  const accessibleTier = badge.designVariant === "consolation" ? "Trostpreis"
-    : badge.designVariant === "positive_special" ? "Special"
-      : badgeTierLabel[badge.tier];
+  const accessibleTier = getBadgeMaterialLabel(badge);
   const rotations = badge.tier === "bronze" ? [0, 90] : badge.tier === "silver" ? [0, 45, 90] : badge.tier === "gold" ? [0, 45, 90, 135] : badge.tier === "diamond" ? [0, 30, 60, 90, 120, 150] : [0, 36, 72, 108, 144];
   return (
     <div aria-label={`${accessibleTier}-Badge ${badge.name ?? ""}`} className={cn("relative isolate shrink-0", size === "sm" ? "size-16" : size === "md" ? "size-24" : size === "lg" ? "size-24 sm:size-32" : "size-28 sm:size-40", badge.tier === "diamond" && "scale-105", className)}>

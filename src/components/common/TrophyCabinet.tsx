@@ -30,6 +30,7 @@ export function TrophyCabinet({
     <div id="trophy-cabinet" className={cn("grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4", className)}>
       {trophies.map((trophy, index) => {
         const isSeasonTrophy = trophy.competitionType === "season";
+        const isHistoricalTrophy = trophy.competitionType === "historical";
         const content = (
           <>
             <span className={cn(
@@ -38,17 +39,17 @@ export function TrophyCabinet({
             )}>
               <AwardAssetImage
                 assetId={trophyAssetIdForAward(trophy) ?? ""}
-                alt={`${trophy.competitionName}, ${trophy.placement}. Platz`}
+                alt={isHistoricalTrophy ? trophy.competitionName : `${trophy.competitionName}, ${trophy.placement}. Platz`}
                 className="p-1"
                 fallback={<Trophy className="size-9 drop-shadow-[0_2px_2px_rgba(0,0,0,.45)] sm:size-11" />}
               />
             </span>
             <p className="mt-3 font-display text-lg font-black uppercase sm:text-xl">
-              {isSeasonTrophy && trophy.placement === 1 ? "Saisonmeister" : `${trophy.placement}. Platz`}
+              {isHistoricalTrophy ? trophy.competitionName : isSeasonTrophy && trophy.placement === 1 ? "Saisonmeister" : `${trophy.placement}. Platz`}
             </p>
-            <p className="mt-1 line-clamp-2 text-xs text-white/45">{isSeasonTrophy ? `Saison ${trophy.year}` : trophy.competitionName}</p>
+            {!isHistoricalTrophy && <p className="mt-1 line-clamp-2 text-xs text-white/45">{isSeasonTrophy ? `Saison ${trophy.year}` : trophy.competitionName}</p>}
             <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-white/25">
-              {isSeasonTrophy ? "Karriere-Trophäe" : formatDate(trophy.eventDate)}
+              {isHistoricalTrophy ? `Historische Trophäe · ${formatDate(trophy.eventDate)}` : isSeasonTrophy ? "Karriere-Trophäe" : formatDate(trophy.eventDate)}
             </p>
           </>
         );

@@ -6,7 +6,7 @@ import type { CompactBadge } from "@/types/historyProfiles";
 import { formatDate } from "@/utils/format";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
 import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
-import { badgeTierLabel } from "@/lib/badgePresentation";
+import { getBadgeMaterialLabel } from "@/lib/badgePresentation";
 
 const styles = {
   bronze: "border-orange-700/30 bg-orange-800/[0.06] text-orange-300",
@@ -19,7 +19,7 @@ const styles = {
 const variantStyles = {
   standard: "",
   positive_special: "border-emerald-300/30 bg-emerald-300/[0.07] text-emerald-100",
-  consolation: "border-rose-300/20 bg-rose-300/[0.04] text-rose-200/85",
+  consolation: "border-amber-700/30 bg-amber-900/[0.08] text-amber-200/85",
 };
 
 export function BadgeGallery({ badges, compact = false, featured = false, showPlayer = false, mobileLimit, desktopLimit, expanded = false }: { badges: CompactBadge[]; compact?: boolean; featured?: boolean; showPlayer?: boolean; mobileLimit?: number; desktopLimit?: number; expanded?: boolean }) {
@@ -32,9 +32,7 @@ export function BadgeGallery({ badges, compact = false, featured = false, showPl
             ? "hidden sm:block"
             : undefined;
         const displayTier = badge.isSpecialEventBadge ? "special" : badge.tier;
-        const badgeLabel = badge.badgeKind === "single"
-          ? (badge.designVariant === "consolation" ? "Trostpreis" : "Special")
-          : badgeTierLabel[displayTier];
+        const badgeLabel = getBadgeMaterialLabel({ tier: displayTier, designVariant: badge.designVariant });
         return <AnimatedCard key={badge.key} delay={Math.min(index * 0.025, 0.2)} className={cn("relative overflow-hidden border p-3 text-center sm:p-5", featured && "sm:px-7 sm:py-8", collapseClass, styles[displayTier], variantStyles[badge.designVariant])}>
           <span className="absolute inset-x-8 -top-16 h-32 rounded-full bg-current opacity-[0.06] blur-3xl" />
           <div className="relative flex min-h-4 items-start justify-between gap-2"><span className="text-[8px] font-black uppercase tracking-[0.18em] opacity-65 sm:text-[9px] sm:tracking-[0.2em]">{badgeLabel}</span>{badge.tier === "diamond" && <span className="hidden rounded-full border border-current/20 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider sm:inline">Ultimativ</span>}{badge.isSpecialEventBadge && <span className="hidden rounded-full border border-current/20 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider sm:inline">Event-Sonderabzeichen</span>}</div>

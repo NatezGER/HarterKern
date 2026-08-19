@@ -84,6 +84,7 @@ export interface BadgeRarity {
   key: string;
   name: string;
   tier: "bronze" | "silver" | "gold" | "diamond" | "special";
+  designVariant: "standard" | "positive_special" | "consolation";
   recipients: number;
   playerCount: number;
   percent: number | null;

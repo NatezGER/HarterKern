@@ -59,4 +59,21 @@ describe("TrophyCabinet", () => {
     expect(markup).not.toContain("/events/season-2026");
     expect(markup.match(/href=/g)).toHaveLength(1);
   });
+
+  it("renders a historical achievement as a named trophy without an event link", () => {
+    const historical: TrophyAward = {
+      ...trophy(1),
+      key: "historical:first-sub-3",
+      competitionType: "historical",
+      scopeType: "all_time",
+      competitionId: "historical-sub3",
+      competitionName: "Erster Sub 3",
+      eventDate: "2024-01-01",
+    };
+    const markup = renderToStaticMarkup(<TrophyCabinet trophies={[historical]} />);
+    expect(markup).toContain("Erster Sub 3");
+    expect(markup).toContain("Historische Trophäe");
+    expect(markup).not.toContain("1. Platz");
+    expect(markup).not.toContain("href=");
+  });
 });

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
-import { badgeTierLabel } from "@/lib/badgePresentation";
+import { getBadgeMaterialLabel } from "@/lib/badgePresentation";
 import { nextBadgeRaritySelection } from "@/lib/badgeRaritySelection";
 import { cn } from "@/lib/cn";
 import type { BadgeRarity } from "@/types";
@@ -42,9 +42,9 @@ export function BadgeRarityContent({
             expanded && "border-gold-400/45 bg-gold-400/[0.06]",
           )}
         >
-          <PrestigeBadgeEmblem badge={{ badgeKey: badge.key, tier: badge.tier, name: badge.name }} size="sm" />
+          <PrestigeBadgeEmblem badge={{ badgeKey: badge.key, tier: badge.tier, name: badge.name, designVariant: badge.designVariant }} size="sm" />
           <span className="min-w-0 flex-1">
-            <span className="block text-[8px] font-black uppercase tracking-[0.14em] text-gold-300 sm:text-[9px] sm:tracking-[0.18em]">{badgeTierLabel[badge.tier]}</span>
+            <span className="block text-[8px] font-black uppercase tracking-[0.14em] text-gold-300 sm:text-[9px] sm:tracking-[0.18em]">{getBadgeMaterialLabel(badge)}</span>
             <span className="mt-1 block break-words font-display text-sm font-black uppercase sm:text-lg">{badge.name}</span>
             <span className="mt-2 block font-display text-xl font-black sm:text-2xl">{badge.percent == null ? "—" : `${badge.percent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`}</span>
             <span className="mt-1 block text-[9px] text-white/35 sm:text-[10px]">{badge.recipients} von {badge.playerCount} Spielern</span>
@@ -55,9 +55,9 @@ export function BadgeRarityContent({
     </div>
     {selected && <section id={`badge-rarity-detail-${selected.key}`} className="panel mt-3 p-4 sm:p-6" aria-live="polite">
       <div className="flex flex-wrap items-center gap-3">
-        <PrestigeBadgeEmblem badge={{ badgeKey: selected.key, tier: selected.tier, name: selected.name }} size="sm" />
+        <PrestigeBadgeEmblem badge={{ badgeKey: selected.key, tier: selected.tier, name: selected.name, designVariant: selected.designVariant }} size="sm" />
         <div>
-          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-gold-300">{badgeTierLabel[selected.tier]}</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-gold-300">{getBadgeMaterialLabel(selected)}</p>
           <h3 className="font-display text-xl font-black uppercase">{selected.name}</h3>
           <p className="text-xs text-white/40">{selected.percent == null ? "Keine Quote verfügbar" : `${selected.percent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`} · {selected.recipients} von {selected.playerCount} Spielern</p>
         </div>

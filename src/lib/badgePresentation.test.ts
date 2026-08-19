@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { badgeTierLabel, getBadgeCenterMark } from "@/lib/badgePresentation";
+import { badgeTierLabel, getBadgeCenterMark, getBadgeMaterialLabel } from "@/lib/badgePresentation";
 
 describe("badge presentation", () => {
-  it("uses Platinum only as the visible name of the special tier", () => {
-    expect(badgeTierLabel.special).toBe("Platinum");
+  it("uses Smaragd and Holz for special badge variants", () => {
+    expect(badgeTierLabel.special).toBe("Smaragd");
+    expect(getBadgeMaterialLabel({ tier: "special", designVariant: "positive_special" })).toBe("Smaragd");
+    expect(getBadgeMaterialLabel({ tier: "special", designVariant: "consolation" })).toBe("Holz");
     expect(badgeTierLabel.diamond).toBe("Diamond");
   });
 
@@ -19,6 +21,10 @@ describe("badge presentation", () => {
     expect(getBadgeCenterMark({ badgeKey: "almost", valueHundredths: 301 })).toBe("3,01");
     expect(getBadgeCenterMark({ badgeKey: "matrix-glitch" })).toBe("==");
     expect(getBadgeCenterMark({ badgeKey: "false-starter" })).toBe("DNF");
+    expect(getBadgeCenterMark({ badgeKey: "photo-finish" })).toBe("+.01");
+    expect(getBadgeCenterMark({ badgeKey: "reverse-gear" })).toBe("⇣5");
+    expect(getBadgeCenterMark({ badgeKey: "wooden-bronze-medal" })).toBe("#4×5");
+    expect(getBadgeCenterMark({ badgeKey: "bingo-completion-diamond", category: "bingo" })).toBe("100");
     expect(getBadgeCenterMark({ badgeKey: "bingo-gold", category: "bingo" })).toBe("BI");
   });
 });
