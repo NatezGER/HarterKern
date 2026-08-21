@@ -1,4 +1,5 @@
 import { validateAwardAssetFile, validateImageFile } from "@/lib/media";
+import { awardAssetType } from "@/lib/awardAssets";
 import { invokeAdminMedia } from "@/services/adminMediaService";
 
 export async function uploadPlayerAvatar(playerId: string, file: File) {
@@ -46,7 +47,9 @@ export async function removeEventPhoto(photoId: string) {
 }
 
 export async function uploadAwardAsset(assetId: string, file: File) {
-  const validation = await validateAwardAssetFile(file);
+  const type = awardAssetType(assetId);
+  if (!type) throw new Error("Award-Auswahl ist ungültig.");
+  const validation = await validateAwardAssetFile(file, type);
   if (validation) throw new Error(validation);
   const result = await invokeAdminMedia("upload-award-asset", { assetId }, file);
   if (!result?.publicUrl) throw new Error("Award-Grafik wurde nicht vollständig gespeichert.");

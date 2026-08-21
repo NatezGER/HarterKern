@@ -126,7 +126,9 @@ export function AwardAssetManagement() {
     <section className="rounded-2xl border border-white/10 p-5">
       <h3 className="display-title text-2xl">Award-Grafiken</h3>
       <p className="mt-2 text-xs leading-5 text-white/50">
-        Empfohlen: 1024 × 1024 px · PNG oder WebP · transparenter Hintergrund · max. 2 MB
+        {type === "trophy"
+          ? "Trophäen: Hochformat empfohlen, etwa 768 × 1024 px · PNG oder WebP · max. 2 MB"
+          : "Badges und Medaillen: quadratisch, empfohlen 1024 × 1024 px · PNG oder WebP · max. 2 MB"}
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <select value={type} onChange={(event) => setType(event.target.value as AwardAssetType)} className={selectClass} aria-label="Award-Art">
@@ -161,7 +163,9 @@ export function AwardAssetManagement() {
       </div>
 
       <div className="mt-5 flex flex-col gap-4 rounded-2xl bg-white/[0.03] p-4 sm:flex-row sm:items-center">
-        <div className="grid size-24 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/10 bg-black/25 p-2">
+        <div className={type === "trophy"
+          ? "grid aspect-[3/4] h-32 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/10 bg-black/25 p-2"
+          : "grid size-24 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/10 bg-black/25 p-2"}>
           {customUrl ? <img src={customUrl} alt="Aktuelle Custom-Grafik" className="size-full object-contain" />
             : type === "medal" ? <PodiumMedal rank={rank} size="lg" />
               : type === "badge" && badge ? <PrestigeBadgeEmblem badge={{ badgeKey: badge.badgeKey, tier: badge.tier, name: badge.name }} size="md" />

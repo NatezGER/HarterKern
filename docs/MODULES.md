@@ -120,12 +120,13 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Hooks/Services:** `useEffectivePublicData`, `useDataPlatform`,
   `dataGroupService`, `statsService`, `attemptService`, `eventService`.
 - **Views/RPCs:** `global_statistics`, `world_record_history`,
+  `event_lead_player_statistics`, `event_player_best_progression`,
   `event_attempt_details`, `events`, `event_statistics`, `event_participants`,
   `event_guests`, `event_podium`; optionale Views stehen in Modulen 9 und 10.
 - **Tests:** `npm test -- src/services/dataGroupService.test.ts`.
 - **Direkte Abhängigkeiten:** historische Versuche und optionale Statistikmodule.
 - **Nicht enthalten:** Spielerprofil und Live-Verwaltung.
-- **Route Load:** Der Statistik-Kern benötigt All-Time 4 und saisonal 5
+- **Route Load:** Der Statistik-Kern benötigt All-Time 5 und saisonal 6
   Requests; der saisonale Zusatzrequest liest nur die Bestzeit aus
   `season_qualified_official_times`. Events und die nicht
   mehr verwendete Recent-Attempt-Vorschau werden dort nicht geladen.
@@ -150,6 +151,8 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   `award_assets`-Mapping; nur im geöffneten Verwaltungsmodus folgen je ein
   Request für aktive Badge-Definitionen. Trophäen-Slots sind lokal definiert
   und hängen nicht von bereits vergebenen Trophäen ab.
+  Badge- und Medaillenbilder bleiben quadratisch; Trophäen unterstützen
+  zusätzlich natürliche Hochformate und werden proportional dargestellt.
 - **Badge-Seltenheit:** lädt die bestehende Rarity-View und in einem zweiten,
   gebündelten Request `public_player_badges` für die Empfänger-Disclosure;
   keine Badge-Einzelrequests und keine zusätzliche globale Datenladung.

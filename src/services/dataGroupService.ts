@@ -4,7 +4,7 @@ import { getPlayers } from "@/services/playerService";
 import {
   getBadgeRarity,
   getDailyWinners,
-  getGlobalStatistics,
+  getGlobalStatistics, getEventLeadPlayerStatistics,
   getGroupMilestones,
   getLeaderboard,
   getLeagueTimeStatistics,
@@ -69,7 +69,7 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
   "event-detail": 0,
   live: 8,
   dashboard: 12,
-  statistics: 5,
+  statistics: 6,
   "prestige-activities": 2,
   "group-milestones": 1,
   "badge-rarity": 2,
@@ -181,14 +181,15 @@ async function loadUncached(group: DataGroup, season: SeasonSelection): Promise<
       return { publicData: { players, leaderboard, dailyWinners, worldRecordHistory, seasonRecord, events } };
     }
     case "statistics": {
-      const [players, worldRecordHistory, statistics] =
+      const [players, worldRecordHistory, statistics, eventLeadStatistics] =
         await Promise.all([
           getPlayers(season),
           getWorldRecordHistory(season),
           getGlobalStatistics(season),
+          getEventLeadPlayerStatistics(season),
         ]);
       return {
-        publicData: { players, worldRecordHistory, statistics },
+        publicData: { players, worldRecordHistory, statistics, eventLeadStatistics },
       };
     }
     case "prestige-activities":

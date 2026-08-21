@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getDailyWinners: vi.fn(),
   getEvents: vi.fn(),
   getMostWantedSnapshot: vi.fn(),
+  getEventLeadPlayerStatistics: vi.fn(),
 }));
 
 vi.mock("@/services/playerService", () => ({ getPlayers: mocks.getPlayers }));
@@ -15,6 +16,7 @@ vi.mock("@/services/statsService", () => ({
   getBadgeRarity: vi.fn(),
   getDailyWinners: mocks.getDailyWinners,
   getGlobalStatistics: vi.fn(),
+  getEventLeadPlayerStatistics: mocks.getEventLeadPlayerStatistics,
   getGroupMilestones: vi.fn(),
   getLeagueTimeStatistics: vi.fn(),
   getMostWantedSnapshot: mocks.getMostWantedSnapshot,
@@ -53,7 +55,7 @@ describe("route data groups", () => {
       "badge-rarity",
     ]);
     expect(getRouteDataPlan("/").optional).toEqual(["prestige-activities"]);
-    expect(dataGroupRequestCounts.statistics).toBe(5);
+    expect(dataGroupRequestCounts.statistics).toBe(6);
     expect(dataGroupRequestCounts["badge-rarity"]).toBe(2);
   });
 

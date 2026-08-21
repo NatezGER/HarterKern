@@ -225,6 +225,19 @@ export interface Statistic {
   icon: "timer" | "users" | "trophy" | "target";
 }
 
+export interface EventLeadPlayerStatistic {
+  playerId: string;
+  playerName: string;
+  avatarUrl: string | null;
+  totalLeadSeconds: number;
+  leadTakeovers: number;
+  leadLosses: number;
+  eventsLed: number;
+  longestLeadSeconds: number;
+  averageLeadSeconds: number;
+  leadSharePercent: number;
+}
+
 export interface PublicDataSnapshot {
   players: Player[];
   leaderboard: LeaderboardEntry[];
@@ -233,6 +246,7 @@ export interface PublicDataSnapshot {
   seasonRecord: WorldRecord | null;
   events: Event[];
   statistics: Statistic[];
+  eventLeadStatistics: EventLeadPlayerStatistic[];
   recentAttempts: Attempt[];
   activities: PrestigeActivity[];
   milestones: GroupMilestone[];

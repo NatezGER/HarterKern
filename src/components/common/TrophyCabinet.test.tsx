@@ -7,6 +7,9 @@ import type { TrophyAward } from "@/types/historyProfiles";
 vi.mock("react-router-dom", () => ({
   Link: ({ to, children, className }: { to: string; children: ReactNode; className?: string }) => <a href={to} className={className}>{children}</a>,
 }));
+vi.mock("@/hooks/useAwardAssets", () => ({
+  useAwardAssetUrl: () => "https://example.test/trophy.webp",
+}));
 
 const trophy = (placement: 1 | 2 | 3): TrophyAward => ({
   key: `trophy-${placement}`,
@@ -34,6 +37,8 @@ describe("TrophyCabinet", () => {
     expect(markup).toContain("max-sm:hidden");
     expect(markup).toContain('aria-expanded="false"');
     expect(markup).toContain("Alle Trophäen anzeigen");
+    expect(markup).toContain("aspect-[3/4]");
+    expect(markup).toContain("object-contain");
   });
 
   it("shows a season trophy as a career award without an event link", () => {

@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/hooks/useSeason", () => ({ useSeason: () => ({ season: "all-time", isAllTime: true }) }));
 vi.mock("@/hooks/useEffectivePublicData", () => ({ useEffectivePublicData: () => ({ data: {
-  statistics: [], mostWanted: {}, leagueTimeStatistics: {}, badgeRarity: [],
+  statistics: [], eventLeadStatistics: [], mostWanted: {},
+  leagueTimeStatistics: {}, badgeRarity: [],
 } }) }));
 vi.mock("@/hooks/useDataPlatform", () => ({ useDataPlatform: () => ({ snapshot: { liveState: { historicalAttempts: [] } } }) }));
 vi.mock("@/components/common/DataState", () => ({ DataState: ({ children }: { children: ReactNode }) => children }));
