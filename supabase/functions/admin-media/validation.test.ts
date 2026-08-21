@@ -71,5 +71,11 @@ describe("admin award validation", () => {
     expect(validateAwardImageMetadata({ mimeType: "image/webp", size: 1000, width: 900, height: 800 })).toMatch(/quadratisch/);
     expect(validateAwardImageMetadata({ mimeType: "image/webp", size: 1000, width: 500, height: 500 })).toMatch(/512/);
     expect(validateAwardImageMetadata({ mimeType: "image/webp", size: 1000, width: 1024, height: 1024 })).toBeNull();
+    expect(validateAwardImageMetadata(
+      { mimeType: "image/webp", size: 1000, width: 768, height: 1024 }, "trophy",
+    )).toBeNull();
+    expect(validateAwardImageMetadata(
+      { mimeType: "image/webp", size: 1000, width: 768, height: 1024 }, "badge",
+    )).toMatch(/quadratisch/);
   });
 });

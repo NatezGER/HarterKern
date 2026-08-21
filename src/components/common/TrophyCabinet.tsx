@@ -34,7 +34,7 @@ export function TrophyCabinet({
         const content = (
           <>
             <span className={cn(
-              "mx-auto grid size-16 place-items-center rounded-2xl bg-gradient-to-br shadow-lg sm:size-20",
+              "mx-auto grid aspect-[3/4] h-20 place-items-center rounded-2xl bg-gradient-to-br shadow-lg sm:h-24",
               trophyStyles[trophy.tier],
             )}>
               <AwardAssetImage

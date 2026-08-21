@@ -16,6 +16,7 @@ import { useSeason } from "@/hooks/useSeason";
 import { useState } from "react";
 import { HistoricalAttemptsDisclosure } from "@/components/history/HistoricalAttemptsDisclosure";
 import { LeagueAttemptNumberChart, OfficialTimeThresholds } from "@/components/stats/OfficialTimePerformance";
+import { EventLeadStatistics } from "@/components/stats/EventLeadStatistics";
 
 export function StatsPage() {
   const { data } = useEffectivePublicData();
@@ -31,6 +32,10 @@ export function StatsPage() {
             <StatCard key={statistic.id} statistic={statistic} delay={index * 0.06} />
           ))}
         </div>
+        <section className="mt-12">
+          <SectionHeading eyebrow="Qualifizierte Events" title="Event-Führungsstatistiken" />
+          <EventLeadStatistics data={data.eventLeadStatistics} />
+        </section>
         <section className="mt-12">
           <WRProgression collapsibleHistory />
         </section>

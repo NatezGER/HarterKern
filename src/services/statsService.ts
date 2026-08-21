@@ -9,6 +9,7 @@ import type {
   MostWantedSnapshot,
   Statistic,
   WorldRecord,
+  EventLeadPlayerStatistic,
 } from "@/types";
 import { hundredthsToSeconds } from "@/utils/time";
 import { ALL_TIME_SEASON, getSeasonDateRange } from "@/lib/season";
@@ -358,6 +359,53 @@ export async function getGlobalStatistics(season: SeasonSelection = ALL_TIME_SEA
     values,
     bestTimeResult.data?.time_hundredths ?? null,
   ), season);
+}
+
+export async function getEventLeadPlayerStatistics(
+  season: SeasonSelection = ALL_TIME_SEASON,
+): Promise<EventLeadPlayerStatistic[]> {
+  const client = getSupabase();
+  let query = client.from("event_lead_player_statistics").select("*");
+  if (season !== ALL_TIME_SEASON) query = query.eq("season_year", season);
+  const { data, error } = await query
+    .order("total_lead_seconds", { ascending: false })
+    .order("display_name", { ascending: true });
+  if (error) throw error;
+
+  const combined = new Map<string, EventLeadPlayerStatistic>();
+  const aggregation = new Map<string, { segments: number; qualifiedSeconds: number }>();
+  for (const row of data) {
+    const existing = combined.get(row.player_id);
+    const nextTotal = (existing?.totalLeadSeconds ?? 0) + Number(row.total_lead_seconds);
+    const nextEvents = (existing?.eventsLed ?? 0) + Number(row.events_led);
+    const previousAggregation = aggregation.get(row.player_id) ?? {
+      segments: 0, qualifiedSeconds: 0,
+    };
+    const nextAggregation = {
+      segments: previousAggregation.segments + Number(row.lead_segment_count),
+      qualifiedSeconds: previousAggregation.qualifiedSeconds
+        + Number(row.qualified_event_duration_seconds),
+    };
+    aggregation.set(row.player_id, nextAggregation);
+    combined.set(row.player_id, {
+      playerId: row.player_id,
+      playerName: row.display_name,
+      avatarUrl: resolveAvatar(row.avatar_path, row.avatar_url),
+      totalLeadSeconds: nextTotal,
+      leadTakeovers: (existing?.leadTakeovers ?? 0) + Number(row.lead_takeovers),
+      leadLosses: (existing?.leadLosses ?? 0) + Number(row.lead_losses),
+      eventsLed: nextEvents,
+      longestLeadSeconds: Math.max(existing?.longestLeadSeconds ?? 0,
+        Number(row.longest_lead_seconds)),
+      averageLeadSeconds: nextAggregation.segments
+        ? Math.round(nextTotal / nextAggregation.segments) : 0,
+      leadSharePercent: nextAggregation.qualifiedSeconds
+        ? Math.round(nextTotal / nextAggregation.qualifiedSeconds * 1000) / 10 : 0,
+    });
+  }
+  return [...combined.values()].sort((left, right) =>
+    right.totalLeadSeconds - left.totalLeadSeconds
+      || left.playerName.localeCompare(right.playerName, "de"));
 }
 
 export function withQualifiedSeasonBest<T extends { world_record_hundredths: number | null }>(

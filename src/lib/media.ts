@@ -10,6 +10,7 @@ export type ImagePurpose = "avatar" | "event-photo";
 export function validateAwardAssetMetadata(
   file: Pick<File, "type" | "size">,
   dimensions?: { width: number; height: number },
+  assetType: "medal" | "badge" | "trophy" = "badge",
 ): string | null {
   if (!AWARD_ASSET_MIME_TYPES.includes(file.type as (typeof AWARD_ASSET_MIME_TYPES)[number])) {
     return "Award-Grafiken müssen PNG- oder WebP-Dateien sein.";
@@ -17,23 +18,27 @@ export function validateAwardAssetMetadata(
   if (file.size < 1 || file.size > AWARD_ASSET_MAX_BYTES) {
     return "Die Award-Grafik darf höchstens 2 MB groß sein.";
   }
-  if (dimensions && dimensions.width !== dimensions.height) {
+  if (dimensions && assetType !== "trophy" && dimensions.width !== dimensions.height) {
     return "Die Award-Grafik muss quadratisch sein.";
   }
-  if (dimensions && dimensions.width < AWARD_ASSET_MIN_DIMENSION) {
+  if (dimensions && (dimensions.width < AWARD_ASSET_MIN_DIMENSION
+    || dimensions.height < AWARD_ASSET_MIN_DIMENSION)) {
     return "Die Award-Grafik muss mindestens 512 × 512 px groß sein.";
   }
   return null;
 }
 
-export async function validateAwardAssetFile(file: File): Promise<string | null> {
-  const metadataError = validateAwardAssetMetadata(file);
+export async function validateAwardAssetFile(
+  file: File,
+  assetType: "medal" | "badge" | "trophy",
+): Promise<string | null> {
+  const metadataError = validateAwardAssetMetadata(file, undefined, assetType);
   if (metadataError) return metadataError;
   try {
     const image = await createImageBitmap(file);
     const dimensions = { width: image.width, height: image.height };
     image.close();
-    return validateAwardAssetMetadata(file, dimensions);
+    return validateAwardAssetMetadata(file, dimensions, assetType);
   } catch {
     return "Die Bildabmessungen konnten nicht geprüft werden.";
   }

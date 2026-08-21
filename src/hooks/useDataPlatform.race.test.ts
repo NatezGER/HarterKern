@@ -5,7 +5,8 @@ import type { DataPlatformSnapshot } from "@/services/dataPlatformRepository";
 const snapshot = (reached: number): DataPlatformSnapshot => ({
   publicData: {
     players: [], leaderboard: [], dailyWinners: [], worldRecordHistory: [],
-    seasonRecord: null, events: [], statistics: [], recentAttempts: [], activities: [],
+    seasonRecord: null, events: [], statistics: [], eventLeadStatistics: [],
+    recentAttempts: [], activities: [],
     milestones: [], badgeRarity: [], leagueTimeStatistics: {
       totalValidTimes: 0, mostCommonTimeHundredths: null, mostCommonTimeHits: 0,
       mostCommonTimeParticipants: 0, smoothTimeCount: 0,

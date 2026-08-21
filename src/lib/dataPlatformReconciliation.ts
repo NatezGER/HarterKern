@@ -23,6 +23,7 @@ export function reconcileDataPlatformSnapshot(
       seasonRecord: remote.publicData.seasonRecord,
       events: uniqueBy(remote.publicData.events, ({ id }) => id),
       statistics: uniqueBy(remote.publicData.statistics, ({ id }) => id),
+      eventLeadStatistics: uniqueBy(remote.publicData.eventLeadStatistics, ({ playerId }) => playerId),
       recentAttempts: uniqueBy(remote.publicData.recentAttempts, ({ id }) => id),
       activities: uniqueBy(remote.publicData.activities, ({ id }) => id),
       milestones: uniqueBy(remote.publicData.milestones, ({ key }) => key),

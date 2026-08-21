@@ -22,6 +22,7 @@ export const emptyPublicData: PublicDataSnapshot = {
   seasonRecord: null,
   events: [],
   statistics: [],
+  eventLeadStatistics: [],
   recentAttempts: [],
   activities: [],
   milestones: [],
@@ -65,6 +66,7 @@ export async function loadPublicData(): Promise<PublicDataSnapshot> {
   const leagueTimeStatistics = await getLeagueTimeStatistics();
   return {
     players, leaderboard, dailyWinners, worldRecordHistory, seasonRecord: null, events, statistics,
-    recentAttempts, activities, milestones, badgeRarity, mostWanted, leagueTimeStatistics,
+    eventLeadStatistics: [], recentAttempts, activities, milestones, badgeRarity,
+    mostWanted, leagueTimeStatistics,
   };
 }

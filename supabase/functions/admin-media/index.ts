@@ -90,9 +90,14 @@ function requireImage(value: FormDataEntryValue | null, limit: number) {
   return value;
 }
 
-async function requireAwardImage(value: FormDataEntryValue | null) {
+async function requireAwardImage(
+  value: FormDataEntryValue | null,
+  assetType: "medal" | "badge" | "trophy",
+) {
   if (!(value instanceof File)) throw new Error("Bitte eine Bilddatei auswählen.");
-  const fileError = validateAwardImageMetadata({ mimeType: value.type, size: value.size });
+  const fileError = validateAwardImageMetadata(
+    { mimeType: value.type, size: value.size }, assetType,
+  );
   if (fileError) throw new Error(fileError);
   const dimensions = readAwardImageDimensions(
     new Uint8Array(await value.arrayBuffer()),
@@ -102,7 +107,7 @@ async function requireAwardImage(value: FormDataEntryValue | null) {
     mimeType: value.type,
     size: value.size,
     ...dimensions,
-  });
+  }, assetType);
   if (dimensionsError) throw new Error(dimensionsError);
   return { file: value, ...dimensions };
 }
@@ -246,7 +251,9 @@ Deno.serve(async (request) => {
     if (action === "upload-award-asset") {
       const assetId = requireAwardAssetId(form.get("assetId"));
       const assetType = assetId.split(":", 1)[0];
-      const { file, width, height } = await requireAwardImage(form.get("file"));
+      const { file, width, height } = await requireAwardImage(
+        form.get("file"), assetType as "medal" | "badge" | "trophy",
+      );
 
       if (assetType === "badge") {
         const badgeKey = assetId.slice("badge:".length);

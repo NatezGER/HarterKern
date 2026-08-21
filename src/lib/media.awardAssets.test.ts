@@ -16,4 +16,17 @@ describe("award asset upload validation", () => {
     expect(validateAwardAssetMetadata({ type: "image/png", size: 1024 }, { width: 1024, height: 900 })).toMatch(/quadratisch/);
     expect(validateAwardAssetMetadata({ type: "image/png", size: 1024 }, { width: 511, height: 511 })).toMatch(/512/);
   });
+
+  it("accepts portrait trophies while badges and medals remain square", () => {
+    const portrait = { width: 768, height: 1024 };
+    expect(validateAwardAssetMetadata(
+      { type: "image/webp", size: 1024 }, portrait, "trophy",
+    )).toBeNull();
+    expect(validateAwardAssetMetadata(
+      { type: "image/webp", size: 1024 }, portrait, "badge",
+    )).toMatch(/quadratisch/);
+    expect(validateAwardAssetMetadata(
+      { type: "image/webp", size: 1024 }, portrait, "medal",
+    )).toMatch(/quadratisch/);
+  });
 });

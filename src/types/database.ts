@@ -371,6 +371,52 @@ export interface Database {
         };
         Relationships: [];
       };
+      event_lead_segments: {
+        Row: {
+          event_id: string;
+          player_id: string;
+          lead_started_at: string;
+          lead_ended_at: string;
+          duration_seconds: number;
+          leading_time_hundredths: number;
+          sequence: number;
+          qualification_started_at: string;
+          statistical_ended_at: string;
+          season_year: number;
+        };
+        Relationships: [];
+      };
+      event_player_best_progression: {
+        Row: {
+          source_attempt_id: string;
+          event_id: string;
+          player_id: string;
+          achieved_at: string;
+          personal_best_hundredths: number;
+          next_personal_best_at: string | null;
+          sequence: number;
+        };
+        Relationships: [];
+      };
+      event_lead_player_statistics: {
+        Row: {
+          player_id: string;
+          display_name: string;
+          avatar_url: string | null;
+          avatar_path: string | null;
+          season_year: number;
+          total_lead_seconds: number;
+          lead_takeovers: number;
+          lead_losses: number;
+          events_led: number;
+          longest_lead_seconds: number;
+          lead_segment_count: number;
+          qualified_event_duration_seconds: number;
+          lead_share_percent: number;
+          average_lead_seconds: number;
+        };
+        Relationships: [];
+      };
       season_player_statistics: {
         Row: Database["public"]["Views"]["player_statistics"]["Row"] & {
           season_year: number;

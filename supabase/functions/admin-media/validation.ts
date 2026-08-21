@@ -23,17 +23,19 @@ export function validateAwardImageMetadata(input: {
   size: number;
   width?: number;
   height?: number;
-}) {
+}, assetType: "medal" | "badge" | "trophy" = "badge") {
   if (input.mimeType !== "image/png" && input.mimeType !== "image/webp") {
     return "Award-Grafiken müssen PNG- oder WebP-Dateien sein.";
   }
   if (input.size < 1 || input.size > 2 * 1024 * 1024) {
     return "Die Award-Grafik darf maximal 2 MB groß sein.";
   }
-  if (input.width != null && input.height != null && input.width !== input.height) {
+  if (assetType !== "trophy" && input.width != null && input.height != null
+    && input.width !== input.height) {
     return "Die Award-Grafik muss quadratisch sein.";
   }
-  if (input.width != null && input.width < 512) {
+  if ((input.width != null && input.width < 512)
+    || (input.height != null && input.height < 512)) {
     return "Die Award-Grafik muss mindestens 512 × 512 px groß sein.";
   }
   return null;
