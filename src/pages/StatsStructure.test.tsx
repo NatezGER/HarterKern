@@ -14,6 +14,7 @@ vi.mock("@/components/dashboard/WRProgression", () => ({ WRProgression: () => <d
 vi.mock("@/components/stats/MostWantedMatrix", () => ({ MostWantedMatrix: () => <div>Most Wanted Matrix</div> }));
 vi.mock("@/components/stats/GroupMilestones", () => ({ GroupMilestones: () => <div>Liga-Meilensteine Inhalt</div> }));
 vi.mock("@/components/stats/LeagueTimeStatistics", () => ({ LeagueTimeStatistics: () => <div>Ligastatistiken Inhalt</div> }));
+vi.mock("@/components/stats/EventLeadStatistics", () => ({ EventLeadStatistics: () => <div>Führungswerte kompakt</div> }));
 vi.mock("@/components/stats/OfficialTimePerformance", () => ({
   OfficialTimeThresholds: () => <div>Zeitquoten</div>,
   LeagueAttemptNumberChart: () => <div>Versuchnummern-Chart</div>,
@@ -27,6 +28,9 @@ describe("StatsPage structure", () => {
     const markup = renderToStaticMarkup(<StatsPage />);
     expect(markup.indexOf("Most Wanted Matrix")).toBeLessThan(markup.indexOf("Liga-Meilensteine Inhalt"));
     expect(markup).toContain("Versuchnummern-Chart");
+    expect(markup.indexOf("Versuchnummern-Chart")).toBeLessThan(markup.indexOf("Liga-Meilensteine Inhalt"));
+    expect(markup.indexOf("Ligastatistiken Inhalt")).toBeLessThan(markup.indexOf("Führungswerte kompakt"));
+    expect(markup).not.toContain("Event-Führungsstatistiken");
     expect(markup).toContain("Badge-Seltenheit");
     expect(markup).toContain("grid grid-cols-2 gap-3");
     expect(markup).not.toContain("col-span-2");

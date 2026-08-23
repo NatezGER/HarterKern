@@ -417,6 +417,28 @@ export interface Database {
         };
         Relationships: [];
       };
+      event_best_breaks: {
+        Row: {
+          source_attempt_id: string;
+          event_id: string;
+          player_id: string;
+          time_hundredths: number;
+          prior_event_best: number;
+          broke_at: string;
+          season_year: number;
+        };
+        Relationships: [];
+      };
+      event_lead_player_statistics_v2: {
+        Row: Database["public"]["Views"]["event_lead_player_statistics"]["Row"] & {
+          event_best_breaks: number;
+        };
+        Relationships: [];
+      };
+      event_lead_participant_statistics: {
+        Row: { event_id: string; player_id: string; lead_seconds: number; event_best_breaks: number };
+        Relationships: [];
+      };
       season_player_statistics: {
         Row: Database["public"]["Views"]["player_statistics"]["Row"] & {
           season_year: number;
@@ -469,6 +491,10 @@ export interface Database {
           valid_attempts: number;
           dnf_count: number;
         }>;
+      };
+      get_player_event_lead_statistics: {
+        Args: { p_player_id: string; p_season_year?: number | null };
+        Returns: Array<{ total_lead_seconds: number; event_best_breaks: number }>;
       };
       get_player_season_pb_history: {
         Args: { p_player_id: string; p_season_year: number };

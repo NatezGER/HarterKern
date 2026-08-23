@@ -39,6 +39,8 @@ export interface EventParticipantDetail {
   bestHundredths: number | null;
   averageHundredths: number | null;
   rank: number | null;
+  leadSeconds: number;
+  eventBestBreaks: number;
 }
 
 export interface CompactBadge {
@@ -139,7 +141,7 @@ export interface EventDetail {
   trophies: TrophyAward[];
   extras?: {
     loading: boolean;
-    errors: Partial<Record<"badges" | "photos" | "trophies", string>>;
+    errors: Partial<Record<"badges" | "trophies", string>>;
   };
 }
 
@@ -212,6 +214,8 @@ export interface PlayerProfileCore {
   thirdPlaces: number;
   validAttempts: number;
   dnfCount: number;
+  eventLeadSeconds: number;
+  eventBestBreaks: number;
 }
 
 export interface PlayerSeasonProfile {
@@ -224,6 +228,8 @@ export interface PlayerSeasonProfile {
   thirdPlaces: number;
   validAttempts: number;
   dnfCount: number;
+  eventLeadSeconds: number;
+  eventBestBreaks: number;
 }
 
 export interface TimeThresholdSummary {

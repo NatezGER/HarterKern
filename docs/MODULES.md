@@ -71,6 +71,8 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Zeitquoten:** Eine zusätzliche spielerbezogene, season-aware Abfrage auf den
   bestehenden qualifizierten offiziellen Zeiten liefert die kumulativen
   Unter-5-/Unter-4-/Unter-3-Anteile; keine globale Abfrage und kein N+1.
+- **Eventführung:** Ein player-scoped RPC liefert All-Time oder saisonal
+  kumulierte offizielle Führungssekunden und strikt gebrochene Eventbestzeiten.
 
 ## 6. Live-Event und Eventverwaltung
 
@@ -105,6 +107,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   `event_podium`, `event_attempt_details`, `event_participant_statistics`,
   `event_badge_unlocks`, `event_photos`, `event_attempt_number_statistics`,
   `player_trophies`; historische `sync_*`-RPCs.
+- **Eventdetail:** Eventfotos werden nicht mehr geladen oder gerendert. Ein
+  gebündelter Lead-Read ergänzt pro permanentem Spieler Führungssekunden und
+  gebrochene Eventbestzeiten.
 - **Tests:** `npm test -- src/services/historicalAttemptRepository.test.ts`.
 - **Direkte Abhängigkeiten:** Statistikroute, Badges/Trophäen, Storage-Fotos.
 - **Nicht enthalten:** Live-Erfassung und Spieler-BINGO.
@@ -134,6 +139,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   für Most Wanted geladenen qualifizierten offiziellen Zeiten des gewählten
   Scopes abgeleitet. Historische Zeiten zählen für Quoten, aber nicht für die
   eventbasierte Versuchnummer.
+- **Eventführung:** Die vorhandene saisonfilterbare Abfrage liefert zusätzlich
+  strikt gebrochene Eventbestzeiten und wird kompakt innerhalb der
+  Ligastatistiken dargestellt.
 
 ## 9. Prestige, Badges, Trophäen und Liga-Momente
 
@@ -153,6 +161,8 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   und hängen nicht von bereits vergebenen Trophäen ab.
   Badge- und Medaillenbilder bleiben quadratisch; Trophäen unterstützen
   zusätzlich natürliche Hochformate und werden proportional dargestellt.
+  Historische Sub-3-, Sub-2- und BINGO-Trophäen besitzen eigene stabile
+  Custom-Asset-Slots.
 - **Badge-Seltenheit:** lädt die bestehende Rarity-View und in einem zweiten,
   gebündelten Request `public_player_badges` für die Empfänger-Disclosure;
   keine Badge-Einzelrequests und keine zusätzliche globale Datenladung.

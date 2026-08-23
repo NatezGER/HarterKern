@@ -25,21 +25,25 @@ export interface BadgeAssetDefinition {
 }
 
 export interface TrophyAssetDefinition {
-  competitionKey: TrophyCompetitionKey;
+  competitionKey: TrophyCompetitionKey | `historical:${string}`;
   competitionName: string;
   year: number;
   tier: TrophyTier;
+  isHistorical?: boolean;
 }
 
 export const TROPHY_ASSET_DEFINITIONS: TrophyAssetDefinition[] =
-  TROPHY_COMPETITIONS.flatMap((competition) => competition.editions.flatMap((edition) =>
+  [...TROPHY_COMPETITIONS.flatMap((competition) => competition.editions.flatMap((edition) =>
     edition.tiers.map((tier) => ({
       competitionKey: competition.key,
       competitionName: competition.name,
       year: edition.year,
       tier,
     })),
-  ));
+  )),
+  { competitionKey: "historical:first-sub-3", competitionName: "Erster Sub 3", year: 0, tier: "gold", isHistorical: true },
+  { competitionKey: "historical:first-sub-2", competitionName: "Erster Sub 2", year: 0, tier: "gold", isHistorical: true },
+  { competitionKey: "historical:first-bingo-card", competitionName: "Erste volle BINGO-Karte", year: 0, tier: "gold", isHistorical: true }];
 
 export function medalAssetId(rank: MedalRank) {
   return `medal:podium:${medalTierByRank[rank]}`;
@@ -51,15 +55,22 @@ export function badgeAssetId(badgeKey: string) {
 
 export function trophyAssetId(trophy: Pick<TrophyAssetDefinition,
   "competitionKey" | "year" | "tier">) {
-  return trophySlotAssetId(trophy.competitionKey, trophy.year, trophy.tier);
+  if (trophy.competitionKey.startsWith("historical:")) {
+    return `trophy:${trophy.competitionKey}`;
+  }
+  return trophySlotAssetId(trophy.competitionKey as TrophyCompetitionKey,
+    trophy.year, trophy.tier);
 }
 
 export function trophyAssetIdForAward(trophy: {
+  key?: string;
   competitionType: "event" | "season" | "historical";
   year: number;
   tier: TrophyTier;
 }) {
-  return trophy.competitionType === "season"
+  return trophy.competitionType === "historical"
+    ? trophy.key ? `trophy:${trophy.key}` : null
+    : trophy.competitionType === "season"
     ? trophySlotAssetId("season", trophy.year, trophy.tier)
     : null;
 }

@@ -109,6 +109,10 @@ function arrangeCore(changes: Partial<Record<string, QueryResult>> = {}) {
       average_hundredths: 350,
       participant_rank: 2,
     }], error: null },
+    event_lead_participant_statistics: { data: [{
+      event_id: event.id, player_id: "player-1", lead_seconds: 600,
+      event_best_breaks: 2,
+    }], error: null },
     ...changes,
   };
   mocks.from.mockImplementation((table: string) => query(results[table]));
@@ -136,6 +140,7 @@ describe("event detail loading", () => {
     expect(detail?.attempts.some(({ isGuest }) => isGuest)).toBe(true);
     expect(detail?.participantStats[0]).toMatchObject({ name: "Gast", isGuest: true });
     expect(mocks.from.mock.calls.map(([table]) => table)).not.toContain("event_badge_unlocks");
+    expect(mocks.from.mock.calls.map(([table]) => table)).not.toContain("event_photos");
   });
 
   it("derives attempt-number statistics from many already loaded attempts", async () => {
@@ -174,6 +179,7 @@ describe("event detail loading", () => {
       trophies: [],
       extras: { loading: false, errors: {} },
     });
+    expect(mocks.from.mock.calls.map(([table]) => table)).not.toContain("event_photos");
   });
 
   it("isolates an optional query timeout instead of failing EventResults core", async () => {

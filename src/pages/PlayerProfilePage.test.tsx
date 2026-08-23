@@ -25,6 +25,8 @@ const profile = vi.hoisted(() => ({
       thirdPlaces: 0,
       validAttempts: 10,
       dnfCount: 2,
+      eventLeadSeconds: 3900,
+      eventBestBreaks: 4,
     },
     loading: false,
     error: "",
@@ -72,6 +74,9 @@ describe("PlayerProfilePage optional failures", () => {
     expect(markup).toContain("Gültige Versuche");
     expect(markup).toContain("2 · 16,7 %");
     expect(markup).toContain("Unter 5 s");
+    expect(markup).toContain("Eventführung");
+    expect(markup).toContain("1 Std. 5 Min.");
+    expect(markup).toContain("Eventbestzeiten gebrochen");
     expect(markup).not.toContain("Gültig / DNF");
     expect(markup).not.toContain("last:col-span-2");
     expect(markup).toContain("Dieser Bereich konnte nicht geladen werden.");
@@ -122,7 +127,7 @@ describe("PlayerProfilePage optional failures", () => {
       secondPlaces: 0,
       thirdPlaces: 0,
       validAttempts: 0,
-      dnfCount: 0,
+    dnfCount: 0, eventLeadSeconds: 0, eventBestBreaks: 0,
     };
     const markup = renderProfile();
     expect(markup).toContain("Saison-PB-Progression");
@@ -147,7 +152,7 @@ describe("PlayerProfilePage optional failures", () => {
       secondPlaces: 0,
       thirdPlaces: 0,
       validAttempts: 5,
-      dnfCount: 1,
+    dnfCount: 1, eventLeadSeconds: 0, eventBestBreaks: 0,
     };
     const markup = renderProfile();
     expect(markup).toContain("Saisonrang #4");

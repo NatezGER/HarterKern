@@ -232,6 +232,7 @@ export interface EventLeadPlayerStatistic {
   totalLeadSeconds: number;
   leadTakeovers: number;
   leadLosses: number;
+  eventBestBreaks: number;
   eventsLed: number;
   longestLeadSeconds: number;
   averageLeadSeconds: number;

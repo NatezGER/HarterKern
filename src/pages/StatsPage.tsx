@@ -33,15 +33,15 @@ export function StatsPage() {
           ))}
         </div>
         <section className="mt-12">
-          <SectionHeading eyebrow="Qualifizierte Events" title="Event-Führungsstatistiken" />
-          <EventLeadStatistics data={data.eventLeadStatistics} />
-        </section>
-        <section className="mt-12">
           <WRProgression collapsibleHistory />
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow="00 bis 99" title="Most Wanted" />
           <OptionalDataState group="most-wanted"><MostWantedMatrix data={data.mostWanted} season={season} /></OptionalDataState>
+        </section>
+        <section className="panel mt-12 p-5 sm:p-8">
+          <SectionHeading eyebrow={isAllTime ? "Ligaweit" : `Ligaweit · Saison ${season}`} title="Durchschnitt nach Versuchsnummer" />
+          <OptionalDataState group="most-wanted"><LeagueAttemptNumberChart data={data.mostWanted} /></OptionalDataState>
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow={isAllTime ? "Gemeinsam erreicht" : "All-Time · Gemeinsam erreicht"} title="Liga-Meilensteine" />
@@ -51,10 +51,7 @@ export function StatsPage() {
           <SectionHeading eyebrow={isAllTime ? "Offizielle Zeiten" : "All-Time · Offizielle Zeiten"} title="Ligastatistiken" />
           <OptionalDataState group="league-time"><LeagueTimeStatistics data={data.leagueTimeStatistics} /></OptionalDataState>
           <div className="mt-3"><OptionalDataState group="most-wanted"><OfficialTimeThresholds data={data.mostWanted} /></OptionalDataState></div>
-        </section>
-        <section className="panel mt-12 p-5 sm:p-8">
-          <SectionHeading eyebrow={isAllTime ? "Ligaweit" : `Ligaweit · Saison ${season}`} title="Durchschnitt nach Versuchsnummer" />
-          <OptionalDataState group="most-wanted"><LeagueAttemptNumberChart data={data.mostWanted} /></OptionalDataState>
+          <div className="mt-3"><EventLeadStatistics data={data.eventLeadStatistics} /></div>
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow={isAllTime ? "Prestige" : "All-Time · Prestige"} title="Badge-Seltenheit" />

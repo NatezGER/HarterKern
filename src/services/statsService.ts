@@ -365,7 +365,7 @@ export async function getEventLeadPlayerStatistics(
   season: SeasonSelection = ALL_TIME_SEASON,
 ): Promise<EventLeadPlayerStatistic[]> {
   const client = getSupabase();
-  let query = client.from("event_lead_player_statistics").select("*");
+  let query = client.from("event_lead_player_statistics_v2").select("*");
   if (season !== ALL_TIME_SEASON) query = query.eq("season_year", season);
   const { data, error } = await query
     .order("total_lead_seconds", { ascending: false })
@@ -394,6 +394,7 @@ export async function getEventLeadPlayerStatistics(
       totalLeadSeconds: nextTotal,
       leadTakeovers: (existing?.leadTakeovers ?? 0) + Number(row.lead_takeovers),
       leadLosses: (existing?.leadLosses ?? 0) + Number(row.lead_losses),
+      eventBestBreaks: (existing?.eventBestBreaks ?? 0) + Number(row.event_best_breaks),
       eventsLed: nextEvents,
       longestLeadSeconds: Math.max(existing?.longestLeadSeconds ?? 0,
         Number(row.longest_lead_seconds)),
