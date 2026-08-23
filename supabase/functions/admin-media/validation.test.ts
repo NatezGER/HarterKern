@@ -46,6 +46,8 @@ describe("admin award validation", () => {
   it("accepts stable existing asset ID shapes", () => {
     expect(requireAwardAssetId("medal:podium:gold")).toBe("medal:podium:gold");
     expect(requireAwardAssetId("badge:first-sub3")).toBe("badge:first-sub3");
+    expect(requireAwardAssetId("trophy:historical:first-sub-3"))
+      .toBe("trophy:historical:first-sub-3");
     for (const competition of ["season", "denmark"]) {
       for (const tier of ["gold", "silver", "bronze"]) {
         const id = `trophy:${competition}:2026:${tier}`;

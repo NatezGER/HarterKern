@@ -59,7 +59,6 @@ export function useEventDetail(eventId: string) {
                 loading: false,
                 errors: {
                   badges: "Badge-Unlocks konnten nicht geladen werden.",
-                  photos: "Eventfotos konnten nicht geladen werden.",
                   trophies: "Trophäen konnten nicht geladen werden.",
                 },
               },

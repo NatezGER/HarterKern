@@ -1,7 +1,6 @@
 import { CalendarDays, CircleX, Star, Target, Timer, Trophy, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EventAttemptList } from "@/components/events/EventAttemptList";
-import { EventPhotoGallery } from "@/components/events/EventPhotoGallery";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
 import { BadgeGallery } from "@/components/common/BadgeGallery";
 import { EventAttemptNumberChart } from "@/components/events/EventAttemptNumberChart";
@@ -17,7 +16,13 @@ const displayTime = (value: number | null) => value == null ? "—" : formatTime
 
 export function EventResults({ detail }: { detail: EventDetail }) {
   const podium = detail.podium.filter(({ rank }) => rank != null && rank <= 3);
-  const eventProgression = buildEventLeadProgression(detail.attempts, detail.closedAt).map((point) => ({ id: point.id, playerId: point.playerId ?? point.guestId ?? undefined, playerName: point.name, avatarUrl: point.avatarUrl, timeHundredths: point.timeHundredths, achievedAt: point.submittedAt, achievedDate: point.submittedAt.slice(0, 10), periodEndAt: point.periodEndAt, eventId: detail.id, sourceLabel: detail.name, improvementHundredths: point.improvementHundredths, durationDays: 0, durationLabel: point.durationLabel, attemptNumber: point.attemptNumber, hasExactTime: true, isCurrent: false }));
+  const validAttempts = detail.attempts.filter((attempt) => !attempt.isDnf
+    && !attempt.isAk && attempt.timeHundredths != null)
+    .sort((left, right) => left.submittedAt.localeCompare(right.submittedAt)
+      || left.id.localeCompare(right.id));
+  const visualStartAt = validAttempts[0]?.submittedAt;
+  const visualEndAt = validAttempts.at(-1)?.submittedAt;
+  const eventProgression = buildEventLeadProgression(detail.attempts, visualEndAt ?? null).map((point) => ({ id: point.id, playerId: point.playerId ?? point.guestId ?? undefined, playerName: point.name, avatarUrl: point.avatarUrl, timeHundredths: point.timeHundredths, achievedAt: point.submittedAt, achievedDate: point.submittedAt.slice(0, 10), periodEndAt: point.periodEndAt, eventId: detail.id, sourceLabel: detail.name, improvementHundredths: point.improvementHundredths, durationDays: 0, durationLabel: point.durationLabel, attemptNumber: point.attemptNumber, hasExactTime: true, isCurrent: false }));
   return (
     <div className="flex flex-col gap-6 sm:gap-8 lg:gap-10">
       <section className="panel relative order-1 overflow-hidden p-5 sm:p-10">
@@ -55,11 +60,11 @@ export function EventResults({ detail }: { detail: EventDetail }) {
 
       {detail.badges.length > 0 && <section className="order-5 lg:order-4"><h2 className="display-title mb-4 text-2xl sm:mb-5 sm:text-3xl">Freigeschaltet</h2><BadgeGallery badges={detail.badges} compact showPlayer /></section>}
       {detail.extras?.errors.badges && <OptionalEventSectionError className="order-5 lg:order-4" message={detail.extras.errors.badges} />}
-      {detail.extras?.loading && <section className="panel order-5 p-4 text-sm text-white/40 lg:order-4">Badges, Fotos und Trophäen werden nachgeladen …</section>}
+      {detail.extras?.loading && <section className="panel order-5 p-4 text-sm text-white/40 lg:order-4">Badges und Trophäen werden nachgeladen …</section>}
 
-      {detail.status === "closed" && <section className="panel order-3 p-4 sm:p-8 lg:order-4"><h2 className="display-title text-2xl sm:text-3xl">Event-Führungsprogression</h2><p className="mt-2 text-xs text-white/40 sm:text-sm">Wer führte zu welchem Zeitpunkt mit welcher Eventbestzeit?</p><div className="mt-4 sm:mt-6"><ProgressionTimeline points={eventProgression} domainStartAt={detail.startedAt} domainEndAt={detail.closedAt ?? undefined} emptyLabel="Dieses Event hat keine gültige Führungszeit." /></div></section>}
+      {detail.status === "closed" && <section className="panel order-4 p-4 sm:p-8"><h2 className="display-title text-2xl sm:text-3xl">Event-Führungsprogression</h2><p className="mt-2 text-xs text-white/40 sm:text-sm">Wer führte zu welchem Zeitpunkt mit welcher Eventbestzeit?</p><div className="mt-4 sm:mt-6"><ProgressionTimeline points={eventProgression} domainStartAt={visualStartAt} domainEndAt={visualEndAt} emptyLabel="Dieses Event hat keine gültige Führungszeit." /></div></section>}
 
-      <section className="order-4 lg:order-5">
+      <section className="order-5">
         <h2 className="display-title mb-4 text-2xl sm:mb-5 sm:text-3xl">Eventstatistiken</h2>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <Metric icon={Users} label="Teilnehmer" value={String(detail.participants)} />
@@ -69,21 +74,20 @@ export function EventResults({ detail }: { detail: EventDetail }) {
           <Metric icon={Target} label="Durchschnitt" value={displayTime(detail.averageHundredths)} className="col-span-2 lg:col-span-1" />
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {detail.participantStats.map((participant) => <article key={participant.playerId ?? participant.guestId} className="panel flex items-center gap-4 p-4"><ProfileAvatar id={participant.playerId ?? participant.guestId ?? participant.name} name={participant.name} url={participant.avatarUrl} /><div className="min-w-0 flex-1"><p className="truncate font-bold">{participant.name}</p><p className="text-xs text-white/35">Ø {displayTime(participant.averageHundredths)} · {participant.dnfCount} DNF</p></div><span className="font-display text-xl font-black">{displayTime(participant.bestHundredths)}</span></article>)}
+          {detail.participantStats.map((participant) => <article key={participant.playerId ?? participant.guestId} className="panel flex items-center gap-4 p-4"><ProfileAvatar id={participant.playerId ?? participant.guestId ?? participant.name} name={participant.name} url={participant.avatarUrl} /><div className="min-w-0 flex-1"><p className="truncate font-bold">{participant.name}</p><p className="text-xs text-white/35">Ø {displayTime(participant.averageHundredths)} · {participant.dnfCount} DNF</p><p className="mt-1 text-[10px] text-gold-200/70">{formatLeadDuration(participant.leadSeconds)} Führung · {participant.eventBestBreaks}× Bestzeit gebrochen</p></div><span className="font-display text-xl font-black">{displayTime(participant.bestHundredths)}</span></article>)}
         </div>
       </section>
 
-      <div className="order-6"><EventAttemptList attempts={detail.attempts} /></div>
-      <section className="panel order-7 p-5 sm:p-8"><h2 className="display-title text-2xl sm:text-3xl">Nach Versuchsnummer</h2><p className="mt-2 text-sm text-white/40">Durchschnitt aller gültigen regulären Spieler- und Gastzeiten dieses Events.</p><div className="mt-5 sm:mt-6"><EventAttemptNumberChart points={detail.attemptNumbers} /></div></section>
-      <div className="order-8">
-        {detail.extras?.loading
-          ? null
-          : detail.extras?.errors.photos
-          ? <OptionalEventSectionError message={detail.extras.errors.photos} />
-          : <EventPhotoGallery eventId={detail.id} photos={detail.photos} />}
-      </div>
+      <section className="panel order-6 p-5 sm:p-8"><h2 className="display-title text-2xl sm:text-3xl">Nach Versuchsnummer</h2><p className="mt-2 text-sm text-white/40">Durchschnitt aller gültigen regulären Spieler- und Gastzeiten dieses Events.</p><div className="mt-5 sm:mt-6"><EventAttemptNumberChart points={detail.attemptNumbers} /></div></section>
+      <div className="order-7"><EventAttemptList attempts={detail.attempts} /></div>
     </div>
   );
+}
+
+function formatLeadDuration(seconds: number) {
+  const minutes = Math.round(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  return hours ? `${hours} Std.${minutes % 60 ? ` ${minutes % 60} Min.` : ""}` : `${minutes} Min.`;
 }
 
 function Metric({ icon: Icon, label, value, className }: { icon: typeof Users; label: string; value: string; className?: string }) {

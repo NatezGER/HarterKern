@@ -21,7 +21,7 @@ describe("award asset identity and fallback", () => {
     })).toBe("trophy:season:2026:gold");
   });
 
-  it("defines all six trophy slots without awarded trophy data", () => {
+  it("defines regular and historical trophy slots without awarded trophy data", () => {
     expect(TROPHY_ASSET_DEFINITIONS.map(trophyAssetId)).toEqual([
       "trophy:season:2026:gold",
       "trophy:season:2026:silver",
@@ -29,7 +29,16 @@ describe("award asset identity and fallback", () => {
       "trophy:denmark:2026:gold",
       "trophy:denmark:2026:silver",
       "trophy:denmark:2026:bronze",
+      "trophy:historical:first-sub-3",
+      "trophy:historical:first-sub-2",
+      "trophy:historical:first-bingo-card",
     ]);
+  });
+
+  it("maps historical awards to their custom asset slots", () => {
+    expect(trophyAssetIdForAward({ key: "historical:first-sub-3",
+      competitionType: "historical", year: 2024, tier: "gold" }))
+      .toBe("trophy:historical:first-sub-3");
   });
 
   it("maps season awards to their slot and keeps unsupported event trophies generic", () => {

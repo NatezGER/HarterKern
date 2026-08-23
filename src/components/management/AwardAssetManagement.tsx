@@ -63,6 +63,7 @@ export function AwardAssetManagement() {
     item.competitionKey === trophyCompetition?.key
     && item.year === selectedTrophyYear);
   const trophy = trophyTiers.find((item) => item.tier === trophyTier) ?? trophyTiers[0];
+  const isHistoricalTrophy = Boolean(trophyCompetition?.isHistorical);
   const assetId = type === "medal" ? medalAssetId(rank)
     : type === "badge" && badge ? badgeAssetId(badge.badgeKey)
       : type === "trophy" && trophy ? trophyAssetId(trophy) : "";
@@ -153,12 +154,12 @@ export function AwardAssetManagement() {
           <select value={trophyCompetition?.key ?? ""} onChange={(event) => { setTrophyCompetitionKey(event.target.value); setTrophyYear(0); }} className={selectClass} aria-label="Trophäen-Wettbewerb">
             {trophyCompetitions.map((item) => <option key={item.key} value={item.key}>{item.competitionName}</option>)}
           </select>
-          <select value={selectedTrophyYear ?? ""} onChange={(event) => setTrophyYear(Number(event.target.value))} className={selectClass} aria-label="Trophäen-Edition">
+          {!isHistoricalTrophy && <select value={selectedTrophyYear ?? ""} onChange={(event) => setTrophyYear(Number(event.target.value))} className={selectClass} aria-label="Trophäen-Edition">
             {trophyYears.map((year) => <option key={year} value={year}>{year}</option>)}
-          </select>
-          <select value={trophy?.tier ?? ""} onChange={(event) => setTrophyTier(event.target.value as TrophyTier)} className={selectClass} aria-label="Trophäen-Platzierung">
+          </select>}
+          {!isHistoricalTrophy && <select value={trophy?.tier ?? ""} onChange={(event) => setTrophyTier(event.target.value as TrophyTier)} className={selectClass} aria-label="Trophäen-Platzierung">
             {trophyTiers.map((item) => <option key={item.tier} value={item.tier}>{item.tier}</option>)}
-          </select>
+          </select>}
         </>}
       </div>
 

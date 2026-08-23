@@ -46,6 +46,7 @@ export function PlayerProfilePage() {
     personalBestHundredths: null, rank: null, averageHundredths: null,
     eventParticipations: 0, wins: 0, secondPlaces: 0, thirdPlaces: 0,
     validAttempts: 0, dnfCount: 0,
+    eventLeadSeconds: 0, eventBestBreaks: 0,
   };
   const activeStats = isAllTime ? player : seasonStats;
   const hasSeasonTime = isAllTime || seasonStats.personalBestHundredths != null;
@@ -56,6 +57,8 @@ export function PlayerProfilePage() {
     { label: "Gültige Versuche", value: String(activeStats.validAttempts), icon: Timer },
     { label: "DNF", value: `${activeStats.dnfCount} · ${activeDnfPercent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`, icon: CircleX },
     { label: isAllTime ? "Getrunken" : "Saison getrunken", value: !isAllTime && !hasSeasonTime ? "—" : formatDrinkVolume(activeStats.validAttempts, DRINK_MILLILITERS_PER_VALID_ATTEMPT), icon: Droplets },
+    { label: "Eventführung", value: formatLeadDuration(activeStats.eventLeadSeconds), icon: Crown },
+    { label: "Eventbestzeiten gebrochen", value: String(activeStats.eventBestBreaks), icon: Zap },
   ];
   return (
     <div className="space-y-7 sm:space-y-10">
@@ -179,4 +182,10 @@ function ProfileOptionalState<T>({
 
 function HistoryMetric({ label, value }: { label: string; value: string }) {
   return <p><span className="block text-[9px] font-bold uppercase tracking-[0.14em] text-white/30">{label}</span><span className="font-display text-lg font-black">{value}</span></p>;
+}
+
+function formatLeadDuration(seconds: number) {
+  const minutes = Math.round(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  return hours ? `${hours} Std.${minutes % 60 ? ` ${minutes % 60} Min.` : ""}` : `${minutes} Min.`;
 }

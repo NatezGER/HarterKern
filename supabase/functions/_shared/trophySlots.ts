@@ -14,6 +14,12 @@ export const TROPHY_COMPETITIONS = [
 export type TrophyCompetitionKey = (typeof TROPHY_COMPETITIONS)[number]["key"];
 export type TrophySlotTier = "gold" | "silver" | "bronze";
 
+export const HISTORICAL_TROPHY_ASSET_IDS = [
+  "trophy:historical:first-sub-3",
+  "trophy:historical:first-sub-2",
+  "trophy:historical:first-bingo-card",
+] as const;
+
 export function trophySlotAssetId(
   competitionKey: TrophyCompetitionKey,
   year: number,
@@ -29,5 +35,6 @@ export const TROPHY_SLOT_ASSET_IDS = TROPHY_COMPETITIONS.flatMap((competition) =
 );
 
 export function isTrophySlotAssetId(value: string) {
-  return (TROPHY_SLOT_ASSET_IDS as readonly string[]).includes(value);
+  return (TROPHY_SLOT_ASSET_IDS as readonly string[]).includes(value)
+    || (HISTORICAL_TROPHY_ASSET_IDS as readonly string[]).includes(value);
 }

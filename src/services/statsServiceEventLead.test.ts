@@ -35,16 +35,18 @@ describe("event lead player statistics", () => {
       longest_lead_seconds: 2400, lead_segment_count: 4,
       qualified_event_duration_seconds: 10800, lead_share_percent: 50,
       average_lead_seconds: 1350,
+      event_best_breaks: 3,
     }]);
     mocks.from.mockReturnValue(builder);
 
     const result = await getEventLeadPlayerStatistics(2026);
 
-    expect(mocks.from).toHaveBeenCalledWith("event_lead_player_statistics");
+    expect(mocks.from).toHaveBeenCalledWith("event_lead_player_statistics_v2");
     expect(builder.eq).toHaveBeenCalledWith("season_year", 2026);
     expect(result[0]).toMatchObject({
       playerId: "player-1", totalLeadSeconds: 5400,
       leadTakeovers: 2, leadLosses: 1,
+      eventBestBreaks: 3,
     });
   });
 });

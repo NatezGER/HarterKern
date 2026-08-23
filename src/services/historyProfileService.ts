@@ -68,6 +68,8 @@ function mapParticipant(row: {
     bestHundredths: row.best_time_hundredths,
     averageHundredths: row.average_hundredths ?? null,
     rank: row.rank ?? row.participant_rank ?? null,
+    leadSeconds: 0,
+    eventBestBreaks: 0,
   };
 }
 
@@ -196,15 +198,17 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
   if (eventResult.error) throw eventResult.error;
   const event = eventResult.data;
   if (!event) return null;
-  const [statsResult, podiumResult, medalEventResult, attemptsResult, participantResult] = await Promise.all([
+  const [statsResult, podiumResult, medalEventResult, attemptsResult, participantResult,
+    leadResult] = await Promise.all([
     client.from("event_statistics").select("*").eq("event_id", eventId).maybeSingle(),
     client.from("event_podium").select("*").eq("event_id", eventId).order("rank"),
     client.rpc("get_medal_qualified_events", { p_event_ids: [eventId] }).maybeSingle(),
     client.from("event_attempt_details").select("*").eq("event_id", eventId).order("submitted_at"),
     client.from("event_participant_statistics").select("*").eq("event_id", eventId),
+    client.from("event_lead_participant_statistics").select("*").eq("event_id", eventId),
   ]);
   for (const result of [statsResult, podiumResult, medalEventResult, attemptsResult,
-    participantResult]) {
+    participantResult, leadResult]) {
     if (result.error) throw result.error;
   }
   const podiumRows = medalEventResult.data ? (podiumResult.data ?? []) : [];
@@ -234,7 +238,13 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
     times.push(attempt.timeHundredths);
     attemptNumbers.set(attempt.attemptNumber, times);
   }
-  const participantStats = participantRows.map(mapParticipant);
+  const leadByPlayer = new Map((leadResult.data ?? []).map((row) => [row.player_id, row]));
+  const participantStats = participantRows.map((row) => {
+    const participant = mapParticipant(row);
+    const lead = participant.playerId ? leadByPlayer.get(participant.playerId) : null;
+    return { ...participant, leadSeconds: Number(lead?.lead_seconds ?? 0),
+      eventBestBreaks: Number(lead?.event_best_breaks ?? 0) };
+  });
   const stats = statsResult.data;
   return {
     id: event.id,
@@ -283,13 +293,11 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
 
 export async function getEventDetailExtras(eventId: string) {
   const client = getSupabase();
-  const [badgeResult, photoResult, trophyResult] = await Promise.allSettled([
+  const [badgeResult, trophyResult] = await Promise.allSettled([
     client.from("event_badge_unlocks").select("*").eq("source_event_id", eventId)
       .order("tier_rank", { ascending: false })
       .order("is_special_event_badge", { ascending: false })
       .order("awarded_at"),
-    client.from("event_photos").select("*").eq("event_id", eventId)
-      .order("sort_order").order("created_at"),
     client.from("player_trophies").select("*").eq("competition_id", eventId)
       .order("placement"),
   ]);
@@ -304,39 +312,21 @@ export async function getEventDetailExtras(eventId: string) {
   if (trophyResult.status === "rejected" || trophyResult.value.error) {
     errors.trophies = "Trophäen konnten nicht geladen werden.";
   }
-  let photos: EventDetail["photos"] = [];
-  if (photoResult.status === "fulfilled" && !photoResult.value.error) {
-    const rows = photoResult.value.data ?? [];
-    const signed = rows.length
-      ? await client.storage.from("event-photos")
-        .createSignedUrls(rows.map(({ storage_path }) => storage_path), 3600)
-      : { data: [], error: null };
-    if (signed.error) {
-      errors.photos = "Eventfotos konnten nicht geladen werden.";
-    } else {
-      const urls = new Map((signed.data ?? []).map((item) => [item.path, item.signedUrl]));
-      photos = rows.map((row) => ({
-        id: row.id,
-        path: row.storage_path,
-        url: urls.get(row.storage_path) ?? "",
-        caption: row.caption,
-      })).filter(({ url }) => Boolean(url));
-    }
-  } else {
-    errors.photos = "Eventfotos konnten nicht geladen werden.";
-  }
-  return { badges, photos, trophies, extras: { loading: false, errors } };
+  return { badges, photos: [], trophies, extras: { loading: false, errors } };
 }
 
 export async function getPlayerProfileCore(playerId: string): Promise<PlayerProfileCore | null> {
   const client = getSupabase();
-  const [playerResult, statsResult, rankResult] = await Promise.all([
+  const [playerResult, statsResult, rankResult, leadResult] = await Promise.all([
     client.from("players").select("*")
       .eq("id", playerId).eq("is_archived", false).maybeSingle(),
     client.from("player_statistics").select("*").eq("player_id", playerId).maybeSingle(),
     client.from("public_hall_of_fame").select("rank").eq("player_id", playerId).maybeSingle(),
+    client.rpc("get_player_event_lead_statistics", {
+      p_player_id: playerId, p_season_year: null,
+    }).maybeSingle(),
   ]);
-  for (const result of [playerResult, statsResult, rankResult]) {
+  for (const result of [playerResult, statsResult, rankResult, leadResult]) {
     if (result.error) throw result.error;
   }
   if (!playerResult.data) return null;
@@ -357,15 +347,23 @@ export async function getPlayerProfileCore(playerId: string): Promise<PlayerProf
     thirdPlaces: Number(stats?.third_places ?? 0),
     validAttempts: Number(stats?.valid_attempts ?? 0),
     dnfCount: Number(stats?.dnf_count ?? 0),
+    eventLeadSeconds: Number(leadResult.data?.total_lead_seconds ?? 0),
+    eventBestBreaks: Number(leadResult.data?.event_best_breaks ?? 0),
   };
 }
 
 export async function getPlayerSeasonProfile(playerId: string, seasonYear: number) {
-  const result = await getSupabase().rpc("get_player_season_profile", {
-    p_player_id: playerId,
-    p_season_year: seasonYear,
-  }).maybeSingle();
+  const client = getSupabase();
+  const [result, leadResult] = await Promise.all([
+    client.rpc("get_player_season_profile", {
+      p_player_id: playerId, p_season_year: seasonYear,
+    }).maybeSingle(),
+    client.rpc("get_player_event_lead_statistics", {
+      p_player_id: playerId, p_season_year: seasonYear,
+    }).maybeSingle(),
+  ]);
   if (result.error) throw result.error;
+  if (leadResult.error) throw leadResult.error;
   const row = result.data;
   if (!row) return null;
   return {
@@ -378,6 +376,8 @@ export async function getPlayerSeasonProfile(playerId: string, seasonYear: numbe
     thirdPlaces: Number(row.third_places),
     validAttempts: Number(row.valid_attempts),
     dnfCount: Number(row.dnf_count),
+    eventLeadSeconds: Number(leadResult.data?.total_lead_seconds ?? 0),
+    eventBestBreaks: Number(leadResult.data?.event_best_breaks ?? 0),
   };
 }
 

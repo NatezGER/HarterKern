@@ -25,6 +25,11 @@ import {
 describe("player profile core repository", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.rpc.mockReturnValue({
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: { total_lead_seconds: 3900, event_best_breaks: 4 }, error: null,
+      }),
+    });
     const rows: Record<string, unknown> = {
       players: {
         id: "player-1",
@@ -63,12 +68,17 @@ describe("player profile core repository", () => {
       name: "Paul",
       rank: 2,
       personalBestHundredths: 250,
+      eventLeadSeconds: 3900,
+      eventBestBreaks: 4,
     });
     expect(mocks.from.mock.calls.map(([table]) => table)).toEqual([
       "players",
       "player_statistics",
       "public_hall_of_fame",
     ]);
+    expect(mocks.rpc).toHaveBeenCalledWith("get_player_event_lead_statistics", {
+      p_player_id: "player-1", p_season_year: null,
+    });
   });
 
   it("loads visible badges through the player-scoped RPC", async () => {
@@ -202,8 +212,12 @@ describe("player profile core repository", () => {
     mocks.rpc.mockReturnValueOnce({ maybeSingle });
     await expect(getPlayerSeasonProfile("player-1", 2026)).resolves.toMatchObject({
       rank: null, personalBestHundredths: null, validAttempts: 0, dnfCount: 0,
+      eventLeadSeconds: 3900, eventBestBreaks: 4,
     });
     expect(mocks.rpc).toHaveBeenCalledWith("get_player_season_profile", {
+      p_player_id: "player-1", p_season_year: 2026,
+    });
+    expect(mocks.rpc).toHaveBeenCalledWith("get_player_event_lead_statistics", {
       p_player_id: "player-1", p_season_year: 2026,
     });
   });

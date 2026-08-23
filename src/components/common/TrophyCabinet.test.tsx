@@ -8,7 +8,7 @@ vi.mock("react-router-dom", () => ({
   Link: ({ to, children, className }: { to: string; children: ReactNode; className?: string }) => <a href={to} className={className}>{children}</a>,
 }));
 vi.mock("@/hooks/useAwardAssets", () => ({
-  useAwardAssetUrl: () => "https://example.test/trophy.webp",
+  useAwardAssetUrl: (assetId: string) => `https://example.test/${assetId}.webp`,
 }));
 
 const trophy = (placement: 1 | 2 | 3): TrophyAward => ({
@@ -78,6 +78,7 @@ describe("TrophyCabinet", () => {
     const markup = renderToStaticMarkup(<TrophyCabinet trophies={[historical]} />);
     expect(markup).toContain("Erster Sub 3");
     expect(markup).toContain("Historische Trophäe");
+    expect(markup).toContain("trophy:historical:first-sub-3.webp");
     expect(markup).not.toContain("1. Platz");
     expect(markup).not.toContain("href=");
   });
