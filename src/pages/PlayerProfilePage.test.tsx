@@ -58,6 +58,9 @@ vi.mock("@/hooks/useHistoryProfiles", () => ({
 vi.mock("@/hooks/useSeason", () => ({
   useSeason: () => selectedSeason,
 }));
+vi.mock("@/components/compare/ProfileCompareAction", () => ({
+  ProfileCompareAction: () => <span>Vergleichen mit …</span>,
+}));
 
 import { PlayerProfilePage } from "@/pages/PlayerProfilePage";
 

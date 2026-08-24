@@ -83,10 +83,17 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
 export function getRouteDataPlan(pathname: string): RouteDataPlan {
   if (pathname === "/leaderboard") return { required: ["leaderboard"], optional: [] };
   if (pathname === "/players") return { required: ["players"], optional: [] };
+  if (pathname === "/compare") {
+    return {
+      required: ["players"],
+      optional: ["profile-core", "profile-season", "profile-performance"],
+    };
+  }
   if (pathname.startsWith("/player/")) {
     return {
       required: ["profile-core"],
       optional: [
+        "players",
         "profile-season",
         "profile-trophies",
         "profile-badges",

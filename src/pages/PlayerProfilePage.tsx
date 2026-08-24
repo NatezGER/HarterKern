@@ -27,6 +27,7 @@ import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { useSeason } from "@/hooks/useSeason";
 import { getEventSeason } from "@/lib/season";
 import { dnfPercentage } from "@/lib/officialTimePerformance";
+import { ProfileCompareAction } from "@/components/compare/ProfileCompareAction";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -73,6 +74,7 @@ export function PlayerProfilePage() {
               <h1 className="display-title mt-2 break-words text-5xl sm:text-7xl">{player.name}</h1>
               <div className="mt-3"><SeasonContextBadge /></div>
               {player.isAk && <p className="mt-2 text-sm text-white/40">Außer Konkurrenz</p>}
+              {!player.isAk && <div className="mt-4"><ProfileCompareAction playerId={player.id} /></div>}
             </div>
           </div>
           <div className="w-full text-center sm:w-auto sm:text-left md:text-right"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">{isAllTime ? "Personal Best" : `Saison-PB ${selectedSeason}`}</p><p className="context-gradient-text font-display text-5xl font-black sm:text-6xl">{displayTime(activeStats.personalBestHundredths)}</p></div>

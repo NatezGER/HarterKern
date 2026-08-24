@@ -138,6 +138,13 @@ body {
   background-image: linear-gradient(to top, var(--context-hero-beam), transparent);
 }
 
+.compare-winner-pill {
+  border: 1px solid var(--context-control-border);
+  background: var(--context-accent-soft);
+  color: var(--context-accent-text);
+  box-shadow: 0 0 14px var(--context-glow);
+}
+
 ::selection {
   background: rgba(231, 186, 75, 0.28);
   color: white;

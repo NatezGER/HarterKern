@@ -74,6 +74,27 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Eventführung:** Ein player-scoped RPC liefert All-Time oder saisonal
   kumulierte offizielle Führungssekunden und strikt gebrochene Eventbestzeiten.
 
+## 5a. Spielervergleich
+
+- **Zweck:** Direkter, season-aware 1-gegen-1-Vergleich regulärer Spieler.
+- **Einstieg:** `src/pages/PlayerComparePage.tsx`, Route `/compare` mit
+  `playerA`- und `playerB`-Queryparametern; zusätzlich dezente Aktion im
+  Spielerprofil.
+- **Hooks/Services:** `usePlayerCompare`, `playerCompareService`, vorhandene
+  gecachte Sections aus `playerProfileService`, Players-Datengruppe.
+- **Views/RPCs:** Pro ausgewähltem Spieler nur vorhandener Profil-Core,
+  optionales Saisonprofil und `qualified_official_times` beziehungsweise
+  `season_qualified_official_times`; keine Awards oder Historienmodule.
+- **Route Load:** Die Auswahlliste benötigt gebündelt 2 Requests. Je Spieler
+  folgen All-Time 4 Core- und 1 Speed-Request, saisonal zusätzlich 2 vorhandene
+  Saison-Core-Requests. Identische gleichzeitige Profilreads werden dedupliziert.
+- **Tests:** `npm test -- src/lib/playerCompare.test.ts
+  src/services/playerCompareService.test.ts src/pages/PlayerComparePage.test.tsx`.
+- **Direkte Abhängigkeiten:** Spieler-Stammdaten, Spielerprofil-Core,
+  Saisonkontext und Zeitquoten.
+- **Nicht enthalten:** H2H, Progressionsvergleich, Attempt Numbers, Awards,
+  Gesamtsieger und Drei-Spieler-Vergleich.
+
 ## 6. Live-Event und Eventverwaltung
 
 - **Zweck:** Eventstart, Teilnehmer, Zeit/DNF-Erfassung, Eventabschluss sowie

@@ -63,6 +63,7 @@ describe("route data groups", () => {
     expect(getRouteDataPlan("/player/player-1")).toEqual({
       required: ["profile-core"],
       optional: [
+        "players",
         "profile-season",
         "profile-trophies",
         "profile-badges",
@@ -76,6 +77,14 @@ describe("route data groups", () => {
     });
     expect(dataGroupRequestCounts["profile-core"]).toBe(0);
     expect(dataGroupRequestCounts["profile-season"]).toBe(0);
+  });
+
+  it("loads only the compare roster globally and keeps player reads scoped", () => {
+    expect(getRouteDataPlan("/compare")).toEqual({
+      required: ["players"],
+      optional: ["profile-core", "profile-season", "profile-performance"],
+    });
+    expect(dataGroupRequestCounts.players).toBe(2);
   });
 
   it("loads the event archive as its own season-aware route group", async () => {
