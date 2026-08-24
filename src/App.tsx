@@ -11,6 +11,7 @@ import { LiveEventPage } from "@/pages/LiveEventPage";
 import { EventResultsPage } from "@/pages/EventResultsPage";
 import { EventsPage } from "@/pages/EventsPage";
 import { HistoricalAttemptsPage } from "@/pages/HistoricalAttemptsPage";
+import { PlayerComparePage } from "@/pages/PlayerComparePage";
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +21,7 @@ export const router = createBrowserRouter([
       { path: "leaderboard", element: <LeaderboardPage /> },
       { path: "players", element: <PlayersPage /> },
       { path: "player/:id", element: <PlayerProfilePage /> },
+      { path: "compare", element: <PlayerComparePage /> },
       { path: "stats", element: <StatsPage /> },
       { path: "settings", element: <SettingsPage /> },
       { path: "events/live", element: <LiveEventPage /> },
