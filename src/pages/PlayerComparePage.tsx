@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CompareMetricRow } from "@/components/compare/CompareMetricRow";
 import { ComparePlayerHeader } from "@/components/compare/ComparePlayerHeader";
+import { DeepCompareSections } from "@/components/compare/DeepCompareSections";
 import { StickyCompareIdentity } from "@/components/compare/StickyCompareIdentity";
 import { HeadToHeadSection } from "@/components/compare/HeadToHeadSection";
 import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
@@ -10,10 +11,12 @@ import { SectionHeading } from "@/components/common/SectionHeading";
 import { getRosterPlayers } from "@/data/selectors";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { usePlayerCompare } from "@/hooks/usePlayerCompare";
+import { usePlayerDeepCompare } from "@/hooks/usePlayerDeepCompare";
 import { useSeason } from "@/hooks/useSeason";
 import { DRINK_MILLILITERS_PER_VALID_ATTEMPT } from "@/constants/game";
 import { formatDrinkVolume } from "@/lib/media";
 import { dnfPercentage } from "@/lib/officialTimePerformance";
+import { calculateFastestAverage, calculateMedian, calculateThresholdShare } from "@/lib/playerCompareDeep";
 import {
   getComparePlayerOptions,
   replaceComparePlayer,
@@ -45,8 +48,14 @@ export function PlayerComparePage() {
     ? players.find(({ id }) => id === rawPlayerBId) ?? null
     : null;
   const { core, speed, headToHead } = usePlayerCompare(playerA?.id ?? null, playerB?.id ?? null);
+  const deep = usePlayerDeepCompare(
+    playerA && playerB ? playerA.id : null,
+    playerA && playerB ? playerB.id : null,
+  );
   const detailA = core.data?.playerA ?? null;
   const detailB = core.data?.playerB ?? null;
+  const timesA = speed.data?.playerA?.timeHundredths ?? [];
+  const timesB = speed.data?.playerB?.timeHundredths ?? [];
   const hasInvalidSelection = Boolean(
     (rawPlayerAId && !playerA) ||
     (rawPlayerBId && !playerB) ||
@@ -73,8 +82,10 @@ export function PlayerComparePage() {
     detailA?.statistics ?? null,
     detailB?.statistics ?? null,
     isAllTime,
+    calculateMedian(timesA),
+    calculateMedian(timesB),
   );
-  const speedMetrics = [5, 4, 3].map((seconds) => {
+  const speedMetrics: Metric[] = [5, 4, 3].map((seconds) => {
     const left = speed.data?.playerA?.thresholds.find((item) => item.seconds === seconds);
     const right = speed.data?.playerB?.thresholds.find((item) => item.seconds === seconds);
     return {
@@ -84,6 +95,14 @@ export function PlayerComparePage() {
       right: percentMetric(right?.total ? right.percent : null),
     };
   });
+  speedMetrics.push(
+    metric("Unter 2,5 s", calculateThresholdShare(timesA, 250), calculateThresholdShare(timesB, 250), "higher", percentMetric),
+    metric("Unter 2,0 s", calculateThresholdShare(timesA, 200), calculateThresholdShare(timesB, 200), "higher", percentMetric),
+    metric("Ø der 3 schnellsten", calculateFastestAverage(timesA, 3), calculateFastestAverage(timesB, 3), "lower", timeMetric),
+    metric("Ø der 5 schnellsten", calculateFastestAverage(timesA, 5), calculateFastestAverage(timesB, 5), "lower", timeMetric),
+    metric("PB-Abstand zum Ø", pbGap(timesA, detailA?.statistics?.averageHundredths ?? null), pbGap(timesB, detailB?.statistics?.averageHundredths ?? null), "lower", timeMetric),
+    metric("PB-Abstand zum Median", pbGap(timesA, calculateMedian(timesA)), pbGap(timesB, calculateMedian(timesB)), "lower", timeMetric),
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 sm:space-y-8">
@@ -153,7 +172,7 @@ export function PlayerComparePage() {
 
       {!core.loading && !core.error && playerA && playerB && (
         <section className="panel overflow-hidden">
-          <div className="p-5 pb-3 sm:p-7 sm:pb-4"><SectionHeading eyebrow="Tempoverteilung" title="Speed" /></div>
+          <div className="p-5 pb-3 sm:p-7 sm:pb-4"><SectionHeading eyebrow="Anteil aller qualifizierten gültigen Zeiten" title="Speed & Peak Performance" /></div>
           {speed.loading ? (
             <div className="grid min-h-28 place-items-center"><LoaderCircle className="context-accent-text size-5 animate-spin" aria-label="Speed-Werte werden geladen" /></div>
           ) : speed.error ? (
@@ -173,6 +192,19 @@ export function PlayerComparePage() {
           error={headToHead.error}
         />
       )}
+
+      {playerA && playerB && (
+        <DeepCompareSections
+          playerA={playerA}
+          playerB={playerB}
+          data={deep.data}
+          loading={deep.loading}
+          error={deep.error}
+          statsA={detailA?.statistics ?? null}
+          statsB={detailB?.statistics ?? null}
+          isAllTime={isAllTime}
+        />
+      )}
     </div>
   );
 }
@@ -181,6 +213,8 @@ function createMainMetrics(
   left: ActiveStatistics,
   right: ActiveStatistics,
   isAllTime: boolean,
+  leftMedian: number | null,
+  rightMedian: number | null,
 ): Metric[] {
   const seasonHasLeftTime = isAllTime || left?.personalBestHundredths != null;
   const seasonHasRightTime = isAllTime || right?.personalBestHundredths != null;
@@ -188,6 +222,7 @@ function createMainMetrics(
     metric("Rang", left?.rank ?? null, right?.rank ?? null, "lower", integerMetric),
     metric(isAllTime ? "Personal Best" : "Saison-PB", left?.personalBestHundredths ?? null, right?.personalBestHundredths ?? null, "lower", timeMetric),
     metric(isAllTime ? "Durchschnitt" : "Saison-Durchschnitt", left?.averageHundredths ?? null, right?.averageHundredths ?? null, "lower", timeMetric),
+    metric(isAllTime ? "Median" : "Saison-Median", leftMedian, rightMedian, "lower", timeMetric),
     metric("Getrunken", seasonHasLeftTime ? left?.validAttempts ?? null : null, seasonHasRightTime ? right?.validAttempts ?? null : null, "higher", drinkMetric),
     metric("Eventteilnahmen", left?.eventParticipations ?? null, right?.eventParticipations ?? null, "higher", integerMetric),
     metric("Siege", left?.wins ?? null, right?.wins ?? null, "higher", integerMetric),
@@ -235,4 +270,9 @@ function podiums(stats: ActiveStatistics) {
 function dnfRate(stats: ActiveStatistics) {
   if (!stats || stats.validAttempts + stats.dnfCount === 0) return null;
   return dnfPercentage(stats.validAttempts, stats.dnfCount);
+}
+
+function pbGap(times: number[], comparison: number | null) {
+  if (times.length === 0 || comparison == null) return null;
+  return comparison - Math.min(...times);
 }

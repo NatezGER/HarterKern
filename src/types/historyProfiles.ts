@@ -270,6 +270,7 @@ export interface TimeThresholdSummary {
 
 export interface PlayerTimePerformance {
   thresholds: TimeThresholdSummary[];
+  timeHundredths: number[];
 }
 
 export interface PlayerProfilePrestige {

@@ -81,27 +81,43 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Einstieg:** `src/pages/PlayerComparePage.tsx`, Route `/compare` mit
   `playerA`- und `playerB`-Queryparametern; zusätzlich dezente Aktion im
   Spielerprofil.
-- **Hooks/Services:** `usePlayerCompare`, `playerCompareService`, vorhandene
-  gecachte Sections aus `playerProfileService`, Players-Datengruppe.
+- **Hooks/Services:** `usePlayerCompare`, `playerCompareService` sowie der davon
+  unabhängige Deep-Block `usePlayerDeepCompare` / `playerDeepCompareService`;
+  vorhandene gecachte Sections aus `playerProfileService`, Players-Datengruppe.
 - **Views/RPCs:** Pro ausgewähltem Spieler nur vorhandener Profil-Core,
   optionales Saisonprofil und `qualified_official_times` beziehungsweise
   `season_qualified_official_times`; für H2H zweimal `player_event_history`
   sowie ein gebündelter `events`-Status-Read für die gemeinsamen Event-IDs.
+- **Deep-Compare-Daten:** Genau ein chronologischer, player-scoped Read auf
+  `event_attempt_details` je Spieler speist Serien, Event-Dominanz,
+  Attempt-Number-Auswertung und Stat Madness. Eventdaten, qualifizierte Zeiten,
+  Progression, sichtbare Badges und etablierte Prestige-Werte kommen aus den
+  vorhandenen gecachten Profil-Sections. Saison-Deep-Stats filtern Attempts über
+  das Eventdatum; Badge- und Prestige-Werte sind im Saisonmodus sichtbar als
+  Karriere / All-Time markiert.
 - **Route Load:** Die Auswahlliste benötigt gebündelt 2 Requests. Je Spieler
   folgen All-Time 4 Core- und 1 Speed-Request, saisonal zusätzlich 2 vorhandene
   Saison-Core-Requests. H2H ergänzt 2 gecachte player-scoped History-Reads und
   1 gebündelten Closed-Event-Read; All-Time damit maximal 15, saisonal 19
-  Route-Requests. Identische gleichzeitige Profilreads werden dedupliziert.
+  Route-Requests. P11C ergänzt 2 Attempt-Reads, 4 Progression-Reads, 2 Badge-RPCs
+  und 2 Prestige-RPCs. Events und Performance werden mit P11A/P11B geteilt und
+  durch den In-Flight-Cache dedupliziert. Damit liegen die Maxima bei 25
+  (All-Time) beziehungsweise 29 (Saison), ohne Query pro Statistik oder N+1.
 - **Tests:** `npm test -- src/lib/playerCompare.test.ts
-  src/services/playerCompareService.test.ts src/pages/PlayerComparePage.test.tsx
-  src/services/historyProfileService.test.ts`.
+  src/lib/playerCompareDeep.test.ts src/services/playerCompareService.test.ts
+  src/services/playerDeepCompareService.test.ts src/pages/PlayerComparePage.test.tsx
+  src/services/historyProfileService.test.ts src/components/progression/ProgressionTimeline.test.tsx`.
 - **Direkte Abhängigkeiten:** Spieler-Stammdaten, Spielerprofil-Core,
   Saisonkontext und Zeitquoten.
 - **H2H-Semantik:** Nur abgeschlossene gemeinsame Events mit je mindestens
   einer qualifizierten gültigen Eventbestzeit zählen. Ties beenden Serien und
   werden nicht in den großen A:B-Score eingerechnet.
-- **Nicht enthalten:** Progressionsvergleich, Attempt Numbers, Awards,
-  Gesamtsieger und Drei-Spieler-Vergleich.
+- **Deep-Sections:** Speed & Peak Performance, Konstanz & Serien,
+  Event-Dominanz, season-aware Attempt Numbers, gemeinsame PB-Progression,
+  Badge Battle, Prestige & Records, Stat Madness und eine leicht entfernbare,
+  ausdrücklich experimentelle Lead-Zusammenfassung ohne Score oder Gewichtung.
+- **Nicht enthalten:** Drei-Spieler-Vergleich, neue Prestigeformel oder ein
+  offizieller Gesamtsieger.
 
 ## 6. Live-Event und Eventverwaltung
 

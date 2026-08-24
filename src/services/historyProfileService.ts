@@ -12,6 +12,7 @@ import type {
   PlayerProfileProgression,
   TrophyAward,
 } from "@/types/historyProfiles";
+import type { PlayerCompareAttemptRead } from "@/types/playerCompare";
 import type { BadgeUnlockCelebration } from "@/types/liveEvent";
 import { calculateTimeThresholds } from "@/lib/officialTimePerformance";
 
@@ -389,9 +390,33 @@ export async function getPlayerTimePerformance(playerId: string, seasonYear?: nu
       .select("time_hundredths").eq("player_id", playerId).eq("season_year", seasonYear);
   const result = await query;
   if (result.error) throw result.error;
-  return { thresholds: calculateTimeThresholds((result.data ?? []).map((row) => ({
+  const timeHundredths = (result.data ?? []).map((row) => row.time_hundredths)
+    .sort((left, right) => left - right);
+  return {
+    thresholds: calculateTimeThresholds(timeHundredths.map((value) => ({
+      timeHundredths: value,
+    }))),
+    timeHundredths,
+  };
+}
+
+export async function getPlayerCompareAttempts(
+  playerId: string,
+): Promise<PlayerCompareAttemptRead[]> {
+  const result = await getSupabase().from("event_attempt_details")
+    .select("attempt_id,event_id,time_hundredths,is_dnf,submitted_at,attempt_number,is_personal_best")
+    .eq("player_id", playerId).eq("is_ak", false)
+    .order("submitted_at").order("attempt_id");
+  if (result.error) throw result.error;
+  return (result.data ?? []).map((row) => ({
+    id: row.attempt_id,
+    eventId: row.event_id,
     timeHundredths: row.time_hundredths,
-  }))) };
+    isDnf: row.is_dnf,
+    submittedAt: row.submitted_at,
+    attemptNumber: row.attempt_number,
+    isPersonalBest: row.is_personal_best,
+  }));
 }
 
 export async function getPlayerBadges(playerId: string): Promise<CompactBadge[]> {

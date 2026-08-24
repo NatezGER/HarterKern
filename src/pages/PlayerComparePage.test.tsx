@@ -6,6 +6,7 @@ const state = vi.hoisted(() => ({
   season: "all-time" as "all-time" | 2026,
   isAllTime: true,
   compare: null as unknown,
+  deep: { data: null, loading: false, error: "Deep Compare konnte nicht geladen werden." },
 }));
 
 const players = [
@@ -22,6 +23,9 @@ vi.mock("@/hooks/useSeason", () => ({
 }));
 vi.mock("@/hooks/usePlayerCompare", () => ({
   usePlayerCompare: () => state.compare,
+}));
+vi.mock("@/hooks/usePlayerDeepCompare", () => ({
+  usePlayerDeepCompare: () => state.deep,
 }));
 
 import { PlayerComparePage } from "@/pages/PlayerComparePage";
@@ -45,7 +49,7 @@ describe("PlayerComparePage", () => {
     state.isAllTime = true;
     state.compare = {
       core: { data: { playerA: coreA, playerB: coreB }, loading: false, error: "" },
-      speed: { data: { playerA: { thresholds: [{ seconds: 5, count: 9, total: 10, percent: 90 }, { seconds: 4, count: 7, total: 10, percent: 70 }, { seconds: 3, count: 2, total: 10, percent: 20 }] }, playerB: { thresholds: [{ seconds: 5, count: 8, total: 10, percent: 80 }, { seconds: 4, count: 6, total: 10, percent: 60 }, { seconds: 3, count: 1, total: 10, percent: 10 }] } }, loading: false, error: "" },
+      speed: { data: { playerA: { timeHundredths: [199, 240, 250, 300, 400], thresholds: [{ seconds: 5, count: 9, total: 10, percent: 90 }, { seconds: 4, count: 7, total: 10, percent: 70 }, { seconds: 3, count: 2, total: 10, percent: 20 }] }, playerB: { timeHundredths: [270, 280, 290, 320, 450], thresholds: [{ seconds: 5, count: 8, total: 10, percent: 80 }, { seconds: 4, count: 6, total: 10, percent: 60 }, { seconds: 3, count: 1, total: 10, percent: 10 }] } }, loading: false, error: "" },
       headToHead: { data: emptyHeadToHead, loading: false, error: "" },
     };
   });
@@ -58,6 +62,9 @@ describe("PlayerComparePage", () => {
     expect(markup).toContain("10 %");
     expect(markup).toContain("20 %");
     expect(markup).toContain("Unter 5 s");
+    expect(markup).toContain("Unter 2,5 s");
+    expect(markup).toContain("Ø der 3 schnellsten");
+    expect(markup).toContain("Median");
     expect(markup).toContain("90 %");
     expect(markup).toContain("80 %");
     expect(markup).toContain("Vorn");
@@ -141,6 +148,14 @@ describe("PlayerComparePage", () => {
     const markup = renderCompare("/compare?playerA=a&playerB=b");
     expect(markup).toContain("Hauptstatistiken");
     expect(markup).toContain("Head to Head konnte nicht geladen werden.");
+  });
+
+  it("keeps core, speed and H2H visible when Deep Compare fails", () => {
+    const markup = renderCompare("/compare?playerA=a&playerB=b");
+    expect(markup).toContain("Hauptstatistiken");
+    expect(markup).toContain("Speed &amp; Peak Performance");
+    expect(markup).toContain("Head to Head");
+    expect(markup).toContain("Deep Compare konnte nicht geladen werden.");
   });
 });
 

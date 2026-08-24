@@ -30,17 +30,20 @@ export interface TimelinePoint {
 
 type PlottedPoint = TimelinePoint & { x: number; y: number; series: "primary" | "comparison" };
 
-export function ProgressionTimeline({ points, comparisonPoints = [], domainStartAt, domainEndAt, emptyLabel = "Noch keine Progression vorhanden.", comparisonLabel = "Weltrekord", showHistory = true, historyDisclosure }: {
+export function ProgressionTimeline({ points, comparisonPoints = [], domainStartAt, domainEndAt, emptyLabel = "Noch keine Progression vorhanden.", primaryLabel = "PB", comparisonLabel = "Weltrekord", comparisonInitiallyVisible = false, compact = false, showHistory = true, historyDisclosure }: {
   points: TimelinePoint[];
   comparisonPoints?: TimelinePoint[];
   domainStartAt?: string;
   domainEndAt?: string;
   emptyLabel?: string;
+  primaryLabel?: string;
   comparisonLabel?: string;
+  comparisonInitiallyVisible?: boolean;
+  compact?: boolean;
   showHistory?: boolean;
   historyDisclosure?: { id: string; expanded: boolean };
 }) {
-  const [showComparison, setShowComparison] = useState(false);
+  const [showComparison, setShowComparison] = useState(comparisonInitiallyVisible);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -58,23 +61,24 @@ export function ProgressionTimeline({ points, comparisonPoints = [], domainStart
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);
   }, []);
-  if (!points.length) return <p className="py-14 text-center text-sm text-white/35">{emptyLabel}</p>;
+  if (!points.length && (!comparisonPoints.length || !showComparison)) return <p className="py-14 text-center text-sm text-white/35">{emptyLabel}</p>;
   const primary = plotted.filter(({ series }) => series === "primary");
   const comparison = plotted.filter(({ series }) => series === "comparison");
   const visibleTimes = plotted.map(({ timeHundredths }) => timeHundredths);
   const fastestTime = Math.min(...visibleTimes);
   const slowestTime = Math.max(...visibleTimes);
-  const orderedDates = [...points].sort((a, b) => a.achievedAt.localeCompare(b.achievedAt));
+  const orderedDates = [...points, ...(showComparison ? comparisonPoints : [])]
+    .sort((a, b) => a.achievedAt.localeCompare(b.achievedAt));
   const activeKey = pinnedId ?? hoveredId;
   const active = plotted.find((point) => `${point.series}:${point.id}` === activeKey) ?? null;
   return (
     <div ref={rootRef} className="space-y-5">
       {comparisonPoints.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.16em] text-white/45"><span className="flex items-center gap-2"><i className="h-0.5 w-7 bg-gold-400" /> PB</span>{showComparison && <span className="flex items-center gap-2"><i className="h-0.5 w-7 border-t-2 border-dashed border-cyan-300" /> {comparisonLabel}</span>}</div>
-        <Button type="button" variant={showComparison ? "default" : "outline"} size="sm" onClick={() => { setShowComparison((value) => !value); setPinnedId(null); }}>{showComparison ? "Nur meine Progression" : `Mit ${comparisonLabel} vergleichen`}</Button>
+        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.16em] text-white/45"><span className="flex items-center gap-2"><i className="h-0.5 w-7 bg-gold-400" /> {primaryLabel}</span>{showComparison && <span className="flex items-center gap-2"><i className="h-0.5 w-7 border-t-2 border-dashed border-cyan-300" /> {comparisonLabel}</span>}</div>
+        <Button type="button" variant={showComparison ? "default" : "outline"} size="sm" onClick={() => { setShowComparison((value) => !value); setPinnedId(null); }}>{showComparison ? `Nur ${primaryLabel}` : `Mit ${comparisonLabel} vergleichen`}</Button>
       </div>}
       <div data-progression-chart className="overflow-x-auto pb-2">
-        <div className="relative h-64 min-w-[42rem] overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20 sm:h-72 sm:min-w-[52rem]">
+        <div className={cn("relative h-64 overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20 sm:h-72", compact ? "min-w-0" : "min-w-[42rem] sm:min-w-[52rem]")}>
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:12.5%_25%]" />
           <TimelinePath points={comparison} className="stroke-cyan-300/70" dashed wide />
           <TimelinePath points={primary} className="stroke-gold-400" />

@@ -15,6 +15,7 @@ vi.mock("@/lib/supabase", () => ({
 
 import {
   getClosedEventIds,
+  getPlayerCompareAttempts,
   getPlayerBadges,
   getPlayerPrestige,
   getPlayerProfileCore,
@@ -101,6 +102,37 @@ describe("player profile core repository", () => {
     expect(builder.in).toHaveBeenCalledWith("id", ["closed-event", "active-event"]);
     expect(builder.eq).toHaveBeenCalledWith("status", "closed");
     expect(builder.is).toHaveBeenCalledWith("deleted_at", null);
+  });
+
+  it("loads all chronological compare attempts through one player-scoped read", async () => {
+    const builder = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      order: vi.fn(),
+    };
+    builder.select.mockReturnValue(builder);
+    builder.eq.mockReturnValue(builder);
+    builder.order
+      .mockReturnValueOnce(builder)
+      .mockResolvedValueOnce({
+        data: [{
+          attempt_id: "attempt-1", event_id: "event-1", time_hundredths: 299,
+          is_dnf: false, submitted_at: "2026-01-01T12:00:00Z", attempt_number: 2,
+          is_personal_best: true,
+        }],
+        error: null,
+      });
+    mocks.from.mockReturnValueOnce(builder);
+
+    await expect(getPlayerCompareAttempts("player-1")).resolves.toEqual([{
+      id: "attempt-1", eventId: "event-1", timeHundredths: 299, isDnf: false,
+      submittedAt: "2026-01-01T12:00:00Z", attemptNumber: 2, isPersonalBest: true,
+    }]);
+    expect(mocks.from).toHaveBeenCalledWith("event_attempt_details");
+    expect(builder.eq).toHaveBeenNthCalledWith(1, "player_id", "player-1");
+    expect(builder.eq).toHaveBeenNthCalledWith(2, "is_ak", false);
+    expect(builder.order).toHaveBeenNthCalledWith(1, "submitted_at");
+    expect(builder.order).toHaveBeenNthCalledWith(2, "attempt_id");
   });
 
   it("loads visible badges through the player-scoped RPC", async () => {

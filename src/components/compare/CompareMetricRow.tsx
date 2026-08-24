@@ -8,11 +8,11 @@ interface CompareMetricRowProps {
   label: string;
   left: { raw: number | null; display: string };
   right: { raw: number | null; display: string };
-  direction: CompareDirection;
+  direction: CompareDirection | null;
 }
 
 export function CompareMetricRow({ label, left, right, direction }: CompareMetricRowProps) {
-  const winner = evaluateCompareWinner(left.raw, right.raw, direction);
+  const winner = direction == null ? null : evaluateCompareWinner(left.raw, right.raw, direction);
   return (
     <div className="grid min-h-16 grid-cols-[minmax(0,1fr)_minmax(5.25rem,0.72fr)_minmax(0,1fr)] items-stretch border-t border-white/[0.06] first:border-t-0 sm:min-h-20 sm:grid-cols-[minmax(0,1fr)_minmax(9rem,0.8fr)_minmax(0,1fr)]">
       <MetricValue value={left.display} winner={winner === "a"} align="left" />

@@ -45,4 +45,23 @@ describe("ProgressionTimeline mobile history disclosure", () => {
     expect(markup).toContain("Mit Saisonrekord vergleichen");
     expect(markup).not.toContain("Mit Weltrekord vergleichen");
   });
+
+  it("shows two differently dated player series together in compare mode", () => {
+    const markup = renderToStaticMarkup(
+      <ProgressionTimeline
+        points={[point]}
+        comparisonPoints={[{ ...point, id: "berta-pb", playerName: "Berta", achievedAt: "2026-02-01T10:00:00.000Z", achievedDate: "2026-02-01" }]}
+        primaryLabel="Paul"
+        comparisonLabel="Berta"
+        comparisonInitiallyVisible
+        compact
+        showHistory={false}
+      />,
+    );
+    expect(markup).toContain("Paul");
+    expect(markup).toContain("Berta");
+    expect(markup).toContain("Nur Paul");
+    expect(markup).toContain("min-w-0");
+    expect(markup).not.toContain("data-progression-history");
+  });
 });
