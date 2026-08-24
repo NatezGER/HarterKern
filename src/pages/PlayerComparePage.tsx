@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { CompareMetricRow } from "@/components/compare/CompareMetricRow";
 import { ComparePlayerHeader } from "@/components/compare/ComparePlayerHeader";
 import { StickyCompareIdentity } from "@/components/compare/StickyCompareIdentity";
+import { HeadToHeadSection } from "@/components/compare/HeadToHeadSection";
 import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { getRosterPlayers } from "@/data/selectors";
@@ -43,7 +44,7 @@ export function PlayerComparePage() {
   const playerB = rawPlayerBId !== rawPlayerAId
     ? players.find(({ id }) => id === rawPlayerBId) ?? null
     : null;
-  const { core, speed } = usePlayerCompare(playerA?.id ?? null, playerB?.id ?? null);
+  const { core, speed, headToHead } = usePlayerCompare(playerA?.id ?? null, playerB?.id ?? null);
   const detailA = core.data?.playerA ?? null;
   const detailB = core.data?.playerB ?? null;
   const hasInvalidSelection = Boolean(
@@ -161,6 +162,16 @@ export function PlayerComparePage() {
             <div>{speedMetrics.map((metric) => <CompareMetricRow key={metric.label} {...metric} />)}</div>
           )}
         </section>
+      )}
+
+      {playerA && playerB && (
+        <HeadToHeadSection
+          playerAName={playerA.name}
+          playerBName={playerB.name}
+          data={headToHead.data}
+          loading={headToHead.loading}
+          error={headToHead.error}
+        />
       )}
     </div>
   );

@@ -14,6 +14,7 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 import {
+  getClosedEventIds,
   getPlayerBadges,
   getPlayerPrestige,
   getPlayerProfileCore,
@@ -79,6 +80,27 @@ describe("player profile core repository", () => {
     expect(mocks.rpc).toHaveBeenCalledWith("get_player_event_lead_statistics", {
       p_player_id: "player-1", p_season_year: null,
     });
+  });
+
+  it("resolves shared event IDs through one closed-event query", async () => {
+    const builder = {
+      select: vi.fn(),
+      in: vi.fn(),
+      eq: vi.fn(),
+      is: vi.fn(),
+    };
+    builder.select.mockReturnValue(builder);
+    builder.in.mockReturnValue(builder);
+    builder.eq.mockReturnValue(builder);
+    builder.is.mockResolvedValue({ data: [{ id: "closed-event" }], error: null });
+    mocks.from.mockReturnValueOnce(builder);
+
+    await expect(getClosedEventIds(["closed-event", "active-event"]))
+      .resolves.toEqual(["closed-event"]);
+    expect(mocks.from).toHaveBeenCalledWith("events");
+    expect(builder.in).toHaveBeenCalledWith("id", ["closed-event", "active-event"]);
+    expect(builder.eq).toHaveBeenCalledWith("status", "closed");
+    expect(builder.is).toHaveBeenCalledWith("deleted_at", null);
   });
 
   it("loads visible badges through the player-scoped RPC", async () => {

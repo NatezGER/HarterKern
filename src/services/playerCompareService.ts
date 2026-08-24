@@ -1,8 +1,11 @@
 import { loadPlayerProfileSection } from "@/services/playerProfileService";
+import { getClosedEventIds } from "@/services/historyProfileService";
+import { createHeadToHeadSummary, emptyHeadToHeadSummary } from "@/lib/playerCompare";
 import type {
   PlayerProfileCore,
   PlayerSeasonProfile,
   PlayerTimePerformance,
+  HeadToHeadSummary,
 } from "@/types/historyProfiles";
 
 export interface ComparePlayerCore {
@@ -60,4 +63,31 @@ export async function loadPlayerCompareSpeed(
     loadSpeed(playerBId, seasonYear),
   ]);
   return { playerA, playerB };
+}
+
+export async function loadPlayerHeadToHead(
+  playerAId: string | null,
+  playerBId: string | null,
+  seasonYear?: number,
+): Promise<HeadToHeadSummary> {
+  if (!playerAId || !playerBId || playerAId === playerBId) {
+    return emptyHeadToHeadSummary();
+  }
+  const [playerAHistory, playerBHistory] = await Promise.all([
+    loadPlayerProfileSection("events", playerAId),
+    loadPlayerProfileSection("events", playerBId),
+  ]);
+  const playerBEventIds = new Set(playerBHistory.map(({ eventId }) => eventId));
+  const sharedEventIds = playerAHistory
+    .map(({ eventId }) => eventId)
+    .filter((eventId, index, all) => (
+      playerBEventIds.has(eventId) && all.indexOf(eventId) === index
+    ));
+  const closedEventIds = await getClosedEventIds(sharedEventIds);
+  return createHeadToHeadSummary(
+    playerAHistory,
+    playerBHistory,
+    new Set(closedEventIds),
+    seasonYear,
+  );
 }
