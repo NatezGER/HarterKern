@@ -459,6 +459,14 @@ export async function getPlayerEventHistory(playerId: string): Promise<PlayerEve
   }));
 }
 
+export async function getClosedEventIds(eventIds: string[]): Promise<string[]> {
+  if (eventIds.length === 0) return [];
+  const result = await getSupabase().from("events").select("id")
+    .in("id", eventIds).eq("status", "closed").is("deleted_at", null);
+  if (result.error) throw result.error;
+  return (result.data ?? []).map(({ id }) => id);
+}
+
 export async function getPlayerProgression(
   playerId: string,
   seasonYear?: number,

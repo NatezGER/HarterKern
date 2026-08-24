@@ -1,0 +1,208 @@
+import { Flame, Gauge, History, LoaderCircle, Trophy } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { SectionHeading } from "@/components/common/SectionHeading";
+import { cn } from "@/lib/cn";
+import { visibleHeadToHeadEvents } from "@/lib/playerCompare";
+import type {
+  HeadToHeadEvent,
+  HeadToHeadStreak,
+  HeadToHeadSummary,
+} from "@/types/historyProfiles";
+import { formatDate, formatTime } from "@/utils/format";
+
+interface HeadToHeadSectionProps {
+  playerAName: string;
+  playerBName: string;
+  data: HeadToHeadSummary | null;
+  loading: boolean;
+  error: string;
+}
+
+export function HeadToHeadSection({
+  playerAName,
+  playerBName,
+  data,
+  loading,
+  error,
+}: HeadToHeadSectionProps) {
+  const [expanded, setExpanded] = useState(false);
+  if (loading) {
+    return <section className="panel grid min-h-40 place-items-center"><LoaderCircle className="context-accent-text size-6 animate-spin" aria-label="Head to Head wird geladen" /></section>;
+  }
+  if (error) {
+    return <section className="panel p-5 text-center text-sm text-amber-100/70">{error}</section>;
+  }
+  if (!data || data.totalDuels === 0) {
+    return (
+      <section className="panel p-5 sm:p-7">
+        <SectionHeading eyebrow="Rivalry" title="Head to Head" />
+        <div className="grid min-h-32 place-items-center rounded-2xl border border-dashed border-white/10 bg-black/10 p-5 text-center">
+          <div><History className="context-accent-text mx-auto size-5" /><p className="mt-3 font-display text-lg font-black uppercase">Noch keine gemeinsamen Duelle</p><p className="mt-1 text-sm text-white/40">Es zählen nur abgeschlossene Events mit einer gültigen Zeit auf beiden Seiten.</p></div>
+        </div>
+      </section>
+    );
+  }
+  const visibleEvents = visibleHeadToHeadEvents(data.events, expanded);
+  return (
+    <section className="panel overflow-hidden">
+      <div className="p-5 pb-4 sm:p-7 sm:pb-5">
+        <SectionHeading eyebrow="Rivalry" title="Head to Head" />
+        <div className="rounded-3xl border border-white/[0.07] bg-black/15 px-3 py-6 text-center sm:px-6 sm:py-8">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-6">
+            <ScoreName name={playerAName} />
+            <p className="context-gradient-text whitespace-nowrap font-display text-4xl font-black tabular-nums sm:text-6xl">
+              {data.playerAWins} : {data.playerBWins}
+            </p>
+            <ScoreName name={playerBName} />
+          </div>
+          <p className="mt-3 text-xs font-semibold text-white/40 sm:text-sm">
+            {data.ties} {data.ties === 1 ? "Unentschieden" : "Unentschieden"} · {data.totalDuels} gemeinsame {data.totalDuels === 1 ? "Duell" : "Duelle"}
+          </p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-5 sm:gap-4">
+          <HighlightCard
+            icon={Gauge}
+            label="Engstes Duell"
+            value={data.closestDuel ? formatDifference(data.closestDuel) : "—"}
+            detail={data.closestDuel ? eventDetail(data.closestDuel) : "Noch kein entschiedenes Duell"}
+          />
+          <HighlightCard
+            icon={Trophy}
+            label="Größter Sieg"
+            value={data.biggestWin ? `${winnerName(data.biggestWin.winner, playerAName, playerBName)} · ${formatDifference(data.biggestWin)}` : "—"}
+            detail={data.biggestWin ? eventDetail(data.biggestWin) : "Noch kein entschiedenes Duell"}
+          />
+          <HighlightCard
+            icon={Flame}
+            label="Aktuelle Serie"
+            value={streakLabel(data.currentStreak, playerAName, playerBName)}
+            detail={data.currentStreak ? "Direkt aufeinanderfolgende Siege" : "Keine aktive Siegesserie"}
+          />
+          <HighlightCard
+            icon={History}
+            label="Längste Siegesserie"
+            value={streakLabel(data.longestStreak, playerAName, playerBName)}
+            detail="Im gewählten Zeitraum"
+          />
+        </div>
+      </div>
+
+      <div className="border-t border-white/[0.07]">
+        <div className="px-5 pt-5 sm:px-7 sm:pt-6"><h3 className="display-title text-xl sm:text-2xl">Letzte Duelle</h3></div>
+        <div className="mt-3">
+          {visibleEvents.map((event) => (
+            <DuelRow
+              key={event.eventId}
+              event={event}
+              playerAName={playerAName}
+              playerBName={playerBName}
+            />
+          ))}
+        </div>
+        {data.events.length > 5 && (
+          <div className="p-4 text-center sm:p-5">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-expanded={expanded}
+              onClick={() => setExpanded((value) => !value)}
+            >
+              {expanded ? "Auf fünf Duelle reduzieren" : `Alle ${data.events.length} Duelle anzeigen`}
+            </Button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ScoreName({ name }: { name: string }) {
+  return <p className="min-w-0 truncate font-display text-base font-black uppercase sm:text-3xl">{name}</p>;
+}
+
+function HighlightCard({
+  icon: Icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: typeof Gauge;
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <article className="min-w-0 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3 sm:p-5">
+      <Icon className="context-accent-text size-4 sm:size-5" />
+      <p className="mt-3 text-[8px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[10px] sm:tracking-[0.16em]">{label}</p>
+      <p className="mt-1 break-words font-display text-lg font-black sm:text-2xl">{value}</p>
+      <p className="mt-1 break-words text-[10px] leading-relaxed text-white/35 sm:text-xs">{detail}</p>
+    </article>
+  );
+}
+
+function DuelRow({
+  event,
+  playerAName,
+  playerBName,
+}: {
+  event: HeadToHeadEvent;
+  playerAName: string;
+  playerBName: string;
+}) {
+  return (
+    <article className="grid min-h-24 grid-cols-[minmax(0,0.8fr)_minmax(7rem,1.4fr)_minmax(0,0.8fr)] items-center border-t border-white/[0.06] px-3 py-3 sm:min-h-28 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,1.5fr)_minmax(0,1fr)] sm:px-7">
+      <DuelTime name={playerAName} time={event.playerATimeHundredths} winner={event.winner === "a"} />
+      <div className="min-w-0 px-2 text-center sm:px-4">
+        <Link to={`/events/${event.eventId}`} className="context-accent-text block truncate text-xs font-bold hover:underline sm:text-sm">{event.eventName}</Link>
+        <p className="mt-1 text-[10px] text-white/35 sm:text-xs">{formatDate(event.eventDate)}</p>
+        <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/35 sm:text-[10px]">
+          {event.winner === "tie" ? "Unentschieden" : `${formatDifference(event)} Differenz`}
+        </p>
+      </div>
+      <DuelTime name={playerBName} time={event.playerBTimeHundredths} winner={event.winner === "b"} align="right" />
+    </article>
+  );
+}
+
+function DuelTime({
+  name,
+  time,
+  winner,
+  align = "left",
+}: {
+  name: string;
+  time: number;
+  winner: boolean;
+  align?: "left" | "right";
+}) {
+  return (
+    <div className={cn("min-w-0", align === "right" && "text-right")}>
+      <p className="truncate text-[8px] font-bold uppercase tracking-wide text-white/30 sm:text-[10px]">{name}</p>
+      <p className={cn("mt-1 font-display text-lg font-black tabular-nums sm:text-2xl", winner ? "context-accent-text" : "text-white/80")}>{formatTime(time / 100)}</p>
+      {winner && <span className="compare-winner-pill mt-1 inline-flex rounded-full px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wide sm:px-2 sm:text-[8px]">Vorn</span>}
+    </div>
+  );
+}
+
+function winnerName(winner: HeadToHeadEvent["winner"], playerAName: string, playerBName: string) {
+  return winner === "a" ? playerAName : playerBName;
+}
+
+function streakLabel(streak: HeadToHeadStreak | null, playerAName: string, playerBName: string) {
+  if (!streak) return "—";
+  const names = streak.winners.map((winner) => winner === "a" ? playerAName : playerBName);
+  return `${names.join(" & ")} ×${streak.length}`;
+}
+
+function formatDifference(event: HeadToHeadEvent) {
+  return formatTime(event.differenceHundredths / 100);
+}
+
+function eventDetail(event: HeadToHeadEvent) {
+  return `${event.eventName} · ${formatDate(event.eventDate)}`;
+}

@@ -3,11 +3,13 @@ import { useSeason } from "@/hooks/useSeason";
 import {
   loadPlayerCompareCore,
   loadPlayerCompareSpeed,
+  loadPlayerHeadToHead,
 } from "@/services/playerCompareService";
 import type {
   PlayerCompareCore,
   PlayerCompareSpeed,
 } from "@/services/playerCompareService";
+import type { HeadToHeadSummary } from "@/types/historyProfiles";
 
 interface CompareState<T> {
   data: T | null;
@@ -27,11 +29,13 @@ export function usePlayerCompare(playerAId: string | null, playerBId: string | n
   const requestKey = `${playerAId ?? "-"}:${playerBId ?? "-"}:${seasonYear ?? "all-time"}`;
   const [core, setCore] = useState<CompareState<PlayerCompareCore>>(initialState);
   const [speed, setSpeed] = useState<CompareState<PlayerCompareSpeed>>(initialState);
+  const [headToHead, setHeadToHead] = useState<CompareState<HeadToHeadSummary>>(initialState);
 
   useEffect(() => {
     let active = true;
     setCore(initialState());
     setSpeed(initialState());
+    setHeadToHead(initialState());
     void loadPlayerCompareCore(playerAId, playerBId, seasonYear)
       .then((data) => active && setCore({ data, loading: false, error: "" }))
       .catch(() => active && setCore({
@@ -46,10 +50,17 @@ export function usePlayerCompare(playerAId: string | null, playerBId: string | n
         loading: false,
         error: "Die Speed-Werte konnten nicht geladen werden.",
       }));
+    void loadPlayerHeadToHead(playerAId, playerBId, seasonYear)
+      .then((data) => active && setHeadToHead({ data, loading: false, error: "" }))
+      .catch(() => active && setHeadToHead({
+        data: null,
+        loading: false,
+        error: "Head to Head konnte nicht geladen werden.",
+      }));
     return () => {
       active = false;
     };
   }, [playerAId, playerBId, requestKey, seasonYear]);
 
-  return { core, speed };
+  return { core, speed, headToHead };
 }

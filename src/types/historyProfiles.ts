@@ -156,6 +156,35 @@ export interface PlayerEventSummary {
   dnfCount: number;
 }
 
+export type HeadToHeadWinner = "a" | "b" | "tie";
+
+export interface HeadToHeadEvent {
+  eventId: string;
+  eventName: string;
+  eventDate: string;
+  playerATimeHundredths: number;
+  playerBTimeHundredths: number;
+  winner: HeadToHeadWinner;
+  differenceHundredths: number;
+}
+
+export interface HeadToHeadStreak {
+  winners: Array<Exclude<HeadToHeadWinner, "tie">>;
+  length: number;
+}
+
+export interface HeadToHeadSummary {
+  playerAWins: number;
+  playerBWins: number;
+  ties: number;
+  totalDuels: number;
+  events: HeadToHeadEvent[];
+  closestDuel: HeadToHeadEvent | null;
+  biggestWin: HeadToHeadEvent | null;
+  currentStreak: HeadToHeadStreak | null;
+  longestStreak: HeadToHeadStreak | null;
+}
+
 export interface AttemptNumberPoint {
   attemptNumber: number;
   samples: number;

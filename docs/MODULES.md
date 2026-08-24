@@ -76,7 +76,8 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 
 ## 5a. Spielervergleich
 
-- **Zweck:** Direkter, season-aware 1-gegen-1-Vergleich regulärer Spieler.
+- **Zweck:** Direkter, season-aware 1-gegen-1-Vergleich regulärer Spieler mit
+  eventbasiertem Head to Head.
 - **Einstieg:** `src/pages/PlayerComparePage.tsx`, Route `/compare` mit
   `playerA`- und `playerB`-Queryparametern; zusätzlich dezente Aktion im
   Spielerprofil.
@@ -84,15 +85,22 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   gecachte Sections aus `playerProfileService`, Players-Datengruppe.
 - **Views/RPCs:** Pro ausgewähltem Spieler nur vorhandener Profil-Core,
   optionales Saisonprofil und `qualified_official_times` beziehungsweise
-  `season_qualified_official_times`; keine Awards oder Historienmodule.
+  `season_qualified_official_times`; für H2H zweimal `player_event_history`
+  sowie ein gebündelter `events`-Status-Read für die gemeinsamen Event-IDs.
 - **Route Load:** Die Auswahlliste benötigt gebündelt 2 Requests. Je Spieler
   folgen All-Time 4 Core- und 1 Speed-Request, saisonal zusätzlich 2 vorhandene
-  Saison-Core-Requests. Identische gleichzeitige Profilreads werden dedupliziert.
+  Saison-Core-Requests. H2H ergänzt 2 gecachte player-scoped History-Reads und
+  1 gebündelten Closed-Event-Read; All-Time damit maximal 15, saisonal 19
+  Route-Requests. Identische gleichzeitige Profilreads werden dedupliziert.
 - **Tests:** `npm test -- src/lib/playerCompare.test.ts
-  src/services/playerCompareService.test.ts src/pages/PlayerComparePage.test.tsx`.
+  src/services/playerCompareService.test.ts src/pages/PlayerComparePage.test.tsx
+  src/services/historyProfileService.test.ts`.
 - **Direkte Abhängigkeiten:** Spieler-Stammdaten, Spielerprofil-Core,
   Saisonkontext und Zeitquoten.
-- **Nicht enthalten:** H2H, Progressionsvergleich, Attempt Numbers, Awards,
+- **H2H-Semantik:** Nur abgeschlossene gemeinsame Events mit je mindestens
+  einer qualifizierten gültigen Eventbestzeit zählen. Ties beenden Serien und
+  werden nicht in den großen A:B-Score eingerechnet.
+- **Nicht enthalten:** Progressionsvergleich, Attempt Numbers, Awards,
   Gesamtsieger und Drei-Spieler-Vergleich.
 
 ## 6. Live-Event und Eventverwaltung
