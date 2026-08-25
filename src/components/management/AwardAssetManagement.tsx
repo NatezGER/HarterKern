@@ -39,9 +39,9 @@ export function AwardAssetManagement() {
   const trophies: TrophyAssetDefinition[] = TROPHY_ASSET_DEFINITIONS;
   const [familyKey, setFamilyKey] = useState("");
   const [badgeKey, setBadgeKey] = useState("");
-  const [trophyCompetitionKey, setTrophyCompetitionKey] = useState("");
-  const [trophyYear, setTrophyYear] = useState(0);
-  const [trophyTier, setTrophyTier] = useState<TrophyTier>("gold");
+  const [selectedTrophyAssetId, setSelectedTrophyAssetId] = useState(
+    () => trophyAssetId(TROPHY_ASSET_DEFINITIONS[0]),
+  );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const badgeFamilies = useMemo(() => groupBadgeDefinitions(badges), [badges]);
@@ -53,16 +53,19 @@ export function AwardAssetManagement() {
     for (const item of trophies) unique.set(item.competitionKey, item);
     return [...unique.entries()].map(([key, item]) => ({ key, ...item }));
   }, [trophies]);
-  const trophyCompetition = trophyCompetitions.find(({ key }) => key === trophyCompetitionKey)
-    ?? trophyCompetitions[0];
+  const trophy = trophies.find((item) => trophyAssetId(item) === selectedTrophyAssetId)
+    ?? trophies[0];
+  const trophyCompetitionKey = trophy.competitionKey;
+  const trophyYear = trophy.year;
+  const trophyTier = trophy.tier;
+  const trophyCompetition = trophyCompetitions.find(({ key }) => key === trophyCompetitionKey)!;
   const trophyYears = [...new Set(trophies
     .filter((item) => item.competitionKey === trophyCompetition?.key)
     .map(({ year }) => year))].sort((a, b) => b - a);
-  const selectedTrophyYear = trophyYears.includes(trophyYear) ? trophyYear : trophyYears[0];
+  const selectedTrophyYear = trophyYear;
   const trophyTiers = trophies.filter((item) =>
     item.competitionKey === trophyCompetition?.key
     && item.year === selectedTrophyYear);
-  const trophy = trophyTiers.find((item) => item.tier === trophyTier) ?? trophyTiers[0];
   const isHistoricalTrophy = Boolean(trophyCompetition?.isHistorical);
   const assetId = type === "medal" ? medalAssetId(rank)
     : type === "badge" && badge ? badgeAssetId(badge.badgeKey)
@@ -85,14 +88,6 @@ export function AwardAssetManagement() {
     if (family && family.key !== familyKey) setFamilyKey(family.key);
     if (badge && badge.badgeKey !== badgeKey) setBadgeKey(badge.badgeKey);
   }, [badge, badgeKey, family, familyKey]);
-  useEffect(() => {
-    if (trophyCompetition && trophyCompetition.key !== trophyCompetitionKey) {
-      setTrophyCompetitionKey(trophyCompetition.key);
-    }
-    if (selectedTrophyYear && selectedTrophyYear !== trophyYear) setTrophyYear(selectedTrophyYear);
-    if (trophy && trophy.tier !== trophyTier) setTrophyTier(trophy.tier);
-  }, [selectedTrophyYear, trophy, trophyCompetition, trophyCompetitionKey, trophyTier, trophyYear]);
-
   const upload = async (file?: File) => {
     if (!file || !assetId || busy) return;
     setBusy(true);
@@ -151,13 +146,26 @@ export function AwardAssetManagement() {
           </select>
         </>}
         {type === "trophy" && <>
-          <select value={trophyCompetition?.key ?? ""} onChange={(event) => { setTrophyCompetitionKey(event.target.value); setTrophyYear(0); }} className={selectClass} aria-label="Trophäen-Wettbewerb">
+          <select value={trophyCompetitionKey} onChange={(event) => {
+            const next = trophies.find((item) => item.competitionKey === event.target.value);
+            if (next) setSelectedTrophyAssetId(trophyAssetId(next));
+          }} className={selectClass} aria-label="Trophäen-Wettbewerb">
             {trophyCompetitions.map((item) => <option key={item.key} value={item.key}>{item.competitionName}</option>)}
           </select>
-          {!isHistoricalTrophy && <select value={selectedTrophyYear ?? ""} onChange={(event) => setTrophyYear(Number(event.target.value))} className={selectClass} aria-label="Trophäen-Edition">
+          {!isHistoricalTrophy && <select value={selectedTrophyYear} onChange={(event) => {
+            const year = Number(event.target.value);
+            const next = trophies.find((item) => item.competitionKey === trophyCompetitionKey
+              && item.year === year && item.tier === trophyTier)
+              ?? trophies.find((item) => item.competitionKey === trophyCompetitionKey && item.year === year);
+            if (next) setSelectedTrophyAssetId(trophyAssetId(next));
+          }} className={selectClass} aria-label="Trophäen-Edition">
             {trophyYears.map((year) => <option key={year} value={year}>{year}</option>)}
           </select>}
-          {!isHistoricalTrophy && <select value={trophy?.tier ?? ""} onChange={(event) => setTrophyTier(event.target.value as TrophyTier)} className={selectClass} aria-label="Trophäen-Platzierung">
+          {!isHistoricalTrophy && <select value={trophyTier} onChange={(event) => {
+            const tier = event.target.value as TrophyTier;
+            const next = trophyTiers.find((item) => item.tier === tier);
+            if (next) setSelectedTrophyAssetId(trophyAssetId(next));
+          }} className={selectClass} aria-label="Trophäen-Platzierung">
             {trophyTiers.map((item) => <option key={item.tier} value={item.tier}>{item.tier}</option>)}
           </select>}
         </>}
