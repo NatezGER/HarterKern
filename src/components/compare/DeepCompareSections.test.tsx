@@ -7,6 +7,7 @@ import {
   CompareProgressionSection,
   CompareSummarySection,
 } from "@/components/compare/DeepCompareSections";
+import { CompareAttemptNumberChart } from "@/components/compare/CompareAttemptNumberChart";
 import type { Player, } from "@/types";
 import type { PlayerTimePerformance, ProgressionPoint } from "@/types/historyProfiles";
 import type { PlayerCompareSequencePair } from "@/types/playerCompare";
@@ -56,6 +57,22 @@ describe("final deep compare sections", () => {
     expect(markup).toContain("Berta: kein gültiger Durchschnitt");
     expect(markup).not.toContain("overflow-x-auto");
     expect(markup).not.toContain("<table");
+  });
+
+  it("renders both attempt series in distinct visible slots with accessible labels", () => {
+    const markup = renderToStaticMarkup(<CompareAttemptNumberChart
+      playerAName="Karl"
+      playerBName="Paul"
+      playerA={[{ attemptNumber: 2, samples: 2, validAttempts: 1, dnfCount: 1, averageHundredths: 451 }]}
+      playerB={[{ attemptNumber: 2, samples: 2, validAttempts: 2, dnfCount: 0, averageHundredths: 445 }]}
+    />);
+    expect(markup).toContain('data-attempt-series="player-a"');
+    expect(markup).toContain('data-attempt-series="player-b"');
+    expect(markup).toContain("from-gold-600/60 to-gold-300");
+    expect(markup).toContain("from-cyan-800/70 to-cyan-300");
+    expect(markup).toContain('aria-label="Karl, Versuch 2: 4,51 s, 1 gültige von 2 Versuchen"');
+    expect(markup).toContain('aria-label="Paul, Versuch 2: 4,45 s, 2 gültige von 2 Versuchen"');
+    expect(markup).toContain("Höherer Balken = schnellerer Ø");
   });
 
   it("keeps a single available PB series visible when the other progression failed", () => {
