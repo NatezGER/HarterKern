@@ -82,7 +82,7 @@ describe("route data groups", () => {
   it("loads only the compare roster globally and keeps player reads scoped", () => {
     expect(getRouteDataPlan("/compare")).toEqual({
       required: ["players"],
-      optional: ["profile-core", "profile-season", "profile-performance", "profile-events"],
+      optional: ["profile-core", "profile-season", "profile-performance", "profile-events", "profile-progression"],
     });
     expect(dataGroupRequestCounts.players).toBe(2);
   });

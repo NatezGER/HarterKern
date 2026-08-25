@@ -30,17 +30,22 @@ export interface TimelinePoint {
 
 type PlottedPoint = TimelinePoint & { x: number; y: number; series: "primary" | "comparison" };
 
-export function ProgressionTimeline({ points, comparisonPoints = [], domainStartAt, domainEndAt, emptyLabel = "Noch keine Progression vorhanden.", comparisonLabel = "Weltrekord", showHistory = true, historyDisclosure }: {
+export function ProgressionTimeline({ points, comparisonPoints = [], domainStartAt, domainEndAt, emptyLabel = "Noch keine Progression vorhanden.", primaryLabel = "PB", comparisonLabel = "Weltrekord", comparisonInitiallyVisible = false, compact = false, showHistory = true, primaryCrossoverIds = [], comparisonCrossoverIds = [], historyDisclosure }: {
   points: TimelinePoint[];
   comparisonPoints?: TimelinePoint[];
   domainStartAt?: string;
   domainEndAt?: string;
   emptyLabel?: string;
+  primaryLabel?: string;
   comparisonLabel?: string;
+  comparisonInitiallyVisible?: boolean;
+  compact?: boolean;
   showHistory?: boolean;
+  primaryCrossoverIds?: string[];
+  comparisonCrossoverIds?: string[];
   historyDisclosure?: { id: string; expanded: boolean };
 }) {
-  const [showComparison, setShowComparison] = useState(false);
+  const [showComparison, setShowComparison] = useState(comparisonInitiallyVisible);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -58,23 +63,26 @@ export function ProgressionTimeline({ points, comparisonPoints = [], domainStart
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);
   }, []);
-  if (!points.length) return <p className="py-14 text-center text-sm text-white/35">{emptyLabel}</p>;
+  if (!points.length && (!comparisonPoints.length || !showComparison)) return <p className="py-14 text-center text-sm text-white/35">{emptyLabel}</p>;
   const primary = plotted.filter(({ series }) => series === "primary");
   const comparison = plotted.filter(({ series }) => series === "comparison");
   const visibleTimes = plotted.map(({ timeHundredths }) => timeHundredths);
   const fastestTime = Math.min(...visibleTimes);
   const slowestTime = Math.max(...visibleTimes);
-  const orderedDates = [...points].sort((a, b) => a.achievedAt.localeCompare(b.achievedAt));
+  const orderedDates = [...points, ...(showComparison ? comparisonPoints : [])]
+    .sort((a, b) => a.achievedAt.localeCompare(b.achievedAt));
   const activeKey = pinnedId ?? hoveredId;
   const active = plotted.find((point) => `${point.series}:${point.id}` === activeKey) ?? null;
+  const primaryCrossovers = new Set(primaryCrossoverIds);
+  const comparisonCrossovers = new Set(comparisonCrossoverIds);
   return (
     <div ref={rootRef} className="space-y-5">
       {comparisonPoints.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.16em] text-white/45"><span className="flex items-center gap-2"><i className="h-0.5 w-7 bg-gold-400" /> PB</span>{showComparison && <span className="flex items-center gap-2"><i className="h-0.5 w-7 border-t-2 border-dashed border-cyan-300" /> {comparisonLabel}</span>}</div>
-        <Button type="button" variant={showComparison ? "default" : "outline"} size="sm" onClick={() => { setShowComparison((value) => !value); setPinnedId(null); }}>{showComparison ? "Nur meine Progression" : `Mit ${comparisonLabel} vergleichen`}</Button>
+        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.16em] text-white/45"><span className="flex items-center gap-2"><i className="h-0.5 w-7 bg-gold-400" /> {primaryLabel}</span>{showComparison && <span className="flex items-center gap-2"><i className="h-0.5 w-7 border-t-2 border-dashed border-cyan-300" /> {comparisonLabel}</span>}</div>
+        <Button type="button" variant={showComparison ? "default" : "outline"} size="sm" onClick={() => { setShowComparison((value) => !value); setPinnedId(null); }}>{showComparison ? `Nur ${primaryLabel}` : `Mit ${comparisonLabel} vergleichen`}</Button>
       </div>}
-      <div data-progression-chart className="overflow-x-auto pb-2">
-        <div className="relative h-64 min-w-[42rem] overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20 sm:h-72 sm:min-w-[52rem]">
+      <div data-progression-chart className={cn("pb-2", compact ? "overflow-hidden" : "overflow-x-auto")}>
+        <div className={cn("relative h-64 overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20 sm:h-72", compact ? "min-w-0" : "min-w-[42rem] sm:min-w-[52rem]")}>
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:12.5%_25%]" />
           <TimelinePath points={comparison} className="stroke-cyan-300/70" dashed wide />
           <TimelinePath points={primary} className="stroke-gold-400" />
@@ -86,10 +94,14 @@ export function ProgressionTimeline({ points, comparisonPoints = [], domainStart
             const width = segmentEnd - point.x;
             const previous = seriesPoints[seriesIndex - 1];
             const key = `${point.series}:${point.id}`;
+            const isCrossover = point.series === "primary"
+              ? primaryCrossovers.has(point.id)
+              : comparisonCrossovers.has(point.id);
             return <div key={key}>
               {point.series === "primary" && <span data-timeline-label="duration" className="absolute z-[5] -translate-x-1/2 whitespace-nowrap rounded-md border border-white/[0.05] bg-[#171711]/95 px-1 py-0.5 text-[8px] font-bold text-white/60 sm:px-1.5 sm:text-[9px]" style={{ left: `${Math.max(10, Math.min(90, point.x + width / 2))}%`, top: `${Math.max(2, point.y - (seriesIndex % 2 === 0 ? 13 : 19))}%` }}>{point.durationLabel ?? (point.isCurrent ? formatCurrentRecordDuration(point.durationDays) : formatRecordDuration(point.durationDays))}</span>}
               {point.series === "primary" && previous && point.improvementHundredths != null && <span data-timeline-label="improvement" className="absolute z-[6] -translate-x-full whitespace-nowrap rounded-md border border-gold-400/20 bg-[#171711]/95 px-1 py-0.5 text-[8px] font-black text-gold-300 sm:px-1.5 sm:text-[9px]" style={{ left: `${Math.max(11, point.x - 1)}%`, top: `${Math.max(8, Math.min(84, Math.min(previous.y, point.y) + Math.abs(point.y - previous.y) / 2 + (seriesIndex % 2 === 0 ? 1 : 4)))}%` }}>−{formatTime(point.improvementHundredths / 100)}</span>}
-              <TimelineNode point={point} active={activeKey === key} onHover={setHoveredId} onPin={() => setPinnedId((value) => value === key ? null : key)} />
+              {isCrossover && <span data-progression-crossover className="absolute z-[8] -translate-x-1/2 rounded-full border border-white/15 bg-[#11130f]/95 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wide text-white/65" style={{ left: `${point.x}%`, top: `${Math.max(3, point.y - 18)}%` }}>Führungswechsel</span>}
+              <TimelineNode point={point} active={activeKey === key} crossover={isCrossover} onHover={setHoveredId} onPin={() => setPinnedId((value) => value === key ? null : key)} />
             </div>;
           })}
           <span className="absolute left-3 top-3 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-bold text-white/30">{formatTime(slowestTime / 100)}</span>
@@ -125,9 +137,9 @@ function TimelinePath({ points, className, dashed = false, wide = false }: { poi
   return <svg aria-hidden="true" className="absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none"><path d={path} fill="none" strokeWidth={wide ? 8 : 4} className={cn(className, "opacity-15")} vectorEffect="non-scaling-stroke" /><path d={path} fill="none" strokeWidth={wide ? 4 : 2} strokeDasharray={dashed ? "7 5" : undefined} className={className} vectorEffect="non-scaling-stroke" /></svg>;
 }
 
-function TimelineNode({ point, active, onHover, onPin }: { point: PlottedPoint; active: boolean; onHover: (id: string | null) => void; onPin: () => void }) {
+function TimelineNode({ point, active, crossover, onHover, onPin }: { point: PlottedPoint; active: boolean; crossover: boolean; onHover: (id: string | null) => void; onPin: () => void }) {
   const key = `${point.series}:${point.id}`;
-  return <button type="button" aria-label={`${point.playerName ?? point.sourceLabel}: ${formatTime(point.timeHundredths / 100)}, ${formatDate(point.achievedDate)}`} aria-pressed={active} onMouseEnter={() => onHover(key)} onMouseLeave={() => onHover(null)} onFocus={() => onHover(key)} onBlur={() => onHover(null)} onClick={onPin} className={cn("group absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white", point.series === "comparison" ? "size-7 sm:size-9" : "size-8 sm:size-11", point.isCurrent && "ring-2 ring-gold-300 ring-offset-2 ring-offset-[#11130f]")} style={{ left: `${point.x}%`, top: `${point.y}%`, marginTop: point.series === "comparison" ? -14 : 0 }}>
+  return <button type="button" aria-label={`${point.playerName ?? point.sourceLabel}: ${formatTime(point.timeHundredths / 100)}, ${formatDate(point.achievedDate)}${crossover ? ", Führungswechsel" : ""}`} aria-pressed={active} onMouseEnter={() => onHover(key)} onMouseLeave={() => onHover(null)} onFocus={() => onHover(key)} onBlur={() => onHover(null)} onClick={onPin} className={cn("group absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white", point.series === "comparison" ? "size-7 sm:size-9" : "size-8 sm:size-11", point.isCurrent && "ring-2 ring-gold-300 ring-offset-2 ring-offset-[#11130f]", crossover && "ring-2 ring-white ring-offset-2 ring-offset-[#11130f]")} style={{ left: `${point.x}%`, top: `${point.y}%`, marginTop: point.series === "comparison" ? -14 : 0 }}>
     <ProfileAvatar id={point.playerId ?? point.id} name={point.playerName ?? point.sourceLabel} url={point.avatarUrl ?? null} className={cn("size-full border-2 shadow-lg", point.series === "comparison" ? "border-cyan-200/80" : "border-gold-300/80")} />
     <span className={cn("pointer-events-none absolute left-1/2 top-[calc(100%+0.2rem)] -translate-x-1/2 whitespace-nowrap rounded bg-[#10120f]/95 px-1.5 py-0.5 font-display text-[9px] font-black sm:text-[10px]", point.series === "comparison" ? "text-cyan-200" : "text-gold-200")}>{formatTime(point.timeHundredths / 100)}{point.series === "primary" && point.playerName ? <small className="ml-1 hidden font-sans text-[8px] font-semibold text-white/55 sm:inline">{point.playerName}</small> : null}</span>
   </button>;

@@ -15,6 +15,8 @@ vi.mock("@/lib/supabase", () => ({
 
 import {
   getClosedEventIds,
+  getPlayerCompareTimeline,
+  getPlayerPersonalProgression,
   getPlayerBadges,
   getPlayerPrestige,
   getPlayerProfileCore,
@@ -101,6 +103,100 @@ describe("player profile core repository", () => {
     expect(builder.in).toHaveBeenCalledWith("id", ["closed-event", "active-event"]);
     expect(builder.eq).toHaveBeenCalledWith("status", "closed");
     expect(builder.is).toHaveBeenCalledWith("deleted_at", null);
+  });
+
+  it("loads both players' closed chronological attempts through one season-aware read", async () => {
+    const builder = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      in: vi.fn(),
+      is: vi.fn(),
+      gte: vi.fn(),
+      lt: vi.fn(),
+      order: vi.fn(),
+    };
+    builder.select.mockReturnValue(builder);
+    builder.eq.mockReturnValue(builder);
+    builder.in.mockReturnValue(builder);
+    builder.is.mockReturnValue(builder);
+    builder.gte.mockReturnValue(builder);
+    builder.lt.mockReturnValue(builder);
+    builder.order
+      .mockReturnValueOnce(builder)
+      .mockResolvedValueOnce({
+        data: [{
+          id: "attempt-1", event_id: "event-1", player_id: "player-a",
+          time_hundredths: 299, is_dnf: false, submitted_at: "2026-01-01T12:00:00Z",
+          events: { name: "Finale", start_date: "2026-01-01", closed_at: "2026-01-01T13:00:00Z", ends_at: "2026-01-01T14:00:00Z" },
+        }],
+        error: null,
+      });
+    mocks.from.mockReturnValueOnce(builder);
+
+    await expect(getPlayerCompareTimeline("player-a", "player-b", 2026)).resolves.toEqual([{
+      id: "attempt-1", eventId: "event-1", eventName: "Finale", eventDate: "2026-01-01",
+      eventEndAt: "2026-01-01T13:00:00Z", playerId: "player-a", timeHundredths: 299,
+      isDnf: false, submittedAt: "2026-01-01T12:00:00Z", attemptNumber: 1,
+    }]);
+    expect(mocks.from).toHaveBeenCalledWith("attempts");
+    expect(builder.in).toHaveBeenCalledWith("player_id", ["player-a", "player-b"]);
+    expect(builder.eq).toHaveBeenCalledWith("events.status", "closed");
+    expect(builder.gte).toHaveBeenCalledWith("events.start_date", "2026-01-01");
+    expect(builder.lt).toHaveBeenCalledWith("events.start_date", "2027-01-01");
+    expect(builder.order).toHaveBeenNthCalledWith(1, "submitted_at");
+    expect(builder.order).toHaveBeenNthCalledWith(2, "id");
+  });
+
+  it("loads all-time compare progression through one player-scoped history read", async () => {
+    const builder = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      order: vi.fn(),
+    };
+    builder.select.mockReturnValue(builder);
+    builder.eq.mockReturnValue(builder);
+    builder.order.mockResolvedValue({
+      data: [{
+        source_id: "pb-1", time_hundredths: 275, achieved_at: "2025-06-01T12:00:00Z",
+        achieved_date: "2025-06-01", event_id: "event-1", source_label: "Sommerfest",
+        source_type: "attempt", previous_best_hundredths: 300, improvement_hundredths: 25,
+        duration_days: 8, is_current: true,
+      }],
+      error: null,
+    });
+    mocks.from.mockReturnValueOnce(builder);
+
+    await expect(getPlayerPersonalProgression("player-a")).resolves.toEqual([
+      expect.objectContaining({ id: "pb-1", timeHundredths: 275, eventId: "event-1" }),
+    ]);
+    expect(mocks.from).toHaveBeenCalledTimes(1);
+    expect(mocks.from).toHaveBeenCalledWith("player_pb_history");
+    expect(builder.eq).toHaveBeenCalledWith("player_id", "player-a");
+    expect(builder.order).toHaveBeenCalledWith("sequence_number");
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("loads season compare progression through one player-scoped RPC", async () => {
+    mocks.rpc.mockResolvedValueOnce({
+      data: [{
+        source_id: "season-pb-1", time_hundredths: 290,
+        achieved_at: "2026-02-01T12:00:00Z", achieved_date: "2026-02-01",
+        event_id: null, source_label: "Saisonstart", source_type: "attempt",
+        previous_best_hundredths: null, improvement_hundredths: null,
+        duration_days: 0, is_current: true,
+      }],
+      error: null,
+    });
+
+    await expect(getPlayerPersonalProgression("player-b", 2026)).resolves.toEqual([
+      expect.objectContaining({ id: "season-pb-1", timeHundredths: 290 }),
+    ]);
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+    expect(mocks.rpc).toHaveBeenCalledWith("get_player_season_pb_history", {
+      p_player_id: "player-b",
+      p_season_year: 2026,
+    });
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 
   it("loads visible badges through the player-scoped RPC", async () => {

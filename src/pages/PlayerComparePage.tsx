@@ -3,6 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CompareMetricRow } from "@/components/compare/CompareMetricRow";
 import { ComparePlayerHeader } from "@/components/compare/ComparePlayerHeader";
+import {
+  CompareAttemptNumbersSection,
+  CompareConsistencySection,
+  CompareEventPerformanceSection,
+  CompareProgressionSection,
+  CompareSummarySection,
+} from "@/components/compare/DeepCompareSections";
 import { StickyCompareIdentity } from "@/components/compare/StickyCompareIdentity";
 import { HeadToHeadSection } from "@/components/compare/HeadToHeadSection";
 import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
@@ -10,6 +17,7 @@ import { SectionHeading } from "@/components/common/SectionHeading";
 import { getRosterPlayers } from "@/data/selectors";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { usePlayerCompare } from "@/hooks/usePlayerCompare";
+import { usePlayerDeepCompare } from "@/hooks/usePlayerDeepCompare";
 import { useSeason } from "@/hooks/useSeason";
 import { DRINK_MILLILITERS_PER_VALID_ATTEMPT } from "@/constants/game";
 import { formatDrinkVolume } from "@/lib/media";
@@ -19,7 +27,8 @@ import {
   replaceComparePlayer,
   type CompareDirection,
 } from "@/lib/playerCompare";
-import type { PlayerProfileCore, PlayerSeasonProfile } from "@/types/historyProfiles";
+import type { PlayerProfileCore, PlayerSeasonProfile, PlayerTimePerformance } from "@/types/historyProfiles";
+import type { ComparableValue, PlayerCompareSequencePair } from "@/types/playerCompare";
 import { formatTime } from "@/utils/format";
 
 type ActiveStatistics = PlayerProfileCore | PlayerSeasonProfile | null;
@@ -45,6 +54,10 @@ export function PlayerComparePage() {
     ? players.find(({ id }) => id === rawPlayerBId) ?? null
     : null;
   const { core, speed, headToHead } = usePlayerCompare(playerA?.id ?? null, playerB?.id ?? null);
+  const deep = usePlayerDeepCompare(
+    playerA && playerB ? playerA.id : null,
+    playerA && playerB ? playerB.id : null,
+  );
   const detailA = core.data?.playerA ?? null;
   const detailB = core.data?.playerB ?? null;
   const hasInvalidSelection = Boolean(
@@ -73,8 +86,10 @@ export function PlayerComparePage() {
     detailA?.statistics ?? null,
     detailB?.statistics ?? null,
     isAllTime,
+    speed.data?.playerA?.medianHundredths ?? null,
+    speed.data?.playerB?.medianHundredths ?? null,
   );
-  const speedMetrics = [5, 4, 3].map((seconds) => {
+  const speedMetrics: Metric[] = [5, 4, 3].map((seconds) => {
     const left = speed.data?.playerA?.thresholds.find((item) => item.seconds === seconds);
     const right = speed.data?.playerB?.thresholds.find((item) => item.seconds === seconds);
     return {
@@ -84,6 +99,31 @@ export function PlayerComparePage() {
       right: percentMetric(right?.total ? right.percent : null),
     };
   });
+  for (const seconds of [2.5, 2] as const) {
+    const left = speed.data?.playerA?.extremeThresholds.find((item) => item.seconds === seconds);
+    const right = speed.data?.playerB?.extremeThresholds.find((item) => item.seconds === seconds);
+    speedMetrics.push({
+      label: `Unter ${String(seconds).replace(".", ",")} s`,
+      direction: "higher",
+      left: percentMetric(left?.total ? left.percent : null),
+      right: percentMetric(right?.total ? right.percent : null),
+    });
+  }
+  speedMetrics.push(
+    metric("Ø der 3 schnellsten", speed.data?.playerA?.fastestThreeAverageHundredths ?? null, speed.data?.playerB?.fastestThreeAverageHundredths ?? null, "lower", timeMetric),
+    metric("Ø der 5 schnellsten", speed.data?.playerA?.fastestFiveAverageHundredths ?? null, speed.data?.playerB?.fastestFiveAverageHundredths ?? null, "lower", timeMetric),
+    metric("PB-Abstand zum Ø", speed.data?.playerA?.pbToAverageHundredths ?? null, speed.data?.playerB?.pbToAverageHundredths ?? null, "lower", timeMetric),
+    metric("PB-Abstand zum Median", speed.data?.playerA?.pbToMedianHundredths ?? null, speed.data?.playerB?.pbToMedianHundredths ?? null, "lower", timeMetric),
+  );
+  const summaryValues = createSummaryValues(
+    mainMetrics,
+    speedMetrics,
+    detailA?.statistics ?? null,
+    detailB?.statistics ?? null,
+    speed.data?.playerA ?? null,
+    speed.data?.playerB ?? null,
+    deep.sequence.data,
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 sm:space-y-8">
@@ -151,9 +191,28 @@ export function PlayerComparePage() {
         </section>
       )}
 
+      {playerA && playerB && <CompareProgressionSection playerA={playerA} playerB={playerB} state={deep.progression} />}
+
+      {playerA && playerB && <CompareAttemptNumbersSection playerA={playerA} playerB={playerB} state={deep.sequence} />}
+
+      {playerA && playerB && (
+        <HeadToHeadSection
+          playerAName={playerA.name}
+          playerBName={playerB.name}
+          data={headToHead.data}
+          loading={headToHead.loading}
+          error={headToHead.error}
+          rivalry={{
+            data: deep.sequence.data?.rivalry ?? null,
+            loading: deep.sequence.loading,
+            error: deep.sequence.error,
+          }}
+        />
+      )}
+
       {!core.loading && !core.error && playerA && playerB && (
         <section className="panel overflow-hidden">
-          <div className="p-5 pb-3 sm:p-7 sm:pb-4"><SectionHeading eyebrow="Tempoverteilung" title="Speed" /></div>
+          <div className="p-5 pb-3 sm:p-7 sm:pb-4"><SectionHeading eyebrow="Anteil aller qualifizierten gültigen Zeiten" title="Speed & Peak Performance" /></div>
           {speed.loading ? (
             <div className="grid min-h-28 place-items-center"><LoaderCircle className="context-accent-text size-5 animate-spin" aria-label="Speed-Werte werden geladen" /></div>
           ) : speed.error ? (
@@ -165,13 +224,15 @@ export function PlayerComparePage() {
       )}
 
       {playerA && playerB && (
-        <HeadToHeadSection
-          playerAName={playerA.name}
-          playerBName={playerB.name}
-          data={headToHead.data}
-          loading={headToHead.loading}
-          error={headToHead.error}
-        />
+        <CompareConsistencySection sequence={deep.sequence} performanceA={speed.data?.playerA ?? null} performanceB={speed.data?.playerB ?? null} />
+      )}
+
+      {playerA && playerB && (
+        <CompareEventPerformanceSection statsA={detailA?.statistics ?? null} statsB={detailB?.statistics ?? null} sequence={deep.sequence} />
+      )}
+
+      {playerA && playerB && (
+        <CompareSummarySection playerA={playerA} playerB={playerB} values={summaryValues} />
       )}
     </div>
   );
@@ -181,13 +242,15 @@ function createMainMetrics(
   left: ActiveStatistics,
   right: ActiveStatistics,
   isAllTime: boolean,
+  leftMedian: number | null,
+  rightMedian: number | null,
 ): Metric[] {
   const seasonHasLeftTime = isAllTime || left?.personalBestHundredths != null;
   const seasonHasRightTime = isAllTime || right?.personalBestHundredths != null;
   return [
-    metric("Rang", left?.rank ?? null, right?.rank ?? null, "lower", integerMetric),
     metric(isAllTime ? "Personal Best" : "Saison-PB", left?.personalBestHundredths ?? null, right?.personalBestHundredths ?? null, "lower", timeMetric),
     metric(isAllTime ? "Durchschnitt" : "Saison-Durchschnitt", left?.averageHundredths ?? null, right?.averageHundredths ?? null, "lower", timeMetric),
+    metric(isAllTime ? "Median" : "Saison-Median", leftMedian, rightMedian, "lower", timeMetric),
     metric("Getrunken", seasonHasLeftTime ? left?.validAttempts ?? null : null, seasonHasRightTime ? right?.validAttempts ?? null : null, "higher", drinkMetric),
     metric("Eventteilnahmen", left?.eventParticipations ?? null, right?.eventParticipations ?? null, "higher", integerMetric),
     metric("Siege", left?.wins ?? null, right?.wins ?? null, "higher", integerMetric),
@@ -235,4 +298,39 @@ function podiums(stats: ActiveStatistics) {
 function dnfRate(stats: ActiveStatistics) {
   if (!stats || stats.validAttempts + stats.dnfCount === 0) return null;
   return dnfPercentage(stats.validAttempts, stats.dnfCount);
+}
+
+function createSummaryValues(
+  main: Metric[],
+  speed: Metric[],
+  statsA: ActiveStatistics,
+  statsB: ActiveStatistics,
+  performanceA: PlayerTimePerformance | null,
+  performanceB: PlayerTimePerformance | null,
+  sequence: PlayerCompareSequencePair | null,
+): ComparableValue[] {
+  const values = [...main, ...speed].map(({ left, right, direction }) => ({
+    left: left.raw,
+    right: right.raw,
+    direction,
+  }));
+  values.push(
+    { left: performanceA?.standardDeviationHundredths ?? null, right: performanceB?.standardDeviationHundredths ?? null, direction: "lower" },
+    { left: sequence?.playerA.longestSub3Streak ?? null, right: sequence?.playerB.longestSub3Streak ?? null, direction: "higher" },
+    { left: sequence?.playerA.longestNoDnfStreak ?? null, right: sequence?.playerB.longestNoDnfStreak ?? null, direction: "higher" },
+    { left: statsA?.eventLeadSeconds ?? null, right: statsB?.eventLeadSeconds ?? null, direction: "higher" },
+    { left: statsA?.eventBestBreaks ?? null, right: statsB?.eventBestBreaks ?? null, direction: "higher" },
+    { left: sequence?.playerA.fastestFirstAttemptHundredths ?? null, right: sequence?.playerB.fastestFirstAttemptHundredths ?? null, direction: "lower" },
+    { left: sequence?.rivalry.playerALeadSeconds ?? null, right: sequence?.rivalry.playerBLeadSeconds ?? null, direction: "higher" },
+    { left: sequence?.rivalry.playerALeadTakes ?? null, right: sequence?.rivalry.playerBLeadTakes ?? null, direction: "higher" },
+  );
+  const attemptsA = new Map(sequence?.playerA.attemptNumbers.map((point) => [point.attemptNumber, point.averageHundredths]) ?? []);
+  const attemptsB = new Map(sequence?.playerB.attemptNumbers.map((point) => [point.attemptNumber, point.averageHundredths]) ?? []);
+  const attemptNumbers = [...new Set([...attemptsA.keys(), ...attemptsB.keys()])];
+  values.push(...attemptNumbers.map((attemptNumber) => ({
+    left: attemptsA.get(attemptNumber) ?? null,
+    right: attemptsB.get(attemptNumber) ?? null,
+    direction: "lower" as const,
+  })));
+  return values;
 }

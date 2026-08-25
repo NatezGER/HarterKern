@@ -81,27 +81,62 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Einstieg:** `src/pages/PlayerComparePage.tsx`, Route `/compare` mit
   `playerA`- und `playerB`-Queryparametern; zusätzlich dezente Aktion im
   Spielerprofil.
-- **Hooks/Services:** `usePlayerCompare`, `playerCompareService`, vorhandene
-  gecachte Sections aus `playerProfileService`, Players-Datengruppe.
-- **Views/RPCs:** Pro ausgewähltem Spieler nur vorhandener Profil-Core,
-  optionales Saisonprofil und `qualified_official_times` beziehungsweise
-  `season_qualified_official_times`; für H2H zweimal `player_event_history`
-  sowie ein gebündelter `events`-Status-Read für die gemeinsamen Event-IDs.
-- **Route Load:** Die Auswahlliste benötigt gebündelt 2 Requests. Je Spieler
-  folgen All-Time 4 Core- und 1 Speed-Request, saisonal zusätzlich 2 vorhandene
-  Saison-Core-Requests. H2H ergänzt 2 gecachte player-scoped History-Reads und
-  1 gebündelten Closed-Event-Read; All-Time damit maximal 15, saisonal 19
-  Route-Requests. Identische gleichzeitige Profilreads werden dedupliziert.
+- **Hooks/Services:** `usePlayerCompare`, `playerCompareService` sowie der davon
+  unabhängige Deep-Block `usePlayerDeepCompare` / `playerDeepCompareService`;
+  vorhandene gecachte Sections aus `playerProfileService`, Players-Datengruppe.
+- **Finale Reihenfolge:** Hero/Selektoren, Hauptstatistiken, gemeinsame
+  PB-Entwicklung, Nach Versuchsnummer, Head to Head/Rivalry, Speed & Peak,
+  Konstanz & Serien, Event- & Leistungswerte und experimentelle
+  Vergleichszusammenfassung.
+- **Views/RPCs und Aggregate:** Pro ausgewähltem Spieler werden vorhandener
+  Profil-Core, optionales Saisonprofil und die bereits von P11A verwendeten
+  `qualified_official_times` beziehungsweise `season_qualified_official_times`
+  wiederverwendet. Daraus entstehen clientseitig Median, Zeitquoten inklusive
+  Unter 2,5/2,0, Top-3/Top-5-Mittel, Standardabweichung und PB-Abstände. Der
+  vorhandene Eventführungs-RPC liefert allgemeine Führungszeit und gebrochene
+  Eventbestzeiten. Es gibt keine separaten Reads pro Kennzahl.
+- **Sequenzdaten:** Genau ein gebündelter, chronologischer Read auf `attempts`
+  mit eingebettetem `events` lädt beide Spieler, nur freigegebene reguläre
+  Versuche aus abgeschlossenen, nicht gelöschten Events und filtert die Saison
+  am Eventdatum. Er wird ausschließlich für Reihenfolgenwerte verwendet:
+  längste Unter-3-Serie, längste DNF-freie Serie, schnellster erster Versuch,
+  Versuch-Nummer-Mittel sowie direkte Rivalitätszeit und Führungswechsel.
+- **PB-Progression:** Je Spieler genau ein bestehender persönlicher Read:
+  All-Time `player_pb_history`, saisonal `get_player_season_pb_history`. Es
+  werden keine globalen WR-Verläufe für den Vergleich geladen.
+- **Route Load:** Die P11A/P11B-Basis liegt bei maximal 15 All-Time- und 19
+  Saison-Requests. P11C ergänzt einen gemeinsamen Sequenz-Read und zwei
+  persönliche Progressions-Reads. Damit liegen die Maxima bei 18 (All-Time)
+  beziehungsweise 22 (Saison), ohne N+1 sowie ohne Badge- oder Prestige-Reads.
+- **Fehlerisolation:** P11A-Core/Speed und P11B-H2H laden unabhängig von P11C.
+  Innerhalb von P11C haben Sequenzdaten und Progression eigene Lade- und
+  Fehlerzustände; die beiden Progressions-Reads werden tolerant zusammengeführt,
+  sodass eine vorhandene Spielerserie trotz Ausfall der anderen sichtbar bleibt.
+- **Datenbankentscheidung:** Keine Migration. Die finale, reduzierte Metrikmenge
+  wird vollständig von bestehenden qualifizierten Reads/RPCs sowie einem
+  gebündelten Read auf den vorhandenen Basistabellen abgedeckt. Es werden keine
+  veraltbaren, abgeleiteten Spalten gespeichert.
 - **Tests:** `npm test -- src/lib/playerCompare.test.ts
-  src/services/playerCompareService.test.ts src/pages/PlayerComparePage.test.tsx
-  src/services/historyProfileService.test.ts`.
+  src/lib/playerCompareDeep.test.ts src/services/playerCompareService.test.ts
+  src/services/playerDeepCompareService.test.ts src/pages/PlayerComparePage.test.tsx
+  src/services/historyProfileService.test.ts src/components/compare/DeepCompareSections.test.tsx
+  src/components/progression/ProgressionTimeline.test.tsx src/services/dataGroupService.test.ts`.
 - **Direkte Abhängigkeiten:** Spieler-Stammdaten, Spielerprofil-Core,
   Saisonkontext und Zeitquoten.
 - **H2H-Semantik:** Nur abgeschlossene gemeinsame Events mit je mindestens
   einer qualifizierten gültigen Eventbestzeit zählen. Ties beenden Serien und
-  werden nicht in den großen A:B-Score eingerechnet.
-- **Nicht enthalten:** Progressionsvergleich, Attempt Numbers, Awards,
-  Gesamtsieger und Drei-Spieler-Vergleich.
+  werden nicht in den großen A:B-Score eingerechnet. Direkte Führungszeit zählt
+  erst, sobald beide Spieler im jeweiligen Event eine vergleichbare gültige Zeit
+  besitzen, und endet spätestens mit Eventschluss. Eine direkte Führungsübernahme
+  zählt nur beim Wechsel vom bislang führenden Gegner zum Einreicher; erster
+  vergleichbarer Vorsprung und Gleichstände zählen nicht als Übernahme.
+- **Deep-Sections:** Gemeinsame PB-Progression, season-aware Attempt Numbers,
+  Speed & Peak, Konstanz & Serien, Event- & Leistungswerte und eine leicht
+  entfernbare, ausdrücklich experimentelle Lead-Zusammenfassung ohne Score,
+  Gewichtung oder Gewinnertext. Profil-Auszeichnungen und zusätzliche
+  spielerprofilfremde Kennzahlen sind nicht Teil des Vergleichs.
+- **Nicht enthalten:** Drei-Spieler-Vergleich, neue Prestigeformel oder ein
+  offizieller Gesamtsieger.
 
 ## 6. Live-Event und Eventverwaltung
 
