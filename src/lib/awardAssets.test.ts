@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   badgeAssetId,
+  awardAssetType,
   groupBadgeDefinitions,
   medalAssetId,
   resolveAwardAsset,
@@ -19,6 +20,15 @@ describe("award asset identity and fallback", () => {
       year: 2026,
       tier: "gold",
     })).toBe("trophy:season:2026:gold");
+  });
+
+  it("resolves every supported medal, badge and generated trophy identity", () => {
+    expect(([1, 2, 3] as const).map((rank) => awardAssetType(medalAssetId(rank))))
+      .toEqual(["medal", "medal", "medal"]);
+    expect(awardAssetType(badgeAssetId("first-sub3"))).toBe("badge");
+    for (const trophy of TROPHY_ASSET_DEFINITIONS) {
+      expect(awardAssetType(trophyAssetId(trophy)), trophyAssetId(trophy)).toBe("trophy");
+    }
   });
 
   it("defines regular and historical trophy slots without awarded trophy data", () => {

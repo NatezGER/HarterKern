@@ -1,13 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const invokeAdminMedia = vi.hoisted(() => vi.fn());
+const validateAwardAssetFile = vi.hoisted(() => vi.fn());
 
 vi.mock("@/services/adminMediaService", () => ({ invokeAdminMedia }));
+vi.mock("@/lib/media", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/media")>(),
+  validateAwardAssetFile,
+}));
 
 import {
   removeEventPhoto,
   removePlayerAvatar,
   uploadEventPhotos,
+  uploadAwardAsset,
   uploadPlayerAvatar,
 } from "@/services/mediaService";
 
@@ -21,6 +27,7 @@ describe("code-admin media workflow", () => {
       ok: true,
       publicUrl: "https://example.supabase.co/avatar.jpg",
     });
+    validateAwardAssetFile.mockReset().mockResolvedValue(null);
   });
 
   it.each(["image/jpeg", "image/png", "image/webp"])(
@@ -64,5 +71,19 @@ describe("code-admin media workflow", () => {
     const file = new File(["gif"], "avatar.gif", { type: "image/gif" });
     await expect(uploadPlayerAvatar(playerId, file)).rejects.toThrow("JPEG");
     expect(invokeAdminMedia).not.toHaveBeenCalled();
+  });
+
+  it("accepts a valid generated trophy ID before validating and uploading its file", async () => {
+    const assetId = "trophy:season:2026:gold";
+    const file = new File(["png"], "trophy.png", { type: "image/png" });
+
+    await expect(uploadAwardAsset(assetId, file))
+      .resolves.toBe("https://example.supabase.co/avatar.jpg");
+    expect(validateAwardAssetFile).toHaveBeenCalledWith(file, "trophy");
+    expect(invokeAdminMedia).toHaveBeenCalledWith(
+      "upload-award-asset",
+      { assetId },
+      file,
+    );
   });
 });

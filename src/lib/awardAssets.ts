@@ -2,6 +2,7 @@ import type { BadgeTier } from "@/types/pr7Foundation";
 import type { TrophyTier } from "@/types/pr8";
 import {
   TROPHY_COMPETITIONS,
+  isTrophySlotAssetId,
   trophySlotAssetId,
 } from "../../supabase/functions/_shared/trophySlots";
 import type { TrophyCompetitionKey } from "../../supabase/functions/_shared/trophySlots";
@@ -76,8 +77,10 @@ export function trophyAssetIdForAward(trophy: {
 }
 
 export function awardAssetType(assetId: string): AwardAssetType | null {
-  const type = assetId.split(":", 1)[0];
-  return type === "medal" || type === "badge" || type === "trophy" ? type : null;
+  if (/^medal:podium:(gold|silver|bronze)$/.test(assetId)) return "medal";
+  if (/^badge:[a-z0-9][a-z0-9-]{1,119}$/.test(assetId)) return "badge";
+  if (isTrophySlotAssetId(assetId)) return "trophy";
+  return null;
 }
 
 export function badgeFamilyLabel(definitions: BadgeAssetDefinition[]) {
