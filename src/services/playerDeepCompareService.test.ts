@@ -1,63 +1,76 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const getAttempts = vi.hoisted(() => vi.fn());
-const loadSection = vi.hoisted(() => vi.fn());
+const mocks = vi.hoisted(() => ({
+  timeline: vi.fn(),
+  progression: vi.fn(),
+  legacySection: vi.fn().mockRejectedValue({ code: "57014", message: "canceling statement due to statement timeout" }),
+}));
 
 vi.mock("@/services/historyProfileService", () => ({
-  getPlayerCompareAttempts: getAttempts,
+  getPlayerCompareTimeline: mocks.timeline,
+  getPlayerPersonalProgression: mocks.progression,
 }));
 vi.mock("@/services/playerProfileService", () => ({
-  loadPlayerProfileSection: loadSection,
+  loadPlayerProfileSection: mocks.legacySection,
 }));
 
-import { loadPlayerDeepCompare } from "@/services/playerDeepCompareService";
+import {
+  loadPlayerCompareProgression,
+  loadPlayerCompareSequence,
+} from "@/services/playerDeepCompareService";
 
-describe("playerDeepCompareService", () => {
+describe("playerDeepCompareService isolation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getAttempts.mockImplementation((playerId: string) => Promise.resolve([
-      { id: `${playerId}-old`, eventId: "old", timeHundredths: 280, isDnf: false, submittedAt: "2025-01-01", attemptNumber: 1, isPersonalBest: false },
-      { id: `${playerId}-new-1`, eventId: "new", timeHundredths: 290, isDnf: false, submittedAt: "2026-01-01", attemptNumber: 1, isPersonalBest: false },
-      { id: `${playerId}-new-2`, eventId: "new", timeHundredths: null, isDnf: true, submittedAt: "2026-01-02", attemptNumber: 2, isPersonalBest: false },
-    ]));
-    loadSection.mockImplementation((section: string, playerId: string, options?: { seasonYear?: number }) => {
-      if (section === "events") return Promise.resolve([
-        { eventId: "old", eventDate: "2025-01-01" },
-        { eventId: "new", eventDate: "2026-01-01" },
-      ]);
-      if (section === "performance") return Promise.resolve({ timeHundredths: options?.seasonYear ? [290] : [280, 290], thresholds: [] });
-      if (section === "progression") return Promise.resolve({ personal: [{ id: `${playerId}-${options?.seasonYear ?? "all"}` }], worldRecords: [] });
-      if (section === "badges") return Promise.resolve([]);
-      if (section === "prestige") return Promise.resolve({ pbCount: 0, largestPbImprovementHundredths: null, averagePbImprovementHundredths: null, worldRecordCount: 0, worldRecordDays: 0, longestWorldRecordDays: 0, visibleBadgeCount: 0 });
-      throw new Error(`Unexpected section ${section}`);
+    mocks.timeline.mockResolvedValue([
+      attempt("a", 1, 290, "2026-01-01T00:01:00Z"),
+      attempt("b", 1, 310, "2026-01-01T00:02:00Z"),
+    ]);
+    mocks.progression.mockImplementation((playerId: string) => Promise.resolve([{
+      id: `${playerId}-pb`, timeHundredths: 300, achievedAt: "2026-01-01",
+    }]));
+  });
+
+  it("regresses the former Badge-RPC timeout by removing badge and prestige dependencies", async () => {
+    await expect(loadPlayerCompareSequence("a", "b", 2026)).resolves.toMatchObject({
+      playerA: { longestSub3Streak: 1 },
+      playerB: { longestSub3Streak: 0 },
+    });
+    expect(mocks.legacySection).not.toHaveBeenCalled();
+    expect(mocks.timeline).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes the established season scope into the single paired timeline read", async () => {
+    await loadPlayerCompareSequence("a", "b", 2027);
+    expect(mocks.timeline).toHaveBeenCalledWith("a", "b", 2027);
+  });
+
+  it("keeps one progression series when the other player request fails", async () => {
+    mocks.progression.mockImplementation((playerId: string) => playerId === "a"
+      ? Promise.reject(new Error("progression unavailable"))
+      : Promise.resolve([{ id: "b-pb" }]));
+    await expect(loadPlayerCompareProgression("a", "b", 2026)).resolves.toEqual({
+      playerA: null,
+      playerB: [{ id: "b-pb" }],
+      playerAError: true,
+      playerBError: false,
     });
   });
 
-  it("loads one bundled attempt read per player and reuses profile sections", async () => {
-    const result = await loadPlayerDeepCompare("a", "b");
-    expect(getAttempts).toHaveBeenCalledTimes(2);
-    expect(getAttempts).toHaveBeenCalledWith("a");
-    expect(getAttempts).toHaveBeenCalledWith("b");
-    expect(loadSection).toHaveBeenCalledTimes(10);
-    expect(result.playerA?.statistics.attemptNumbers).toHaveLength(2);
-    expect(result.playerB?.statistics.eventDominance.eventsWithAttempts).toBe(2);
-  });
-
-  it("applies the event season before streak and attempt-number calculations", async () => {
-    const result = await loadPlayerDeepCompare("a", "b", 2026);
-    expect(result.playerA?.statistics.attemptNumbers).toEqual([
-      { attemptNumber: 1, samples: 1, validAttempts: 1, dnfCount: 0, averageHundredths: 290 },
-      { attemptNumber: 2, samples: 1, validAttempts: 0, dnfCount: 1, averageHundredths: null },
-    ]);
-    expect(result.playerA?.statistics.consistency.noDnf).toEqual({ longest: 1, current: 0 });
-    expect(loadSection).toHaveBeenCalledWith("performance", "a", { seasonYear: 2026 });
-    expect(loadSection).toHaveBeenCalledWith("progression", "b", { seasonYear: 2026 });
-  });
-
-  it("skips reads for an unselected side", async () => {
-    const result = await loadPlayerDeepCompare("a", null, 2026);
-    expect(result.playerA).not.toBeNull();
-    expect(result.playerB).toBeNull();
-    expect(getAttempts).toHaveBeenCalledTimes(1);
+  it("allows progression to succeed even when the sequence read fails", async () => {
+    mocks.timeline.mockRejectedValueOnce(new Error("timeline unavailable"));
+    await expect(loadPlayerCompareSequence("a", "b", 2030)).rejects.toThrow("timeline unavailable");
+    await expect(loadPlayerCompareProgression("a", "b", 2030)).resolves.toMatchObject({
+      playerAError: false,
+      playerBError: false,
+    });
   });
 });
+
+function attempt(playerId: string, attemptNumber: number, timeHundredths: number, submittedAt: string) {
+  return {
+    id: `${playerId}-${attemptNumber}`, eventId: "shared", eventName: "Shared",
+    eventDate: "2026-01-01", eventEndAt: "2026-01-01T00:10:00Z", playerId,
+    timeHundredths, isDnf: false, submittedAt, attemptNumber,
+  };
+}

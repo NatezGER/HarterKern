@@ -86,7 +86,7 @@ export function getRouteDataPlan(pathname: string): RouteDataPlan {
   if (pathname === "/compare") {
     return {
       required: ["players"],
-      optional: ["profile-core", "profile-season", "profile-performance", "profile-events", "profile-progression", "profile-badges", "profile-prestige"],
+      optional: ["profile-core", "profile-season", "profile-performance", "profile-events", "profile-progression"],
     };
   }
   if (pathname.startsWith("/player/")) {

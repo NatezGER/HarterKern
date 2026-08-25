@@ -1,129 +1,131 @@
 import { describe, expect, it } from "vitest";
 import {
-  calculateAttemptStreak,
   calculateCompareLeadSummary,
-  calculateDeepPlayerStatistics,
-  calculateFastestAverage,
-  calculateMedian,
-  calculateThresholdShare,
-  compareBadgeCollections,
+  calculateComparePerformance,
+  calculateDirectRivalry,
+  calculatePlayerSequenceStatistics,
+  calculateProgressionCrossovers,
   mergePlayerProgressions,
   visibleAttemptNumbers,
 } from "@/lib/playerCompareDeep";
-import type { CompactBadge, ProgressionPoint } from "@/types/historyProfiles";
-import type { PlayerCompareAttempt } from "@/types/playerCompare";
+import type { ProgressionPoint } from "@/types/historyProfiles";
+import type { PlayerCompareTimelineAttempt } from "@/types/playerCompare";
 
-describe("deep player comparison statistics", () => {
-  const attempts = [
-    attempt("e1", 1, 290),
-    attempt("e1", 2, 280),
-    attempt("e1", 3, null, true),
-    attempt("e2", 1, 310),
-    attempt("e2", 2, 299),
-    attempt("e2", 3, 250),
-    attempt("e3", 1, 295),
-    attempt("e3", 2, 296),
-  ];
-  const times = [290, 280, 310, 299, 250, 295, 296];
-
-  it("calculates median, threshold shares and sorted top averages", () => {
-    expect(calculateMedian([400, 200, 300])).toBe(300);
-    expect(calculateMedian([400, 200, 300, 100])).toBe(250);
-    expect(calculateMedian([])).toBeNull();
-    expect(calculateThresholdShare(times, 300)).toBe(85.7);
-    expect(calculateThresholdShare(times, 200)).toBe(0);
-    expect(calculateThresholdShare([], 300)).toBeNull();
-    expect(calculateFastestAverage(times, 3)).toBe(273);
-    expect(calculateFastestAverage(times, 5)).toBe(282);
-    expect(calculateFastestAverage(times, 8)).toBeNull();
+describe("final player compare statistics", () => {
+  it("calculates every speed threshold, median, top averages and PB gaps", () => {
+    const result = calculateComparePerformance([199, 240, 250, 300, 400]);
+    expect(result.thresholds.map(({ seconds, percent }) => [seconds, percent]))
+      .toEqual([[5, 100], [4, 80], [3, 60]]);
+    expect(result.extremeThresholds.map(({ seconds, percent }) => [seconds, percent]))
+      .toEqual([[2.5, 40], [2, 20]]);
+    expect(result).toMatchObject({
+      medianHundredths: 250,
+      fastestThreeAverageHundredths: 230,
+      fastestFiveAverageHundredths: 278,
+      pbToAverageHundredths: 79,
+      pbToMedianHundredths: 51,
+    });
   });
 
-  it("lets a threshold miss and DNF break chronological streaks", () => {
-    expect(calculateAttemptStreak(attempts, (time) => time < 300))
-      .toEqual({ longest: 4, current: 4 });
-    expect(calculateAttemptStreak(attempts, (time) => time < 400))
-      .toEqual({ longest: 5, current: 5 });
-    expect(calculateAttemptStreak(attempts, () => true))
-      .toEqual({ longest: 5, current: 5 });
-    expect(calculateAttemptStreak([...attempts, attempt("e4", 1, null, true)], () => true))
-      .toEqual({ longest: 5, current: 0 });
+  it("returns zero-percent extreme thresholds when valid samples exist but none qualify", () => {
+    expect(calculateComparePerformance([300, 400]).extremeThresholds)
+      .toMatchObject([{ seconds: 2.5, percent: 0 }, { seconds: 2, percent: 0 }]);
   });
 
-  it("derives consistency, event dominance and every attempt-number bucket", () => {
-    const stats = calculateDeepPlayerStatistics(attempts, times);
-    expect(stats.consistency).toMatchObject({
-      medianHundredths: 295,
-      rangeHundredths: 60,
-      fastestThreeAverageHundredths: 273,
-      fastestFiveAverageHundredths: 282,
-      pbToAverageHundredths: 39,
-      pbToMedianHundredths: 45,
+  it("lets DNF and >=3 seconds break Sub-3 while DNF alone breaks the no-DNF streak", () => {
+    const result = calculatePlayerSequenceStatistics([
+      attempt("e1", "a", 1, 290, "00:01"),
+      attempt("e1", "a", 2, 280, "00:02"),
+      attempt("e1", "a", 3, 300, "00:03"),
+      attempt("e1", "a", 4, 299, "00:04"),
+      attempt("e1", "a", 5, null, "00:05", true),
+      attempt("e1", "a", 6, 250, "00:06"),
+    ]);
+    expect(result.longestSub3Streak).toBe(2);
+    expect(result.longestNoDnfStreak).toBe(4);
+    expect(result.fastestFirstAttemptHundredths).toBe(290);
+  });
+
+  it("builds all attempt-number averages without inventing missing valid values", () => {
+    const result = calculatePlayerSequenceStatistics([
+      attempt("e1", "a", 1, 300, "00:01"),
+      attempt("e1", "a", 2, null, "00:02", true),
+      attempt("e2", "a", 1, 320, "00:03"),
+      attempt("e2", "a", 2, null, "00:04", true),
+      attempt("e2", "a", 3, 280, "00:05"),
+    ]);
+    expect(result.attemptNumbers).toEqual([
+      { attemptNumber: 1, samples: 2, validAttempts: 2, dnfCount: 0, averageHundredths: 310 },
+      { attemptNumber: 2, samples: 2, validAttempts: 0, dnfCount: 2, averageHundredths: null },
+      { attemptNumber: 3, samples: 1, validAttempts: 1, dnfCount: 0, averageHundredths: 280 },
+    ]);
+    expect(visibleAttemptNumbers(result.attemptNumbers, false, 2)).toHaveLength(2);
+    expect(visibleAttemptNumbers(result.attemptNumbers, true, 2)).toHaveLength(3);
+  });
+
+  it("calculates direct lead time and only true takeovers after comparable state", () => {
+    const attempts = [
+      attempt("shared", "a", 1, 300, "00:01"),
+      attempt("shared", "b", 1, 320, "00:02"),
+      attempt("shared", "b", 2, 290, "00:04"),
+      attempt("shared", "a", 2, 290, "00:06"),
+      attempt("shared", "a", 3, 280, "00:07"),
+      attempt("shared", "b", 3, 270, "00:08"),
+      attempt("shared", "a", 4, 260, "00:09"),
+      attempt("only-a", "a", 1, 250, "00:01"),
+    ];
+    expect(calculateDirectRivalry(attempts, "a", "b")).toEqual({
+      playerALeadSeconds: 240,
+      playerBLeadSeconds: 180,
+      playerALeadTakes: 1,
+      playerBLeadTakes: 2,
+      qualifyingEventCount: 1,
     });
-    expect(stats.eventDominance).toEqual({
-      fastestFirstAttemptHundredths: 290,
-      bestEventAverageHundredths: 285,
-      eventsWithSub3: 3,
-      eventsWithoutDnf: 2,
-      perfectSub3Events: 1,
-      eventsWithAttempts: 3,
-    });
-    expect(stats.attemptNumbers).toEqual([
-      { attemptNumber: 1, samples: 3, validAttempts: 3, dnfCount: 0, averageHundredths: 298 },
-      { attemptNumber: 2, samples: 3, validAttempts: 3, dnfCount: 0, averageHundredths: 292 },
-      { attemptNumber: 3, samples: 2, validAttempts: 1, dnfCount: 1, averageHundredths: 250 },
+  });
+
+  it("merges progression dates and identifies actual leader crossovers", () => {
+    const playerA = [progression("a1", "2026-01-01", 400), progression("a2", "2026-03-01", 370)];
+    const playerB = [progression("b1", "2026-02-01", 380), progression("b2", "2026-04-01", 360)];
+    expect(mergePlayerProgressions(playerA, playerB).map(({ id }) => id))
+      .toEqual(["a1", "b1", "a2", "b2"]);
+    expect(calculateProgressionCrossovers(playerA, playerB)).toEqual([
+      { player: "a", pointId: "a2", achievedAt: "2026-03-01" },
+      { player: "b", pointId: "b2", achievedAt: "2026-04-01" },
     ]);
   });
 
-  it("derives exact-repeat and PB-proximity nerd statistics", () => {
-    const stats = calculateDeepPlayerStatistics([
-      attempt("e1", 1, 250), attempt("e1", 2, 250), attempt("e2", 1, 275),
-      attempt("e2", 2, 310),
-    ], [250, 250, 275, 310]);
-    expect(stats.madness).toMatchObject({
-      modalTimeHundredths: 250,
-      modalTimeHits: 2,
-      exactRepeatCount: 1,
-      withinQuarterSecondOfPbPercent: 75,
-      withinHalfSecondOfPbPercent: 75,
-      distinctSub3Times: 2,
-      mostCommonHundredth: 50,
-      mostCommonHundredthHits: 2,
-    });
-  });
-
-  it("supports mobile disclosure, badge sets and neutral summary rules", () => {
-    expect(visibleAttemptNumbers([1, 2, 3, 4, 5, 6], false)).toEqual([1, 2, 3, 4, 5]);
-    expect(visibleAttemptNumbers([1, 2, 3, 4, 5, 6], true)).toHaveLength(6);
-    const battle = compareBadgeCollections([badge("a"), badge("shared")], [badge("shared"), badge("b")]);
-    expect(battle.onlyA.map(({ badgeKey }) => badgeKey)).toEqual(["a"]);
-    expect(battle.shared.map(({ playerA }) => playerA.badgeKey)).toEqual(["shared"]);
-    expect(battle.onlyB.map(({ badgeKey }) => badgeKey)).toEqual(["b"]);
+  it("counts A leads, B leads and ties while excluding nulls", () => {
     expect(calculateCompareLeadSummary([
       { left: 2, right: 3, direction: "lower" },
-      { left: 4, right: 3, direction: "higher" },
+      { left: 2, right: 3, direction: "higher" },
       { left: 2, right: 2, direction: "higher" },
       { left: null, right: 2, direction: "higher" },
-    ])).toEqual({ playerALeads: 2, playerBLeads: 0, ties: 1, compared: 3 });
-  });
-
-  it("merges different progression dates without aligning attempt counts", () => {
-    const merged = mergePlayerProgressions(
-      [progression("a2", "2026-02-01"), progression("a1", "2026-01-01")],
-      [progression("b1", "2026-01-15")],
-    );
-    expect(merged.map(({ id, player }) => `${player}:${id}`))
-      .toEqual(["a:a1", "b:b1", "a:a2"]);
+    ])).toEqual({ playerALeads: 1, playerBLeads: 1, ties: 1, compared: 3 });
   });
 });
 
-function attempt(eventId: string, attemptNumber: number, timeHundredths: number | null, isDnf = false): PlayerCompareAttempt {
-  return { id: `${eventId}-${attemptNumber}`, eventId, eventDate: "2026-01-01", attemptNumber, timeHundredths, isDnf, submittedAt: `2026-01-01T00:00:0${attemptNumber}Z`, isPersonalBest: false };
+function attempt(
+  eventId: string,
+  playerId: string,
+  attemptNumber: number,
+  timeHundredths: number | null,
+  minute: string,
+  isDnf = false,
+): PlayerCompareTimelineAttempt {
+  return {
+    id: `${eventId}-${playerId}-${attemptNumber}`,
+    eventId,
+    eventName: eventId,
+    eventDate: "2026-01-01",
+    eventEndAt: "2026-01-01T00:10:00Z",
+    playerId,
+    timeHundredths,
+    isDnf,
+    submittedAt: `2026-01-01T${minute}:00Z`,
+    attemptNumber,
+  };
 }
 
-function badge(badgeKey: string): CompactBadge {
-  return { key: badgeKey, badgeKey, playerId: "p", playerName: "P", playerAvatarUrl: null, name: badgeKey, tier: "bronze", awardedAt: "2026-01-01", eventId: null, description: "", category: "", familyKey: null, requirement: "", threshold: null, recipientCount: 1, regularPlayerCount: 2, rarityPercent: 50, sourceAttemptId: null, sourceHistoricalAttemptId: null, eventName: null, sourceAttemptNumber: null, sourceTimeHundredths: null, nextBadgeName: null, nextRequirement: null, nextTier: null, nextThreshold: null, currentProgress: null, isSpecialEventBadge: false, badgeKind: "tiered", designVariant: "standard", scopeType: "all_time", bingoLineCounts: null };
-}
-
-function progression(id: string, achievedAt: string): ProgressionPoint {
-  return { id, timeHundredths: 300, previousHundredths: null, achievedAt, achievedDate: achievedAt, eventId: null, sourceLabel: id, sourceType: "attempt", improvementHundredths: null, durationDays: 1, isCurrent: false };
+function progression(id: string, achievedAt: string, timeHundredths: number): ProgressionPoint {
+  return { id, timeHundredths, previousHundredths: null, achievedAt, achievedDate: achievedAt, eventId: null, sourceLabel: id, sourceType: "attempt", improvementHundredths: null, durationDays: 1, isCurrent: false };
 }

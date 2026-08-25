@@ -1,26 +1,16 @@
-import type {
-  CompactBadge,
-  PlayerProfilePrestige,
-  PlayerProfileProgression,
-} from "@/types/historyProfiles";
+import type { ProgressionPoint } from "@/types/historyProfiles";
 
-export interface PlayerCompareAttemptRead {
+export interface PlayerCompareTimelineAttempt {
   id: string;
   eventId: string;
+  eventName: string;
+  eventDate: string;
+  eventEndAt: string;
+  playerId: string;
   timeHundredths: number | null;
   isDnf: boolean;
   submittedAt: string;
   attemptNumber: number;
-  isPersonalBest: boolean;
-}
-
-export interface PlayerCompareAttempt extends PlayerCompareAttemptRead {
-  eventDate: string;
-}
-
-export interface CompareStreakSummary {
-  longest: number;
-  current: number;
 }
 
 export interface CompareAttemptNumberPoint {
@@ -31,62 +21,32 @@ export interface CompareAttemptNumberPoint {
   averageHundredths: number | null;
 }
 
-export interface PlayerConsistencyStatistics {
-  medianHundredths: number | null;
-  standardDeviationHundredths: number | null;
-  rangeHundredths: number | null;
-  fastestThreeAverageHundredths: number | null;
-  fastestFiveAverageHundredths: number | null;
-  pbToAverageHundredths: number | null;
-  pbToMedianHundredths: number | null;
-  sub3: CompareStreakSummary;
-  sub4: CompareStreakSummary;
-  noDnf: CompareStreakSummary;
-}
-
-export interface PlayerEventDominanceStatistics {
+export interface PlayerCompareSequenceStatistics {
+  longestSub3Streak: number;
+  longestNoDnfStreak: number;
   fastestFirstAttemptHundredths: number | null;
-  bestEventAverageHundredths: number | null;
-  eventsWithSub3: number;
-  eventsWithoutDnf: number;
-  perfectSub3Events: number;
-  eventsWithAttempts: number;
-}
-
-export interface PlayerStatMadness {
-  modalTimeHundredths: number | null;
-  modalTimeHits: number;
-  exactRepeatCount: number;
-  withinQuarterSecondOfPbPercent: number | null;
-  withinHalfSecondOfPbPercent: number | null;
-  distinctSub3Times: number;
-  mostCommonHundredth: number | null;
-  mostCommonHundredthHits: number;
-}
-
-export interface PlayerDeepStatistics {
-  consistency: PlayerConsistencyStatistics;
-  eventDominance: PlayerEventDominanceStatistics;
   attemptNumbers: CompareAttemptNumberPoint[];
-  madness: PlayerStatMadness;
 }
 
-export interface PlayerDeepCompareData {
-  statistics: PlayerDeepStatistics;
-  progression: PlayerProfileProgression;
-  badges: CompactBadge[];
-  prestige: PlayerProfilePrestige;
+export interface DirectRivalrySummary {
+  playerALeadSeconds: number;
+  playerBLeadSeconds: number;
+  playerALeadTakes: number;
+  playerBLeadTakes: number;
+  qualifyingEventCount: number;
 }
 
-export interface PlayerDeepComparePair {
-  playerA: PlayerDeepCompareData | null;
-  playerB: PlayerDeepCompareData | null;
+export interface PlayerCompareSequencePair {
+  playerA: PlayerCompareSequenceStatistics;
+  playerB: PlayerCompareSequenceStatistics;
+  rivalry: DirectRivalrySummary;
 }
 
-export interface BadgeComparison {
-  onlyA: CompactBadge[];
-  shared: Array<{ playerA: CompactBadge; playerB: CompactBadge }>;
-  onlyB: CompactBadge[];
+export interface PlayerCompareProgressionPair {
+  playerA: ProgressionPoint[] | null;
+  playerB: ProgressionPoint[] | null;
+  playerAError: boolean;
+  playerBError: boolean;
 }
 
 export interface ComparableValue {
@@ -100,4 +60,10 @@ export interface CompareLeadSummary {
   playerBLeads: number;
   ties: number;
   compared: number;
+}
+
+export interface ProgressionCrossover {
+  player: "a" | "b";
+  pointId: string;
+  achievedAt: string;
 }

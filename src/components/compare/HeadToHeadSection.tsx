@@ -10,6 +10,7 @@ import type {
   HeadToHeadStreak,
   HeadToHeadSummary,
 } from "@/types/historyProfiles";
+import type { DirectRivalrySummary } from "@/types/playerCompare";
 import { formatDate, formatTime } from "@/utils/format";
 
 interface HeadToHeadSectionProps {
@@ -18,6 +19,7 @@ interface HeadToHeadSectionProps {
   data: HeadToHeadSummary | null;
   loading: boolean;
   error: string;
+  rivalry?: { data: DirectRivalrySummary | null; loading: boolean; error: string };
 }
 
 export function HeadToHeadSection({
@@ -26,6 +28,7 @@ export function HeadToHeadSection({
   data,
   loading,
   error,
+  rivalry,
 }: HeadToHeadSectionProps) {
   const [expanded, setExpanded] = useState(false);
   if (loading) {
@@ -61,6 +64,8 @@ export function HeadToHeadSection({
             {data.ties} {data.ties === 1 ? "Unentschieden" : "Unentschieden"} · {data.totalDuels} gemeinsame {data.totalDuels === 1 ? "Duell" : "Duelle"}
           </p>
         </div>
+
+        {rivalry && <DirectRivalryMetrics {...rivalry} playerAName={playerAName} playerBName={playerBName} />}
 
         <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-5 sm:gap-4">
           <HighlightCard
@@ -118,6 +123,46 @@ export function HeadToHeadSection({
       </div>
     </section>
   );
+}
+
+function DirectRivalryMetrics({
+  data,
+  loading,
+  error,
+  playerAName,
+  playerBName,
+}: {
+  data: DirectRivalrySummary | null;
+  loading: boolean;
+  error: string;
+  playerAName: string;
+  playerBName: string;
+}) {
+  if (loading) return <p className="mt-4 text-center text-xs text-white/35">Direkte Rivalry-Zeit wird geladen …</p>;
+  if (error || !data) return <p className="mt-4 text-center text-xs text-amber-100/55">{error || "Direkte Rivalry-Werte sind nicht verfügbar."}</p>;
+  return (
+    <div className="mt-4 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] sm:mt-5">
+      <RivalryRow label="Direkte Führungszeit" left={formatLeadDuration(data.playerALeadSeconds)} right={formatLeadDuration(data.playerBLeadSeconds)} playerAName={playerAName} playerBName={playerBName} />
+      <RivalryRow label="Führung direkt abgenommen" left={String(data.playerALeadTakes)} right={String(data.playerBLeadTakes)} playerAName={playerAName} playerBName={playerBName} />
+    </div>
+  );
+}
+
+function RivalryRow({ label, left, right, playerAName, playerBName }: { label: string; left: string; right: string; playerAName: string; playerBName: string }) {
+  return (
+    <div className="grid min-h-20 grid-cols-[minmax(0,1fr)_minmax(7rem,0.8fr)_minmax(0,1fr)] items-center border-t border-white/[0.06] px-3 first:border-t-0 sm:px-5">
+      <div className="min-w-0"><strong className="font-display text-xl tabular-nums sm:text-2xl">{left}</strong><p className="truncate text-[9px] text-white/30">{playerAName}</p></div>
+      <p className="px-1 text-center text-[9px] font-black uppercase leading-tight tracking-[0.1em] text-white/40 sm:text-[10px]">{label}</p>
+      <div className="min-w-0 text-right"><strong className="font-display text-xl tabular-nums sm:text-2xl">{right}</strong><p className="truncate text-[9px] text-white/30">{playerBName}</p></div>
+    </div>
+  );
+}
+
+function formatLeadDuration(seconds: number) {
+  if (seconds < 60) return `${seconds} Sek.`;
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return hours > 0 ? `${hours} Std. ${minutes} Min.` : `${minutes} Min.`;
 }
 
 function ScoreName({ name }: { name: string }) {

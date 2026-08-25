@@ -14,7 +14,7 @@ interface CompareMetricRowProps {
 export function CompareMetricRow({ label, left, right, direction }: CompareMetricRowProps) {
   const winner = direction == null ? null : evaluateCompareWinner(left.raw, right.raw, direction);
   return (
-    <div className="grid min-h-16 grid-cols-[minmax(0,1fr)_minmax(5.25rem,0.72fr)_minmax(0,1fr)] items-stretch border-t border-white/[0.06] first:border-t-0 sm:min-h-20 sm:grid-cols-[minmax(0,1fr)_minmax(9rem,0.8fr)_minmax(0,1fr)]">
+    <div data-compare-metric={label} className="grid min-h-16 grid-cols-[minmax(0,1fr)_minmax(5.25rem,0.72fr)_minmax(0,1fr)] items-stretch border-t border-white/[0.06] first:border-t-0 sm:min-h-20 sm:grid-cols-[minmax(0,1fr)_minmax(9rem,0.8fr)_minmax(0,1fr)]">
       <MetricValue value={left.display} winner={winner === "a"} align="left" />
       <div className="grid place-items-center px-1 text-center text-[9px] font-bold uppercase leading-tight tracking-[0.08em] text-white/40 sm:px-3 sm:text-[11px] sm:tracking-[0.13em]">
         {label}

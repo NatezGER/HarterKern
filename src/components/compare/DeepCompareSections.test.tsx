@@ -1,8 +1,15 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { DeepCompareSections } from "@/components/compare/DeepCompareSections";
-import type { Player } from "@/types";
-import type { PlayerDeepCompareData } from "@/types/playerCompare";
+import {
+  CompareAttemptNumbersSection,
+  CompareConsistencySection,
+  CompareEventPerformanceSection,
+  CompareProgressionSection,
+  CompareSummarySection,
+} from "@/components/compare/DeepCompareSections";
+import type { Player, } from "@/types";
+import type { PlayerTimePerformance, ProgressionPoint } from "@/types/historyProfiles";
+import type { PlayerCompareSequencePair } from "@/types/playerCompare";
 
 const player = (id: string, name: string): Player => ({
   id, name, initials: name[0], avatarGradient: "", avatarUrl: null,
@@ -10,36 +17,24 @@ const player = (id: string, name: string): Player => ({
   dailyWins: 0, trend: "same", isAk: false, isArchived: false,
 });
 
-const deep = (offset: number): PlayerDeepCompareData => ({
-  statistics: {
-    consistency: {
-      medianHundredths: 290 + offset, standardDeviationHundredths: 10 + offset,
-      rangeHundredths: 50 + offset, fastestThreeAverageHundredths: 270 + offset,
-      fastestFiveAverageHundredths: 280 + offset, pbToAverageHundredths: 40 + offset,
-      pbToMedianHundredths: 30 + offset, sub3: { longest: 4, current: 2 },
-      sub4: { longest: 8, current: 5 }, noDnf: { longest: 9, current: 6 },
-    },
-    eventDominance: {
-      fastestFirstAttemptHundredths: 280 + offset, bestEventAverageHundredths: 290 + offset,
-      eventsWithSub3: 3, eventsWithoutDnf: 2, perfectSub3Events: 1, eventsWithAttempts: 4,
-    },
-    attemptNumbers: Array.from({ length: 6 }, (_, index) => ({
-      attemptNumber: index + 1, samples: 2, validAttempts: 2, dnfCount: 0,
-      averageHundredths: 300 + offset + index,
-    })),
-    madness: {
-      modalTimeHundredths: 299 + offset, modalTimeHits: 2, exactRepeatCount: 1,
-      withinQuarterSecondOfPbPercent: 20, withinHalfSecondOfPbPercent: 40,
-      distinctSub3Times: 5, mostCommonHundredth: 99, mostCommonHundredthHits: 2,
-    },
+const sequence: PlayerCompareSequencePair = {
+  playerA: {
+    longestSub3Streak: 4, longestNoDnfStreak: 8, fastestFirstAttemptHundredths: 280,
+    attemptNumbers: Array.from({ length: 6 }, (_, index) => ({ attemptNumber: index + 1, samples: 2, validAttempts: 2, dnfCount: 0, averageHundredths: 300 + index })),
   },
-  progression: { personal: [], worldRecords: [] },
-  badges: [],
-  prestige: {
-    pbCount: 2, largestPbImprovementHundredths: 30, averagePbImprovementHundredths: 15,
-    worldRecordCount: 1, worldRecordDays: 4, longestWorldRecordDays: 4, visibleBadgeCount: 0,
+  playerB: {
+    longestSub3Streak: 3, longestNoDnfStreak: 7, fastestFirstAttemptHundredths: 290,
+    attemptNumbers: [{ attemptNumber: 1, samples: 1, validAttempts: 1, dnfCount: 0, averageHundredths: 310 }],
   },
-});
+  rivalry: { playerALeadSeconds: 60, playerBLeadSeconds: 30, playerALeadTakes: 1, playerBLeadTakes: 0, qualifyingEventCount: 1 },
+};
+
+const performance: PlayerTimePerformance = {
+  thresholds: [], extremeThresholds: [], medianHundredths: 290,
+  standardDeviationHundredths: 12.5, fastestThreeAverageHundredths: 270,
+  fastestFiveAverageHundredths: 280, pbToAverageHundredths: 40,
+  pbToMedianHundredths: 30,
+};
 
 const stats = {
   personalBestHundredths: 250, rank: 1, averageHundredths: 300,
@@ -47,27 +42,70 @@ const stats = {
   validAttempts: 9, dnfCount: 1, eventLeadSeconds: 120, eventBestBreaks: 2,
 };
 
-describe("DeepCompareSections", () => {
-  it("renders the grouped deep sections and keeps career-only values labelled in season mode", () => {
-    const markup = renderToStaticMarkup(<DeepCompareSections
+describe("final deep compare sections", () => {
+  it("renders grouped attempt bars, five initial slots and a disclosure without horizontal table markup", () => {
+    const markup = renderToStaticMarkup(<CompareAttemptNumbersSection
       playerA={player("a", "Anna")}
       playerB={player("b", "Berta")}
-      data={{ playerA: deep(0), playerB: deep(10) }}
-      loading={false}
-      error=""
-      statsA={stats}
-      statsB={{ ...stats, wins: 1 }}
-      isAllTime={false}
+      state={{ data: sequence, loading: false, error: "" }}
     />);
-    expect(markup).toContain("Konstanz &amp; Serien");
-    expect(markup).toContain("Event-Dominanz");
-    expect(markup).toContain("Nach Versuchsnummer");
+    expect(markup).toContain("data-attempt-number-chart");
+    expect(markup).toContain("Versuch 5");
+    expect(markup).not.toContain("Versuch 6");
     expect(markup).toContain("Weitere Versuche anzeigen");
-    expect(markup).toContain("PB-Progression");
-    expect(markup).toContain("Badge Battle");
-    expect(markup).toContain("Prestige &amp; Records");
-    expect(markup).toContain("Stat Madness");
-    expect(markup).toContain("Karriere / All-Time");
-    expect(markup).toContain("Experimentelle Übersicht");
+    expect(markup).toContain("Berta: kein gültiger Durchschnitt");
+    expect(markup).not.toContain("overflow-x-auto");
+    expect(markup).not.toContain("<table");
+  });
+
+  it("keeps a single available PB series visible when the other progression failed", () => {
+    const markup = renderToStaticMarkup(<CompareProgressionSection
+      playerA={player("a", "Anna")}
+      playerB={player("b", "Berta")}
+      state={{ data: { playerA: [progression("a1")], playerB: null, playerAError: false, playerBError: true }, loading: false, error: "" }}
+    />);
+    expect(markup).toContain("PB-Entwicklung");
+    expect(markup).toContain("Anna");
+    expect(markup).toContain("vorübergehend nicht verfügbar");
+  });
+
+  it("renders only the reduced consistency and event metric sets", () => {
+    const state = { data: sequence, loading: false, error: "" };
+    const markup = renderToStaticMarkup(<>
+      <CompareConsistencySection sequence={state} performanceA={performance} performanceB={performance} />
+      <CompareEventPerformanceSection statsA={stats} statsB={stats} sequence={state} />
+    </>);
+    expect(markup).toContain("Längste 2,xx-Serie");
+    expect(markup).toContain("Längste Serie ohne DNF");
+    expect(markup).toContain("Konstanz / Streuung");
+    expect(markup).toContain("Event-Führungszeit gesamt");
+    expect(markup).toContain("Eventbestzeiten gebrochen");
+    expect(markup).toContain("Schnellster erster Versuch");
+    expect(markup).not.toContain("Aktuelle 2,xx-Serie");
+    expect(markup).not.toContain("Zeitspanne");
+    expect(markup).not.toContain("Badge Battle");
+    expect(markup).not.toContain("Prestige");
+    expect(markup).not.toContain("Stat Madness");
+  });
+
+  it("renders an unweighted summary without winner wording", () => {
+    const markup = renderToStaticMarkup(<CompareSummarySection
+      playerA={player("a", "Anna")}
+      playerB={player("b", "Berta")}
+      values={[
+        { left: 1, right: 2, direction: "lower" },
+        { left: 1, right: 2, direction: "higher" },
+        { left: 2, right: 2, direction: "higher" },
+        { left: null, right: 2, direction: "higher" },
+      ]}
+    />);
+    expect(markup).toContain("1 von 3 vergleichbaren Werten vorn");
+    expect(markup).toContain("Berta bei 1");
+    expect(markup).toContain("1 Gleichstand");
+    expect(markup).not.toContain("gewinnt");
   });
 });
+
+function progression(id: string): ProgressionPoint {
+  return { id, timeHundredths: 300, previousHundredths: null, achievedAt: "2026-01-01", achievedDate: "2026-01-01", eventId: null, sourceLabel: "Event", sourceType: "attempt", improvementHundredths: null, durationDays: 1, isCurrent: true };
+}

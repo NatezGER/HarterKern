@@ -262,7 +262,7 @@ export interface PlayerSeasonProfile {
 }
 
 export interface TimeThresholdSummary {
-  seconds: 5 | 4 | 3;
+  seconds: 5 | 4 | 3 | 2.5 | 2;
   count: number;
   total: number;
   percent: number;
@@ -270,7 +270,13 @@ export interface TimeThresholdSummary {
 
 export interface PlayerTimePerformance {
   thresholds: TimeThresholdSummary[];
-  timeHundredths: number[];
+  extremeThresholds: TimeThresholdSummary[];
+  medianHundredths: number | null;
+  standardDeviationHundredths: number | null;
+  fastestThreeAverageHundredths: number | null;
+  fastestFiveAverageHundredths: number | null;
+  pbToAverageHundredths: number | null;
+  pbToMedianHundredths: number | null;
 }
 
 export interface PlayerProfilePrestige {

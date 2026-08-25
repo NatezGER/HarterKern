@@ -1,14 +1,13 @@
-import type { ProgressionPoint } from "@/types/historyProfiles";
+import type { PlayerTimePerformance, ProgressionPoint, TimeThresholdSummary } from "@/types/historyProfiles";
 import type {
-  BadgeComparison,
   ComparableValue,
   CompareAttemptNumberPoint,
   CompareLeadSummary,
-  CompareStreakSummary,
-  PlayerCompareAttempt,
-  PlayerDeepStatistics,
+  DirectRivalrySummary,
+  PlayerCompareSequenceStatistics,
+  PlayerCompareTimelineAttempt,
+  ProgressionCrossover,
 } from "@/types/playerCompare";
-import type { CompactBadge } from "@/types/historyProfiles";
 
 export function calculateMedian(values: number[]): number | null {
   if (values.length === 0) return null;
@@ -25,75 +24,55 @@ export function calculateThresholdShare(values: number[], thresholdHundredths: n
   return Math.round(count * 1_000 / values.length) / 10;
 }
 
-export function calculateDeepPlayerStatistics(
-  attempts: PlayerCompareAttempt[],
-  qualifiedTimes: number[],
-): PlayerDeepStatistics {
-  const sortedTimes = [...qualifiedTimes].sort((left, right) => left - right);
-  const medianHundredths = calculateMedian(sortedTimes);
-  const averageHundredths = mean(sortedTimes);
-  const personalBest = sortedTimes[0] ?? null;
-  const eventGroups = groupAttemptsByEvent(attempts);
-  const eventAverages = [...eventGroups.values()].flatMap((eventAttempts) => {
-    const validTimes = validAttemptTimes(eventAttempts);
-    const average = mean(validTimes);
-    return average == null ? [] : [average];
-  });
-  const timeMode = uniqueMode(sortedTimes);
-  const hundredthMode = uniqueMode(sortedTimes.map((value) => value % 100));
+export function calculateFastestAverage(values: number[], sampleCount: number) {
+  if (sampleCount <= 0 || values.length < sampleCount) return null;
+  return roundedMean([...values].sort((left, right) => left - right).slice(0, sampleCount));
+}
+
+export function calculateStandardDeviation(values: number[]) {
+  if (values.length === 0) return null;
+  const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const variance = values.reduce((sum, value) => sum + (value - average) ** 2, 0) / values.length;
+  return Math.round(Math.sqrt(variance) * 10) / 10;
+}
+
+export function calculateComparePerformance(values: number[]): PlayerTimePerformance {
+  const sorted = [...values].sort((left, right) => left - right);
+  const medianHundredths = calculateMedian(sorted);
+  const averageHundredths = roundedMean(sorted);
+  const personalBestHundredths = sorted[0] ?? null;
   return {
-    consistency: {
-      medianHundredths,
-      standardDeviationHundredths: standardDeviation(sortedTimes),
-      rangeHundredths: sortedTimes.length === 0
-        ? null
-        : sortedTimes.at(-1)! - sortedTimes[0],
-      fastestThreeAverageHundredths: calculateFastestAverage(sortedTimes, 3),
-      fastestFiveAverageHundredths: calculateFastestAverage(sortedTimes, 5),
-      pbToAverageHundredths: personalBest == null || averageHundredths == null
-        ? null : averageHundredths - personalBest,
-      pbToMedianHundredths: personalBest == null || medianHundredths == null
-        ? null : medianHundredths - personalBest,
-      sub3: calculateAttemptStreak(attempts, (time) => time < 300),
-      sub4: calculateAttemptStreak(attempts, (time) => time < 400),
-      noDnf: calculateAttemptStreak(attempts, () => true),
-    },
-    eventDominance: {
-      fastestFirstAttemptHundredths: minimum(validAttemptTimes(
-        attempts.filter(({ attemptNumber }) => attemptNumber === 1),
-      )),
-      bestEventAverageHundredths: minimum(eventAverages),
-      eventsWithSub3: countEventGroups(eventGroups, (eventAttempts) => (
-        validAttemptTimes(eventAttempts).some((time) => time < 300)
-      )),
-      eventsWithoutDnf: countEventGroups(eventGroups, (eventAttempts) => (
-        eventAttempts.length > 0 && eventAttempts.every(isValidAttempt)
-      )),
-      perfectSub3Events: countEventGroups(eventGroups, (eventAttempts) => (
-        eventAttempts.length > 0 && eventAttempts.every((attempt) => (
-          isValidAttempt(attempt) && attempt.timeHundredths! < 300
-        ))
-      )),
-      eventsWithAttempts: eventGroups.size,
-    },
-    attemptNumbers: calculateAttemptNumberStatistics(attempts),
-    madness: {
-      modalTimeHundredths: timeMode.value,
-      modalTimeHits: timeMode.count,
-      exactRepeatCount: repeatedValueCount(sortedTimes),
-      withinQuarterSecondOfPbPercent: withinPbShare(sortedTimes, 25),
-      withinHalfSecondOfPbPercent: withinPbShare(sortedTimes, 50),
-      distinctSub3Times: new Set(sortedTimes.filter((time) => time < 300)).size,
-      mostCommonHundredth: hundredthMode.value,
-      mostCommonHundredthHits: hundredthMode.count,
-    },
+    thresholds: ([5, 4, 3] as const).map((seconds) => thresholdSummary(sorted, seconds)),
+    extremeThresholds: ([2.5, 2] as const).map((seconds) => thresholdSummary(sorted, seconds)),
+    medianHundredths,
+    standardDeviationHundredths: calculateStandardDeviation(sorted),
+    fastestThreeAverageHundredths: calculateFastestAverage(sorted, 3),
+    fastestFiveAverageHundredths: calculateFastestAverage(sorted, 5),
+    pbToAverageHundredths: personalBestHundredths == null || averageHundredths == null
+      ? null : averageHundredths - personalBestHundredths,
+    pbToMedianHundredths: personalBestHundredths == null || medianHundredths == null
+      ? null : medianHundredths - personalBestHundredths,
   };
 }
 
-export function calculateAttemptStreak(
-  attempts: PlayerCompareAttempt[],
+export function calculatePlayerSequenceStatistics(
+  attempts: PlayerCompareTimelineAttempt[],
+): PlayerCompareSequenceStatistics {
+  const ordered = orderAttempts(attempts);
+  return {
+    longestSub3Streak: calculateLongestAttemptStreak(ordered, (time) => time < 300),
+    longestNoDnfStreak: calculateLongestAttemptStreak(ordered, () => true),
+    fastestFirstAttemptHundredths: minimum(validTimes(
+      ordered.filter(({ attemptNumber }) => attemptNumber === 1),
+    )),
+    attemptNumbers: calculateAttemptNumberStatistics(ordered),
+  };
+}
+
+export function calculateLongestAttemptStreak(
+  attempts: PlayerCompareTimelineAttempt[],
   qualifies: (timeHundredths: number) => boolean,
-): CompareStreakSummary {
+) {
   let longest = 0;
   let running = 0;
   for (const attempt of attempts) {
@@ -104,52 +83,75 @@ export function calculateAttemptStreak(
       running = 0;
     }
   }
-  let current = 0;
-  for (const attempt of [...attempts].reverse()) {
-    if (!isValidAttempt(attempt) || !qualifies(attempt.timeHundredths!)) break;
-    current += 1;
-  }
-  return { longest, current };
+  return longest;
 }
 
 export function calculateAttemptNumberStatistics(
-  attempts: PlayerCompareAttempt[],
+  attempts: PlayerCompareTimelineAttempt[],
 ): CompareAttemptNumberPoint[] {
-  const grouped = new Map<number, PlayerCompareAttempt[]>();
+  const grouped = new Map<number, PlayerCompareTimelineAttempt[]>();
   for (const attempt of attempts) {
     grouped.set(attempt.attemptNumber, [...(grouped.get(attempt.attemptNumber) ?? []), attempt]);
   }
   return [...grouped.entries()].sort(([left], [right]) => left - right)
     .map(([attemptNumber, samples]) => {
-      const validTimes = validAttemptTimes(samples);
+      const times = validTimes(samples);
       return {
         attemptNumber,
         samples: samples.length,
-        validAttempts: validTimes.length,
+        validAttempts: times.length,
         dnfCount: samples.filter(({ isDnf }) => isDnf).length,
-        averageHundredths: mean(validTimes),
+        averageHundredths: roundedMean(times),
       };
     });
 }
 
-export function visibleAttemptNumbers<T>(points: T[], expanded: boolean, limit = 5) {
-  return expanded ? points : points.slice(0, limit);
+export function calculateDirectRivalry(
+  attempts: PlayerCompareTimelineAttempt[],
+  playerAId: string,
+  playerBId: string,
+): DirectRivalrySummary {
+  const summary: DirectRivalrySummary = {
+    playerALeadSeconds: 0,
+    playerBLeadSeconds: 0,
+    playerALeadTakes: 0,
+    playerBLeadTakes: 0,
+    qualifyingEventCount: 0,
+  };
+  const byEvent = groupBy(attempts, ({ eventId }) => eventId);
+  for (const eventAttempts of byEvent.values()) {
+    const hasValidA = eventAttempts.some((attempt) => attempt.playerId === playerAId && isValidAttempt(attempt));
+    const hasValidB = eventAttempts.some((attempt) => attempt.playerId === playerBId && isValidAttempt(attempt));
+    if (!hasValidA || !hasValidB) continue;
+    summary.qualifyingEventCount += 1;
+    let bestA: number | null = null;
+    let bestB: number | null = null;
+    let leader: "a" | "b" | null = null;
+    let lastAt: string | null = null;
+    const ordered = orderAttempts(eventAttempts);
+    for (const attempt of ordered) {
+      if (lastAt) addLeadDuration(summary, leader, lastAt, attempt.submittedAt);
+      const previousLeader = leader;
+      if (isValidAttempt(attempt)) {
+        if (attempt.playerId === playerAId) bestA = minimumValue(bestA, attempt.timeHundredths!);
+        if (attempt.playerId === playerBId) bestB = minimumValue(bestB, attempt.timeHundredths!);
+      }
+      leader = directLeader(bestA, bestB);
+      if (previousLeader === "b" && leader === "a" && attempt.playerId === playerAId) {
+        summary.playerALeadTakes += 1;
+      }
+      if (previousLeader === "a" && leader === "b" && attempt.playerId === playerBId) {
+        summary.playerBLeadTakes += 1;
+      }
+      lastAt = attempt.submittedAt;
+    }
+    if (lastAt) addLeadDuration(summary, leader, lastAt, ordered[0].eventEndAt);
+  }
+  return summary;
 }
 
-export function compareBadgeCollections(
-  playerA: CompactBadge[],
-  playerB: CompactBadge[],
-): BadgeComparison {
-  const playerAByKey = new Map(playerA.map((badge) => [badge.badgeKey, badge]));
-  const playerBByKey = new Map(playerB.map((badge) => [badge.badgeKey, badge]));
-  return {
-    onlyA: playerA.filter(({ badgeKey }) => !playerBByKey.has(badgeKey)),
-    shared: playerA.flatMap((badge) => {
-      const other = playerBByKey.get(badge.badgeKey);
-      return other ? [{ playerA: badge, playerB: other }] : [];
-    }),
-    onlyB: playerB.filter(({ badgeKey }) => !playerAByKey.has(badgeKey)),
-  };
+export function visibleAttemptNumbers<T>(points: T[], expanded: boolean, limit = 5) {
+  return expanded ? points : points.slice(0, limit);
 }
 
 export function calculateCompareLeadSummary(values: ComparableValue[]): CompareLeadSummary {
@@ -164,10 +166,7 @@ export function calculateCompareLeadSummary(values: ComparableValue[]): CompareL
   }, { playerALeads: 0, playerBLeads: 0, ties: 0, compared: 0 });
 }
 
-export function mergePlayerProgressions(
-  playerA: ProgressionPoint[],
-  playerB: ProgressionPoint[],
-) {
+export function mergePlayerProgressions(playerA: ProgressionPoint[], playerB: ProgressionPoint[]) {
   return [
     ...playerA.map((point) => ({ ...point, player: "a" as const })),
     ...playerB.map((point) => ({ ...point, player: "b" as const })),
@@ -176,30 +175,61 @@ export function mergePlayerProgressions(
   ));
 }
 
-function isValidAttempt(attempt: PlayerCompareAttempt) {
+export function calculateProgressionCrossovers(
+  playerA: ProgressionPoint[],
+  playerB: ProgressionPoint[],
+): ProgressionCrossover[] {
+  const merged = mergePlayerProgressions(playerA, playerB);
+  let bestA: number | null = null;
+  let bestB: number | null = null;
+  let leader: "a" | "b" | null = null;
+  const crossovers: ProgressionCrossover[] = [];
+  for (let index = 0; index < merged.length;) {
+    const achievedAt = merged[index].achievedAt;
+    const moment = merged.slice(index).filter((point) => point.achievedAt === achievedAt);
+    for (const point of moment) {
+      if (point.player === "a") bestA = point.timeHundredths;
+      else bestB = point.timeHundredths;
+    }
+    const nextLeader = directLeader(bestA, bestB);
+    if (leader && nextLeader && leader !== nextLeader) {
+      const trigger = [...moment].reverse().find(({ player }) => player === nextLeader) ?? moment.at(-1)!;
+      crossovers.push({ player: nextLeader, pointId: trigger.id, achievedAt });
+    }
+    leader = nextLeader;
+    index += moment.length;
+  }
+  return crossovers;
+}
+
+function thresholdSummary(
+  values: number[],
+  seconds: TimeThresholdSummary["seconds"],
+): TimeThresholdSummary {
+  const count = values.filter((value) => value < seconds * 100).length;
+  return {
+    seconds,
+    count,
+    total: values.length,
+    percent: values.length === 0 ? 0 : Math.round(count * 1_000 / values.length) / 10,
+  };
+}
+
+function isValidAttempt(attempt: PlayerCompareTimelineAttempt) {
   return !attempt.isDnf && attempt.timeHundredths != null;
 }
 
-function validAttemptTimes(attempts: PlayerCompareAttempt[]) {
+function validTimes(attempts: PlayerCompareTimelineAttempt[]) {
   return attempts.flatMap((attempt) => isValidAttempt(attempt) ? [attempt.timeHundredths!] : []);
 }
 
-function groupAttemptsByEvent(attempts: PlayerCompareAttempt[]) {
-  const grouped = new Map<string, PlayerCompareAttempt[]>();
-  for (const attempt of attempts) {
-    grouped.set(attempt.eventId, [...(grouped.get(attempt.eventId) ?? []), attempt]);
-  }
-  return grouped;
+function orderAttempts(attempts: PlayerCompareTimelineAttempt[]) {
+  return [...attempts].sort((left, right) => (
+    left.submittedAt.localeCompare(right.submittedAt) || left.id.localeCompare(right.id)
+  ));
 }
 
-function countEventGroups(
-  groups: Map<string, PlayerCompareAttempt[]>,
-  predicate: (attempts: PlayerCompareAttempt[]) => boolean,
-) {
-  return [...groups.values()].filter(predicate).length;
-}
-
-function mean(values: number[]): number | null {
+function roundedMean(values: number[]): number | null {
   return values.length === 0
     ? null
     : Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
@@ -209,37 +239,32 @@ function minimum(values: number[]) {
   return values.length === 0 ? null : Math.min(...values);
 }
 
-export function calculateFastestAverage(values: number[], sampleCount: number) {
-  if (sampleCount <= 0 || values.length < sampleCount) return null;
-  return mean([...values].sort((left, right) => left - right).slice(0, sampleCount));
+function minimumValue(current: number | null, candidate: number) {
+  return current == null ? candidate : Math.min(current, candidate);
 }
 
-function standardDeviation(values: number[]) {
-  if (values.length === 0) return null;
-  const average = values.reduce((sum, value) => sum + value, 0) / values.length;
-  const variance = values.reduce((sum, value) => sum + (value - average) ** 2, 0) / values.length;
-  return Math.round(Math.sqrt(variance) * 10) / 10;
+function directLeader(bestA: number | null, bestB: number | null): "a" | "b" | null {
+  if (bestA == null || bestB == null || bestA === bestB) return null;
+  return bestA < bestB ? "a" : "b";
 }
 
-function uniqueMode(values: number[]) {
-  const counts = new Map<number, number>();
-  for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
-  const maximum = Math.max(0, ...counts.values());
-  const modes = [...counts.entries()].filter(([, count]) => count === maximum);
-  return maximum > 1 && modes.length === 1
-    ? { value: modes[0][0], count: maximum }
-    : { value: null, count: maximum > 1 ? maximum : 0 };
+function addLeadDuration(
+  summary: DirectRivalrySummary,
+  leader: "a" | "b" | null,
+  startAt: string,
+  endAt: string,
+) {
+  if (!leader) return;
+  const seconds = Math.max(0, Math.floor((Date.parse(endAt) - Date.parse(startAt)) / 1_000));
+  if (leader === "a") summary.playerALeadSeconds += seconds;
+  else summary.playerBLeadSeconds += seconds;
 }
 
-function repeatedValueCount(values: number[]) {
-  const counts = new Map<number, number>();
-  for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
-  return [...counts.values()].reduce((sum, count) => sum + Math.max(0, count - 1), 0);
-}
-
-function withinPbShare(values: number[], distanceHundredths: number) {
-  const personalBest = values[0];
-  if (personalBest == null) return null;
-  const count = values.filter((value) => value <= personalBest + distanceHundredths).length;
-  return Math.round(count * 1_000 / values.length) / 10;
+function groupBy<T, Key>(values: T[], keyOf: (value: T) => Key) {
+  const grouped = new Map<Key, T[]>();
+  for (const value of values) {
+    const key = keyOf(value);
+    grouped.set(key, [...(grouped.get(key) ?? []), value]);
+  }
+  return grouped;
 }

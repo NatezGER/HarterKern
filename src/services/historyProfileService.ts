@@ -12,9 +12,10 @@ import type {
   PlayerProfileProgression,
   TrophyAward,
 } from "@/types/historyProfiles";
-import type { PlayerCompareAttemptRead } from "@/types/playerCompare";
+import type { PlayerCompareTimelineAttempt } from "@/types/playerCompare";
 import type { BadgeUnlockCelebration } from "@/types/liveEvent";
-import { calculateTimeThresholds } from "@/lib/officialTimePerformance";
+import { calculateComparePerformance } from "@/lib/playerCompareDeep";
+import { getSeasonDateRange } from "@/lib/season";
 
 export async function getAttemptBadgeUnlocks(
   attemptId: string,
@@ -392,31 +393,45 @@ export async function getPlayerTimePerformance(playerId: string, seasonYear?: nu
   if (result.error) throw result.error;
   const timeHundredths = (result.data ?? []).map((row) => row.time_hundredths)
     .sort((left, right) => left - right);
-  return {
-    thresholds: calculateTimeThresholds(timeHundredths.map((value) => ({
-      timeHundredths: value,
-    }))),
-    timeHundredths,
-  };
+  return calculateComparePerformance(timeHundredths);
 }
 
-export async function getPlayerCompareAttempts(
-  playerId: string,
-): Promise<PlayerCompareAttemptRead[]> {
-  const result = await getSupabase().from("event_attempt_details")
-    .select("attempt_id,event_id,time_hundredths,is_dnf,submitted_at,attempt_number,is_personal_best")
-    .eq("player_id", playerId).eq("is_ak", false)
-    .order("submitted_at").order("attempt_id");
+export async function getPlayerCompareTimeline(
+  playerAId: string,
+  playerBId: string,
+  seasonYear?: number,
+): Promise<PlayerCompareTimelineAttempt[]> {
+  let query = getSupabase().from("attempts")
+    .select("id,event_id,player_id,time_hundredths,is_dnf,submitted_at,events!inner(name,start_date,closed_at,ends_at,status,deleted_at)")
+    .in("player_id", [playerAId, playerBId])
+    .eq("status", "approved").is("deleted_at", null).eq("is_ak", false)
+    .eq("events.status", "closed").is("events.deleted_at", null);
+  if (seasonYear != null) {
+    const { start, end } = getSeasonDateRange(seasonYear);
+    query = query.gte("events.start_date", start).lt("events.start_date", end);
+  }
+  const result = await query.order("submitted_at").order("id");
   if (result.error) throw result.error;
-  return (result.data ?? []).map((row) => ({
-    id: row.attempt_id,
-    eventId: row.event_id,
-    timeHundredths: row.time_hundredths,
-    isDnf: row.is_dnf,
-    submittedAt: row.submitted_at,
-    attemptNumber: row.attempt_number,
-    isPersonalBest: row.is_personal_best,
-  }));
+  const attemptNumbers = new Map<string, number>();
+  return (result.data ?? []).flatMap((row) => {
+    const event = Array.isArray(row.events) ? row.events[0] : row.events;
+    if (!row.player_id || !row.event_id || !event) return [];
+    const key = `${row.event_id}:${row.player_id}`;
+    const attemptNumber = (attemptNumbers.get(key) ?? 0) + 1;
+    attemptNumbers.set(key, attemptNumber);
+    return [{
+      id: row.id,
+      eventId: row.event_id,
+      eventName: event.name?.trim() || "Spieleabend",
+      eventDate: event.start_date,
+      eventEndAt: event.closed_at ?? event.ends_at,
+      playerId: row.player_id,
+      timeHundredths: row.time_hundredths,
+      isDnf: row.is_dnf,
+      submittedAt: row.submitted_at,
+      attemptNumber,
+    }];
+  });
 }
 
 export async function getPlayerBadges(playerId: string): Promise<CompactBadge[]> {
@@ -545,6 +560,33 @@ export async function getPlayerProgression(
       isCurrent: row.is_current,
     })),
   };
+}
+
+export async function getPlayerPersonalProgression(
+  playerId: string,
+  seasonYear?: number,
+) {
+  const result = seasonYear == null
+    ? await getSupabase().from("player_pb_history").select("*")
+      .eq("player_id", playerId).order("sequence_number")
+    : await getSupabase().rpc("get_player_season_pb_history", {
+      p_player_id: playerId,
+      p_season_year: seasonYear,
+    });
+  if (result.error) throw result.error;
+  return (result.data ?? []).map((row) => ({
+    id: row.source_id,
+    timeHundredths: row.time_hundredths,
+    achievedAt: row.achieved_at,
+    achievedDate: row.achieved_date,
+    eventId: row.event_id,
+    sourceLabel: row.source_label,
+    sourceType: row.source_type,
+    previousHundredths: row.previous_best_hundredths,
+    improvementHundredths: row.improvement_hundredths,
+    durationDays: row.duration_days,
+    isCurrent: row.is_current,
+  }));
 }
 
 export const emptyPlayerBingo: PlayerBingo = {

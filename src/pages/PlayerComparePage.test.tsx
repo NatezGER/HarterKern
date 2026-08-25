@@ -6,7 +6,7 @@ const state = vi.hoisted(() => ({
   season: "all-time" as "all-time" | 2026,
   isAllTime: true,
   compare: null as unknown,
-  deep: { data: null, loading: false, error: "Deep Compare konnte nicht geladen werden." },
+  deep: null as unknown,
 }));
 
 const players = [
@@ -49,8 +49,12 @@ describe("PlayerComparePage", () => {
     state.isAllTime = true;
     state.compare = {
       core: { data: { playerA: coreA, playerB: coreB }, loading: false, error: "" },
-      speed: { data: { playerA: { timeHundredths: [199, 240, 250, 300, 400], thresholds: [{ seconds: 5, count: 9, total: 10, percent: 90 }, { seconds: 4, count: 7, total: 10, percent: 70 }, { seconds: 3, count: 2, total: 10, percent: 20 }] }, playerB: { timeHundredths: [270, 280, 290, 320, 450], thresholds: [{ seconds: 5, count: 8, total: 10, percent: 80 }, { seconds: 4, count: 6, total: 10, percent: 60 }, { seconds: 3, count: 1, total: 10, percent: 10 }] } }, loading: false, error: "" },
+      speed: { data: { playerA: performance(90, 250), playerB: performance(80, 290) }, loading: false, error: "" },
       headToHead: { data: emptyHeadToHead, loading: false, error: "" },
+    };
+    state.deep = {
+      sequence: { data: sequence(), loading: false, error: "" },
+      progression: { data: { playerA: [], playerB: [], playerAError: false, playerBError: false }, loading: false, error: "" },
     };
   });
 
@@ -65,6 +69,8 @@ describe("PlayerComparePage", () => {
     expect(markup).toContain("Unter 2,5 s");
     expect(markup).toContain("Ø der 3 schnellsten");
     expect(markup).toContain("Median");
+    expect(markup).toContain('data-compare-metric="Personal Best"');
+    expect(markup).not.toContain('data-compare-metric="Rang"');
     expect(markup).toContain("90 %");
     expect(markup).toContain("80 %");
     expect(markup).toContain("Vorn");
@@ -88,7 +94,7 @@ describe("PlayerComparePage", () => {
     state.isAllTime = false;
     state.compare = {
       core: { data: { playerA: { ...coreA, statistics: { ...coreA.statistics, rank: 1, personalBestHundredths: 280 } }, playerB: { ...coreB, statistics: { ...coreB.statistics, rank: null, personalBestHundredths: null, averageHundredths: null, validAttempts: 0, dnfCount: 0 } } }, loading: false, error: "" },
-      speed: { data: { playerA: { thresholds: [{ seconds: 5, count: 1, total: 1, percent: 100 }] }, playerB: { thresholds: [{ seconds: 5, count: 0, total: 0, percent: 0 }] } }, loading: false, error: "" },
+      speed: { data: { playerA: performance(100, 280), playerB: performance(0, null, 0) }, loading: false, error: "" },
       headToHead: { data: emptyHeadToHead, loading: false, error: "" },
     };
     const markup = renderCompare("/compare?playerA=a&playerB=b");
@@ -137,6 +143,8 @@ describe("PlayerComparePage", () => {
     expect(markup).toContain("Rivalry 5");
     expect(markup).not.toContain("Rivalry 6");
     expect(markup).toContain("Alle 6 Duelle anzeigen");
+    expect(markup).toContain("Direkte Führungszeit");
+    expect(markup).toContain("Führung direkt abgenommen");
   });
 
   it("keeps P11A core visible when H2H fails", () => {
@@ -150,12 +158,33 @@ describe("PlayerComparePage", () => {
     expect(markup).toContain("Head to Head konnte nicht geladen werden.");
   });
 
-  it("keeps core, speed and H2H visible when Deep Compare fails", () => {
+  it("uses the exact final section order", () => {
+    const markup = renderCompare("/compare?playerA=a&playerB=b");
+    const labels = ["Hauptstatistiken", "PB-Entwicklung", "Nach Versuchsnummer", "Head to Head", "Speed &amp; Peak Performance", "Konstanz &amp; Serien", "Event- &amp; Leistungswerte", "Experimentelle Übersicht"];
+    expect(labels.map((label) => markup.indexOf(label))).toEqual([...labels.map((label) => markup.indexOf(label))].sort((a, b) => a - b));
+  });
+
+  it("keeps progression and P11A/P11B visible when sequence data fails", () => {
+    state.deep = {
+      sequence: { data: null, loading: false, error: "Serien und Versuchsnummern konnten nicht geladen werden." },
+      progression: { data: { playerA: [], playerB: [], playerAError: false, playerBError: false }, loading: false, error: "" },
+    };
     const markup = renderCompare("/compare?playerA=a&playerB=b");
     expect(markup).toContain("Hauptstatistiken");
-    expect(markup).toContain("Speed &amp; Peak Performance");
+    expect(markup).toContain("PB-Entwicklung");
     expect(markup).toContain("Head to Head");
-    expect(markup).toContain("Deep Compare konnte nicht geladen werden.");
+    expect(markup).toContain("Serien und Versuchsnummern konnten nicht geladen werden.");
+  });
+
+  it("keeps attempt numbers and H2H visible when progression fails", () => {
+    state.deep = {
+      sequence: { data: sequence(), loading: false, error: "" },
+      progression: { data: null, loading: false, error: "Die PB-Entwicklung konnte nicht geladen werden." },
+    };
+    const markup = renderCompare("/compare?playerA=a&playerB=b");
+    expect(markup).toContain("Nach Versuchsnummer");
+    expect(markup).toContain("Head to Head");
+    expect(markup).toContain("Die PB-Entwicklung konnte nicht geladen werden.");
   });
 });
 
@@ -165,4 +194,33 @@ function renderCompare(entry: string) {
       <Routes><Route path="/compare" element={<PlayerComparePage />} /></Routes>
     </MemoryRouter>,
   );
+}
+
+function performance(sub5Percent: number, medianHundredths: number | null, total = 10) {
+  return {
+    thresholds: [
+      { seconds: 5 as const, count: Math.round(total * sub5Percent / 100), total, percent: sub5Percent },
+      { seconds: 4 as const, count: 7, total, percent: total ? 70 : 0 },
+      { seconds: 3 as const, count: 2, total, percent: total ? 20 : 0 },
+    ],
+    extremeThresholds: [
+      { seconds: 2.5 as const, count: 1, total, percent: total ? 10 : 0 },
+      { seconds: 2 as const, count: 0, total, percent: 0 },
+    ],
+    medianHundredths,
+    standardDeviationHundredths: medianHundredths == null ? null : 12,
+    fastestThreeAverageHundredths: medianHundredths == null ? null : medianHundredths - 20,
+    fastestFiveAverageHundredths: medianHundredths == null ? null : medianHundredths - 10,
+    pbToAverageHundredths: medianHundredths == null ? null : 50,
+    pbToMedianHundredths: medianHundredths == null ? null : 30,
+  };
+}
+
+function sequence() {
+  const points = Array.from({ length: 2 }, (_, index) => ({ attemptNumber: index + 1, samples: 2, validAttempts: 2, dnfCount: 0, averageHundredths: 300 + index }));
+  return {
+    playerA: { longestSub3Streak: 2, longestNoDnfStreak: 4, fastestFirstAttemptHundredths: 280, attemptNumbers: points },
+    playerB: { longestSub3Streak: 1, longestNoDnfStreak: 3, fastestFirstAttemptHundredths: 290, attemptNumbers: points },
+    rivalry: { playerALeadSeconds: 60, playerBLeadSeconds: 30, playerALeadTakes: 1, playerBLeadTakes: 0, qualifyingEventCount: 1 },
+  };
 }

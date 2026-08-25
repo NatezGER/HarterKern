@@ -1,54 +1,71 @@
-import { getEventSeason } from "@/lib/season";
-import { calculateDeepPlayerStatistics } from "@/lib/playerCompareDeep";
-import { getPlayerCompareAttempts } from "@/services/historyProfileService";
-import { loadPlayerProfileSection } from "@/services/playerProfileService";
+import {
+  calculateDirectRivalry,
+  calculatePlayerSequenceStatistics,
+} from "@/lib/playerCompareDeep";
+import {
+  getPlayerCompareTimeline,
+  getPlayerPersonalProgression,
+} from "@/services/historyProfileService";
 import type {
-  PlayerDeepCompareData,
-  PlayerDeepComparePair,
+  PlayerCompareProgressionPair,
+  PlayerCompareSequencePair,
 } from "@/types/playerCompare";
 
-const inFlight = new Map<string, Promise<PlayerDeepCompareData | null>>();
+const sequenceInFlight = new Map<string, Promise<PlayerCompareSequencePair | null>>();
+const progressionInFlight = new Map<string, Promise<Awaited<ReturnType<typeof getPlayerPersonalProgression>>>>();
 
-async function loadDeepPlayer(playerId: string | null, seasonYear?: number) {
-  if (!playerId) return null;
-  const key = `${playerId}:${seasonYear ?? "all-time"}`;
-  const running = inFlight.get(key);
-  if (running) return running;
-  const request = Promise.all([
-    getPlayerCompareAttempts(playerId),
-    loadPlayerProfileSection("events", playerId),
-    loadPlayerProfileSection("performance", playerId, { seasonYear }),
-    loadPlayerProfileSection("progression", playerId, { seasonYear }),
-    loadPlayerProfileSection("badges", playerId),
-    loadPlayerProfileSection("prestige", playerId),
-  ]).then(([attemptReads, events, performance, progression, badges, prestige]) => {
-    const eventDates = new Map(events.map(({ eventId, eventDate }) => [eventId, eventDate]));
-    const attempts = attemptReads.flatMap((attempt) => {
-      const eventDate = eventDates.get(attempt.eventId);
-      if (!eventDate || (seasonYear != null && getEventSeason(eventDate) !== seasonYear)) return [];
-      return [{ ...attempt, eventDate }];
-    });
-    return {
-      statistics: calculateDeepPlayerStatistics(attempts, performance.timeHundredths),
-      progression,
-      badges,
-      prestige,
-    };
-  }).finally(() => {
-    if (inFlight.get(key) === request) inFlight.delete(key);
-  });
-  inFlight.set(key, request);
-  return request;
-}
-
-export async function loadPlayerDeepCompare(
+export async function loadPlayerCompareSequence(
   playerAId: string | null,
   playerBId: string | null,
   seasonYear?: number,
-): Promise<PlayerDeepComparePair> {
-  const [playerA, playerB] = await Promise.all([
-    loadDeepPlayer(playerAId, seasonYear),
-    loadDeepPlayer(playerBId, seasonYear),
+): Promise<PlayerCompareSequencePair | null> {
+  if (!playerAId || !playerBId || playerAId === playerBId) return null;
+  const key = `${playerAId}:${playerBId}:${seasonYear ?? "all-time"}`;
+  const running = sequenceInFlight.get(key);
+  if (running) return running;
+  const request = getPlayerCompareTimeline(playerAId, playerBId, seasonYear)
+    .then((attempts) => ({
+      playerA: calculatePlayerSequenceStatistics(
+        attempts.filter(({ playerId }) => playerId === playerAId),
+      ),
+      playerB: calculatePlayerSequenceStatistics(
+        attempts.filter(({ playerId }) => playerId === playerBId),
+      ),
+      rivalry: calculateDirectRivalry(attempts, playerAId, playerBId),
+    }))
+    .finally(() => {
+      if (sequenceInFlight.get(key) === request) sequenceInFlight.delete(key);
+    });
+  sequenceInFlight.set(key, request);
+  return request;
+}
+
+export async function loadPlayerCompareProgression(
+  playerAId: string | null,
+  playerBId: string | null,
+  seasonYear?: number,
+): Promise<PlayerCompareProgressionPair> {
+  const [playerA, playerB] = await Promise.allSettled([
+    loadProgression(playerAId, seasonYear),
+    loadProgression(playerBId, seasonYear),
   ]);
-  return { playerA, playerB };
+  return {
+    playerA: playerA.status === "fulfilled" ? playerA.value : null,
+    playerB: playerB.status === "fulfilled" ? playerB.value : null,
+    playerAError: playerA.status === "rejected",
+    playerBError: playerB.status === "rejected",
+  };
+}
+
+function loadProgression(playerId: string | null, seasonYear?: number) {
+  if (!playerId) return Promise.resolve(null);
+  const key = `${playerId}:${seasonYear ?? "all-time"}`;
+  const running = progressionInFlight.get(key);
+  if (running) return running;
+  const request = getPlayerPersonalProgression(playerId, seasonYear)
+    .finally(() => {
+      if (progressionInFlight.get(key) === request) progressionInFlight.delete(key);
+    });
+  progressionInFlight.set(key, request);
+  return request;
 }

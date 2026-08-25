@@ -56,12 +56,16 @@ describe("ProgressionTimeline mobile history disclosure", () => {
         comparisonInitiallyVisible
         compact
         showHistory={false}
+        comparisonCrossoverIds={["berta-pb"]}
       />,
     );
     expect(markup).toContain("Paul");
     expect(markup).toContain("Berta");
     expect(markup).toContain("Nur Paul");
     expect(markup).toContain("min-w-0");
+    expect(markup).toContain("data-progression-crossover");
+    expect(markup).toContain("Führungswechsel");
+    expect(markup).not.toContain("overflow-x-auto");
     expect(markup).not.toContain("data-progression-history");
   });
 });
