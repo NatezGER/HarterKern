@@ -6,10 +6,6 @@ import {
   requirePostgresUuid,
   validateAwardImageMetadata,
 } from "./validation.ts";
-import {
-  isTrophySlotAssetId,
-  TROPHY_ASSET_IDS,
-} from "./trophySlots.ts";
 
 declare const Deno: {
   env: { get(name: string): string | undefined };
@@ -254,15 +250,6 @@ Deno.serve(async (request) => {
     }
 
     if (action === "upload-award-asset") {
-      const receivedAssetId = form.get("assetId");
-      // TEMPORARY: remove after one confirmed production upload.
-      console.info("[award-upload-diagnostic]", {
-        action,
-        assetId: typeof receivedAssetId === "string" ? receivedAssetId : null,
-        trophyValid: typeof receivedAssetId === "string"
-          && isTrophySlotAssetId(receivedAssetId),
-        knownTrophyIdCount: TROPHY_ASSET_IDS.length,
-      });
       const { assetId } = requireAwardUploadRequest(form);
       const assetType = assetId.split(":", 1)[0];
       const { file, width, height } = await requireAwardImage(
