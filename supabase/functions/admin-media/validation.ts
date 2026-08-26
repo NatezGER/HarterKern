@@ -1,4 +1,4 @@
-import { isTrophySlotAssetId } from "../_shared/trophySlots.ts";
+import { isTrophySlotAssetId } from "./trophySlots.ts";
 
 export const postgresUuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -16,6 +16,12 @@ export function requireAwardAssetId(value: FormDataEntryValue | null) {
     || isTrophySlotAssetId(id);
   if (!valid) throw new Error("Award-Auswahl ist ungültig.");
   return id;
+}
+
+export function requireAwardUploadRequest(form: FormData) {
+  const action = form.get("action");
+  if (action !== "upload-award-asset") throw new Error("Medienaktion ist ungültig.");
+  return { action, assetId: requireAwardAssetId(form.get("assetId")) };
 }
 
 export function validateAwardImageMetadata(input: {

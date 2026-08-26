@@ -34,7 +34,11 @@ export const TROPHY_SLOT_ASSET_IDS = TROPHY_COMPETITIONS.flatMap((competition) =
   )),
 );
 
+export const TROPHY_ASSET_IDS = [
+  ...TROPHY_SLOT_ASSET_IDS,
+  ...HISTORICAL_TROPHY_ASSET_IDS,
+] as const;
+
 export function isTrophySlotAssetId(value: string) {
-  return (TROPHY_SLOT_ASSET_IDS as readonly string[]).includes(value)
-    || (HISTORICAL_TROPHY_ASSET_IDS as readonly string[]).includes(value);
+  return (TROPHY_ASSET_IDS as readonly string[]).includes(value);
 }

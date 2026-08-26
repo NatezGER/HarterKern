@@ -4,8 +4,8 @@ import {
   TROPHY_COMPETITIONS,
   isTrophySlotAssetId,
   trophySlotAssetId,
-} from "../../supabase/functions/_shared/trophySlots";
-import type { TrophyCompetitionKey } from "../../supabase/functions/_shared/trophySlots";
+} from "../../supabase/functions/admin-media/trophySlots";
+import type { TrophyCompetitionKey } from "../../supabase/functions/admin-media/trophySlots";
 
 export type AwardAssetType = "medal" | "badge" | "trophy";
 export type MedalRank = 1 | 2 | 3;
