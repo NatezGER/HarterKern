@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   readAwardImageDimensions,
   requireAwardAssetId,
+  requireAwardUploadRequest,
   requirePostgresUuid,
   validateAwardImageMetadata,
 } from "./validation.ts";
@@ -43,6 +44,16 @@ function pngHeader(width: number, height: number) {
 }
 
 describe("admin award validation", () => {
+  it("reads the upload action and trophy ID from their exact FormData fields", () => {
+    const form = new FormData();
+    form.set("action", "upload-award-asset");
+    form.set("assetId", "trophy:season:2026:silver");
+    expect(requireAwardUploadRequest(form)).toEqual({
+      action: "upload-award-asset",
+      assetId: "trophy:season:2026:silver",
+    });
+  });
+
   it("accepts stable existing asset ID shapes", () => {
     expect(requireAwardAssetId("medal:podium:gold")).toBe("medal:podium:gold");
     expect(requireAwardAssetId("badge:first-sub3")).toBe("badge:first-sub3");
