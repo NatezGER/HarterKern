@@ -27,34 +27,36 @@ export function TrophyCabinet({
   if (!trophies.length) return null;
   return (
     <div>
-    <div id="trophy-cabinet" className={cn("grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4", className)}>
+    <div id="trophy-cabinet" className={cn("grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3", className)}>
       {trophies.map((trophy, index) => {
         const isSeasonTrophy = trophy.competitionType === "season";
         const isHistoricalTrophy = trophy.competitionType === "historical";
         const content = (
           <>
-            <span className={cn(
-              "mx-auto grid aspect-[3/4] h-20 place-items-center rounded-2xl bg-gradient-to-br shadow-lg sm:h-24",
-              trophyStyles[trophy.tier],
-            )}>
+            <div data-trophy-artwork className="flex h-60 w-full items-center justify-center sm:h-72 lg:h-80">
               <AwardAssetImage
                 assetId={trophyAssetIdForAward(trophy) ?? ""}
                 alt={isHistoricalTrophy ? trophy.competitionName : `${trophy.competitionName}, ${trophy.placement}. Platz`}
-                className="p-1"
-                fallback={<Trophy className="size-9 drop-shadow-[0_2px_2px_rgba(0,0,0,.45)] sm:size-11" />}
+                className="max-h-full max-w-full object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,.38)]"
+                fallback={<span className={cn(
+                  "grid aspect-[3/4] h-44 place-items-center rounded-3xl bg-gradient-to-br shadow-xl sm:h-52",
+                  trophyStyles[trophy.tier],
+                )}><Trophy className="size-20 drop-shadow-[0_4px_4px_rgba(0,0,0,.45)] sm:size-24" /></span>}
               />
-            </span>
-            <p className="mt-3 font-display text-lg font-black uppercase sm:text-xl">
+            </div>
+            <p className="mt-5 font-display text-3xl font-black uppercase sm:text-4xl">
               {isHistoricalTrophy ? trophy.competitionName : isSeasonTrophy && trophy.placement === 1 ? "Saisonmeister" : `${trophy.placement}. Platz`}
             </p>
-            {!isHistoricalTrophy && <p className="mt-1 line-clamp-2 text-xs text-white/45">{isSeasonTrophy ? `Saison ${trophy.year}` : trophy.competitionName}</p>}
-            <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-white/25">
-              {isHistoricalTrophy ? `Historische Trophäe · ${formatDate(trophy.eventDate)}` : isSeasonTrophy ? "Karriere-Trophäe" : formatDate(trophy.eventDate)}
+            <p className="mt-2 text-sm font-semibold text-white/55">
+              {isHistoricalTrophy ? "Historischer Meilenstein" : isSeasonTrophy ? `Saison ${trophy.year}` : trophy.competitionName}
+            </p>
+            <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-white/30 sm:text-xs">
+              {isHistoricalTrophy ? "Historische Trophäe" : isSeasonTrophy ? "Karriere-Trophäe" : "Event-Trophäe"} · {formatDate(trophy.eventDate)}
             </p>
           </>
         );
         const styles = cn(
-          "panel block p-4 text-center transition hover:-translate-y-0.5 hover:border-gold-400/25 sm:p-5",
+          "panel relative block min-h-[26rem] overflow-hidden p-6 text-center transition hover:-translate-y-1 hover:border-gold-400/25 sm:min-h-[31rem] sm:p-8 lg:p-10",
           index >= mobileLimit && !expanded && "max-sm:hidden",
         );
         return trophy.competitionType === "event" ? (

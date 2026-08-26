@@ -37,8 +37,17 @@ describe("TrophyCabinet", () => {
     expect(markup).toContain("max-sm:hidden");
     expect(markup).toContain('aria-expanded="false"');
     expect(markup).toContain("Alle Trophäen anzeigen");
-    expect(markup).toContain("aspect-[3/4]");
+    expect(markup).toContain("grid-cols-1");
+    expect(markup).toContain("md:grid-cols-2");
+    expect(markup).toContain("xl:grid-cols-3");
+    expect(markup).toContain("h-60");
+    expect(markup).toContain("sm:h-72");
+    expect(markup).toContain("lg:h-80");
+    expect(markup).toContain("min-h-[26rem]");
+    expect(markup).toContain("max-w-full");
     expect(markup).toContain("object-contain");
+    expect(markup).not.toContain("overflow-x-auto");
+    expect(markup).not.toContain("bg-gradient-to-br");
   });
 
   it("shows a season trophy as a career award without an event link", () => {
@@ -60,6 +69,7 @@ describe("TrophyCabinet", () => {
     expect(markup).toContain("Saisonmeister");
     expect(markup).toContain("Saison 2026");
     expect(markup).toContain("Karriere-Trophäe");
+    expect(markup).toContain("31.07.2026");
     expect(markup).toContain("1. Platz");
     expect(markup).not.toContain("/events/season-2026");
     expect(markup.match(/href=/g)).toHaveLength(1);
@@ -78,6 +88,7 @@ describe("TrophyCabinet", () => {
     const markup = renderToStaticMarkup(<TrophyCabinet trophies={[historical]} />);
     expect(markup).toContain("Erster Sub 3");
     expect(markup).toContain("Historische Trophäe");
+    expect(markup).toContain("Historischer Meilenstein");
     expect(markup).toContain("trophy:historical:first-sub-3.webp");
     expect(markup).not.toContain("1. Platz");
     expect(markup).not.toContain("href=");
