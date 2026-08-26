@@ -82,7 +82,13 @@ export function PlayerProfilePage() {
       </section>
 
       <ProfileOptionalState state={trophies}>{(data) => data.length > 0 ? (
-        <section><SectionHeading eyebrow="Karriere-Auszeichnungen" title="Trophäenschrank" /><TrophyCabinet trophies={data} /></section>
+        <section data-trophy-hero className="relative overflow-hidden rounded-[2rem] border border-white/[0.08] bg-white/[0.025] p-4 sm:p-8 lg:p-10">
+          <div className="mb-7 sm:mb-10">
+            <p className="context-accent-text text-[10px] font-semibold uppercase tracking-[0.28em] sm:text-xs">Karriere-Auszeichnungen</p>
+            <h2 className="display-title mt-2 text-4xl sm:text-5xl lg:text-6xl">Trophäenschrank</h2>
+          </div>
+          <TrophyCabinet trophies={data} />
+        </section>
       ) : null}</ProfileOptionalState>
 
       <ProfileOptionalState state={badges}>{(data) => data.length > 0 ? (
