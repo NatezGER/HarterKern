@@ -56,7 +56,8 @@ describe("route data groups", () => {
     ]);
     expect(getRouteDataPlan("/").optional).toEqual(["prestige-activities"]);
     expect(dataGroupRequestCounts.statistics).toBe(6);
-    expect(dataGroupRequestCounts["badge-rarity"]).toBe(2);
+    expect(dataGroupRequestCounts["badge-rarity"]).toBe(1);
+    expect(dataGroupRequestCounts.bingo).toBe(1);
   });
 
   it("keeps player profile reads player-scoped and independently optional", () => {

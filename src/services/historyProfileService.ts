@@ -609,43 +609,18 @@ export const emptyPlayerBingo: PlayerBingo = {
 };
 
 export async function getPlayerBingo(playerId: string): Promise<PlayerBingo> {
-  const client = getSupabase();
-  const [fieldsResult, statsResult, hitsResult] = await Promise.all([
-    client.from("player_bingo_fields").select("*")
-      .eq("player_id", playerId).order("ending"),
-    client.from("player_bingo_statistics").select("*")
-      .eq("player_id", playerId).maybeSingle(),
-    client.from("player_bingo_hits").select("*")
-      .eq("player_id", playerId).order("occurred_at").order("source_priority")
-      .order("source_order").order("source_id"),
-  ]);
-  for (const result of [fieldsResult, statsResult, hitsResult]) {
-    if (result.error) throw result.error;
-  }
-  const hits = hitsResult.data ?? [];
-  const hitsByEnding = new Map<number, typeof hits>();
-  for (const hit of hits) {
-    const current = hitsByEnding.get(hit.ending) ?? [];
-    current.push(hit);
-    hitsByEnding.set(hit.ending, current);
-  }
-  const stats = statsResult.data;
+  const result = await getSupabase().rpc("get_player_bingo", {
+    p_player_id: playerId,
+  });
+  if (result.error) throw result.error;
+  const rows = result.data ?? [];
+  const stats = rows[0];
   return {
-    fields: (fieldsResult.data ?? []).map((field) => ({
-      ending: field.ending,
-      label: field.ending_label,
-      hitCount: field.hit_count,
-      tier: field.field_tier,
-      hits: (hitsByEnding.get(field.ending) ?? []).map((hit) => ({
-        id: hit.source_id,
-        sourceType: hit.source_type,
-        eventId: hit.event_id,
-        timeHundredths: hit.time_hundredths,
-        occurredAt: hit.occurred_at,
-        occurredDate: hit.occurred_date,
-        hasExactTime: hit.has_exact_time,
-        sourceLabel: hit.source_label,
-      })),
+    fields: rows.map((field) => ({
+      ending: field.ending, label: field.ending_label,
+      hitCount: field.hit_count, tier: field.field_tier,
+      hits: (Array.isArray(field.hits) ? field.hits : []) as unknown as
+        PlayerBingo["fields"][number]["hits"],
     })),
     summary: {
       collectedEndings: stats?.collected_endings ?? 0,

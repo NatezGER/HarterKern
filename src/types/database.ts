@@ -505,6 +505,41 @@ export interface Database {
         Args: { p_player_id: string };
         Returns: PlayerTrophyView["Row"][];
       };
+      get_player_bingo: {
+        Args: { p_player_id: string };
+        Returns: Array<{
+          ending: number;
+          ending_label: string;
+          hit_count: number;
+          field_tier: "open" | "bronze" | "silver" | "gold" | "diamond";
+          hits: Json;
+          collected_endings: number;
+          bronze_fields: number;
+          silver_fields: number;
+          gold_fields: number;
+          diamond_fields: number;
+          bronze_lines: number;
+          silver_lines: number;
+          gold_lines: number;
+          diamond_lines: number;
+          highest_badge_tier: "bronze" | "silver" | "gold" | "diamond" | null;
+        }>;
+      };
+      get_badge_rarity: {
+        Args: Record<never, never>;
+        Returns: Array<{
+          badge_key: string;
+          name: string;
+          tier: Database["public"]["Enums"]["badge_tier"];
+          tier_rank: number;
+          sort_order: number;
+          design_variant: "standard" | "positive_special" | "consolation";
+          recipient_count: number;
+          regular_player_count: number;
+          rarity_percent: number | null;
+          recipients: Json;
+        }>;
+      };
       get_season_finalization_status: {
         Args: { p_as_of?: string };
         Returns: Array<{
