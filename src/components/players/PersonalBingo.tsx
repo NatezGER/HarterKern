@@ -12,6 +12,7 @@ const tierNames: Record<BingoTier, string> = {
   bronze: "Bronze",
   silver: "Silber",
   gold: "Gold",
+  diamond: "Diamond",
 };
 
 const tierMarks: Record<BingoTier, string> = {
@@ -19,6 +20,7 @@ const tierMarks: Record<BingoTier, string> = {
   bronze: "B",
   silver: "S",
   gold: "G",
+  diamond: "D",
 };
 
 const tierClasses: Record<BingoTier, string> = {
@@ -26,6 +28,7 @@ const tierClasses: Record<BingoTier, string> = {
   bronze: "border-orange-300/40 bg-gradient-to-br from-amber-950/80 to-orange-500/20 text-orange-100 shadow-[inset_0_1px_rgba(255,255,255,0.12)]",
   silver: "border-slate-200/50 bg-gradient-to-br from-slate-500/35 to-slate-100/10 text-slate-50 shadow-[inset_0_1px_rgba(255,255,255,0.2)]",
   gold: "border-yellow-200/55 bg-gradient-to-br from-amber-500/40 to-yellow-200/15 text-yellow-50 shadow-[inset_0_1px_rgba(255,255,255,0.28),0_0_12px_rgba(250,204,21,0.08)]",
+  diamond: "border-cyan-200/55 bg-gradient-to-br from-indigo-700/45 to-cyan-200/20 text-cyan-50 shadow-[inset_0_1px_rgba(255,255,255,0.3),0_0_14px_rgba(103,232,249,0.1)]",
 };
 
 export function PersonalBingo({ data }: { data: PlayerBingo }) {
@@ -70,8 +73,8 @@ export function PersonalBingo({ data }: { data: PlayerBingo }) {
       </ul>
 
       <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-white/45 sm:text-xs" aria-label="BINGO-Legende">
-        {(["open", "bronze", "silver", "gold"] as BingoTier[]).map((tier) => (
-          <span key={tier} className="inline-flex items-center gap-1.5"><span className={cn("grid size-5 place-items-center rounded border text-[7px] font-black", tierClasses[tier])}>{tierMarks[tier]}</span>{tierNames[tier]} · {tier === "open" ? "0" : tier === "bronze" ? "1" : tier === "silver" ? "2" : "3+"} Treffer</span>
+        {(["open", "bronze", "silver", "gold", "diamond"] as BingoTier[]).map((tier) => (
+          <span key={tier} className="inline-flex items-center gap-1.5"><span className={cn("grid size-5 place-items-center rounded border text-[7px] font-black", tierClasses[tier])}>{tierMarks[tier]}</span>{tierNames[tier]} · {tier === "open" ? "0" : tier === "bronze" ? "1" : tier === "silver" ? "2" : tier === "gold" ? "3–4" : "5+"} Treffer</span>
         ))}
       </div>
       <p className="mt-3 text-xs leading-5 text-white/35">22 mögliche Linien: zehn Reihen, zehn Spalten und zwei vollständige Diagonalen. Linienzahlen bauen kumulativ aufeinander auf.</p>

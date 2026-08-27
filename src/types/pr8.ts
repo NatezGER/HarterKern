@@ -98,7 +98,7 @@ export interface SeasonQualifiedOfficialTimeView {
   Relationships: [];
 }
 
-export type BingoTier = "open" | "bronze" | "silver" | "gold";
+export type BingoTier = "open" | "bronze" | "silver" | "gold" | "diamond";
 
 export interface PlayerBingoHitView {
   Row: {
@@ -130,6 +130,7 @@ export interface PlayerBingoFieldView {
     bronze_achieved_at: string | null;
     silver_achieved_at: string | null;
     gold_achieved_at: string | null;
+    diamond_achieved_at: string | null;
   };
   Relationships: [];
 }
@@ -145,10 +146,12 @@ export interface PlayerBingoLineView {
     qualifies_bronze: boolean;
     qualifies_silver: boolean;
     qualifies_gold: boolean;
+    qualifies_diamond: boolean;
     line_tier: BingoTier;
     bronze_achieved_at: string | null;
     silver_achieved_at: string | null;
     gold_achieved_at: string | null;
+    diamond_achieved_at: string | null;
   };
   Relationships: [];
 }
@@ -160,13 +163,16 @@ export interface PlayerBingoStatisticsView {
     bronze_fields: number;
     silver_fields: number;
     gold_fields: number;
+    diamond_fields: number;
     bronze_lines: number;
     silver_lines: number;
     gold_lines: number;
+    diamond_lines: number;
     highest_badge_tier: Exclude<BingoTier, "open"> | null;
     bronze_badge_achieved_at: string | null;
     silver_badge_achieved_at: string | null;
     gold_badge_achieved_at: string | null;
+    diamond_badge_achieved_at: string | null;
   };
   Relationships: [];
 }
