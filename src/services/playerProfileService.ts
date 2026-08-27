@@ -50,9 +50,32 @@ export interface PlayerProfileSectionData {
 }
 
 const CACHE_TTL_MS = 30_000;
+const MAX_CONCURRENT_PROFILE_LOADS = 3;
 const cache = new Map<string, { value: unknown; expiresAt: number }>();
 const inFlight = new Map<string, Promise<unknown>>();
 const generations = new Map<string, number>();
+const loadQueue: Array<() => void> = [];
+let activeLoads = 0;
+
+function runNextQueuedLoad() {
+  while (activeLoads < MAX_CONCURRENT_PROFILE_LOADS && loadQueue.length > 0) {
+    loadQueue.shift()?.();
+  }
+}
+
+function scheduleProfileLoad<T>(load: () => Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const start = () => {
+      activeLoads += 1;
+      void Promise.resolve().then(load).then(resolve, reject).finally(() => {
+        activeLoads -= 1;
+        runNextQueuedLoad();
+      });
+    };
+    loadQueue.push(start);
+    runNextQueuedLoad();
+  });
+}
 
 const loaders: {
   [Section in PlayerProfileSection]: (
@@ -88,11 +111,6 @@ function loadSection<Section extends PlayerProfileSection>(
     return getPlayerTimePerformance(playerId, seasonYear) as
       Promise<PlayerProfileSectionData[Section]>;
   }
-  if (section === "prestige") {
-    return loadPlayerProfileSection("badges", playerId)
-      .then((badges) => getPlayerPrestige(playerId, badges.length)) as
-      Promise<PlayerProfileSectionData[Section]>;
-  }
   return loaders[section](playerId);
 }
 
@@ -106,7 +124,11 @@ export function loadPlayerProfileSection<Section extends PlayerProfileSection>(
   options: { force?: boolean; seasonYear?: number } = {},
 ): Promise<PlayerProfileSectionData[Section]> {
   const key = cacheKey(section, playerId, options.seasonYear);
-  if (options.force) cache.delete(key);
+  if (options.force) {
+    cache.delete(key);
+    inFlight.delete(key);
+    generations.set(key, (generations.get(key) ?? 0) + 1);
+  }
   const cached = cache.get(key);
   if (cached && cached.expiresAt > Date.now()) {
     return Promise.resolve(cached.value as PlayerProfileSectionData[Section]);
@@ -116,7 +138,12 @@ export function loadPlayerProfileSection<Section extends PlayerProfileSection>(
   if (running) return running as Promise<PlayerProfileSectionData[Section]>;
 
   const generation = generations.get(key) ?? 0;
-  const request = loadSection(section, playerId, options.seasonYear)
+  const source = (section === "prestige"
+    ? loadPlayerProfileSection("badges", playerId).then((badges) =>
+        scheduleProfileLoad(() => getPlayerPrestige(playerId, badges.length)))
+    : scheduleProfileLoad(() => loadSection(section, playerId, options.seasonYear))) as
+      Promise<PlayerProfileSectionData[Section]>;
+  const request = source
     .then((value) => {
       if ((generations.get(key) ?? 0) === generation) {
         cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
