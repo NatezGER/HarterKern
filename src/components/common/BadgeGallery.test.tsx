@@ -47,6 +47,13 @@ describe("BadgeGallery responsive collapse", () => {
     expect(markup).not.toContain("Platinum");
   });
 
+  it("renders Holz after Bronze even when the input puts it first", () => {
+    const wood = { ...badges[0], name: "Holz Badge", tier: "special", designVariant: "consolation" } as CompactBadge;
+    const bronze = { ...badges[1], name: "Bronze Badge", tier: "bronze", designVariant: "standard" } as CompactBadge;
+    const markup = renderToStaticMarkup(<BadgeGallery badges={[wood, bronze]} />);
+    expect(markup.indexOf("Bronze Badge")).toBeLessThan(markup.indexOf("Holz Badge"));
+  });
+
   it("renders every card without collapse classes when expanded", () => {
     const markup = renderToStaticMarkup(<BadgeGallery badges={badges} mobileLimit={2} desktopLimit={3} expanded />);
     expect(markup).not.toContain("sm:p-5 hidden sm:block");

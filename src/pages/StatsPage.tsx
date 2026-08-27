@@ -17,12 +17,15 @@ import { useState } from "react";
 import { HistoricalAttemptsDisclosure } from "@/components/history/HistoricalAttemptsDisclosure";
 import { LeagueAttemptNumberChart, OfficialTimeThresholds } from "@/components/stats/OfficialTimePerformance";
 import { EventLeadStatistics } from "@/components/stats/EventLeadStatistics";
+import { useManagementMode } from "@/hooks/useManagementMode";
+import { AdminBadgeCatalogSlot } from "@/components/stats/AdminBadgeCatalogSlot";
 
 export function StatsPage() {
   const { data } = useEffectivePublicData();
   const { snapshot } = useDataPlatform();
   const { season, isAllTime } = useSeason();
   const [historyExpanded, setHistoryExpanded] = useState(false);
+  const { unlocked } = useManagementMode();
   return (
     <div className="space-y-10">
       <PageHeader eyebrow={isAllTime ? "League Intelligence" : `League Intelligence · Saison ${season}`} title="Statistiken" description={isAllTime ? appMeta.statsDescription : `Eventbasierte Ligawerte der Saison ${season}.`} action={<SeasonContextBadge />} />
@@ -73,6 +76,7 @@ export function StatsPage() {
           />
         </section>}
       </DataState>
+      <AdminBadgeCatalogSlot unlocked={unlocked} />
     </div>
   );
 }

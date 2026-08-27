@@ -11,6 +11,7 @@ import type {
   WorldRecord,
   EventLeadPlayerStatistic,
 } from "@/types";
+import { compareBadgeDisplayOrder } from "@/lib/badgePresentation";
 import { hundredthsToSeconds } from "@/utils/time";
 import { ALL_TIME_SEASON, getSeasonDateRange } from "@/lib/season";
 import type { SeasonSelection } from "@/lib/season";
@@ -275,7 +276,7 @@ export async function getBadgeRarity(): Promise<BadgeRarity[]> {
     recipients: row.recipient_count,
     playerCount: row.regular_player_count,
     percent: row.rarity_percent,
-  }));
+  })).sort((left, right) => compareBadgeDisplayOrder(left, right));
   return attachBadgeRecipients(badges, recipientsResult.data.map((row) => ({
     badgeKey: row.badge_key,
     playerId: row.player_id,
