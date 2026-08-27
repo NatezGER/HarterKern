@@ -31,17 +31,39 @@ export interface AdminBadgeCatalogEntry extends AdminBadgeDefinition {
   achievements: AdminBadgeAchievement[];
 }
 
+export interface AdminBadgeFamily {
+  familyKey: string;
+  name: string;
+  category: string;
+  description: string;
+  stages: AdminBadgeCatalogEntry[];
+}
+
+export interface AdminBadgeCatalog {
+  families: AdminBadgeFamily[];
+  singles: AdminBadgeCatalogEntry[];
+}
+
+const regularTierOrder: BadgeTier[] = ["bronze", "silver", "gold", "diamond"];
+
+function familyName(entry: AdminBadgeDefinition) {
+  const withoutMaterial = entry.name.replace(/\s+(Bronze|Silber|Gold|Diamond)$/i, "").trim();
+  if (withoutMaterial && withoutMaterial !== entry.name) return withoutMaterial;
+  return (entry.familyKey ?? entry.name).split("-")
+    .map((part) => part ? part[0].toLocaleUpperCase("de-DE") + part.slice(1) : part).join(" ");
+}
+
 export function buildAdminBadgeCatalog(
   definitions: AdminBadgeDefinition[],
   achievements: AdminBadgeAchievement[],
-): AdminBadgeCatalogEntry[] {
+): AdminBadgeCatalog {
   const achievementsByBadge = new Map<string, AdminBadgeAchievement[]>();
   for (const achievement of achievements) {
     const entries = achievementsByBadge.get(achievement.badgeKey) ?? [];
     entries.push(achievement);
     achievementsByBadge.set(achievement.badgeKey, entries);
   }
-  return definitions.map((definition, index) => ({
+  const entries = definitions.filter(({ isActive }) => isActive).map((definition, index) => ({
     definition,
     index,
     achievements: (achievementsByBadge.get(definition.badgeKey) ?? [])
@@ -52,9 +74,39 @@ export function buildAdminBadgeCatalog(
       ...definition,
       achievements: badgeAchievements,
     }));
+  const entriesByFamily = new Map<string, AdminBadgeCatalogEntry[]>();
+  for (const entry of entries) {
+    if (!entry.familyKey) continue;
+    const familyEntries = entriesByFamily.get(entry.familyKey) ?? [];
+    familyEntries.push(entry);
+    entriesByFamily.set(entry.familyKey, familyEntries);
+  }
+  const groupedBadgeKeys = new Set<string>();
+  const families = [...entriesByFamily.entries()].flatMap(([familyKey, familyEntries]) => {
+    const stages = regularTierOrder.flatMap((tier) => {
+      const entry = familyEntries.find((candidate) => candidate.tier === tier &&
+        candidate.designVariant === "standard" && candidate.badgeKind === "tiered");
+      return entry ? [entry] : [];
+    });
+    if (stages.length !== regularTierOrder.length) return [];
+    for (const stage of stages) groupedBadgeKeys.add(stage.badgeKey);
+    const first = stages[0];
+    return [{
+      familyKey,
+      name: familyName(first),
+      category: first.category,
+      description: first.description,
+      stages,
+    }];
+  }).sort((left, right) => left.stages[0].sortOrder - right.stages[0].sortOrder ||
+    left.name.localeCompare(right.name, "de"));
+  const singles = entries.filter((entry) => !groupedBadgeKeys.has(entry.badgeKey))
+    .sort((left, right) => compareBadgeDisplayOrder(left, right) ||
+      left.sortOrder - right.sortOrder);
+  return { families, singles };
 }
 
-export async function getAdminBadgeCatalog(): Promise<AdminBadgeCatalogEntry[]> {
+export async function getAdminBadgeCatalog(): Promise<AdminBadgeCatalog> {
   const client = getSupabase();
   const [definitionsResult, achievementsResult] = await Promise.all([
     client.from("badge_definitions").select("badge_key,family_key,category,tier,name,description,threshold,requirement,sort_order,is_secret,badge_kind,design_variant,scope_type,is_active")
