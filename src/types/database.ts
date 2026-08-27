@@ -258,6 +258,7 @@ export interface Database {
       player_pb_history: PlayerPbHistoryView;
       event_attempt_number_statistics: EventAttemptNumberStatisticsView;
       visible_player_badges: VisiblePlayerBadgesView;
+      bingo_line_diamond_badge_awards: PlayerBadgeAwardsView;
       event_badge_unlocks: VisiblePlayerBadgesView;
       player_prestige_statistics: PlayerPrestigeStatisticsView;
       prestige_activity_feed: {

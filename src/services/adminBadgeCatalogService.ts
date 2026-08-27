@@ -25,6 +25,8 @@ export interface AdminBadgeAchievement {
   playerId: string;
   playerName: string;
   awardedAt: string;
+  progress?: number | null;
+  timeHundredths?: number | null;
 }
 
 export interface AdminBadgeCatalogEntry extends AdminBadgeDefinition {
@@ -111,7 +113,7 @@ export async function getAdminBadgeCatalog(): Promise<AdminBadgeCatalog> {
   const [definitionsResult, achievementsResult] = await Promise.all([
     client.from("badge_definitions").select("badge_key,family_key,category,tier,name,description,threshold,requirement,sort_order,is_secret,badge_kind,design_variant,scope_type,is_active")
       .order("sort_order"),
-    client.from("public_player_badges").select("award_key,badge_key,player_id,display_name,awarded_at")
+    client.from("public_player_badges").select("award_key,badge_key,player_id,display_name,awarded_at,metadata")
       .order("awarded_at"),
   ]);
   if (definitionsResult.error) throw definitionsResult.error;
@@ -138,6 +140,12 @@ export async function getAdminBadgeCatalog(): Promise<AdminBadgeCatalog> {
     playerId: row.player_id,
     playerName: row.display_name,
     awardedAt: row.awarded_at,
+    progress: row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata) &&
+      "progress" in row.metadata && typeof row.metadata.progress === "number"
+      ? row.metadata.progress : null,
+    timeHundredths: row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata) &&
+      "timeHundredths" in row.metadata && typeof row.metadata.timeHundredths === "number"
+      ? row.metadata.timeHundredths : null,
   }));
   return buildAdminBadgeCatalog(definitions, achievements);
 }

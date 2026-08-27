@@ -16,20 +16,24 @@ import type { PlayerCompareTimelineAttempt } from "@/types/playerCompare";
 import type { BadgeUnlockCelebration } from "@/types/liveEvent";
 import { calculateComparePerformance } from "@/lib/playerCompareDeep";
 import { getSeasonDateRange } from "@/lib/season";
+import { getAwardBadgeDisplayName } from "@/lib/badgePresentation";
 
 export async function getAttemptBadgeUnlocks(
   attemptId: string,
   playerName: string,
 ): Promise<BadgeUnlockCelebration[]> {
   const { data, error } = await getSupabase().from("public_player_badges")
-    .select("award_key,badge_key,name,tier,description")
+    .select("award_key,badge_key,name,tier,description,category,metadata")
     .eq("source_attempt_id", attemptId)
     .order("awarded_at");
   if (error) throw error;
   return data.map((row) => ({
     key: row.award_key,
     badgeKey: row.badge_key,
-    name: row.name,
+    name: getAwardBadgeDisplayName(row.name, row.category,
+      row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata) &&
+        "timeHundredths" in row.metadata && typeof row.metadata.timeHundredths === "number"
+        ? row.metadata.timeHundredths : null),
     tier: row.tier,
     requirement: row.description,
     playerName,
@@ -128,7 +132,8 @@ function mapBadge(row: {
     playerId: row.player_id,
     playerName: row.display_name,
     playerAvatarUrl: avatarUrl(row.avatar_path, row.avatar_url),
-    name: row.name,
+    name: getAwardBadgeDisplayName(row.name, row.category,
+      row.source_time_hundredths ?? metadataTime),
     tier: row.tier,
     awardedAt: row.awarded_at,
     eventId: row.source_event_id,

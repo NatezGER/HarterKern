@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getBadgeMaterialLabel } from "@/lib/badgePresentation";
+import { formatBadgeTime, getBadgeMaterialLabel } from "@/lib/badgePresentation";
 import { getAdminBadgeCatalog } from "@/services/adminBadgeCatalogService";
 import type { AdminBadgeCatalog as AdminBadgeCatalogData, AdminBadgeCatalogEntry } from "@/services/adminBadgeCatalogService";
 import { formatDate } from "@/utils/format";
@@ -18,9 +18,20 @@ const stageStyles = {
   diamond: "border-cyan-300/30 bg-cyan-300/[0.07]",
 };
 
+function progressLabel(entry: AdminBadgeCatalogEntry, progress?: number | null, timeHundredths?: number | null) {
+  if (entry.category === "favorite_time" && progress != null && timeHundredths != null) return `${progress}× ${formatBadgeTime(timeHundredths)}`;
+  if (progress == null) return null;
+  if (entry.category === "attempts") return `${progress} gültige Versuche`;
+  if (entry.category === "wins") return `${progress} Siege`;
+  if (entry.category === "events") return `${progress} Events`;
+  if (entry.category === "podiums") return `${progress} Podien`;
+  if (entry.category === "bingo") return `${progress} BINGO-Linien`;
+  return `${progress}`;
+}
+
 function AchievementList({ entry, emptyLabel = "Noch niemand" }: { entry: AdminBadgeCatalogEntry; emptyLabel?: string }) {
   if (entry.achievements.length === 0) return <p className="mt-3 text-xs text-white/35">{emptyLabel}</p>;
-  return <ul className="mt-3 space-y-1 text-xs text-white/60">{entry.achievements.map((achievement) => <li key={achievement.awardKey}>{achievement.playerName} · {formatDate(achievement.awardedAt.slice(0, 10))}</li>)}</ul>;
+  return <ul className="mt-3 space-y-1 text-xs text-white/60">{entry.achievements.map((achievement) => { const progress = progressLabel(entry, achievement.progress, achievement.timeHundredths); return <li key={achievement.awardKey}>{achievement.playerName}{progress ? ` · ${progress}` : ""} <span className="text-white/30">· {formatDate(achievement.awardedAt.slice(0, 10))}</span></li>; })}</ul>;
 }
 
 export function AdminBadgeCatalogContent({ catalog }: { catalog: AdminBadgeCatalogData }) {
@@ -42,7 +53,8 @@ export function AdminBadgeCatalogContent({ catalog }: { catalog: AdminBadgeCatal
       <h3 id="admin-single-badges-title" className="display-title text-2xl">Einzel- &amp; Sonderbadges</h3>
       <div className="mt-4 grid gap-3 xl:grid-cols-2">{catalog.singles.map((entry) => {
         const requirement = entry.requirement?.trim() || entry.description;
-        return <article key={entry.badgeKey} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+        const variantClass = entry.designVariant === "positive_special" ? "border-emerald-300/30 bg-emerald-300/[0.07]" : entry.designVariant === "consolation" ? "border-amber-700/30 bg-amber-900/[0.08]" : "border-white/10 bg-black/20";
+        return <article key={entry.badgeKey} className={`rounded-2xl border p-4 ${variantClass}`}>
           <div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="font-display text-lg font-black uppercase">{entry.name}</h4><p className="mt-1 text-xs text-white/40">{entry.badgeKey}</p></div><span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold text-white/55">{getBadgeMaterialLabel(entry)}</span></div>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3"><div><dt className="text-white/35">Kategorie</dt><dd className="mt-0.5 font-semibold">{categoryLabels[entry.category] ?? entry.category}</dd></div><div><dt className="text-white/35">Schwelle</dt><dd className="mt-0.5 font-semibold">{entry.threshold ?? "—"}</dd></div><div><dt className="text-white/35">Geltung</dt><dd className="mt-0.5 font-semibold">{entry.scopeType}</dd></div></dl>
           <p className="mt-4 text-sm leading-6 text-white/70">{requirement}</p>

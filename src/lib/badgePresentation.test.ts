@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { badgeTierLabel, compareBadgeDisplayOrder, getBadgeCenterMark, getBadgeMaterialLabel } from "@/lib/badgePresentation";
+import { badgeTierLabel, compareBadgeDisplayOrder, formatBadgeTime, getAwardBadgeDisplayName, getBadgeCenterMark, getBadgeMaterialLabel } from "@/lib/badgePresentation";
 
 describe("badge presentation", () => {
   it("uses Smaragd and Holz for special badge variants", () => {
@@ -28,6 +28,12 @@ describe("badge presentation", () => {
     expect(getBadgeCenterMark({ badgeKey: "first-sub3", threshold: 300 })).toBe("<3s");
     expect(getBadgeCenterMark({ badgeKey: "event-wins-gold", category: "wins", threshold: 10 })).toBe("10×");
     expect(getBadgeCenterMark({ badgeKey: "important-event-gold" })).toBe("#1");
+  });
+
+  it("adds the personal Favorite Time only to an awarded display name", () => {
+    expect(formatBadgeTime(294)).toBe("2,94 s");
+    expect(getAwardBadgeDisplayName("Déjà-vu", "favorite_time", 294)).toBe("Déjà-vu · 2,94 s");
+    expect(getAwardBadgeDisplayName("Déjà-vu", "favorite_time", null)).toBe("Déjà-vu");
   });
 
   it("renders dynamic and special badge marks without long labels", () => {

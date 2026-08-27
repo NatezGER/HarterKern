@@ -37,6 +37,18 @@ export function compareBadgeDisplayOrder(
   return getBadgeDisplayRank(left) - getBadgeDisplayRank(right);
 }
 
+export function formatBadgeTime(timeHundredths: number) {
+  return `${(timeHundredths / 100).toLocaleString("de-DE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} s`;
+}
+
+export function getAwardBadgeDisplayName(name: string, category: string, timeHundredths?: number | null) {
+  return category === "favorite_time" && timeHundredths != null
+    ? `${name} · ${formatBadgeTime(timeHundredths)}` : name;
+}
+
 export function getBadgeCenterMark(badge: {
   badgeKey: string;
   category?: string;
