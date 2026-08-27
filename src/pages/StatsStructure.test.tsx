@@ -8,6 +8,7 @@ vi.mock("@/hooks/useEffectivePublicData", () => ({ useEffectivePublicData: () =>
   leagueTimeStatistics: {}, badgeRarity: [],
 } }) }));
 vi.mock("@/hooks/useDataPlatform", () => ({ useDataPlatform: () => ({ snapshot: { liveState: { historicalAttempts: [] } } }) }));
+vi.mock("@/hooks/useManagementMode", () => ({ useManagementMode: () => ({ unlocked: false }) }));
 vi.mock("@/components/common/DataState", () => ({ DataState: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/common/OptionalDataState", () => ({ OptionalDataState: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/dashboard/WRProgression", () => ({ WRProgression: () => <div>Record Progression</div> }));

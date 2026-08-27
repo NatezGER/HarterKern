@@ -6,7 +6,7 @@ import type { CompactBadge } from "@/types/historyProfiles";
 import { formatDate } from "@/utils/format";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
 import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
-import { getBadgeMaterialLabel } from "@/lib/badgePresentation";
+import { compareBadgeDisplayOrder, getBadgeMaterialLabel } from "@/lib/badgePresentation";
 
 const styles = {
   bronze: "border-orange-700/30 bg-orange-800/[0.06] text-orange-300",
@@ -23,9 +23,13 @@ const variantStyles = {
 };
 
 export function BadgeGallery({ badges, compact = false, featured = false, showPlayer = false, mobileLimit, desktopLimit, expanded = false }: { badges: CompactBadge[]; compact?: boolean; featured?: boolean; showPlayer?: boolean; mobileLimit?: number; desktopLimit?: number; expanded?: boolean }) {
+  const orderedBadges = badges.map((badge, index) => ({ badge, index }))
+    .sort((left, right) => compareBadgeDisplayOrder(left.badge, right.badge) ||
+      left.index - right.index)
+    .map(({ badge }) => badge);
   return (
     <div className={cn("grid grid-cols-2 gap-3 lg:grid-cols-3", compact && "lg:grid-cols-4")}>
-      {badges.map((badge, index) => {
+      {orderedBadges.map((badge, index) => {
         const collapseClass = !expanded && desktopLimit != null && index >= desktopLimit
           ? "hidden"
           : !expanded && mobileLimit != null && index >= mobileLimit

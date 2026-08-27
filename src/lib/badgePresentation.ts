@@ -17,6 +17,38 @@ export function getBadgeMaterialLabel(badge: {
   return badgeTierLabel[badge.tier];
 }
 
+type BadgeDisplayOrderInput = {
+  tier: BadgeTier;
+  designVariant?: "standard" | "positive_special" | "consolation";
+  isSpecialEventBadge?: boolean;
+};
+
+export function getBadgeDisplayRank(badge: BadgeDisplayOrderInput) {
+  if (badge.designVariant === "consolation") return 5;
+  if (badge.designVariant === "positive_special" || badge.isSpecialEventBadge ||
+    badge.tier === "special") return 0;
+  return { diamond: 1, gold: 2, silver: 3, bronze: 4 }[badge.tier] ?? 5;
+}
+
+export function compareBadgeDisplayOrder(
+  left: BadgeDisplayOrderInput,
+  right: BadgeDisplayOrderInput,
+) {
+  return getBadgeDisplayRank(left) - getBadgeDisplayRank(right);
+}
+
+export function formatBadgeTime(timeHundredths: number) {
+  return `${(timeHundredths / 100).toLocaleString("de-DE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} s`;
+}
+
+export function getAwardBadgeDisplayName(name: string, category: string, timeHundredths?: number | null) {
+  return category === "favorite_time" && timeHundredths != null
+    ? `${name} · ${formatBadgeTime(timeHundredths)}` : name;
+}
+
 export function getBadgeCenterMark(badge: {
   badgeKey: string;
   category?: string;
