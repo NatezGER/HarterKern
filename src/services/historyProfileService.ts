@@ -17,6 +17,32 @@ import type { BadgeUnlockCelebration } from "@/types/liveEvent";
 import { calculateComparePerformance } from "@/lib/playerCompareDeep";
 import { getSeasonDateRange } from "@/lib/season";
 import { getAwardBadgeDisplayName } from "@/lib/badgePresentation";
+import { getBadgeRarity } from "@/services/statsService";
+
+const BADGE_RARITY_CACHE_TTL_MS = 5 * 60_000;
+let badgeRarityCache: {
+  expiresAt: number;
+  values: Map<string, number | null>;
+} | null = null;
+let badgeRarityInFlight: Promise<Map<string, number | null>> | null = null;
+
+async function getCachedBadgeRarity() {
+  if (badgeRarityCache && badgeRarityCache.expiresAt > Date.now()) {
+    return badgeRarityCache.values;
+  }
+  if (badgeRarityInFlight) return badgeRarityInFlight;
+  badgeRarityInFlight = getBadgeRarity().then((badges) => {
+    const values = new Map(badges.map((badge) => [badge.key, badge.percent]));
+    badgeRarityCache = {
+      values,
+      expiresAt: Date.now() + BADGE_RARITY_CACHE_TTL_MS,
+    };
+    return values;
+  }).finally(() => {
+    badgeRarityInFlight = null;
+  });
+  return badgeRarityInFlight;
+}
 
 export async function getAttemptBadgeUnlocks(
   attemptId: string,
@@ -90,9 +116,7 @@ function mapBadge(row: {
   category: string;
   family_key: string | null;
   requirement: string | null;
-  recipient_count: number;
-  regular_player_count: number;
-  rarity_percent: number | null;
+  rarity_percent?: number | null;
   source_attempt_id: string | null;
   source_historical_attempt_id: string | null;
   source_event_name: string | null;
@@ -102,18 +126,13 @@ function mapBadge(row: {
   avatar_path: string | null;
   source_attempt_number: number | null;
   source_time_hundredths: number | null;
-  next_badge_name: string | null;
-  next_requirement: string | null;
-  next_tier: CompactBadge["tier"] | null;
-  next_threshold: number | null;
-  current_progress: number | null;
   threshold: number | null;
   is_special_event_badge: boolean;
   badge_kind?: CompactBadge["badgeKind"];
   design_variant?: CompactBadge["designVariant"];
   scope_type?: CompactBadge["scopeType"];
   metadata?: unknown;
-}): CompactBadge {
+}, rarityPercent?: number | null): CompactBadge {
   const metadataTime = row.metadata && typeof row.metadata === "object" &&
     !Array.isArray(row.metadata) && "timeHundredths" in row.metadata &&
     typeof row.metadata.timeHundredths === "number"
@@ -143,19 +162,12 @@ function mapBadge(row: {
     familyKey: row.family_key,
     requirement: row.requirement ?? row.description,
     threshold: row.threshold,
-    recipientCount: Number(row.recipient_count),
-    regularPlayerCount: Number(row.regular_player_count),
-    rarityPercent: row.rarity_percent,
+    rarityPercent: rarityPercent ?? row.rarity_percent ?? null,
     sourceAttemptId: row.source_attempt_id,
     sourceHistoricalAttemptId: row.source_historical_attempt_id,
     eventName: row.source_event_name,
     sourceAttemptNumber: row.source_attempt_number,
     sourceTimeHundredths: row.source_time_hundredths ?? metadataTime,
-    nextBadgeName: row.next_badge_name,
-    nextRequirement: row.next_requirement,
-    nextTier: row.next_tier,
-    nextThreshold: row.next_threshold,
-    currentProgress: row.current_progress,
     isSpecialEventBadge: row.is_special_event_badge,
     badgeKind: row.badge_kind ?? "tiered",
     designVariant: row.design_variant ?? "standard",
@@ -389,12 +401,10 @@ export async function getPlayerSeasonProfile(playerId: string, seasonYear: numbe
 }
 
 export async function getPlayerTimePerformance(playerId: string, seasonYear?: number) {
-  const query = seasonYear == null
-    ? getSupabase().from("qualified_official_times")
-      .select("time_hundredths").eq("player_id", playerId)
-    : getSupabase().from("season_qualified_official_times")
-      .select("time_hundredths").eq("player_id", playerId).eq("season_year", seasonYear);
-  const result = await query;
+  const result = await getSupabase().rpc("get_player_qualified_times", {
+    p_player_id: playerId,
+    p_season_year: seasonYear ?? null,
+  });
   if (result.error) throw result.error;
   const timeHundredths = (result.data ?? []).map((row) => row.time_hundredths)
     .sort((left, right) => left - right);
@@ -440,11 +450,16 @@ export async function getPlayerCompareTimeline(
 }
 
 export async function getPlayerBadges(playerId: string): Promise<CompactBadge[]> {
-  const result = await getSupabase().rpc("get_visible_player_badges", {
-    p_player_id: playerId,
-  });
+  const [result, rarityResult] = await Promise.all([
+    getSupabase().rpc("get_player_visible_badges", { p_player_id: playerId }),
+    getCachedBadgeRarity().then(
+      (value) => ({ value }),
+      () => ({ value: new Map<string, number | null>() }),
+    ),
+  ]);
   if (result.error) throw result.error;
-  return (result.data ?? []).map(mapBadge);
+  return (result.data ?? []).map((row) =>
+    mapBadge(row, rarityResult.value.get(row.badge_key) ?? null));
 }
 
 export async function getPlayerTrophies(playerId: string): Promise<TrophyAward[]> {
@@ -476,8 +491,9 @@ export async function getPlayerPrestige(
 }
 
 export async function getPlayerAttemptNumbers(playerId: string): Promise<AttemptNumberPoint[]> {
-  const result = await getSupabase().from("player_attempt_number_statistics").select("*")
-    .eq("player_id", playerId).order("attempt_number");
+  const result = await getSupabase().rpc("get_player_attempt_number_statistics", {
+    p_player_id: playerId,
+  });
   if (result.error) throw result.error;
   return (result.data ?? []).map((row) => ({
       attemptNumber: row.attempt_number,
@@ -489,8 +505,9 @@ export async function getPlayerAttemptNumbers(playerId: string): Promise<Attempt
 }
 
 export async function getPlayerEventHistory(playerId: string): Promise<PlayerEventSummary[]> {
-  const result = await getSupabase().from("player_event_history").select("*")
-    .eq("player_id", playerId).order("event_date", { ascending: false });
+  const result = await getSupabase().rpc("get_player_event_history", {
+    p_player_id: playerId,
+  });
   if (result.error) throw result.error;
   return (result.data ?? []).map((row) => ({
     eventId: row.event_id,
