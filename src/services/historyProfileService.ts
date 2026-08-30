@@ -48,7 +48,7 @@ export async function getAttemptBadgeUnlocks(
   attemptId: string,
   playerName: string,
 ): Promise<BadgeUnlockCelebration[]> {
-  const { data, error } = await getSupabase().from("public_player_badges")
+  const { data, error } = await getSupabase().from("player_badge_award_achievements")
     .select("award_key,badge_key,name,tier,description,category,metadata")
     .eq("source_attempt_id", attemptId)
     .order("awarded_at");

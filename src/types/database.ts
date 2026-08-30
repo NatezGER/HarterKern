@@ -166,6 +166,29 @@ export interface Database {
       historical_attempts: HistoricalAttemptsTable;
       event_photos: EventPhotosTable;
       badge_definitions: BadgeDefinitionsTable;
+      player_badge_award_ledger: {
+        Row: {
+          award_key: string;
+          player_id: string;
+          badge_key: string;
+          source_type: string;
+          source_attempt_id: string | null;
+          source_historical_attempt_id: string | null;
+          source_event_id: string | null;
+          source_awarded_at: string;
+          awarded_at: string;
+          metadata: Json;
+          source_event_name: string | null;
+          source_event_date: string | null;
+          source_attempt_number: number | null;
+          source_time_hundredths: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       award_assets: AwardAssetsTable;
       admin_roles: {
         Row: { user_id: string; created_at: string };
@@ -259,6 +282,22 @@ export interface Database {
       event_attempt_number_statistics: EventAttemptNumberStatisticsView;
       visible_player_badges: VisiblePlayerBadgesView;
       bingo_line_diamond_badge_awards: PlayerBadgeAwardsView;
+      player_badge_award_achievements: {
+        Row: {
+          award_key: string;
+          badge_key: string;
+          player_id: string;
+          display_name: string;
+          awarded_at: string;
+          metadata: Json;
+          source_attempt_id: string | null;
+          name: string;
+          tier: BadgeTier;
+          description: string;
+          category: string;
+        };
+        Relationships: [];
+      };
       event_badge_unlocks: VisiblePlayerBadgesView;
       player_prestige_statistics: PlayerPrestigeStatisticsView;
       prestige_activity_feed: {

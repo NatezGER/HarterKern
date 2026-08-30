@@ -14,6 +14,7 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 import {
+  getAttemptBadgeUnlocks,
   getClosedEventIds,
   getPlayerCompareTimeline,
   getPlayerPersonalProgression,
@@ -271,6 +272,38 @@ describe("player profile core repository", () => {
     });
     expect(mocks.rpc).toHaveBeenCalledWith("get_badge_rarity");
     expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it("loads post-attempt unlocks from the persisted ledger projection", async () => {
+    const builder = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      order: vi.fn().mockResolvedValue({
+        data: [{
+          award_key: "player-1:favorite-time-bronze:294",
+          badge_key: "favorite-time-bronze",
+          name: "Déjà-vu",
+          tier: "bronze",
+          description: "Dieselbe Zeit zweimal",
+          category: "favorite_time",
+          metadata: { timeHundredths: 294 },
+        }],
+        error: null,
+      }),
+    };
+    builder.select.mockReturnValue(builder);
+    builder.eq.mockReturnValue(builder);
+    mocks.from.mockReturnValueOnce(builder);
+
+    await expect(getAttemptBadgeUnlocks("attempt-1", "Paul")).resolves.toEqual([
+      expect.objectContaining({
+        key: "player-1:favorite-time-bronze:294",
+        badgeKey: "favorite-time-bronze",
+        playerName: "Paul",
+      }),
+    ]);
+    expect(mocks.from).toHaveBeenCalledWith("player_badge_award_achievements");
+    expect(builder.eq).toHaveBeenCalledWith("source_attempt_id", "attempt-1");
   });
 
   it("uses dedicated player-scoped RPCs for extended profile reads", async () => {

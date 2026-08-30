@@ -233,9 +233,11 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   gebündelten Request `public_player_badges` für die Empfänger-Disclosure;
   keine Badge-Einzelrequests und keine zusätzliche globale Datenladung.
 - **Profil-Badges:** Der Galerie-RPC liefert nur sichtbare, familiengerankte
-  Player-Awards und keine Rarity-, Progress- oder Next-Badge-Aggregate. Rarity
-  wird separat über `get_badge_rarity` geladen, im Profil fünf Minuten gecacht
-  und fehlertolerant per `badge_key` ergänzt.
+  Awards aus `player_badge_award_ledger` und keine Live-Eligibility-, Rarity-,
+  Progress- oder Next-Badge-Aggregate. Das Ledger wird transaktional aus den
+  kanonischen Award-Views synchronisiert. Rarity wird ebenfalls aus dem Ledger
+  über `get_badge_rarity` geladen, im Profil fünf Minuten gecacht und
+  fehlertolerant per `badge_key` ergänzt.
 - **Pre-P11 Awards:** Die additive Award-Erweiterung ergänzt die vollständige
   BINGO-Kartenfamilie, drei Holz-/Trostpreis-Badges und deterministisch aus
   qualifizierten Zeiten beziehungsweise BINGO-Treffern ermittelte historische

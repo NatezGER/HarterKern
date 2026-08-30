@@ -113,7 +113,7 @@ export async function getAdminBadgeCatalog(): Promise<AdminBadgeCatalog> {
   const [definitionsResult, achievementsResult] = await Promise.all([
     client.from("badge_definitions").select("badge_key,family_key,category,tier,name,description,threshold,requirement,sort_order,is_secret,badge_kind,design_variant,scope_type,is_active")
       .order("sort_order"),
-    client.from("public_player_badges").select("award_key,badge_key,player_id,display_name,awarded_at,metadata")
+    client.from("player_badge_award_achievements").select("award_key,badge_key,player_id,display_name,awarded_at,metadata")
       .order("awarded_at"),
   ]);
   if (definitionsResult.error) throw definitionsResult.error;
