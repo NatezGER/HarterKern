@@ -27,6 +27,13 @@ vi.mock("@/hooks/usePlayerCompare", () => ({
 vi.mock("@/hooks/usePlayerDeepCompare", () => ({
   usePlayerDeepCompare: () => state.deep,
 }));
+vi.mock("@/hooks/usePlayerMostWantedStatistics", () => ({
+  usePlayerMostWantedStatistics: () => ({
+    data: { a: { allTimeHits: 41, seasonFirstHits: 8 }, b: { allTimeHits: 37, seasonFirstHits: 5 } },
+    loading: false,
+    error: "",
+  }),
+}));
 
 import { PlayerComparePage } from "@/pages/PlayerComparePage";
 
@@ -160,8 +167,16 @@ describe("PlayerComparePage", () => {
 
   it("uses the exact final section order", () => {
     const markup = renderCompare("/compare?playerA=a&playerB=b");
-    const labels = ["Hauptstatistiken", "PB-Entwicklung", "Nach Versuchsnummer", "Head to Head", "Speed &amp; Peak Performance", "Konstanz &amp; Serien", "Event- &amp; Leistungswerte", "Experimentelle Übersicht"];
+    const labels = ["Head to Head", "PB-Entwicklung", "Nach Versuchsnummer", "Hauptstatistiken", "Speed &amp; Peak Performance", "Konstanz &amp; Serien", "Event- &amp; Leistungswerte", "Most Wanted", "Wer liegt vorne?"];
     expect(labels.map((label) => markup.indexOf(label))).toEqual([...labels.map((label) => markup.indexOf(label))].sort((a, b) => a - b));
+  });
+
+  it("shows canonical Most Wanted values and season first hits only in season mode", () => {
+    expect(renderCompare("/compare?playerA=a&playerB=b")).toContain("Most-Wanted Treffer");
+    expect(renderCompare("/compare?playerA=a&playerB=b")).not.toContain("Saison-Ersttreffer 2026");
+    state.season = 2026;
+    state.isAllTime = false;
+    expect(renderCompare("/compare?playerA=a&playerB=b")).toContain("Saison-Ersttreffer 2026");
   });
 
   it("keeps progression and P11A/P11B visible when sequence data fails", () => {

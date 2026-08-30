@@ -1,6 +1,7 @@
 import type { PlayerTimePerformance, ProgressionPoint, TimeThresholdSummary } from "@/types/historyProfiles";
 import type {
   ComparableValue,
+  CompareCategoryValue,
   CompareAttemptNumberPoint,
   CompareLeadSummary,
   DirectRivalrySummary,
@@ -156,14 +157,54 @@ export function visibleAttemptNumbers<T>(points: T[], expanded: boolean, limit =
 
 export function calculateCompareLeadSummary(values: ComparableValue[]): CompareLeadSummary {
   return values.reduce<CompareLeadSummary>((summary, value) => {
-    if (value.left == null || value.right == null) return summary;
+    if (value.left == null || value.right == null) {
+      summary.unavailable += 1;
+      return summary;
+    }
     summary.compared += 1;
     if (value.left === value.right) summary.ties += 1;
     else if ((value.direction === "higher" && value.left > value.right) ||
       (value.direction === "lower" && value.left < value.right)) summary.playerALeads += 1;
     else summary.playerBLeads += 1;
     return summary;
-  }, { playerALeads: 0, playerBLeads: 0, ties: 0, compared: 0 });
+  }, { playerALeads: 0, playerBLeads: 0, ties: 0, compared: 0, unavailable: 0 });
+}
+
+type CategoryPair = { left: number | null; right: number | null };
+
+const COMPARE_CATEGORY_DEFINITIONS = [
+  ["personal-best", "Bestzeit", "Hauptwerte", "lower"],
+  ["average", "Durchschnitt", "Hauptwerte", "lower"],
+  ["median", "Median", "Hauptwerte", "lower"],
+  ["valid-attempts", "Gültige Versuche", "Hauptwerte", "higher"],
+  ["event-participations", "Eventteilnahmen", "Hauptwerte", "higher"],
+  ["wins", "Siege", "Hauptwerte", "higher"],
+  ["podiums", "Podien", "Hauptwerte", "higher"],
+  ["dnf-rate", "DNF-Quote", "Hauptwerte", "lower"],
+  ["head-to-head-wins", "Direkte Siege", "Head to Head", "higher"],
+  ["sub-3", "Unter 3 Sekunden", "Speed", "higher"],
+  ["fastest-three", "Ø der 3 schnellsten", "Speed", "lower"],
+  ["standard-deviation", "Streuung", "Konstanz", "lower"],
+  ["sub-3-streak", "Längste 2,xx-Serie", "Konstanz", "higher"],
+  ["no-dnf-streak", "Längste Serie ohne DNF", "Konstanz", "higher"],
+  ["event-lead", "Event-Führungszeit", "Events", "higher"],
+  ["event-best-breaks", "Eventbestzeiten gebrochen", "Events", "higher"],
+  ["fastest-first", "Schnellster erster Versuch", "Events", "lower"],
+  ["most-wanted-all-time", "Most-Wanted Treffer", "Most Wanted", "higher"],
+  ["most-wanted-season-first", "Saison-Ersttreffer", "Most Wanted", "higher"],
+] as const;
+
+export type CompareCategoryKey = typeof COMPARE_CATEGORY_DEFINITIONS[number][0];
+
+export function createCompareCategoryBalance(
+  values: Partial<Record<CompareCategoryKey, CategoryPair>>,
+  includeSeasonFirstHits: boolean,
+): CompareCategoryValue[] {
+  return COMPARE_CATEGORY_DEFINITIONS.flatMap(([key, label, group, direction]) => {
+    if (key === "most-wanted-season-first" && !includeSeasonFirstHits) return [];
+    const pair = values[key] ?? { left: null, right: null };
+    return [{ key, label, group, direction, ...pair }];
+  });
 }
 
 export function mergePlayerProgressions(playerA: ProgressionPoint[], playerB: ProgressionPoint[]) {

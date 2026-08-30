@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateCompareLeadSummary,
+  createCompareCategoryBalance,
   calculateComparePerformance,
   calculateDirectRivalry,
   calculatePlayerSequenceStatistics,
@@ -100,7 +101,23 @@ describe("final player compare statistics", () => {
       { left: 2, right: 3, direction: "higher" },
       { left: 2, right: 2, direction: "higher" },
       { left: null, right: 2, direction: "higher" },
-    ])).toEqual({ playerALeads: 1, playerBLeads: 1, ties: 1, compared: 3 });
+    ])).toEqual({ playerALeads: 1, playerBLeads: 1, ties: 1, compared: 3, unavailable: 1 });
+  });
+
+  it("uses one transparent, unweighted category list including scoped Most Wanted", () => {
+    const allTime = createCompareCategoryBalance({
+      "personal-best": { left: 250, right: 260 },
+      "most-wanted-all-time": { left: 41, right: 37 },
+      "most-wanted-season-first": { left: 8, right: 5 },
+    }, false);
+    expect(allTime.filter(({ left }) => left != null).map(({ key }) => key))
+      .toEqual(["personal-best", "most-wanted-all-time"]);
+    expect(allTime.some(({ key }) => key === "most-wanted-season-first")).toBe(false);
+    const season = createCompareCategoryBalance({
+      "most-wanted-season-first": { left: 8, right: 5 },
+    }, true);
+    expect(season.find(({ key }) => key === "most-wanted-season-first"))
+      .toMatchObject({ direction: "higher", left: 8, right: 5 });
   });
 });
 

@@ -61,7 +61,8 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Views/RPCs:** `players`, `player_statistics`, `public_hall_of_fame`,
   `get_player_event_history`, `get_player_visible_badges`,
   `get_player_attempt_number_statistics`, `get_player_qualified_times`, `player_pb_history`,
-  `player_prestige_statistics`, `player_trophies`; separat
+  `player_prestige_statistics`, `player_trophies`,
+  `get_player_most_wanted_statistics`; separat
   `get_player_bingo`; dessen gemeinsame player-scoped Basis bleibt fachlich aus
   `player_bingo_hits`, den zentralen Badge-Schwellen und dem kanonischen
   `bingo_line_cells`-Raster abgeleitet.
@@ -75,6 +76,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   Unter-5-/Unter-4-/Unter-3-Anteile; keine globale Abfrage und kein N+1.
 - **Eventführung:** Ein player-scoped RPC liefert All-Time oder saisonal
   kumulierte offizielle Führungssekunden und strikt gebrochene Eventbestzeiten.
+- **Most Wanted:** Ein kleiner player-scoped Read liefert unterschiedliche
+  All-Time-Endungen und im Saisonmodus saisonale Ersttreffer. Er projiziert die
+  kanonischen Most-Wanted-Quellen und lädt weder Matrix noch Rohbestand.
 
 ## 5a. Spielervergleich
 
@@ -86,10 +90,10 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Hooks/Services:** `usePlayerCompare`, `playerCompareService` sowie der davon
   unabhängige Deep-Block `usePlayerDeepCompare` / `playerDeepCompareService`;
   vorhandene gecachte Sections aus `playerProfileService`, Players-Datengruppe.
-- **Finale Reihenfolge:** Hero/Selektoren, Hauptstatistiken, gemeinsame
-  PB-Entwicklung, Nach Versuchsnummer, Head to Head/Rivalry, Speed & Peak,
-  Konstanz & Serien, Event- & Leistungswerte und experimentelle
-  Vergleichszusammenfassung.
+- **Finale Reihenfolge:** Hero/Selektoren, Head to Head/Rivalry, gemeinsame
+  PB-Entwicklung, Nach Versuchsnummer, Hauptstatistiken, Speed & Peak,
+  Konstanz & Serien, Event- & Leistungswerte, Most Wanted und die finale
+  Kategorienbilanz „Wer liegt vorne?“.
 - **Views/RPCs und Aggregate:** Pro ausgewähltem Spieler werden vorhandener
   Profil-Core, optionales Saisonprofil und die bereits von P11A verwendeten
   `qualified_official_times` beziehungsweise `season_qualified_official_times`
@@ -110,14 +114,16 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   Saison-Requests. P11C ergänzt einen gemeinsamen Sequenz-Read und zwei
   persönliche Progressions-Reads. Damit liegen die Maxima bei 18 (All-Time)
   beziehungsweise 22 (Saison), ohne N+1 sowie ohne Badge- oder Prestige-Reads.
+  Most Wanted ergänzt genau einen paarweisen, aggregierten und optionalen RPC.
 - **Fehlerisolation:** P11A-Core/Speed und P11B-H2H laden unabhängig von P11C.
   Innerhalb von P11C haben Sequenzdaten und Progression eigene Lade- und
   Fehlerzustände; die beiden Progressions-Reads werden tolerant zusammengeführt,
   sodass eine vorhandene Spielerserie trotz Ausfall der anderen sichtbar bleibt.
-- **Datenbankentscheidung:** Keine Migration. Die finale, reduzierte Metrikmenge
-  wird vollständig von bestehenden qualifizierten Reads/RPCs sowie einem
-  gebündelten Read auf den vorhandenen Basistabellen abgedeckt. Es werden keine
-  veraltbaren, abgeleiteten Spalten gespeichert.
+- **Most-Wanted-Projektion:** `get_player_most_wanted_statistics` zählt pro
+  angefragtem Spieler unterschiedliche Endungen aus `qualified_official_times`
+  und saisonale Ersttreffer direkt aus `season_most_wanted_endings`. Der RPC
+  übernimmt damit Qualifikation und deterministischen First-Hit-Tie-Break aus
+  den kanonischen Read-Models statt sie neu zu implementieren.
 - **Tests:** `npm test -- src/lib/playerCompare.test.ts
   src/lib/playerCompareDeep.test.ts src/services/playerCompareService.test.ts
   src/services/playerDeepCompareService.test.ts src/pages/PlayerComparePage.test.tsx
@@ -132,11 +138,11 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   besitzen, und endet spätestens mit Eventschluss. Eine direkte Führungsübernahme
   zählt nur beim Wechsel vom bislang führenden Gegner zum Einreicher; erster
   vergleichbarer Vorsprung und Gleichstände zählen nicht als Übernahme.
-- **Deep-Sections:** Gemeinsame PB-Progression, season-aware Attempt Numbers,
-  Speed & Peak, Konstanz & Serien, Event- & Leistungswerte und eine leicht
-  entfernbare, ausdrücklich experimentelle Lead-Zusammenfassung ohne Score,
-  Gewichtung oder Gewinnertext. Profil-Auszeichnungen und zusätzliche
-  spielerprofilfremde Kennzahlen sind nicht Teil des Vergleichs.
+- **Kategorienbilanz:** 18 All-Time- beziehungsweise 19 Saisonkategorien sind
+  zentral mit ihrer Richtung definiert. Semantisch überlappende Thresholds,
+  PB-Abstände und variable Versuchnummern werden nicht mehrfach belohnt.
+  Missing Data zählt für niemanden; jede verfügbare Kategorie zählt einmal,
+  ohne Gewichtung und ohne offiziellen Gewinnertext.
 - **Nicht enthalten:** Drei-Spieler-Vergleich, neue Prestigeformel oder ein
   offizieller Gesamtsieger.
 
@@ -254,6 +260,7 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Hooks/Services:** `statsService`, `historyProfileService`; Datenzustände über
   `useDataPlatform` beziehungsweise `usePlayerProfileDetail`.
 - **Views/RPCs:** `most_wanted_endings`, `most_wanted_progress`,
+  `season_most_wanted_endings`, `get_player_most_wanted_statistics`,
   `player_bingo_fields`, `player_bingo_statistics`, `player_bingo_hits`.
 - **Tests:** `npm test -- src/components/stats/MostWantedMatrix.test.tsx
   src/components/players/PersonalBingo.test.tsx`.

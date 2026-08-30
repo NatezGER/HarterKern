@@ -515,6 +515,14 @@ export interface Database {
       season_trophies: PlayerTrophyView;
     };
     Functions: DataPlatformFunctions & {
+      get_player_most_wanted_statistics: {
+        Args: { p_player_ids: string[]; p_season_year?: number | null };
+        Returns: Array<{
+          player_id: string;
+          all_time_hits: number;
+          season_first_hits: number | null;
+        }>;
+      };
       get_medal_qualified_events: {
         Args: { p_event_ids: string[] | null };
         Returns: Array<{ event_id: string }>;

@@ -7,6 +7,7 @@ import {
   CompareAttemptNumbersSection,
   CompareConsistencySection,
   CompareEventPerformanceSection,
+  CompareMostWantedSection,
   CompareProgressionSection,
   CompareSummarySection,
 } from "@/components/compare/DeepCompareSections";
@@ -18,6 +19,7 @@ import { getRosterPlayers } from "@/data/selectors";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { usePlayerCompare } from "@/hooks/usePlayerCompare";
 import { usePlayerDeepCompare } from "@/hooks/usePlayerDeepCompare";
+import { usePlayerMostWantedStatistics } from "@/hooks/usePlayerMostWantedStatistics";
 import { useSeason } from "@/hooks/useSeason";
 import { DRINK_MILLILITERS_PER_VALID_ATTEMPT } from "@/constants/game";
 import { formatDrinkVolume } from "@/lib/media";
@@ -27,8 +29,8 @@ import {
   replaceComparePlayer,
   type CompareDirection,
 } from "@/lib/playerCompare";
-import type { PlayerProfileCore, PlayerSeasonProfile, PlayerTimePerformance } from "@/types/historyProfiles";
-import type { ComparableValue, PlayerCompareSequencePair } from "@/types/playerCompare";
+import { createCompareCategoryBalance } from "@/lib/playerCompareDeep";
+import type { PlayerProfileCore, PlayerSeasonProfile } from "@/types/historyProfiles";
 import { formatTime } from "@/utils/format";
 
 type ActiveStatistics = PlayerProfileCore | PlayerSeasonProfile | null;
@@ -58,6 +60,8 @@ export function PlayerComparePage() {
     playerA && playerB ? playerA.id : null,
     playerA && playerB ? playerB.id : null,
   );
+  const seasonYear = typeof season === "number" ? season : undefined;
+  const mostWanted = usePlayerMostWantedStatistics([playerA?.id ?? null, playerB?.id ?? null], seasonYear);
   const detailA = core.data?.playerA ?? null;
   const detailB = core.data?.playerB ?? null;
   const hasInvalidSelection = Boolean(
@@ -115,15 +119,29 @@ export function PlayerComparePage() {
     metric("PB-Abstand zum Ø", speed.data?.playerA?.pbToAverageHundredths ?? null, speed.data?.playerB?.pbToAverageHundredths ?? null, "lower", timeMetric),
     metric("PB-Abstand zum Median", speed.data?.playerA?.pbToMedianHundredths ?? null, speed.data?.playerB?.pbToMedianHundredths ?? null, "lower", timeMetric),
   );
-  const summaryValues = createSummaryValues(
-    mainMetrics,
-    speedMetrics,
-    detailA?.statistics ?? null,
-    detailB?.statistics ?? null,
-    speed.data?.playerA ?? null,
-    speed.data?.playerB ?? null,
-    deep.sequence.data,
-  );
+  const sub3A = speed.data?.playerA?.thresholds.find(({ seconds }) => seconds === 3);
+  const sub3B = speed.data?.playerB?.thresholds.find(({ seconds }) => seconds === 3);
+  const categories = createCompareCategoryBalance({
+    "personal-best": pair(detailA?.statistics?.personalBestHundredths, detailB?.statistics?.personalBestHundredths),
+    average: pair(detailA?.statistics?.averageHundredths, detailB?.statistics?.averageHundredths),
+    median: pair(speed.data?.playerA?.medianHundredths, speed.data?.playerB?.medianHundredths),
+    "valid-attempts": pair(detailA?.statistics?.validAttempts, detailB?.statistics?.validAttempts),
+    "event-participations": pair(detailA?.statistics?.eventParticipations, detailB?.statistics?.eventParticipations),
+    wins: pair(detailA?.statistics?.wins, detailB?.statistics?.wins),
+    podiums: pair(podiums(detailA?.statistics ?? null), podiums(detailB?.statistics ?? null)),
+    "dnf-rate": pair(dnfRate(detailA?.statistics ?? null), dnfRate(detailB?.statistics ?? null)),
+    "head-to-head-wins": pair(headToHead.data?.playerAWins, headToHead.data?.playerBWins),
+    "sub-3": pair(sub3A?.total ? sub3A.percent : null, sub3B?.total ? sub3B.percent : null),
+    "fastest-three": pair(speed.data?.playerA?.fastestThreeAverageHundredths, speed.data?.playerB?.fastestThreeAverageHundredths),
+    "standard-deviation": pair(speed.data?.playerA?.standardDeviationHundredths, speed.data?.playerB?.standardDeviationHundredths),
+    "sub-3-streak": pair(deep.sequence.data?.playerA.longestSub3Streak, deep.sequence.data?.playerB.longestSub3Streak),
+    "no-dnf-streak": pair(deep.sequence.data?.playerA.longestNoDnfStreak, deep.sequence.data?.playerB.longestNoDnfStreak),
+    "event-lead": pair(detailA?.statistics?.eventLeadSeconds, detailB?.statistics?.eventLeadSeconds),
+    "event-best-breaks": pair(detailA?.statistics?.eventBestBreaks, detailB?.statistics?.eventBestBreaks),
+    "fastest-first": pair(deep.sequence.data?.playerA.fastestFirstAttemptHundredths, deep.sequence.data?.playerB.fastestFirstAttemptHundredths),
+    "most-wanted-all-time": pair(playerA ? mostWanted.data?.[playerA.id]?.allTimeHits : null, playerB ? mostWanted.data?.[playerB.id]?.allTimeHits : null),
+    "most-wanted-season-first": pair(playerA ? mostWanted.data?.[playerA.id]?.seasonFirstHits : null, playerB ? mostWanted.data?.[playerB.id]?.seasonFirstHits : null),
+  }, !isAllTime);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 sm:space-y-8">
@@ -184,17 +202,6 @@ export function PlayerComparePage() {
       )}
       {core.error && <div className="panel p-5 text-center text-red-200">{core.error}</div>}
 
-      {!core.loading && !core.error && (playerA || playerB) && (
-        <section className="panel overflow-hidden">
-          <div className="p-5 pb-3 sm:p-7 sm:pb-4"><SectionHeading eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Hauptstatistiken" /></div>
-          <div>{mainMetrics.map((metric) => <CompareMetricRow key={metric.label} {...metric} />)}</div>
-        </section>
-      )}
-
-      {playerA && playerB && <CompareProgressionSection playerA={playerA} playerB={playerB} state={deep.progression} />}
-
-      {playerA && playerB && <CompareAttemptNumbersSection playerA={playerA} playerB={playerB} state={deep.sequence} />}
-
       {playerA && playerB && (
         <HeadToHeadSection
           playerAName={playerA.name}
@@ -202,12 +209,19 @@ export function PlayerComparePage() {
           data={headToHead.data}
           loading={headToHead.loading}
           error={headToHead.error}
-          rivalry={{
-            data: deep.sequence.data?.rivalry ?? null,
-            loading: deep.sequence.loading,
-            error: deep.sequence.error,
-          }}
+          rivalry={{ data: deep.sequence.data?.rivalry ?? null, loading: deep.sequence.loading, error: deep.sequence.error }}
         />
+      )}
+
+      {playerA && playerB && <CompareProgressionSection playerA={playerA} playerB={playerB} state={deep.progression} />}
+
+      {playerA && playerB && <CompareAttemptNumbersSection playerA={playerA} playerB={playerB} state={deep.sequence} />}
+
+      {!core.loading && !core.error && (playerA || playerB) && (
+        <section className="panel overflow-hidden">
+          <div className="p-5 pb-3 sm:p-7 sm:pb-4"><SectionHeading eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Hauptstatistiken" /></div>
+          <div>{mainMetrics.map((metric) => <CompareMetricRow key={metric.label} {...metric} />)}</div>
+        </section>
       )}
 
       {!core.loading && !core.error && playerA && playerB && (
@@ -231,8 +245,10 @@ export function PlayerComparePage() {
         <CompareEventPerformanceSection statsA={detailA?.statistics ?? null} statsB={detailB?.statistics ?? null} sequence={deep.sequence} />
       )}
 
+      {playerA && playerB && <CompareMostWantedSection playerA={playerA} playerB={playerB} {...mostWanted} seasonYear={seasonYear} />}
+
       {playerA && playerB && (
-        <CompareSummarySection playerA={playerA} playerB={playerB} values={summaryValues} />
+        <CompareSummarySection playerA={playerA} playerB={playerB} categories={categories} />
       )}
     </div>
   );
@@ -300,37 +316,6 @@ function dnfRate(stats: ActiveStatistics) {
   return dnfPercentage(stats.validAttempts, stats.dnfCount);
 }
 
-function createSummaryValues(
-  main: Metric[],
-  speed: Metric[],
-  statsA: ActiveStatistics,
-  statsB: ActiveStatistics,
-  performanceA: PlayerTimePerformance | null,
-  performanceB: PlayerTimePerformance | null,
-  sequence: PlayerCompareSequencePair | null,
-): ComparableValue[] {
-  const values = [...main, ...speed].map(({ left, right, direction }) => ({
-    left: left.raw,
-    right: right.raw,
-    direction,
-  }));
-  values.push(
-    { left: performanceA?.standardDeviationHundredths ?? null, right: performanceB?.standardDeviationHundredths ?? null, direction: "lower" },
-    { left: sequence?.playerA.longestSub3Streak ?? null, right: sequence?.playerB.longestSub3Streak ?? null, direction: "higher" },
-    { left: sequence?.playerA.longestNoDnfStreak ?? null, right: sequence?.playerB.longestNoDnfStreak ?? null, direction: "higher" },
-    { left: statsA?.eventLeadSeconds ?? null, right: statsB?.eventLeadSeconds ?? null, direction: "higher" },
-    { left: statsA?.eventBestBreaks ?? null, right: statsB?.eventBestBreaks ?? null, direction: "higher" },
-    { left: sequence?.playerA.fastestFirstAttemptHundredths ?? null, right: sequence?.playerB.fastestFirstAttemptHundredths ?? null, direction: "lower" },
-    { left: sequence?.rivalry.playerALeadSeconds ?? null, right: sequence?.rivalry.playerBLeadSeconds ?? null, direction: "higher" },
-    { left: sequence?.rivalry.playerALeadTakes ?? null, right: sequence?.rivalry.playerBLeadTakes ?? null, direction: "higher" },
-  );
-  const attemptsA = new Map(sequence?.playerA.attemptNumbers.map((point) => [point.attemptNumber, point.averageHundredths]) ?? []);
-  const attemptsB = new Map(sequence?.playerB.attemptNumbers.map((point) => [point.attemptNumber, point.averageHundredths]) ?? []);
-  const attemptNumbers = [...new Set([...attemptsA.keys(), ...attemptsB.keys()])];
-  values.push(...attemptNumbers.map((attemptNumber) => ({
-    left: attemptsA.get(attemptNumber) ?? null,
-    right: attemptsB.get(attemptNumber) ?? null,
-    direction: "lower" as const,
-  })));
-  return values;
+function pair(left: number | null | undefined, right: number | null | undefined) {
+  return { left: left ?? null, right: right ?? null };
 }

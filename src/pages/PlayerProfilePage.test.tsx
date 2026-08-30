@@ -58,6 +58,9 @@ vi.mock("@/hooks/useHistoryProfiles", () => ({
 vi.mock("@/hooks/useSeason", () => ({
   useSeason: () => selectedSeason,
 }));
+vi.mock("@/hooks/usePlayerMostWantedStatistics", () => ({
+  usePlayerMostWantedStatistics: () => ({ data: { "player-1": { allTimeHits: 41, seasonFirstHits: 8 } }, loading: false, error: "" }),
+}));
 vi.mock("@/components/compare/ProfileCompareAction", () => ({
   ProfileCompareAction: () => <span>Vergleichen mit …</span>,
 }));
@@ -73,6 +76,8 @@ describe("PlayerProfilePage optional failures", () => {
     );
     expect(markup).toContain("Paul");
     expect(markup).toContain("Weltrang #2");
+    expect(markup).toContain("Most-Wanted Treffer · All-Time");
+    expect(markup).toContain(">41<");
     expect(markup).toContain("Personal Best");
     expect(markup).toContain("Gültige Versuche");
     expect(markup).toContain("2 · 16,7 %");
