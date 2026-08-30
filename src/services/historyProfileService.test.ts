@@ -306,6 +306,20 @@ describe("player profile core repository", () => {
     expect(builder.eq).toHaveBeenCalledWith("source_attempt_id", "attempt-1");
   });
 
+  it("does not announce a repeated qualification that is not a new ledger row", async () => {
+    const builder = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+    builder.select.mockReturnValue(builder);
+    builder.eq.mockReturnValue(builder);
+    mocks.from.mockReturnValueOnce(builder);
+
+    await expect(getAttemptBadgeUnlocks("later-proof", "Paul")).resolves.toEqual([]);
+    expect(builder.eq).toHaveBeenCalledWith("source_attempt_id", "later-proof");
+  });
+
   it("uses dedicated player-scoped RPCs for extended profile reads", async () => {
     mocks.rpc
       .mockResolvedValueOnce({ data: [{ time_hundredths: 300 }], error: null })

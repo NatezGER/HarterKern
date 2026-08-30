@@ -61,7 +61,7 @@ export function AttemptHistory({
               {milestone?.isPersonalBest && <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-300"><Medal className="size-3" /> PB</span>}
               {milestone?.isWorldRecord && <span className="flex items-center gap-1 text-[10px] font-bold text-gold-300"><Trophy className="size-3" /> WR</span>}
             </div>
-            <p className="text-right font-display text-xl font-black">{attempt.result === "dns" ? "DNS" : formatTime(attempt.timeSeconds ?? 0)}</p>
+            <p className="text-right font-display text-xl font-black">{attempt.result === "dns" ? "DNF" : formatTime(attempt.timeSeconds ?? 0)}</p>
             {unlocked && (
               <Button className="hidden lg:inline-flex" size="sm" variant="outline" onClick={() => setEditing(attempt)}>
                 <Edit3 className="size-4" /> Bearbeiten

@@ -15,6 +15,7 @@ import type {
   PublicPlayerBadgesView,
   EventAttemptDetailsView,
   EventParticipantStatisticsView,
+  EventFinalStandingsView,
   PlayerEventHistoryView,
   WorldRecordHistoryView,
   PlayerPbHistoryView,
@@ -276,6 +277,7 @@ export interface Database {
       public_player_badges: PublicPlayerBadgesView;
       event_attempt_details: EventAttemptDetailsView;
       event_participant_statistics: EventParticipantStatisticsView;
+      event_final_standings: EventFinalStandingsView;
       player_event_history: PlayerEventHistoryView;
       world_record_history: WorldRecordHistoryView;
       player_pb_history: PlayerPbHistoryView;

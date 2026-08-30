@@ -21,7 +21,7 @@ export function LiveEventBanner() {
     .sort((a, b) => (a.timeSeconds ?? Infinity) - (b.timeSeconds ?? Infinity))[0];
   const attemptText = (attempt: (typeof attempts)[number]) => {
     const player = state.players.find(({ id }) => id === attempt.playerId);
-    return `${player?.name ?? "Spieler"} ${attempt.result === "dns" ? "DNS" : formatTime(attempt.timeSeconds ?? 0)}`;
+    return `${player?.name ?? "Spieler"} ${attempt.result === "dns" ? "DNF" : formatTime(attempt.timeSeconds ?? 0)}`;
   };
   const items = [
     activeEvent.name || "Spieleabend",

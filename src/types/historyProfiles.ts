@@ -126,6 +126,7 @@ export interface EventDetail {
   fastestHundredths: number | null;
   averageHundredths: number | null;
   podium: EventParticipantDetail[];
+  finalStandings: EventParticipantDetail[];
   participantStats: EventParticipantDetail[];
   attempts: EventAttemptDetail[];
   badges: CompactBadge[];

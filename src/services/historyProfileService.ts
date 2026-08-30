@@ -220,10 +220,13 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
   const [statsResult, podiumResult, medalEventResult, attemptsResult, participantResult,
     leadResult] = await Promise.all([
     client.from("event_statistics").select("*").eq("event_id", eventId).maybeSingle(),
-    client.from("event_podium").select("*").eq("event_id", eventId).order("rank"),
+    client.from("event_podium").select("*").eq("event_id", eventId)
+      .order("rank").order("best_time_hundredths").order("display_name"),
     client.rpc("get_medal_qualified_events", { p_event_ids: [eventId] }).maybeSingle(),
     client.from("event_attempt_details").select("*").eq("event_id", eventId).order("submitted_at"),
-    client.from("event_participant_statistics").select("*").eq("event_id", eventId),
+    client.from(event.status === "closed"
+      ? "event_final_standings"
+      : "event_participant_statistics").select("*").eq("event_id", eventId),
     client.from("event_lead_participant_statistics").select("*").eq("event_id", eventId),
   ]);
   for (const result of [statsResult, podiumResult, medalEventResult, attemptsResult,
@@ -264,6 +267,23 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
     return { ...participant, leadSeconds: Number(lead?.lead_seconds ?? 0),
       eventBestBreaks: Number(lead?.event_best_breaks ?? 0) };
   });
+  const finalStandings = event.status === "closed"
+    ? [...participantStats].sort((left, right) => {
+      if (left.rank == null) return right.rank == null
+        ? left.name.localeCompare(right.name, "de") ||
+          (left.playerId ?? left.guestId ?? "").localeCompare(
+            right.playerId ?? right.guestId ?? "",
+          )
+        : 1;
+      if (right.rank == null) return -1;
+      return left.rank - right.rank ||
+        (left.bestHundredths ?? Infinity) - (right.bestHundredths ?? Infinity) ||
+        left.name.localeCompare(right.name, "de") ||
+        (left.playerId ?? left.guestId ?? "").localeCompare(
+          right.playerId ?? right.guestId ?? "",
+        );
+    })
+    : [];
   const stats = statsResult.data;
   return {
     id: event.id,
@@ -292,6 +312,7 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
         averageHundredths: participant?.averageHundredths ?? null,
       };
     }),
+    finalStandings,
     participantStats,
     attempts,
     badges: [],

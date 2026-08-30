@@ -93,7 +93,7 @@ function arrangeCore(changes: Partial<Record<string, QueryResult>> = {}) {
         is_personal_best: false,
       },
     ], error: null },
-    event_participant_statistics: { data: [{
+    event_final_standings: { data: [{
       event_id: event.id,
       player_id: null,
       guest_id: "guest-1",
@@ -107,7 +107,8 @@ function arrangeCore(changes: Partial<Record<string, QueryResult>> = {}) {
       dnf_count: 0,
       best_time_hundredths: 350,
       average_hundredths: 350,
-      participant_rank: 2,
+      first_best_at: "2026-08-17T18:01:00Z",
+      rank: 2,
     }], error: null },
     event_lead_participant_statistics: { data: [{
       event_id: event.id, player_id: "player-1", lead_seconds: 600,
@@ -139,6 +140,10 @@ describe("event detail loading", () => {
     });
     expect(detail?.attempts.some(({ isGuest }) => isGuest)).toBe(true);
     expect(detail?.participantStats[0]).toMatchObject({ name: "Gast", isGuest: true });
+    expect(detail?.finalStandings[0]).toMatchObject({ name: "Gast", rank: 2 });
+    expect(mocks.from.mock.calls.map(([table]) => table)).toContain("event_final_standings");
+    expect(mocks.from.mock.calls.map(([table]) => table))
+      .not.toContain("event_participant_statistics");
     expect(mocks.from.mock.calls.map(([table]) => table)).not.toContain("event_badge_unlocks");
     expect(mocks.from.mock.calls.map(([table]) => table)).not.toContain("event_photos");
   });

@@ -117,15 +117,15 @@ export function finalizeLiveEvent(
   endedAt: string,
 ) {
   if (event.status === "completed") return event;
-  const winner = getLiveStandings(event, attempts, players).find(
-    (standing) => standing.bestTime != null,
+  const winners = getLiveStandings(event, attempts, players).filter(
+    (standing) => standing.rank === 1 && standing.bestTime != null,
   );
   return {
     ...event,
     status: "completed" as const,
     endedAt,
     endReason: reason,
-    winnerPlayerId: winner?.player.id,
+    winnerPlayerId: winners.length === 1 ? winners[0].player.id : undefined,
   };
 }
 

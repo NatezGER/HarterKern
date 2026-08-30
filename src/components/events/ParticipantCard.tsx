@@ -10,7 +10,7 @@ import { MOBILE_CONTEXT_AVATAR_FRAME } from "@/constants/avatar";
 const lastStatus = (standing: LiveStanding) => {
   const attempt = standing.lastAttempt;
   if (!attempt) return { icon: Sparkles, label: "Noch kein Versuch", color: "text-white/35" };
-  if (attempt.result === "dns") return { icon: Flag, label: "DNS", color: "text-white/45" };
+  if (attempt.result === "dns") return { icon: Flag, label: "DNF", color: "text-white/45" };
   return { icon: CheckCircle2, label: "Offiziell", color: "text-emerald-300" };
 };
 

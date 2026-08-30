@@ -44,7 +44,7 @@ export function StandaloneAttemptForm() {
         <Input className="rounded-xl" value={time} disabled={dns} onChange={(event) => setTime(event.target.value)} placeholder="Zeit, z. B. 2,41" />
         <Input className="rounded-xl" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
         <Input className="rounded-xl" value={eventName} onChange={(event) => setEventName(event.target.value)} placeholder="Eventname optional" />
-        <label className="flex h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-xs"><input type="checkbox" checked={dns} onChange={(event) => setDns(event.target.checked)} /> DNS</label>
+        <label className="flex h-11 items-center gap-2 rounded-xl border border-white/10 px-4 text-xs"><input type="checkbox" checked={dns} onChange={(event) => setDns(event.target.checked)} /> DNF</label>
       </div>
       <Button className="mt-4" onClick={() => void save()}><Save className="size-4" /> Direkt speichern</Button>
       <p aria-live="polite" className="mt-3 text-sm text-white/45">{message}</p>

@@ -82,6 +82,14 @@ export interface EventParticipantStatisticsView {
   Relationships: [];
 }
 
+export interface EventFinalStandingsView {
+  Row: Omit<EventParticipantStatisticsView["Row"], "participant_rank"> & {
+    first_best_at: string | null;
+    rank: number | null;
+  };
+  Relationships: [];
+}
+
 export interface PlayerEventHistoryView {
   Row: {
     player_id: string;

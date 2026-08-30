@@ -55,8 +55,20 @@ export function EventResults({ detail }: { detail: EventDetail }) {
         ) : <div className="panel py-14 text-center text-sm text-white/40">Keine gültige Eventzeit vorhanden.</div>}
       </section>
 
-      {detail.trophies.length > 0 && <section className="order-3"><h2 className="display-title mb-4 text-2xl sm:text-3xl">Vergebene Trophäen</h2><TrophyCabinet trophies={detail.trophies} mobileLimit={3} /></section>}
-      {detail.extras?.errors.trophies && <OptionalEventSectionError className="order-3" message={detail.extras.errors.trophies} />}
+      {detail.status === "closed" && <section className="order-3">
+        <h2 className="display-title mb-3 text-2xl sm:mb-5 sm:text-3xl">Finale Bestenliste</h2>
+        <div className="panel divide-y divide-white/[0.06] overflow-hidden">
+          {detail.finalStandings.map((entry) => {
+            const placement = entry.rank != null ? `${entry.rank}.` : entry.isAk ? "AK" : "DNF";
+            const row = <><span className="w-10 shrink-0 text-center font-display text-xl font-black text-gold-300 sm:w-14 sm:text-2xl">{placement}</span><ProfileAvatar id={entry.playerId ?? entry.guestId ?? entry.name} name={entry.name} url={entry.avatarUrl} className="size-10 shrink-0 sm:size-12" /><div className="min-w-0 flex-1"><p className="truncate font-bold">{entry.name}</p><p className="text-[10px] uppercase tracking-wider text-white/35">{entry.isGuest ? "Gast" : entry.isAk ? "Außer Konkurrenz" : `${entry.attempts} Versuche`}</p></div><span className="shrink-0 font-display text-lg font-black sm:text-2xl">{entry.bestHundredths == null ? "DNF" : displayTime(entry.bestHundredths)}</span></>;
+            const className = "flex min-h-16 items-center gap-3 px-3 py-3 sm:min-h-20 sm:gap-4 sm:px-6";
+            return entry.playerId ? <Link key={entry.playerId} to={`/player/${entry.playerId}`} className={`${className} transition hover:bg-white/[0.03]`}>{row}</Link> : <div key={entry.guestId ?? entry.name} className={className}>{row}</div>;
+          })}
+        </div>
+      </section>}
+
+      {detail.trophies.length > 0 && <section className="order-4"><h2 className="display-title mb-4 text-2xl sm:text-3xl">Vergebene Trophäen</h2><TrophyCabinet trophies={detail.trophies} mobileLimit={3} /></section>}
+      {detail.extras?.errors.trophies && <OptionalEventSectionError className="order-4" message={detail.extras.errors.trophies} />}
 
       {detail.badges.length > 0 && <section className="order-5 lg:order-4"><h2 className="display-title mb-4 text-2xl sm:mb-5 sm:text-3xl">Freigeschaltet</h2><BadgeGallery badges={detail.badges} compact showPlayer /></section>}
       {detail.extras?.errors.badges && <OptionalEventSectionError className="order-5 lg:order-4" message={detail.extras.errors.badges} />}
