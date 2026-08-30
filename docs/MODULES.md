@@ -79,6 +79,11 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Most Wanted:** Ein kleiner player-scoped Read liefert unterschiedliche
   All-Time-Endungen und im Saisonmodus saisonale Ersttreffer. Er projiziert die
   kanonischen Most-Wanted-Quellen und lädt weder Matrix noch Rohbestand.
+- **Progressions-Overlays:** Profil-, Saison- und All-Time-Charts laden erst
+  nach einer Auswahl maximal fünf zusätzliche Spieler in einem gebündelten
+  RPC. Event-Overlays entstehen requestfrei aus den bereits geladenen
+  Event-Attempts. Erfolgreiche scoped Reads werden pro Spieler-ID-Menge und
+  Saison im Client gecacht; Overlay-Fehler lassen die Standardlinie sichtbar.
 
 ## 5a. Spielervergleich
 
@@ -187,6 +192,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Eventdetail:** Eventfotos werden nicht mehr geladen oder gerendert. Ein
   gebündelter Lead-Read ergänzt pro permanentem Spieler Führungssekunden und
   gebrochene Eventbestzeiten.
+- **Event-PB-Overlays:** Reguläre Eventteilnehmer können lokal eingeblendet
+  werden. Nur strikt schnellere, gültige und freigegebene Eventzeiten bilden
+  Punkte; DNF, AK, Gäste, gleiche und langsamere Zeiten werden verworfen.
 - **Tests:** `npm test -- src/services/historicalAttemptRepository.test.ts`.
 - **Direkte Abhängigkeiten:** Statistikroute, Badges/Trophäen, Storage-Fotos.
 - **Nicht enthalten:** Live-Erfassung und Spieler-BINGO.

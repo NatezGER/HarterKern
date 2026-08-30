@@ -61,6 +61,9 @@ vi.mock("@/hooks/useSeason", () => ({
 vi.mock("@/hooks/usePlayerMostWantedStatistics", () => ({
   usePlayerMostWantedStatistics: () => ({ data: { "player-1": { allTimeHits: 41, seasonFirstHits: 8 } }, loading: false, error: "" }),
 }));
+vi.mock("@/hooks/useEffectivePublicData", () => ({
+  useEffectivePublicData: () => ({ data: { players: [] } }),
+}));
 vi.mock("@/hooks/usePlayerRivalries", () => ({
   usePlayerRivalries: () => ({ data: [], loading: false, error: "" }),
 }));

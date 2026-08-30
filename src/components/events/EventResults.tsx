@@ -7,14 +7,18 @@ import { EventAttemptNumberChart } from "@/components/events/EventAttemptNumberC
 import { formatDate, formatTime } from "@/utils/format";
 import type { EventDetail } from "@/types/historyProfiles";
 import { ProgressionTimeline } from "@/components/progression/ProgressionTimeline";
+import { PlayerOverlaySelector } from "@/components/progression/PlayerOverlaySelector";
 import { buildEventLeadProgression } from "@/lib/eventLeadProgression";
 import { PodiumMedal } from "@/components/common/PodiumMedal";
 import { cn } from "@/lib/cn";
 import { TrophyCabinet } from "@/components/common/TrophyCabinet";
+import { useMemo, useState } from "react";
+import { buildEventPlayerProgressions } from "@/services/playerProgressionOverlayService";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
 export function EventResults({ detail }: { detail: EventDetail }) {
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const podium = detail.podium.filter(({ rank }) => rank != null && rank <= 3);
   const validAttempts = detail.attempts.filter((attempt) => !attempt.isDnf
     && !attempt.isAk && attempt.timeHundredths != null)
@@ -23,6 +27,8 @@ export function EventResults({ detail }: { detail: EventDetail }) {
   const visualStartAt = validAttempts[0]?.submittedAt;
   const visualEndAt = validAttempts.at(-1)?.submittedAt;
   const eventProgression = buildEventLeadProgression(detail.attempts, visualEndAt ?? null).map((point) => ({ id: point.id, playerId: point.playerId ?? point.guestId ?? undefined, playerName: point.name, avatarUrl: point.avatarUrl, timeHundredths: point.timeHundredths, achievedAt: point.submittedAt, achievedDate: point.submittedAt.slice(0, 10), periodEndAt: point.periodEndAt, eventId: detail.id, sourceLabel: detail.name, improvementHundredths: point.improvementHundredths, durationDays: 0, durationLabel: point.durationLabel, attemptNumber: point.attemptNumber, hasExactTime: true, isCurrent: false }));
+  const eventOptions = useMemo(() => detail.participantStats.filter((participant) => participant.playerId && !participant.isAk).map((participant) => ({ id: participant.playerId!, name: participant.name, avatarUrl: participant.avatarUrl })), [detail.participantStats]);
+  const eventOverlays = useMemo(() => buildEventPlayerProgressions(detail.attempts, selectedPlayers), [detail.attempts, selectedPlayers]);
   return (
     <div className="flex flex-col gap-6 sm:gap-8 lg:gap-10">
       <section className="panel relative order-1 overflow-hidden p-5 sm:p-10">
@@ -74,7 +80,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
       {detail.extras?.errors.badges && <OptionalEventSectionError className="order-5 lg:order-4" message={detail.extras.errors.badges} />}
       {detail.extras?.loading && <section className="panel order-5 p-4 text-sm text-white/40 lg:order-4">Badges und Trophäen werden nachgeladen …</section>}
 
-      {detail.status === "closed" && <section className="panel order-4 p-4 sm:p-8"><h2 className="display-title text-2xl sm:text-3xl">Event-Führungsprogression</h2><p className="mt-2 text-xs text-white/40 sm:text-sm">Wer führte zu welchem Zeitpunkt mit welcher Eventbestzeit?</p><div className="mt-4 sm:mt-6"><ProgressionTimeline points={eventProgression} domainStartAt={visualStartAt} domainEndAt={visualEndAt} emptyLabel="Dieses Event hat keine gültige Führungszeit." /></div></section>}
+      {detail.status === "closed" && <section className="panel order-4 p-4 sm:p-8"><h2 className="display-title text-2xl sm:text-3xl">Event-Führungsprogression</h2><p className="mt-2 text-xs text-white/40 sm:text-sm">Wer führte zu welchem Zeitpunkt mit welcher Eventbestzeit?</p><div className="mt-4 sm:mt-6"><PlayerOverlaySelector options={eventOptions} selectedIds={selectedPlayers} onChange={setSelectedPlayers} /><ProgressionTimeline points={eventProgression} overlaySeries={eventOverlays} primaryLabel="Eventrekord" domainStartAt={visualStartAt} domainEndAt={visualEndAt} emptyLabel="Dieses Event hat keine gültige Führungszeit." /></div></section>}
 
       <section className="order-5">
         <h2 className="display-title mb-4 text-2xl sm:mb-5 sm:text-3xl">Eventstatistiken</h2>
