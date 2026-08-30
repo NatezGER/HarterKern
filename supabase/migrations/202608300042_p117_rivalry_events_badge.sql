@@ -4,10 +4,10 @@ insert into public.badge_definitions (
   badge_key, category, tier, name, description, threshold, sort_order,
   family_key, requirement, is_secret, badge_kind, design_variant, scope_type, is_active
 ) values
-  ('rivalry-bronze', 'rivalry', 'bronze', 'Rivalität Bronze', 'Ein Rivalitäts-Event.', 1, 162, 'rivalry', '1 Rivalitäts-Event-Paarung', false, 'tiered', 'standard', 'all_time', true),
-  ('rivalry-silver', 'rivalry', 'silver', 'Rivalität Silber', 'Drei Rivalitäts-Events.', 3, 163, 'rivalry', '3 Rivalitäts-Event-Paarungen', false, 'tiered', 'standard', 'all_time', true),
-  ('rivalry-gold', 'rivalry', 'gold', 'Rivalität Gold', 'Fünf Rivalitäts-Events.', 5, 164, 'rivalry', '5 Rivalitäts-Event-Paarungen', false, 'tiered', 'standard', 'all_time', true),
-  ('rivalry-diamond', 'rivalry', 'diamond', 'Rivalität Diamond', 'Zehn Rivalitäts-Events.', 10, 165, 'rivalry', '10 Rivalitäts-Event-Paarungen', false, 'tiered', 'standard', 'all_time', true)
+  ('rivalry-bronze', 'streak', 'bronze', 'Rivalität Bronze', 'Ein Rivalitäts-Event.', 1, 162, 'rivalry', '1 Rivalitäts-Event-Paarung', false, 'tiered', 'standard', 'all_time', true),
+  ('rivalry-silver', 'streak', 'silver', 'Rivalität Silber', 'Drei Rivalitäts-Events.', 3, 163, 'rivalry', '3 Rivalitäts-Event-Paarungen', false, 'tiered', 'standard', 'all_time', true),
+  ('rivalry-gold', 'streak', 'gold', 'Rivalität Gold', 'Fünf Rivalitäts-Events.', 5, 164, 'rivalry', '5 Rivalitäts-Event-Paarungen', false, 'tiered', 'standard', 'all_time', true),
+  ('rivalry-diamond', 'streak', 'diamond', 'Rivalität Diamond', 'Zehn Rivalitäts-Events.', 10, 165, 'rivalry', '10 Rivalitäts-Event-Paarungen', false, 'tiered', 'standard', 'all_time', true)
 on conflict (badge_key) do update set category = excluded.category, tier = excluded.tier,
   name = excluded.name, description = excluded.description, threshold = excluded.threshold,
   sort_order = excluded.sort_order, family_key = excluded.family_key,

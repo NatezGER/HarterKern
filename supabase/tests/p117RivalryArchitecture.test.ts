@@ -2,6 +2,18 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const sql = readFileSync(new URL("../migrations/202608300042_p117_rivalry_events_badge.sql", import.meta.url), "utf8");
+const categoryConstraintSql = readFileSync(
+  new URL("../migrations/202608300039_p115_badge_expansion_admin_polish.sql", import.meta.url),
+  "utf8",
+);
+
+const categoryConstraintBody = categoryConstraintSql.match(
+  /add constraint badge_definitions_category_check check \(category in \(([\s\S]*?)\)\);/,
+)?.[1];
+const allowedBadgeCategories = new Set(
+  [...(categoryConstraintBody ?? "").matchAll(/'([^']+)'/g)].map((match) => match[1]),
+);
+const rivalryDefinitionRows = [...sql.matchAll(/\('rivalry-(?:bronze|silver|gold|diamond)',\s*'([^']+)'/g)];
 
 describe("P11.7 canonical rivalry architecture", () => {
   it("counts only strict record takeovers in closed events", () => {
@@ -25,5 +37,18 @@ describe("P11.7 canonical rivalry architecture", () => {
     for (const threshold of [1, 3, 5, 10]) expect(sql).toMatch(new RegExp(`, ${threshold}, 16`));
     expect(sql).toContain("union all select * from public.rivalry_badge_awards");
     expect(sql).toContain("sync_all_player_badge_award_ledgers");
+  });
+  it("uses only categories accepted by the current badge definition constraint", () => {
+    expect(categoryConstraintBody).toBeDefined();
+    expect(rivalryDefinitionRows).toHaveLength(4);
+    expect(rivalryDefinitionRows.map((match) => match[1])).toEqual([
+      "streak",
+      "streak",
+      "streak",
+      "streak",
+    ]);
+    for (const [, category] of rivalryDefinitionRows) {
+      expect(allowedBadgeCategories).toContain(category);
+    }
   });
 });
