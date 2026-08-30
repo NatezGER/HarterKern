@@ -115,16 +115,18 @@ export function buildAdminBadgeCatalog(
 
 export async function getAdminBadgeCatalog(): Promise<AdminBadgeCatalog> {
   const client = getSupabase();
-  const [definitionsResult, achievementsResult, progressResult] = await Promise.all([
+  const [definitionsResult, achievementsResult, progressResult, rivalryProgressResult] = await Promise.all([
     client.from("badge_definitions").select("badge_key,family_key,category,tier,name,description,threshold,requirement,sort_order,is_secret,badge_kind,design_variant,scope_type,is_active")
       .order("sort_order"),
     client.from("player_badge_award_achievements").select("award_key,badge_key,player_id,display_name,awarded_at,metadata")
       .order("awarded_at"),
     client.rpc("get_admin_badge_family_progress"),
+    client.rpc("get_rivalry_badge_progress"),
   ]);
   if (definitionsResult.error) throw definitionsResult.error;
   if (achievementsResult.error) throw achievementsResult.error;
   if (progressResult.error) throw progressResult.error;
+  if (rivalryProgressResult.error) throw rivalryProgressResult.error;
   const definitions: AdminBadgeDefinition[] = definitionsResult.data.map((row) => ({
     badgeKey: row.badge_key,
     familyKey: row.family_key,
@@ -154,7 +156,7 @@ export async function getAdminBadgeCatalog(): Promise<AdminBadgeCatalog> {
       "timeHundredths" in row.metadata && typeof row.metadata.timeHundredths === "number"
       ? row.metadata.timeHundredths : null,
   }));
-  const progress = (progressResult.data ?? []).map((row) => ({
+  const progress = [...(progressResult.data ?? []), ...(rivalryProgressResult.data ?? [])].map((row) => ({
     playerId: row.player_id, playerName: row.display_name, familyKey: row.family_key,
     currentProgress: Number(row.current_progress), timeHundredths: row.time_hundredths == null ? null : Number(row.time_hundredths),
   }));

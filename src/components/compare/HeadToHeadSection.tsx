@@ -67,6 +67,12 @@ export function HeadToHeadSection({
 
         {rivalry && <DirectRivalryMetrics {...rivalry} playerAName={playerAName} playerBName={playerBName} />}
 
+        {data.rivalry && <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-3">
+          <RivalryStat label="Gemeinsame Events" value={data.rivalry.commonEvents} />
+          <RivalryStat label="Rivalitäts-Events" value={data.rivalry.rivalryEvents} warm />
+          <RivalryStat label="Direkte Wechsel" value={data.rivalry.directTakeovers} />
+        </div>}
+
         <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-5 sm:gap-4">
           <HighlightCard
             icon={Gauge}
@@ -158,6 +164,10 @@ function RivalryRow({ label, left, right, playerAName, playerBName }: { label: s
   );
 }
 
+function RivalryStat({ label, value, warm = false }: { label: string; value: number; warm?: boolean }) {
+  return <div className={cn("min-w-0 rounded-xl border bg-white/[0.025] p-2.5 text-center sm:p-4", warm ? "border-red-400/20 shadow-[0_0_24px_rgba(248,113,113,0.06)]" : "border-white/[0.07]")}><strong className="font-display text-2xl font-black tabular-nums sm:text-3xl">{value}</strong><p className="mt-1 break-words text-[8px] font-bold uppercase leading-tight tracking-wide text-white/40 sm:text-[10px]">{label}</p></div>;
+}
+
 function formatLeadDuration(seconds: number) {
   if (seconds < 60) return `${seconds} Sek.`;
   const hours = Math.floor(seconds / 3600);
@@ -208,6 +218,7 @@ function DuelRow({
         <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-white/35 sm:text-[10px]">
           {event.winner === "tie" ? "Unentschieden" : `${formatDifference(event)} Differenz`}
         </p>
+        {event.isRivalryEvent && <span className="mt-2 inline-flex rounded-full border border-red-300/25 bg-red-400/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-red-100/80">Rivalitäts-Event · {event.directTakeovers} Wechsel</span>}
       </div>
       <DuelTime name={playerBName} time={event.playerBTimeHundredths} winner={event.winner === "b"} align="right" />
     </article>

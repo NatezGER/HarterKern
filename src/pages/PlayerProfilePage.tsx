@@ -29,6 +29,8 @@ import { getEventSeason } from "@/lib/season";
 import { dnfPercentage } from "@/lib/officialTimePerformance";
 import { ProfileCompareAction } from "@/components/compare/ProfileCompareAction";
 import { usePlayerMostWantedStatistics } from "@/hooks/usePlayerMostWantedStatistics";
+import { usePlayerRivalries } from "@/hooks/usePlayerRivalries";
+import { PlayerRivalries } from "@/components/players/PlayerRivalries";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -39,6 +41,7 @@ export function PlayerProfilePage() {
   const { season: selectedSeason, isAllTime } = useSeason();
   const seasonYear = typeof selectedSeason === "number" ? selectedSeason : undefined;
   const mostWanted = usePlayerMostWantedStatistics([id], seasonYear);
+  const rivalries = usePlayerRivalries(id);
   const { core, season, trophies, badges, prestige, progression, performance, bingo, attemptNumbers, events } =
     usePlayerProfileDetail(id);
   if (core.loading) return <DataState><div /></DataState>;
@@ -131,6 +134,8 @@ export function PlayerProfilePage() {
           <AttemptNumberChart points={data} />
         </section>
       )}</ProfileOptionalState>
+
+      {!player.isAk && <PlayerRivalries playerId={player.id} {...rivalries} />}
 
       <section>
         <SectionHeading eyebrow={isAllTime ? "Karrierewerte" : `Saisonwerte ${selectedSeason}`} title="Statistik" />

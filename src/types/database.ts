@@ -523,6 +523,18 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: Array<{ player_id: string; display_name: string; family_key: string; current_progress: number; time_hundredths: number | null }>;
       };
+      get_rivalry_badge_progress: {
+        Args: Record<PropertyKey, never>;
+        Returns: Array<{ player_id: string; display_name: string; family_key: string; current_progress: number; time_hundredths: number | null }>;
+      };
+      get_pair_rivalry: {
+        Args: { p_player_a_id: string; p_player_b_id: string; p_season_year?: number | null };
+        Returns: Array<{ event_id: string | null; direct_takeovers: number; is_rivalry_event: boolean; common_events: number; rivalry_events: number; total_direct_takeovers: number; first_rivalry_date: string | null; last_rivalry_date: string | null }>;
+      };
+      get_player_rivalries: {
+        Args: { p_player_id: string };
+        Returns: Array<{ rival_player_id: string; display_name: string; avatar_url: string | null; avatar_path: string | null; rivalry_events: number; direct_takeovers: number; first_rivalry_date: string; last_rivalry_date: string }>;
+      };
       get_player_most_wanted_statistics: {
         Args: { p_player_ids: string[]; p_season_year?: number | null };
         Returns: Array<{

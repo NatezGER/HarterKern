@@ -187,6 +187,34 @@ describe("event detail loading", () => {
     expect(mocks.from.mock.calls.map(([table]) => table)).not.toContain("event_photos");
   });
 
+  it("loads a normal badge unlock for a completed event", async () => {
+    mocks.from.mockImplementation((table: string) => query(table === "event_badge_unlocks" ? {
+      data: [{
+        award_key: "player-1:valid-attempts-bronze", player_id: "player-1",
+        display_name: "Paul", avatar_url: null, avatar_path: null,
+        badge_key: "valid-attempts-bronze", category: "attempts", tier: "bronze",
+        name: "Versuche Bronze", description: "Fünf gültige Versuche.",
+        family_key: "valid-attempts", requirement: "5 gültige Versuche", threshold: 5,
+        source_type: "attempt", source_attempt_id: "attempt-5",
+        source_historical_attempt_id: null, source_event_id: event.id,
+        source_event_name: event.name, awarded_at: "2026-08-30T20:00:00Z",
+        metadata: { progress: 5 }, rarity_percent: 50,
+        source_attempt_number: 5, source_time_hundredths: 280,
+        is_special_event_badge: false, badge_kind: "tiered",
+        design_variant: "standard", scope_type: "all_time",
+      }],
+      error: null,
+    } : { data: [], error: null }));
+    const extras = await getEventDetailExtras(event.id);
+    expect(extras.extras.errors).toEqual({});
+    expect(extras.badges).toEqual([expect.objectContaining({
+      badgeKey: "valid-attempts-bronze",
+      playerName: "Paul",
+      eventId: event.id,
+      sourceAttemptNumber: 5,
+    })]);
+  });
+
   it("isolates an optional query timeout instead of failing EventResults core", async () => {
     mocks.from.mockImplementation((table: string) => query(table === "event_badge_unlocks"
       ? { data: null, error: new Error("statement timeout") }
