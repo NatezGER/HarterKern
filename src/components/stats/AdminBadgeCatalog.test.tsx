@@ -1,7 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AdminBadgeCatalogContent } from "@/components/stats/AdminBadgeCatalog";
 import type { AdminBadgeCatalogEntry } from "@/services/adminBadgeCatalogService";
+
+vi.mock("@/hooks/useAwardAssets", () => ({
+  useAwardAssetUrl: (assetId: string) => `https://example.test/${assetId}.webp`,
+}));
 
 const stage = (tier: AdminBadgeCatalogEntry["tier"], achievements: AdminBadgeCatalogEntry["achievements"] = []): AdminBadgeCatalogEntry => ({
   badgeKey: `wins-${tier}`, familyKey: "wins", category: "wins", tier,
@@ -25,6 +29,10 @@ describe("AdminBadgeCatalogContent", () => {
     expect(markup).toContain("Karl");
     expect(markup).toContain("6 Siege");
     expect(markup).toContain("Noch niemand");
+    expect(markup).toContain('src="https://example.test/badge:wins-bronze.webp"');
+    expect(markup).toContain('loading="lazy"');
+    expect(markup).toContain('decoding="async"');
+    expect(markup).toContain("overflow-hidden");
     expect(markup.indexOf("Badge-Familien")).toBeLessThan(markup.indexOf("Einzel- &amp; Sonderbadges"));
   });
 

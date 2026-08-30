@@ -3,9 +3,11 @@ import { formatBadgeTime, getBadgeMaterialLabel } from "@/lib/badgePresentation"
 import { getAdminBadgeCatalog } from "@/services/adminBadgeCatalogService";
 import type { AdminBadgeCatalog as AdminBadgeCatalogData, AdminBadgeCatalogEntry } from "@/services/adminBadgeCatalogService";
 import { formatDate } from "@/utils/format";
+import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
 
 const categoryLabels: Record<string, string> = {
   attempts: "Versuche", bingo: "Bingo", consolation: "Trostpreis", dnf: "DNF",
+  event_attempts: "Event-Versuche", rapid_fire: "Sperrfeuer", teamwork: "Teamwork",
   favorite_time: "Lieblingszeit", flawless: "Fehlerfrei", glitch: "Glitch",
   performance: "Leistung", podium: "Podium", podiums: "Podien", precision: "Präzision",
   streak: "Serie", sub3_streak: "Sub-3-Serie", win_streak: "Siegesserie", wins: "Siege",
@@ -22,6 +24,9 @@ function progressLabel(entry: AdminBadgeCatalogEntry, progress?: number | null, 
   if (entry.category === "favorite_time" && progress != null && timeHundredths != null) return `${progress}× ${formatBadgeTime(timeHundredths)}`;
   if (progress == null) return null;
   if (entry.category === "attempts") return `${progress} gültige Versuche`;
+  if (entry.category === "event_attempts") return `${progress} gültige Event-Versuche`;
+  if (entry.category === "rapid_fire") return `${progress} in 60 Minuten`;
+  if (entry.category === "teamwork") return `${progress} Teamwork-Events`;
   if (entry.category === "wins") return `${progress} Siege`;
   if (entry.category === "events") return `${progress} Events`;
   if (entry.category === "podiums") return `${progress} Podien`;
@@ -42,8 +47,8 @@ export function AdminBadgeCatalogContent({ catalog }: { catalog: AdminBadgeCatal
         <h4 className="font-display text-xl font-black uppercase">{family.name}</h4>
         <p className="mt-1 text-xs font-bold uppercase tracking-wider text-white/40">{categoryLabels[family.category] ?? family.category}</p>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-white/60">{family.description}</p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{family.stages.map((stage) => <section key={stage.badgeKey} className={`min-w-0 rounded-xl border p-4 ${stageStyles[stage.tier as keyof typeof stageStyles]}`}>
-          <div className="flex items-start justify-between gap-2"><h5 className="font-display text-lg font-black uppercase">{getBadgeMaterialLabel(stage)}</h5><span className="text-xs font-bold text-white/45">Schwelle {stage.threshold ?? "—"}</span></div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{family.stages.map((stage) => <section key={stage.badgeKey} className={`min-w-0 overflow-hidden rounded-xl border p-4 ${stageStyles[stage.tier as keyof typeof stageStyles]}`}>
+          <div className="flex min-w-0 items-start gap-3"><PrestigeBadgeEmblem badge={stage} size="sm" /><div className="min-w-0 flex-1"><h5 className="font-display text-lg font-black uppercase">{getBadgeMaterialLabel(stage)}</h5><span className="text-xs font-bold text-white/45">Schwelle {stage.threshold ?? "—"}</span></div></div>
           <p className="mt-2 text-xs leading-5 text-white/55">{stage.requirement?.trim() || stage.description}</p>
           <div className="mt-4 border-t border-white/10 pt-3"><p className="text-[10px] font-bold uppercase tracking-wider text-white/35">Freigeschaltet von</p><AchievementList entry={stage} /></div>
         </section>)}</div>
@@ -55,7 +60,7 @@ export function AdminBadgeCatalogContent({ catalog }: { catalog: AdminBadgeCatal
         const requirement = entry.requirement?.trim() || entry.description;
         const variantClass = entry.designVariant === "positive_special" ? "border-emerald-300/30 bg-emerald-300/[0.07]" : entry.designVariant === "consolation" ? "border-amber-700/30 bg-amber-900/[0.08]" : "border-white/10 bg-black/20";
         return <article key={entry.badgeKey} className={`rounded-2xl border p-4 ${variantClass}`}>
-          <div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="font-display text-lg font-black uppercase">{entry.name}</h4><p className="mt-1 text-xs text-white/40">{entry.badgeKey}</p></div><span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold text-white/55">{getBadgeMaterialLabel(entry)}</span></div>
+          <div className="flex min-w-0 flex-wrap items-start gap-3"><PrestigeBadgeEmblem badge={entry} size="sm" /><div className="min-w-0 flex-1"><h4 className="font-display text-lg font-black uppercase">{entry.name}</h4><p className="mt-1 break-all text-xs text-white/40">{entry.badgeKey}</p></div><span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold text-white/55">{getBadgeMaterialLabel(entry)}</span></div>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3"><div><dt className="text-white/35">Kategorie</dt><dd className="mt-0.5 font-semibold">{categoryLabels[entry.category] ?? entry.category}</dd></div><div><dt className="text-white/35">Schwelle</dt><dd className="mt-0.5 font-semibold">{entry.threshold ?? "—"}</dd></div><div><dt className="text-white/35">Geltung</dt><dd className="mt-0.5 font-semibold">{entry.scopeType}</dd></div></dl>
           <p className="mt-4 text-sm leading-6 text-white/70">{requirement}</p>
           <AchievementList entry={entry} />
