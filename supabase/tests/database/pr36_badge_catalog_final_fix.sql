@@ -28,9 +28,9 @@ select is((select count(*) from public.badge_definitions where not is_active
 select ok((select count(*) from public.get_visible_player_badges(
   '99000000-0000-0000-0000-000000000001')) >= 0,
   'player badge RPC remains callable');
-select ok(position('visible_player_badges' in pg_get_functiondef(
+select ok(position('bingo_line_diamond_badge_awards' in pg_get_functiondef(
   'public.get_visible_player_badges(uuid)'::regprocedure)) > 0,
-  'RPC reads the canonical visible badge view');
+  'RPC includes the canonical Diamond BINGO source directly');
 select ok(position('bingo_line_diamond_badge_awards' in pg_get_viewdef(
   'public.public_player_badges'::regclass, true)) > 0,
   'public_player_badges includes Diamond BINGO line awards');

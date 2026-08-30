@@ -101,14 +101,26 @@ function usePlayerProfileSection<Section extends PlayerProfileSection>(
     setState({ ...initialState(), requestKey });
     void loadPlayerProfileSection(section, playerId, { force: run > 0, seasonYear })
       .then((data) => active && setState({ data, loading: false, error: "", requestKey }))
-      .catch(() => active && setState({
-        data: null,
-        loading: false,
-        error: section === "core"
-          ? "Profil konnte nicht geladen werden."
-          : "Dieser Bereich konnte nicht geladen werden.",
-        requestKey,
-      }));
+      .catch((caught) => {
+        if (!active) return;
+        console.error("[player-profile-section]", {
+          section,
+          seasonYear: seasonYear ?? null,
+          error: getErrorMessage(caught),
+          code: caught && typeof caught === "object" && "code" in caught
+            ? String(caught.code) : null,
+          status: caught && typeof caught === "object" && "status" in caught
+            ? String(caught.status) : null,
+        });
+        setState({
+          data: null,
+          loading: false,
+          error: section === "core"
+            ? "Profil konnte nicht geladen werden."
+            : "Dieser Bereich konnte nicht geladen werden.",
+          requestKey,
+        });
+      });
     return () => {
       active = false;
     };

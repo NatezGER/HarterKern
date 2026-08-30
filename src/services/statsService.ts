@@ -253,36 +253,19 @@ export async function getGroupMilestones(): Promise<GroupMilestone[]> {
 }
 
 export async function getBadgeRarity(): Promise<BadgeRarity[]> {
-  const client = getSupabase();
-  const [rarityResult, recipientsResult] = await Promise.all([
-    client.from("badge_rarity_statistics").select("*")
-      .order("tier_rank", { ascending: false })
-      .order("recipient_count", { ascending: true })
-      .order("sort_order"),
-    client.from("public_player_badges")
-      .select("badge_key,player_id,display_name,avatar_url,design_variant")
-      .order("display_name"),
-  ]);
-  if (rarityResult.error) throw rarityResult.error;
-  if (recipientsResult.error) throw recipientsResult.error;
-  const variants = new Map(recipientsResult.data.map((row) => [
-    row.badge_key, row.design_variant,
-  ]));
-  const badges = rarityResult.data.map((row) => ({
+  const result = await getSupabase().rpc("get_badge_rarity");
+  if (result.error) throw result.error;
+  return (result.data ?? []).map((row) => ({
     key: row.badge_key,
     name: row.name,
     tier: row.tier,
-    designVariant: variants.get(row.badge_key) ?? "standard",
+    designVariant: row.design_variant,
     recipients: row.recipient_count,
     playerCount: row.regular_player_count,
     percent: row.rarity_percent,
+    recipientsList: (Array.isArray(row.recipients) ? row.recipients : []) as unknown as
+      BadgeRarity["recipientsList"],
   })).sort((left, right) => compareBadgeDisplayOrder(left, right));
-  return attachBadgeRecipients(badges, recipientsResult.data.map((row) => ({
-    badgeKey: row.badge_key,
-    playerId: row.player_id,
-    playerName: row.display_name,
-    avatarUrl: row.avatar_url,
-  })));
 }
 
 export function attachBadgeRecipients(

@@ -166,6 +166,29 @@ export interface Database {
       historical_attempts: HistoricalAttemptsTable;
       event_photos: EventPhotosTable;
       badge_definitions: BadgeDefinitionsTable;
+      player_badge_award_ledger: {
+        Row: {
+          award_key: string;
+          player_id: string;
+          badge_key: string;
+          source_type: string;
+          source_attempt_id: string | null;
+          source_historical_attempt_id: string | null;
+          source_event_id: string | null;
+          source_awarded_at: string;
+          awarded_at: string;
+          metadata: Json;
+          source_event_name: string | null;
+          source_event_date: string | null;
+          source_attempt_number: number | null;
+          source_time_hundredths: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       award_assets: AwardAssetsTable;
       admin_roles: {
         Row: { user_id: string; created_at: string };
@@ -259,6 +282,22 @@ export interface Database {
       event_attempt_number_statistics: EventAttemptNumberStatisticsView;
       visible_player_badges: VisiblePlayerBadgesView;
       bingo_line_diamond_badge_awards: PlayerBadgeAwardsView;
+      player_badge_award_achievements: {
+        Row: {
+          award_key: string;
+          badge_key: string;
+          player_id: string;
+          display_name: string;
+          awarded_at: string;
+          metadata: Json;
+          source_attempt_id: string | null;
+          name: string;
+          tier: BadgeTier;
+          description: string;
+          category: string;
+        };
+        Relationships: [];
+      };
       event_badge_unlocks: VisiblePlayerBadgesView;
       player_prestige_statistics: PlayerPrestigeStatisticsView;
       prestige_activity_feed: {
@@ -504,6 +543,99 @@ export interface Database {
       get_player_trophies: {
         Args: { p_player_id: string };
         Returns: PlayerTrophyView["Row"][];
+      };
+      get_player_bingo: {
+        Args: { p_player_id: string };
+        Returns: Array<{
+          ending: number;
+          ending_label: string;
+          hit_count: number;
+          field_tier: "open" | "bronze" | "silver" | "gold" | "diamond";
+          hits: Json;
+          collected_endings: number;
+          bronze_fields: number;
+          silver_fields: number;
+          gold_fields: number;
+          diamond_fields: number;
+          bronze_lines: number;
+          silver_lines: number;
+          gold_lines: number;
+          diamond_lines: number;
+          highest_badge_tier: "bronze" | "silver" | "gold" | "diamond" | null;
+        }>;
+      };
+      get_player_visible_badges: {
+        Args: { p_player_id: string };
+        Returns: Array<{
+          award_key: string;
+          player_id: string;
+          display_name: string;
+          avatar_url: string | null;
+          avatar_path: string | null;
+          badge_key: string;
+          category: string;
+          tier: Database["public"]["Enums"]["badge_tier"];
+          name: string;
+          description: string;
+          family_key: string | null;
+          requirement: string | null;
+          threshold: number | null;
+          source_type: string;
+          source_attempt_id: string | null;
+          source_historical_attempt_id: string | null;
+          source_event_id: string | null;
+          source_event_name: string | null;
+          awarded_at: string;
+          metadata: Json;
+          source_attempt_number: number | null;
+          source_time_hundredths: number | null;
+          is_special_event_badge: boolean;
+          badge_kind: "tiered" | "single";
+          design_variant: "standard" | "positive_special" | "consolation";
+          scope_type: "all_time" | "season" | "event";
+        }>;
+      };
+      get_player_qualified_times: {
+        Args: { p_player_id: string; p_season_year?: number | null };
+        Returns: Array<{ time_hundredths: number }>;
+      };
+      get_player_attempt_number_statistics: {
+        Args: { p_player_id: string };
+        Returns: Array<{
+          attempt_number: number;
+          attempt_count: number;
+          valid_attempts: number;
+          dnf_count: number;
+          average_hundredths: number | null;
+        }>;
+      };
+      get_player_event_history: {
+        Args: { p_player_id: string };
+        Returns: Array<{
+          event_id: string;
+          event_name: string;
+          event_date: string;
+          best_time_hundredths: number | null;
+          rank: number | null;
+          attempt_count: number;
+          valid_attempts: number;
+          dnf_count: number;
+        }>;
+      };
+      get_badge_rarity: {
+        Args: Record<never, never>;
+        Returns: Array<{
+          badge_key: string;
+          name: string;
+          tier: Database["public"]["Enums"]["badge_tier"];
+          tier_rank: number;
+          sort_order: number;
+          design_variant: "standard" | "positive_special" | "consolation";
+          recipient_count: number;
+          regular_player_count: number;
+          rarity_percent: number | null;
+          recipients: Json;
+        }>;
       };
       get_season_finalization_status: {
         Args: { p_as_of?: string };

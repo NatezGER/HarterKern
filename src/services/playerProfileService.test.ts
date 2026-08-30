@@ -78,8 +78,10 @@ describe("player profile section loading", () => {
     mocks.trophies.mockReturnValueOnce(new Promise((resolve) => { resolveTrophies = resolve; }));
     const badges = loadPlayerProfileSection("badges", "player-1");
     const trophies = loadPlayerProfileSection("trophies", "player-1");
-    expect(mocks.badges).toHaveBeenCalledOnce();
-    expect(mocks.trophies).toHaveBeenCalledOnce();
+    await vi.waitFor(() => {
+      expect(mocks.badges).toHaveBeenCalledOnce();
+      expect(mocks.trophies).toHaveBeenCalledOnce();
+    });
     resolveBadges([]);
     resolveTrophies([]);
     await Promise.all([badges, trophies]);
@@ -92,9 +94,11 @@ describe("player profile section loading", () => {
     const prestige = loadPlayerProfileSection("prestige", "player-1");
     const progression = loadPlayerProfileSection("progression", "player-1");
 
-    expect(mocks.badges).toHaveBeenCalledOnce();
+    await vi.waitFor(() => {
+      expect(mocks.badges).toHaveBeenCalledOnce();
+      expect(mocks.progression).toHaveBeenCalledOnce();
+    });
     expect(mocks.prestige).not.toHaveBeenCalled();
-    expect(mocks.progression).toHaveBeenCalledOnce();
 
     resolveBadges([{ key: "one" }, { key: "two" }]);
     await badges;
@@ -111,10 +115,63 @@ describe("player profile section loading", () => {
     const first = loadPlayerProfileSection("badges", "player-1");
     const second = loadPlayerProfileSection("badges", "player-1");
     expect(first).toBe(second);
+    await vi.waitFor(() => expect(mocks.badges).toHaveBeenCalledOnce());
     resolveBadges([]);
     await first;
     await loadPlayerProfileSection("badges", "player-1");
     expect(mocks.badges).toHaveBeenCalledOnce();
+  });
+
+  it("removes a rejected in-flight read and allows the same section to recover", async () => {
+    mocks.badges.mockRejectedValueOnce(new Error("statement timeout"));
+    await expect(loadPlayerProfileSection("badges", "player-1"))
+      .rejects.toThrow("statement timeout");
+
+    await expect(loadPlayerProfileSection("badges", "player-1")).resolves.toEqual([]);
+    expect(mocks.badges).toHaveBeenCalledTimes(2);
+  });
+
+  it("starts a genuinely new request when a running section is force-retried", async () => {
+    let resolveFirst!: (value: never[]) => void;
+    mocks.badges.mockReturnValueOnce(new Promise((resolve) => { resolveFirst = resolve; }));
+    const first = loadPlayerProfileSection("badges", "player-1");
+    await vi.waitFor(() => expect(mocks.badges).toHaveBeenCalledOnce());
+    const retry = loadPlayerProfileSection("badges", "player-1", { force: true });
+
+    expect(retry).not.toBe(first);
+    await vi.waitFor(() => expect(mocks.badges).toHaveBeenCalledTimes(2));
+    resolveFirst([]);
+    await expect(Promise.all([first, retry])).resolves.toEqual([[], []]);
+  });
+
+  it("limits the initial profile burst while keeping sections independent", async () => {
+    let resolveBadges!: (value: never[]) => void;
+    let resolveTrophies!: (value: never[]) => void;
+    let resolveProgression!: (value: { personal: never[]; worldRecords: never[] }) => void;
+    let resolvePerformance!: (value: { thresholds: never[] }) => void;
+    mocks.badges.mockReturnValueOnce(new Promise((resolve) => { resolveBadges = resolve; }));
+    mocks.trophies.mockReturnValueOnce(new Promise((resolve) => { resolveTrophies = resolve; }));
+    mocks.progression.mockReturnValueOnce(new Promise((resolve) => { resolveProgression = resolve; }));
+    mocks.performance.mockReturnValueOnce(new Promise((resolve) => { resolvePerformance = resolve; }));
+
+    const badges = loadPlayerProfileSection("badges", "player-1");
+    const trophies = loadPlayerProfileSection("trophies", "player-1");
+    const progression = loadPlayerProfileSection("progression", "player-1");
+    const performance = loadPlayerProfileSection("performance", "player-1");
+    await vi.waitFor(() => {
+      expect(mocks.badges).toHaveBeenCalledOnce();
+      expect(mocks.trophies).toHaveBeenCalledOnce();
+      expect(mocks.progression).toHaveBeenCalledOnce();
+    });
+    expect(mocks.performance).not.toHaveBeenCalled();
+
+    resolveBadges([]);
+    await badges;
+    await vi.waitFor(() => expect(mocks.performance).toHaveBeenCalledOnce());
+    resolveTrophies([]);
+    resolveProgression({ personal: [], worldRecords: [] });
+    resolvePerformance({ thresholds: [] });
+    await Promise.all([trophies, progression, performance]);
   });
 
   it("forces only the retried section to load again", async () => {
@@ -129,6 +186,7 @@ describe("player profile section loading", () => {
     let resolveFirst!: (value: never[]) => void;
     mocks.badges.mockReturnValueOnce(new Promise((resolve) => { resolveFirst = resolve; }));
     const first = loadPlayerProfileSection("badges", "player-1");
+    await vi.waitFor(() => expect(mocks.badges).toHaveBeenCalledOnce());
     invalidatePlayerProfileSections(["badges"], "player-1");
     const second = loadPlayerProfileSection("badges", "player-1");
     resolveFirst([]);

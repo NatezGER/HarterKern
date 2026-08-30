@@ -17,6 +17,8 @@ export function AwardAssetImage({ assetId, alt, className, fallback }: {
     <img
       src={url}
       alt={alt}
+      loading="lazy"
+      decoding="async"
       className={cn("size-full object-contain", className)}
       onError={() => setFailedUrl(url)}
     />

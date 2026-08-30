@@ -59,17 +59,19 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Hooks/Services:** `usePlayerProfileDetail`, `useEffectivePublicData`,
   `historyProfileService`, `dataGroupService`, `playerService`, `statsService`.
 - **Views/RPCs:** `players`, `player_statistics`, `public_hall_of_fame`,
-  `player_event_history`, `visible_player_badges`,
-  `player_attempt_number_statistics`, `player_pb_history`,
+  `get_player_event_history`, `get_player_visible_badges`,
+  `get_player_attempt_number_statistics`, `get_player_qualified_times`, `player_pb_history`,
   `player_prestige_statistics`, `player_trophies`; separat
-  `player_bingo_fields`, `player_bingo_statistics`, `player_bingo_hits`.
+  `get_player_bingo`; dessen gemeinsame player-scoped Basis bleibt fachlich aus
+  `player_bingo_hits`, den zentralen Badge-Schwellen und dem kanonischen
+  `bingo_line_cells`-Raster abgeleitet.
 - **Tests:** `npm test -- src/components/players/PersonalBingo.test.tsx
   src/components/progression/ProgressionTimeline.test.tsx
   src/components/progression/PersonalBestDetailsToggle.test.tsx`.
 - **Direkte Abhängigkeiten:** Spielerübersicht, Prestige/Badges/Trophäen, BINGO.
 - **Nicht enthalten:** globale Statistikmodule und Live-Verwaltung.
 - **Zeitquoten:** Eine zusätzliche spielerbezogene, season-aware Abfrage auf den
-  bestehenden qualifizierten offiziellen Zeiten liefert die kumulativen
+  Basistabellen liefert über `get_player_qualified_times` die kumulativen
   Unter-5-/Unter-4-/Unter-3-Anteile; keine globale Abfrage und kein N+1.
 - **Eventführung:** Ein player-scoped RPC liefert All-Time oder saisonal
   kumulierte offizielle Führungssekunden und strikt gebrochene Eventbestzeiten.
@@ -230,6 +232,12 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Badge-Seltenheit:** lädt die bestehende Rarity-View und in einem zweiten,
   gebündelten Request `public_player_badges` für die Empfänger-Disclosure;
   keine Badge-Einzelrequests und keine zusätzliche globale Datenladung.
+- **Profil-Badges:** Der Galerie-RPC liefert nur sichtbare, familiengerankte
+  Awards aus `player_badge_award_ledger` und keine Live-Eligibility-, Rarity-,
+  Progress- oder Next-Badge-Aggregate. Das Ledger wird transaktional aus den
+  kanonischen Award-Views synchronisiert. Rarity wird ebenfalls aus dem Ledger
+  über `get_badge_rarity` geladen, im Profil fünf Minuten gecacht und
+  fehlertolerant per `badge_key` ergänzt.
 - **Pre-P11 Awards:** Die additive Award-Erweiterung ergänzt die vollständige
   BINGO-Kartenfamilie, drei Holz-/Trostpreis-Badges und deterministisch aus
   qualifizierten Zeiten beziehungsweise BINGO-Treffern ermittelte historische

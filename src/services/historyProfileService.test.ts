@@ -14,10 +14,15 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 import {
+  getAttemptBadgeUnlocks,
   getClosedEventIds,
   getPlayerCompareTimeline,
   getPlayerPersonalProgression,
   getPlayerBadges,
+  getPlayerBingo,
+  getPlayerAttemptNumbers,
+  getPlayerEventHistory,
+  getPlayerTimePerformance,
   getPlayerPrestige,
   getPlayerProfileCore,
   getPlayerSeasonProfile,
@@ -187,7 +192,6 @@ describe("player profile core repository", () => {
       }],
       error: null,
     });
-
     await expect(getPlayerPersonalProgression("player-b", 2026)).resolves.toEqual([
       expect.objectContaining({ id: "season-pb-1", timeHundredths: 290 }),
     ]);
@@ -244,6 +248,15 @@ describe("player profile core repository", () => {
       }],
       error: null,
     });
+    mocks.rpc.mockResolvedValueOnce({
+      data: [{
+        badge_key: "fast-bronze", name: "Fast Bronze", tier: "bronze",
+        tier_rank: 2, sort_order: 10, design_variant: "standard",
+        recipient_count: 3, regular_player_count: 10, rarity_percent: 30,
+        recipients: [],
+      }],
+      error: null,
+    });
 
     await expect(getPlayerBadges("player-1")).resolves.toEqual([
       expect.objectContaining({
@@ -251,14 +264,73 @@ describe("player profile core repository", () => {
         badgeKey: "fast-bronze",
         playerId: "player-1",
         tier: "bronze",
-        recipientCount: 3,
         rarityPercent: 30,
-        currentProgress: 450,
-        nextBadgeName: "Fast Silver",
-        nextThreshold: 400,
       }),
     ]);
-    expect(mocks.rpc).toHaveBeenCalledWith("get_visible_player_badges", {
+    expect(mocks.rpc).toHaveBeenCalledWith("get_player_visible_badges", {
+      p_player_id: "player-1",
+    });
+    expect(mocks.rpc).toHaveBeenCalledWith("get_badge_rarity");
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
+  it("loads post-attempt unlocks from the persisted ledger projection", async () => {
+    const builder = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      order: vi.fn().mockResolvedValue({
+        data: [{
+          award_key: "player-1:favorite-time-bronze:294",
+          badge_key: "favorite-time-bronze",
+          name: "Déjà-vu",
+          tier: "bronze",
+          description: "Dieselbe Zeit zweimal",
+          category: "favorite_time",
+          metadata: { timeHundredths: 294 },
+        }],
+        error: null,
+      }),
+    };
+    builder.select.mockReturnValue(builder);
+    builder.eq.mockReturnValue(builder);
+    mocks.from.mockReturnValueOnce(builder);
+
+    await expect(getAttemptBadgeUnlocks("attempt-1", "Paul")).resolves.toEqual([
+      expect.objectContaining({
+        key: "player-1:favorite-time-bronze:294",
+        badgeKey: "favorite-time-bronze",
+        playerName: "Paul",
+      }),
+    ]);
+    expect(mocks.from).toHaveBeenCalledWith("player_badge_award_achievements");
+    expect(builder.eq).toHaveBeenCalledWith("source_attempt_id", "attempt-1");
+  });
+
+  it("uses dedicated player-scoped RPCs for extended profile reads", async () => {
+    mocks.rpc
+      .mockResolvedValueOnce({ data: [{ time_hundredths: 300 }], error: null })
+      .mockResolvedValueOnce({ data: [{ attempt_number: 1, attempt_count: 2,
+        valid_attempts: 2, dnf_count: 0, average_hundredths: 350 }], error: null })
+      .mockResolvedValueOnce({ data: [{ event_id: "event-1", event_name: "Finale",
+        event_date: "2026-08-27", best_time_hundredths: 300, rank: 1,
+        attempt_count: 2, valid_attempts: 2, dnf_count: 0 }], error: null });
+
+    await expect(getPlayerTimePerformance("player-1")).resolves.toMatchObject({
+      thresholds: expect.any(Array), medianHundredths: 300,
+    });
+    await expect(getPlayerAttemptNumbers("player-1")).resolves.toEqual([
+      expect.objectContaining({ attemptNumber: 1, samples: 2 }),
+    ]);
+    await expect(getPlayerEventHistory("player-1")).resolves.toEqual([
+      expect.objectContaining({ eventId: "event-1", rank: 1 }),
+    ]);
+    expect(mocks.rpc).toHaveBeenCalledWith("get_player_qualified_times", {
+      p_player_id: "player-1", p_season_year: null,
+    });
+    expect(mocks.rpc).toHaveBeenCalledWith("get_player_attempt_number_statistics", {
+      p_player_id: "player-1",
+    });
+    expect(mocks.rpc).toHaveBeenCalledWith("get_player_event_history", {
       p_player_id: "player-1",
     });
     expect(mocks.from).not.toHaveBeenCalled();
@@ -426,5 +498,32 @@ describe("player profile core repository", () => {
       "player_pb_history", "world_record_history",
     ]);
     expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+});
+
+describe("player profile BINGO repository", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("loads fields, hits and summary through one player-scoped RPC", async () => {
+    mocks.rpc.mockResolvedValueOnce({ data: [{
+      ending: 7, ending_label: "07", hit_count: 1, field_tier: "bronze",
+      hits: [{ id: "hit-1", sourceType: "attempt", eventId: "event-1",
+        timeHundredths: 307, occurredAt: "2026-08-27T20:00:00Z",
+        occurredDate: "2026-08-27", hasExactTime: true, sourceLabel: "Finale" }],
+      collected_endings: 1, bronze_fields: 1, silver_fields: 0,
+      gold_fields: 0, diamond_fields: 0, bronze_lines: 0,
+      silver_lines: 0, gold_lines: 0, diamond_lines: 0,
+      highest_badge_tier: null,
+    }], error: null });
+
+    await expect(getPlayerBingo("player-1")).resolves.toMatchObject({
+      fields: [{ ending: 7, label: "07", hits: [{ id: "hit-1" }] }],
+      summary: { collectedEndings: 1, bronzeFields: 1, bronzeLines: 0 },
+    });
+    expect(mocks.rpc).toHaveBeenCalledOnce();
+    expect(mocks.rpc).toHaveBeenCalledWith("get_player_bingo", {
+      p_player_id: "player-1",
+    });
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 });
