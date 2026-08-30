@@ -94,7 +94,7 @@ describe("live event rules", () => {
     expect(created).toMatchObject({ eventId: undefined, eventName: "Training" });
   });
 
-  it("stores DNS without a time", () => {
+  it("stores DNF without a time", () => {
     const created = createLiveAttempt({
       playerId: "paul",
       eventId: event.id,
@@ -120,7 +120,35 @@ describe("live event rules", () => {
       attempt("1", "paul", 2.2),
       attempt("2", "mats", 2.2),
     ], players);
-    expect(standings.slice(0, 2).map(({ rank }) => rank)).toEqual([1, 1]);
+    expect(standings.slice(0, 3).map(({ rank }) => rank)).toEqual([1, 1, null]);
+  });
+
+  it("uses competition ranking for ties at first and second place", () => {
+    const rankedPlayers = [
+      participant("a"), participant("b"), participant("c"), participant("d"),
+    ];
+    const firstTie = getLiveStandings({ ...event, participantIds: rankedPlayers.map(({ id }) => id) }, [
+      attempt("1", "a", 2.5), attempt("2", "b", 2.5), attempt("3", "c", 2.7),
+    ], rankedPlayers);
+    expect(firstTie.slice(0, 3).map(({ rank }) => rank)).toEqual([1, 1, 3]);
+
+    const secondTie = getLiveStandings({ ...event, participantIds: rankedPlayers.map(({ id }) => id) }, [
+      attempt("1", "a", 2.4), attempt("2", "b", 2.5),
+      attempt("3", "c", 2.5), attempt("4", "d", 2.7),
+    ], rankedPlayers);
+    expect(secondTie.map(({ rank }) => rank)).toEqual([1, 2, 2, 4]);
+  });
+
+  it("keeps three identical times tied despite deterministic name ordering", () => {
+    const rankedPlayers = [participant("c"), participant("a"), participant("b"), participant("d")];
+    const standings = getLiveStandings(
+      { ...event, participantIds: rankedPlayers.map(({ id }) => id) },
+      [attempt("1", "c", 2.5), attempt("2", "a", 2.5),
+        attempt("3", "b", 2.5), attempt("4", "d", 2.8)],
+      rankedPlayers,
+    );
+    expect(standings.map(({ player }) => player.id)).toEqual(["a", "b", "c", "d"]);
+    expect(standings.map(({ rank }) => rank)).toEqual([1, 1, 1, 4]);
   });
 
   it("lets an event-only guest rank and win without affecting official records", () => {
@@ -139,6 +167,12 @@ describe("live event rules", () => {
     const edited = original.map((item) => item.id === "1" ? { ...item, timeSeconds: 2.3 } : item);
     expect(finalizeLiveEvent(event, edited, players, "manual", event.endsAt).winnerPlayerId).toBe("mats");
     expect(finalizeLiveEvent(event, original.slice(1), players, "manual", event.endsAt).winnerPlayerId).toBe("mats");
+  });
+
+  it("does not persist an artificial single winner for a tied event", () => {
+    const tied = [attempt("1", "paul", 2.2), attempt("2", "mats", 2.2)];
+    expect(finalizeLiveEvent(event, tied, players, "manual", event.endsAt).winnerPlayerId)
+      .toBeUndefined();
   });
 
   it("finalizes automatically and never finalizes twice", () => {

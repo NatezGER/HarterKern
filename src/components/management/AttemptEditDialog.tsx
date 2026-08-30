@@ -67,7 +67,7 @@ export function AttemptEditDialog({
         </label>
         <label className="text-xs text-white/45">Ergebnis
           <select value={result} onChange={(event) => setResult(event.target.value as "time" | "dns")} className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/30 px-3 text-sm">
-            <option value="time">Zeit</option><option value="dns">DNS</option>
+            <option value="time">Zeit</option><option value="dns">DNF</option>
           </select>
         </label>
         <label className="text-xs text-white/45">Zeit
