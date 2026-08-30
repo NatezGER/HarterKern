@@ -1,0 +1,11 @@
+begin;
+select plan(7);
+select has_function('public', 'get_player_badge_prestige', array['uuid[]'], 'pair-scoped prestige RPC exists');
+select has_function('public', 'get_admin_badge_family_progress', array[]::text[], 'admin progress RPC exists');
+select matches(pg_get_functiondef('public.get_player_badge_prestige(uuid[])'::regprocedure), 'player_badge_award_ledger', 'prestige reads persisted ledger');
+select matches(pg_get_functiondef('public.get_player_badge_prestige(uuid[])'::regprocedure), 'group by ledger.player_id, definitions.family_key', 'one maximum per family');
+select matches(pg_get_functiondef('public.get_player_badge_prestige(uuid[])'::regprocedure), 'positive_special', 'emerald is separate');
+select matches(pg_get_functiondef('public.get_player_badge_prestige(uuid[])'::regprocedure), 'design_variant = ''standard''', 'wood and other specials are excluded from ladder');
+select matches(pg_get_functiondef('public.get_admin_badge_family_progress()'::regprocedure), 'player_badge_award_sync_source', 'admin progress reuses canonical eligibility source');
+select * from finish();
+rollback;

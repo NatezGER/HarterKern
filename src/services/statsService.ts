@@ -23,7 +23,9 @@ export async function getLeaderboard(season: SeasonSelection = ALL_TIME_SEASON):
     : getSupabase().from("season_hall_of_fame").select("*").eq("season_year", season);
   const { data, error } = await query
     .order("personal_best_hundredths", { ascending: true })
-    .order("display_name", { ascending: true });
+    .order("record_date", { ascending: true })
+    .order("display_name", { ascending: true })
+    .order("player_id", { ascending: true });
   if (error) throw error;
   return data.map((row) => ({
     playerId: row.player_id,

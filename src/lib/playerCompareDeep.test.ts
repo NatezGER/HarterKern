@@ -119,6 +119,16 @@ describe("final player compare statistics", () => {
     expect(season.find(({ key }) => key === "most-wanted-season-first"))
       .toMatchObject({ direction: "higher", left: 8, right: 5 });
   });
+
+  it("adds five transparent higher-is-better badge prestige categories", () => {
+    const categories = createCompareCategoryBalance({
+      "badge-bronze": { left: 4, right: 3 }, "badge-silver": { left: 3, right: 2 },
+      "badge-gold": { left: 2, right: 1 }, "badge-diamond": { left: 1, right: 0 },
+      "badge-emerald": { left: 2, right: 1 },
+    }, false).filter(({ group }) => group === "Badges");
+    expect(categories.map(({ key }) => key)).toEqual(["badge-bronze", "badge-silver", "badge-gold", "badge-diamond", "badge-emerald"]);
+    expect(categories.every(({ direction }) => direction === "higher")).toBe(true);
+  });
 });
 
 function attempt(

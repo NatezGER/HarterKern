@@ -39,7 +39,10 @@ export interface AdminBadgeFamily {
   category: string;
   description: string;
   stages: AdminBadgeCatalogEntry[];
+  progress?: AdminBadgeFamilyProgress[];
 }
+
+export interface AdminBadgeFamilyProgress { playerId: string; playerName: string; familyKey: string; currentProgress: number; timeHundredths: number | null }
 
 export interface AdminBadgeCatalog {
   families: AdminBadgeFamily[];
@@ -58,6 +61,7 @@ function familyName(entry: AdminBadgeDefinition) {
 export function buildAdminBadgeCatalog(
   definitions: AdminBadgeDefinition[],
   achievements: AdminBadgeAchievement[],
+  progress: AdminBadgeFamilyProgress[] = [],
 ): AdminBadgeCatalog {
   const achievementsByBadge = new Map<string, AdminBadgeAchievement[]>();
   for (const achievement of achievements) {
@@ -99,6 +103,7 @@ export function buildAdminBadgeCatalog(
       category: first.category,
       description: first.description,
       stages,
+      progress: progress.filter((item) => familyKey === item.familyKey),
     }];
   }).sort((left, right) => left.stages[0].sortOrder - right.stages[0].sortOrder ||
     left.name.localeCompare(right.name, "de"));
@@ -110,14 +115,16 @@ export function buildAdminBadgeCatalog(
 
 export async function getAdminBadgeCatalog(): Promise<AdminBadgeCatalog> {
   const client = getSupabase();
-  const [definitionsResult, achievementsResult] = await Promise.all([
+  const [definitionsResult, achievementsResult, progressResult] = await Promise.all([
     client.from("badge_definitions").select("badge_key,family_key,category,tier,name,description,threshold,requirement,sort_order,is_secret,badge_kind,design_variant,scope_type,is_active")
       .order("sort_order"),
     client.from("player_badge_award_achievements").select("award_key,badge_key,player_id,display_name,awarded_at,metadata")
       .order("awarded_at"),
+    client.rpc("get_admin_badge_family_progress"),
   ]);
   if (definitionsResult.error) throw definitionsResult.error;
   if (achievementsResult.error) throw achievementsResult.error;
+  if (progressResult.error) throw progressResult.error;
   const definitions: AdminBadgeDefinition[] = definitionsResult.data.map((row) => ({
     badgeKey: row.badge_key,
     familyKey: row.family_key,
@@ -147,5 +154,9 @@ export async function getAdminBadgeCatalog(): Promise<AdminBadgeCatalog> {
       "timeHundredths" in row.metadata && typeof row.metadata.timeHundredths === "number"
       ? row.metadata.timeHundredths : null,
   }));
-  return buildAdminBadgeCatalog(definitions, achievements);
+  const progress = (progressResult.data ?? []).map((row) => ({
+    playerId: row.player_id, playerName: row.display_name, familyKey: row.family_key,
+    currentProgress: Number(row.current_progress), timeHundredths: row.time_hundredths == null ? null : Number(row.time_hundredths),
+  }));
+  return buildAdminBadgeCatalog(definitions, achievements, progress);
 }

@@ -515,6 +515,14 @@ export interface Database {
       season_trophies: PlayerTrophyView;
     };
     Functions: DataPlatformFunctions & {
+      get_player_badge_prestige: {
+        Args: { p_player_ids: string[] };
+        Returns: Array<{ player_id: string; at_least_bronze: number; at_least_silver: number; at_least_gold: number; at_least_diamond: number; emerald: number }>;
+      };
+      get_admin_badge_family_progress: {
+        Args: Record<PropertyKey, never>;
+        Returns: Array<{ player_id: string; display_name: string; family_key: string; current_progress: number; time_hundredths: number | null }>;
+      };
       get_player_most_wanted_statistics: {
         Args: { p_player_ids: string[]; p_season_year?: number | null };
         Returns: Array<{

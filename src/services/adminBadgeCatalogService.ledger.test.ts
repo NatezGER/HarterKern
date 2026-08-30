@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const from = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/supabase", () => ({ getSupabase: () => ({ from }) }));
+const rpc = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/supabase", () => ({ getSupabase: () => ({ from, rpc }) }));
 
 import { getAdminBadgeCatalog } from "@/services/adminBadgeCatalogService";
 
@@ -9,6 +10,7 @@ describe("admin badge catalog ledger read", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("loads achievements from the persisted ledger projection", async () => {
+    rpc.mockResolvedValue({ data: [], error: null });
     from.mockImplementation((name: string) => {
       const data = name === "badge_definitions" ? [{
         badge_key: "fast-bronze", family_key: null, category: "performance",
@@ -36,5 +38,6 @@ describe("admin badge catalog ledger read", () => {
     expect(from).toHaveBeenCalledWith("badge_definitions");
     expect(from).toHaveBeenCalledWith("player_badge_award_achievements");
     expect(from).not.toHaveBeenCalledWith("public_player_badges");
+    expect(rpc).toHaveBeenCalledWith("get_admin_badge_family_progress");
   });
 });

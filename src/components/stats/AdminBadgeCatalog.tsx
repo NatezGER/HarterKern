@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { formatBadgeTime, getBadgeMaterialLabel } from "@/lib/badgePresentation";
 import { getAdminBadgeCatalog } from "@/services/adminBadgeCatalogService";
 import type { AdminBadgeCatalog as AdminBadgeCatalogData, AdminBadgeCatalogEntry } from "@/services/adminBadgeCatalogService";
+import type { AdminBadgeFamily, AdminBadgeFamilyProgress } from "@/services/adminBadgeCatalogService";
 import { formatDate } from "@/utils/format";
 import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
 
@@ -39,6 +40,21 @@ function AchievementList({ entry, emptyLabel = "Noch niemand" }: { entry: AdminB
   return <ul className="mt-3 space-y-1 text-xs text-white/60">{entry.achievements.map((achievement) => { const progress = progressLabel(entry, achievement.progress, achievement.timeHundredths); return <li key={achievement.awardKey}>{achievement.playerName}{progress ? ` · ${progress}` : ""} <span className="text-white/30">· {formatDate(achievement.awardedAt.slice(0, 10))}</span></li>; })}</ul>;
 }
 
+function FamilyProgress({ family, progress }: { family: AdminBadgeFamily; progress: AdminBadgeFamilyProgress }) {
+  const highestAchievedIndex = family.stages.reduce((highest, stage, index) =>
+    stage.achievements.some(({ playerId }) => playerId === progress.playerId) ? index : highest, -1);
+  const next = family.stages[highestAchievedIndex + 1] ?? null;
+  const current = family.category === "favorite_time" && progress.timeHundredths != null
+    ? `${progress.currentProgress}× ${formatBadgeTime(progress.timeHundredths)}` : String(progress.currentProgress);
+  const remaining = next?.threshold == null ? null : family.category === "performance"
+    ? Math.max(0, progress.currentProgress - next.threshold + 1)
+    : Math.max(0, next.threshold - progress.currentProgress);
+  return <li className="rounded-lg bg-white/[0.035] px-3 py-2">
+    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1"><strong className="text-sm">{progress.playerName}</strong><span className="text-xs tabular-nums text-white/65">Aktuell: {current}{next?.threshold != null ? ` / ${next.threshold}` : ""}</span></div>
+    <p className="mt-1 text-xs text-white/40">{next ? `${remaining ?? "—"} bis ${getBadgeMaterialLabel(next)}` : "Diamond erreicht · keine weitere Stufe"}</p>
+  </li>;
+}
+
 export function AdminBadgeCatalogContent({ catalog }: { catalog: AdminBadgeCatalogData }) {
   return <div className="mt-6 space-y-10">
     {catalog.families.length > 0 && <section aria-labelledby="admin-badge-families-title">
@@ -52,6 +68,7 @@ export function AdminBadgeCatalogContent({ catalog }: { catalog: AdminBadgeCatal
           <p className="mt-2 text-xs leading-5 text-white/55">{stage.requirement?.trim() || stage.description}</p>
           <div className="mt-4 border-t border-white/10 pt-3"><p className="text-[10px] font-bold uppercase tracking-wider text-white/35">Freigeschaltet von</p><AchievementList entry={stage} /></div>
         </section>)}</div>
+        {(family.progress?.length ?? 0) > 0 && <details className="mt-4 rounded-xl border border-white/[0.07] bg-black/15 p-3"><summary className="cursor-pointer text-xs font-bold uppercase tracking-wider text-white/55">Aktueller Fortschritt · {family.progress!.length} Spieler</summary><ul className="mt-3 grid gap-2 sm:grid-cols-2">{family.progress!.map((progress) => <FamilyProgress key={progress.playerId} family={family} progress={progress} />)}</ul></details>}
       </article>)}</div>
     </section>}
     {catalog.singles.length > 0 && <section aria-labelledby="admin-single-badges-title">

@@ -46,4 +46,13 @@ describe("admin badge catalog", () => {
     ]);
     expect(groupedCatalog.singles.map(({ badgeKey }) => badgeKey)).toEqual(["special"]);
   });
+
+  it("attaches current family progress without replacing award history", () => {
+    const family = ["bronze", "silver", "gold", "diamond"].map((tier, index) =>
+      definition(`attempts-${tier}`, { familyKey: "attempts", badgeKind: "tiered", tier: tier as AdminBadgeDefinition["tier"], threshold: [10, 20, 50, 100][index], sortOrder: index + 1 }));
+    const catalog = buildAdminBadgeCatalog(family, [{ awardKey: "old", badgeKey: "attempts-silver", playerId: "p1", playerName: "Paul", awardedAt: "2026-08-01" }],
+      [{ playerId: "p1", playerName: "Paul", familyKey: "attempts", currentProgress: 37, timeHundredths: null }]);
+    expect(catalog.families[0].progress?.[0].currentProgress).toBe(37);
+    expect(catalog.families[0].stages[1].achievements[0].awardedAt).toBe("2026-08-01");
+  });
 });

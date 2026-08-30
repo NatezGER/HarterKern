@@ -60,7 +60,15 @@ export interface PlayerMostWantedStatistics {
   seasonFirstHits: number | null;
 }
 
-export type CompareCategoryGroup = "Hauptwerte" | "Head to Head" | "Speed" | "Konstanz" | "Events" | "Most Wanted";
+export interface PlayerBadgePrestige {
+  atLeastBronze: number;
+  atLeastSilver: number;
+  atLeastGold: number;
+  atLeastDiamond: number;
+  emerald: number;
+}
+
+export type CompareCategoryGroup = "Hauptwerte" | "Head to Head" | "Speed" | "Konstanz" | "Events" | "Most Wanted" | "Badges";
 
 export interface CompareCategoryValue extends ComparableValue {
   key: string;
