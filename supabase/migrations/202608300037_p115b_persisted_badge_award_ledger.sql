@@ -52,7 +52,7 @@ language sql
 security definer
 set search_path = public
 as $$
-  with canonical as materialized (
+  with enriched as materialized (
     select source.award_key, source.player_id, source.badge_key,
       source.source_type, source.source_attempt_id,
       source.source_historical_attempt_id, source.source_event_id,
@@ -74,6 +74,29 @@ as $$
     left join public.event_attempt_details details
       on details.attempt_id = source.source_attempt_id
     where source.player_id = p_player_id
+  ), ranked as materialized (
+    select enriched.*, row_number() over (
+      partition by enriched.award_key
+      order by enriched.awarded_at,
+        enriched.source_awarded_at,
+        enriched.source_attempt_id nulls last,
+        enriched.source_historical_attempt_id nulls last,
+        enriched.source_event_id nulls last,
+        enriched.source_type,
+        enriched.player_id,
+        enriched.badge_key,
+        enriched.metadata::text
+    ) canonical_position
+    from enriched
+  ), canonical as materialized (
+    select ranked.award_key, ranked.player_id, ranked.badge_key,
+      ranked.source_type, ranked.source_attempt_id,
+      ranked.source_historical_attempt_id, ranked.source_event_id,
+      ranked.source_awarded_at, ranked.awarded_at, ranked.metadata,
+      ranked.source_event_name, ranked.source_event_date,
+      ranked.source_attempt_number, ranked.source_time_hundredths
+    from ranked
+    where ranked.canonical_position = 1
   ), upserted as (
     insert into public.player_badge_award_ledger (
       award_key, player_id, badge_key, source_type, source_attempt_id,

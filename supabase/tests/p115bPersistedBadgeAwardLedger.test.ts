@@ -41,6 +41,21 @@ describe("P11.5 B persisted badge award ledger", () => {
     expect(migration).toContain("select public.sync_all_player_badge_award_ledgers()");
   });
 
+  it("canonicalizes repeated evidence to the earliest deterministic award row", () => {
+    const sync = functionBody("sync_player_badge_award_ledger",
+      "create or replace function public.sync_all_player_badge_award_ledgers");
+    expect(sync).toContain("with enriched as materialized");
+    expect(sync).toContain("partition by enriched.award_key");
+    expect(sync).toMatch(/order by enriched\.awarded_at,\s+enriched\.source_awarded_at/);
+    expect(sync).toContain("enriched.source_attempt_id nulls last");
+    expect(sync).toContain("enriched.source_historical_attempt_id nulls last");
+    expect(sync).toContain("enriched.source_event_id nulls last");
+    expect(sync).toContain("enriched.source_type");
+    expect(sync).toContain("where ranked.canonical_position = 1");
+    expect(sync.indexOf("where ranked.canonical_position = 1"))
+      .toBeLessThan(sync.indexOf("on conflict (award_key) do update"));
+  });
+
   it("makes profile and rarity reads ledger-only", () => {
     const profile = functionBody("get_player_visible_badges",
       "create or replace function public.get_badge_rarity");
