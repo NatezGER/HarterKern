@@ -1,7 +1,7 @@
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { ProgressionTimeline } from "@/components/progression/ProgressionTimeline";
-import { getPlayerById } from "@/data/selectors";
+import { getPlayerById, getRankedPlayers } from "@/data/selectors";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -41,8 +41,8 @@ export function WRProgression({ compact = false, collapsibleHistory = false }: {
         title={isAllTime ? "WR Progression" : "Saisonrekord-Progression"}
       />
       <AnimatedCard className="overflow-hidden p-5 sm:p-8" hover={false}>
-        <PlayerOverlaySelector options={regularPlayerOptions(data.players)} selectedIds={selectedPlayers} onChange={setSelectedPlayers} loading={overlays.loading} error={overlays.error} />
-        <ProgressionTimeline points={compact ? points.slice(0, 6) : points} overlaySeries={overlays.data} primaryLabel={isAllTime ? "Weltrekord" : "Saisonrekord"} showHistory={!collapsibleHistory || historyExpanded} emptyLabel={isAllTime ? "Noch kein offizieller Weltrekord." : `Noch kein Saisonrekord ${season}.`} />
+        <PlayerOverlaySelector options={regularPlayerOptions(getRankedPlayers(data.players, data.leaderboard).map(({ player }) => player))} selectedIds={selectedPlayers} onChange={setSelectedPlayers} loading={overlays.loading} error={overlays.error} />
+        <ProgressionTimeline points={compact ? points.slice(0, 6) : points} overlaySeries={overlays.data} primaryLabel={isAllTime ? "Weltrekord" : "Saisonrekord"} primaryToggleable showHistory={!collapsibleHistory || historyExpanded} emptyLabel={isAllTime ? "Noch kein offizieller Weltrekord." : `Noch kein Saisonrekord ${season}.`} />
         {collapsibleHistory && points.length > 0 && <Button type="button" variant="outline" className="mt-5 w-full sm:w-auto" aria-expanded={historyExpanded} onClick={() => setHistoryExpanded((value) => !value)}>{historyExpanded ? (isAllTime ? "Weltrekorde einklappen" : "Saisonrekorde einklappen") : (isAllTime ? "Alle Weltrekorde anzeigen" : "Alle Saisonrekorde anzeigen")}</Button>}
       </AnimatedCard>
     </section>

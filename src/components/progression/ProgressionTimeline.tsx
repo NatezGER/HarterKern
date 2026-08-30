@@ -38,7 +38,7 @@ const overlayStyles = [
   { path: "stroke-sky-300", legend: "bg-sky-300" },
 ];
 
-export function ProgressionTimeline({ points, comparisonPoints = [], overlaySeries = [], domainStartAt, domainEndAt, emptyLabel = "Noch keine Progression vorhanden.", primaryLabel = "PB", comparisonLabel = "Weltrekord", comparisonInitiallyVisible = false, compact = false, showHistory = true, primaryCrossoverIds = [], comparisonCrossoverIds = [], historyDisclosure }: {
+export function ProgressionTimeline({ points, comparisonPoints = [], overlaySeries = [], domainStartAt, domainEndAt, emptyLabel = "Noch keine Progression vorhanden.", primaryLabel = "PB", comparisonLabel = "Weltrekord", primaryToggleable = false, primaryInitiallyVisible = true, comparisonInitiallyVisible = false, compact = false, showHistory = true, primaryCrossoverIds = [], comparisonCrossoverIds = [], historyDisclosure }: {
   points: TimelinePoint[];
   comparisonPoints?: TimelinePoint[];
   overlaySeries?: TimelineOverlaySeries[];
@@ -47,6 +47,8 @@ export function ProgressionTimeline({ points, comparisonPoints = [], overlaySeri
   emptyLabel?: string;
   primaryLabel?: string;
   comparisonLabel?: string;
+  primaryToggleable?: boolean;
+  primaryInitiallyVisible?: boolean;
   comparisonInitiallyVisible?: boolean;
   compact?: boolean;
   showHistory?: boolean;
@@ -54,18 +56,19 @@ export function ProgressionTimeline({ points, comparisonPoints = [], overlaySeri
   comparisonCrossoverIds?: string[];
   historyDisclosure?: { id: string; expanded: boolean };
 }) {
+  const [showPrimary, setShowPrimary] = useState(primaryInitiallyVisible);
   const [showComparison, setShowComparison] = useState(comparisonInitiallyVisible);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const plotted = useMemo(() => {
     const combined = [
-      ...points.map((point) => ({ ...point, id: `primary:${point.id}`, originalId: point.id, series: "primary" as const })),
+      ...(showPrimary ? points.map((point) => ({ ...point, id: `primary:${point.id}`, originalId: point.id, series: "primary" as const })) : []),
       ...(showComparison ? comparisonPoints.map((point) => ({ ...point, id: `comparison:${point.id}`, originalId: point.id, series: "comparison" as const })) : []),
       ...overlaySeries.flatMap((series) => series.points.map((point) => ({ ...point, id: `overlay:${series.id}:${point.id}`, originalId: point.id, series: `overlay:${series.id}`, seriesLabel: series.label }))),
     ];
     return buildProgressionCoordinates(combined, { startAt: domainStartAt, endAt: domainEndAt }).map(({ originalId, ...point }) => ({ ...point, id: originalId })) as PlottedPoint[];
-  }, [comparisonPoints, domainEndAt, domainStartAt, overlaySeries, points, showComparison]);
+  }, [comparisonPoints, domainEndAt, domainStartAt, overlaySeries, points, showComparison, showPrimary]);
   useEffect(() => {
     const close = (event: PointerEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) setPinnedId(null);
@@ -73,14 +76,14 @@ export function ProgressionTimeline({ points, comparisonPoints = [], overlaySeri
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);
   }, []);
-  if (!points.length && (!comparisonPoints.length || !showComparison)) return <p className="py-14 text-center text-sm text-white/35">{emptyLabel}</p>;
+  if ((!points.length || !showPrimary) && (!comparisonPoints.length || !showComparison) && !overlaySeries.some(({ points }) => points.length)) return <div>{primaryToggleable && points.length > 0 && <Button type="button" variant="outline" size="sm" onClick={() => setShowPrimary(true)}>{primaryLabel} einblenden</Button>}<p className="py-14 text-center text-sm text-white/35">{emptyLabel}</p></div>;
   const primary = plotted.filter(({ series }) => series === "primary");
   const comparison = plotted.filter(({ series }) => series === "comparison");
   const overlays = overlaySeries.map((series) => ({ ...series, plotted: plotted.filter(({ series: key }) => key === `overlay:${series.id}`) }));
   const visibleTimes = plotted.map(({ timeHundredths }) => timeHundredths);
   const fastestTime = Math.min(...visibleTimes);
   const slowestTime = Math.max(...visibleTimes);
-  const orderedDates = [...points, ...(showComparison ? comparisonPoints : []), ...overlaySeries.flatMap(({ points }) => points)]
+  const orderedDates = [...(showPrimary ? points : []), ...(showComparison ? comparisonPoints : []), ...overlaySeries.flatMap(({ points }) => points)]
     .sort((a, b) => a.achievedAt.localeCompare(b.achievedAt));
   const activeKey = pinnedId ?? hoveredId;
   const active = plotted.find((point) => `${point.series}:${point.id}` === activeKey) ?? null;
@@ -88,8 +91,9 @@ export function ProgressionTimeline({ points, comparisonPoints = [], overlaySeri
   const comparisonCrossovers = new Set(comparisonCrossoverIds);
   return (
     <div ref={rootRef} className="space-y-5">
+      {primaryToggleable && <div className="flex justify-end"><Button type="button" variant={showPrimary ? "default" : "outline"} size="sm" aria-pressed={showPrimary} onClick={() => { setShowPrimary((value) => !value); setPinnedId(null); }}>{showPrimary ? `${primaryLabel} ausblenden` : `${primaryLabel} einblenden`}</Button></div>}
       {comparisonPoints.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.16em] text-white/45"><span className="flex items-center gap-2"><i className="h-0.5 w-7 bg-gold-400" /> {primaryLabel}</span>{showComparison && <span className="flex items-center gap-2"><i className="h-0.5 w-7 border-t-2 border-dashed border-cyan-300" /> {comparisonLabel}</span>}</div>
+        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.16em] text-white/45">{showComparison && <span className="flex items-center gap-2"><i className="h-0.5 w-7 border-t-2 border-dashed border-cyan-300" /> {comparisonLabel}</span>}<span className="flex items-center gap-2"><i className="h-0.5 w-7 bg-gold-400" /> {primaryLabel}</span></div>
         <Button type="button" variant={showComparison ? "default" : "outline"} size="sm" onClick={() => { setShowComparison((value) => !value); setPinnedId(null); }}>{showComparison ? `Nur ${primaryLabel}` : `Mit ${comparisonLabel} vergleichen`}</Button>
       </div>}
       {overlaySeries.length > 0 && <div className="flex flex-wrap gap-3 text-[10px] font-bold uppercase tracking-[0.12em] text-white/55">{overlaySeries.map((series, index) => <span key={series.id} className="flex items-center gap-2"><i className={cn("h-0.5 w-6", overlayStyles[index % overlayStyles.length].legend)} />{series.label}</span>)}</div>}

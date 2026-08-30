@@ -69,6 +69,20 @@ describe("ProgressionTimeline mobile history disclosure", () => {
     expect(markup).not.toContain("data-progression-history");
   });
 
+  it("shows a toggleable record line by default", () => {
+    const markup = renderToStaticMarkup(<ProgressionTimeline points={[point]} primaryLabel="Weltrekord" primaryToggleable />);
+    expect(markup).toContain("Weltrekord ausblenden");
+    expect(markup).toContain('aria-pressed="true"');
+    expect(markup).toContain("stroke-gold-400");
+  });
+
+  it("shows the profile reference line by default while keeping the profile line visible", () => {
+    const markup = renderToStaticMarkup(<ProgressionTimeline points={[point]} comparisonPoints={[{ ...point, id: "wr" }]} primaryLabel="Paul" comparisonLabel="Weltrekord" comparisonInitiallyVisible />);
+    expect(markup).toContain("Nur Paul");
+    expect(markup).toContain("stroke-cyan-300/70");
+    expect(markup.indexOf("Weltrekord")).toBeLessThan(markup.indexOf("Paul"));
+  });
+
   it("renders multiple named overlay series without changing the primary line", () => {
     const markup = renderToStaticMarkup(<ProgressionTimeline points={[point]} primaryLabel="Weltrekord" overlaySeries={[
       { id: "lars", label: "Lars", points: [{ ...point, id: "lars-1", playerName: "Lars" }] },

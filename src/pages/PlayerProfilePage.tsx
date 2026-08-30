@@ -35,6 +35,7 @@ import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { PlayerOverlaySelector } from "@/components/progression/PlayerOverlaySelector";
 import { usePlayerProgressionOverlays } from "@/hooks/usePlayerProgressionOverlays";
 import { regularPlayerOptions } from "@/services/playerProgressionOverlayService";
+import { getRankedPlayers } from "@/data/selectors";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -123,8 +124,8 @@ export function PlayerProfilePage() {
         return (
           <section className="panel p-5 sm:p-8">
             <SectionHeading eyebrow={isAllTime ? "Persönliche Bestmarken" : `Saison ${selectedSeason}`} title={isAllTime ? "PB Progression" : "Saison-PB-Progression"} />
-            <PlayerOverlaySelector options={regularPlayerOptions(publicData.players, [player.id])} selectedIds={selectedOverlayPlayers} onChange={setSelectedOverlayPlayers} loading={overlayProgressions.loading} error={overlayProgressions.error} />
-            <ProgressionTimeline points={personalProgression} comparisonPoints={comparisonProgression} overlaySeries={overlayProgressions.data} primaryLabel={player.name} comparisonLabel={isAllTime ? "Weltrekord" : "Saisonrekord"} historyDisclosure={{ id: "personal-best-history", expanded: pbDetailsExpanded }} emptyLabel={isAllTime ? "Noch keine persönliche Bestzeit vorhanden." : `Noch keine Saison-PB ${selectedSeason} vorhanden.`} />
+            <PlayerOverlaySelector options={regularPlayerOptions(getRankedPlayers(publicData.players, publicData.leaderboard).map(({ player }) => player), [player.id])} selectedIds={selectedOverlayPlayers} onChange={setSelectedOverlayPlayers} loading={overlayProgressions.loading} error={overlayProgressions.error} />
+            <ProgressionTimeline points={personalProgression} comparisonPoints={comparisonProgression} overlaySeries={overlayProgressions.data} primaryLabel={player.name} comparisonLabel={isAllTime ? "Weltrekord" : "Saisonrekord"} comparisonInitiallyVisible historyDisclosure={{ id: "personal-best-history", expanded: pbDetailsExpanded }} emptyLabel={isAllTime ? "Noch keine persönliche Bestzeit vorhanden." : `Noch keine Saison-PB ${selectedSeason} vorhanden.`} />
             {personalProgression.length > 0 && <PersonalBestDetailsToggle expanded={pbDetailsExpanded} controls="personal-best-history" onToggle={() => setPbDetailsExpanded((value) => !value)} />}
           </section>
         );
