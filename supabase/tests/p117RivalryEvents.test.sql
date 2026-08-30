@@ -1,5 +1,5 @@
 begin;
-select plan(15);
+select plan(16);
 
 insert into public.players (id, display_name) values
 ('11700000-0000-0000-0000-000000000001', 'P117 Paul'),
@@ -52,6 +52,7 @@ select ok(not (select is_rivalry_event from public.rivalry_pair_events where eve
 select is((select count(*)::integer from public.rivalry_pair_events where event_id='11710000-0000-0000-0000-000000000004'), 0, 'active event is not final rivalry');
 select is((select count(*)::integer from public.rivalry_badge_awards where player_id='11700000-0000-0000-0000-000000000001'), 1, 'one rivalry unlocks Bronze only');
 select is((select count(*)::integer from public.rivalry_badge_awards where player_id='11700000-0000-0000-0000-000000000002'), 1, 'proof is symmetric for opponent');
+select is((select count(*)::integer from public.event_badge_unlocks where source_event_id='11710000-0000-0000-0000-000000000001' and badge_key='rivalry-bronze'), 2, 'event unlock view exposes both canonical rivalry awards');
 select is((select count(*)::integer from public.rivalry_pair_events where player_low_id='11700000-0000-0000-0000-000000000001' and player_high_id='11700000-0000-0000-0000-000000000002' and is_rivalry_event), 1, 'pair direction is canonical and unique');
 select is((select rivalry_events from public.get_pair_rivalry('11700000-0000-0000-0000-000000000002','11700000-0000-0000-0000-000000000001',null) limit 1), 1, 'reverse pair lookup has same summary');
 select is((select count(*)::integer from public.get_player_rivalries('11700000-0000-0000-0000-000000000001')), 1, 'profile returns only qualified rivals');

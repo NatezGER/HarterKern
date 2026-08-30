@@ -61,6 +61,9 @@ vi.mock("@/hooks/useSeason", () => ({
 vi.mock("@/hooks/usePlayerMostWantedStatistics", () => ({
   usePlayerMostWantedStatistics: () => ({ data: { "player-1": { allTimeHits: 41, seasonFirstHits: 8 } }, loading: false, error: "" }),
 }));
+vi.mock("@/hooks/usePlayerRivalries", () => ({
+  usePlayerRivalries: () => ({ data: [], loading: false, error: "" }),
+}));
 vi.mock("@/components/compare/ProfileCompareAction", () => ({
   ProfileCompareAction: () => <span>Vergleichen mit …</span>,
 }));
@@ -170,6 +173,16 @@ describe("PlayerProfilePage optional failures", () => {
     profile.season.data = null;
     selectedSeason.season = "all-time";
     selectedSeason.isAllTime = true;
+  });
+
+  it("places Rivalries directly after attempt-number performance and before statistics", () => {
+    const markup = renderProfile();
+    const attemptNumbers = markup.indexOf("Nach Versuchsnummer");
+    const rivalries = markup.indexOf(">Rivalries<");
+    const statistics = markup.indexOf(">Statistik<");
+    expect(attemptNumbers).toBeGreaterThan(-1);
+    expect(rivalries).toBeGreaterThan(attemptNumbers);
+    expect(statistics).toBeGreaterThan(rivalries);
   });
 });
 

@@ -15,5 +15,8 @@ describe("HeadToHead rivalry presentation", () => {
     expect(markup).toContain("Rivalitäts-Events"); expect(markup).toContain("Rivalitäts-Event · 3 Wechsel");
     expect(markup.match(/Rivalitäts-Event · 3 Wechsel/g)).toHaveLength(1);
     expect(markup).toContain("normal-event");
+    expect(markup).not.toContain("border-red-400/25");
+    expect(markup).not.toContain("bg-red-400/[0.035]");
+    expect(markup).not.toContain("shadow-[inset_3px_0_0_rgba(248,113,113,0.45)]");
   });
 });

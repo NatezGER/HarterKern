@@ -101,8 +101,6 @@ export function PlayerProfilePage() {
         <section><SectionHeading eyebrow={isAllTime ? "Verdient" : "Karriere · All-Time"} title="Badge-Galerie" /><BadgeGallery badges={data} featured mobileLimit={2} desktopLimit={3} expanded={badgesExpanded} />{data.length > 2 && <Button type="button" variant="outline" className="mt-4 w-full sm:w-auto" aria-expanded={badgesExpanded} onClick={() => setBadgesExpanded((value) => !value)}>{badgeGalleryToggleLabel(badgesExpanded)}</Button>}</section>
       ) : null}</ProfileOptionalState>
 
-      {!player.isAk && <PlayerRivalries {...rivalries} />}
-
       <section className="panel p-5 sm:p-8">
         <SectionHeading eyebrow={isAllTime ? "Offizielle Events" : `Saison ${selectedSeason} · Offizielle Events`} title="Podiumsmedaillen" />
         <div className="grid grid-cols-3 gap-2 sm:gap-4">{getPodiumCounters(activeStats).map((counter) => <article key={counter.rank} className="flex flex-col items-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3 text-center sm:flex-row sm:gap-5 sm:p-5 sm:text-left"><PodiumMedal rank={counter.rank} size="lg" /><div><p className="text-[8px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[10px] sm:tracking-[0.18em]">{counter.label} · Platz {counter.rank}</p><p className="mt-1 font-display text-3xl font-black sm:text-4xl">{counter.count}</p></div></article>)}</div>
@@ -136,6 +134,8 @@ export function PlayerProfilePage() {
           <AttemptNumberChart points={data} />
         </section>
       )}</ProfileOptionalState>
+
+      {!player.isAk && <PlayerRivalries playerId={player.id} {...rivalries} />}
 
       <section>
         <SectionHeading eyebrow={isAllTime ? "Karrierewerte" : `Saisonwerte ${selectedSeason}`} title="Statistik" />

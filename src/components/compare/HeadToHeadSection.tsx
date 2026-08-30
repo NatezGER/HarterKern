@@ -210,7 +210,7 @@ function DuelRow({
   playerBName: string;
 }) {
   return (
-    <article className={cn("grid min-h-24 grid-cols-[minmax(0,0.8fr)_minmax(7rem,1.4fr)_minmax(0,0.8fr)] items-center border-t px-3 py-3 sm:min-h-28 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,1.5fr)_minmax(0,1fr)] sm:px-7", event.isRivalryEvent ? "border-red-400/25 bg-red-400/[0.035] shadow-[inset_3px_0_0_rgba(248,113,113,0.45)]" : "border-white/[0.06]")}>
+    <article className="grid min-h-24 grid-cols-[minmax(0,0.8fr)_minmax(7rem,1.4fr)_minmax(0,0.8fr)] items-center border-t border-white/[0.06] px-3 py-3 sm:min-h-28 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,1.5fr)_minmax(0,1fr)] sm:px-7">
       <DuelTime name={playerAName} time={event.playerATimeHundredths} winner={event.winner === "a"} />
       <div className="min-w-0 px-2 text-center sm:px-4">
         <Link to={`/events/${event.eventId}`} className="context-accent-text block truncate text-xs font-bold hover:underline sm:text-sm">{event.eventName}</Link>
