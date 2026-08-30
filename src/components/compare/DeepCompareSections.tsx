@@ -179,6 +179,22 @@ export function CompareMostWantedSection({
   return <MetricSection eyebrow="Hundertstel-Endungen" title="Most Wanted" metrics={metrics} note={loading ? "Most-Wanted-Werte werden geladen …" : error} />;
 }
 
+export function CompareBadgePrestigeSection({ playerA, playerB, data, loading, error }: {
+  playerA: Player; playerB: Player;
+  data: Record<string, import("@/types/playerCompare").PlayerBadgePrestige> | null;
+  loading: boolean; error: string;
+}) {
+  const left = data?.[playerA.id];
+  const right = data?.[playerB.id];
+  return <MetricSection eyebrow="Karriere · All-Time" title="Badge-Prestige" metrics={[
+    metric("Mind. Bronze", left?.atLeastBronze ?? null, right?.atLeastBronze ?? null, "higher", countValue),
+    metric("Mind. Silber", left?.atLeastSilver ?? null, right?.atLeastSilver ?? null, "higher", countValue),
+    metric("Mind. Gold", left?.atLeastGold ?? null, right?.atLeastGold ?? null, "higher", countValue),
+    metric("Mind. Diamond", left?.atLeastDiamond ?? null, right?.atLeastDiamond ?? null, "higher", countValue),
+    metric("Smaragd", left?.emerald ?? null, right?.emerald ?? null, "higher", countValue),
+  ]} note={loading ? "Badge-Prestige wird geladen …" : error} />;
+}
+
 function BalanceValue({ label, value }: { label: string; value: number }) {
   return <div className="min-w-0 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3 sm:p-4"><strong className="font-display text-3xl font-black tabular-nums sm:text-4xl">{value}</strong><p className="mt-1 truncate text-[9px] font-bold uppercase tracking-wide text-white/40 sm:text-[10px]">{label}</p></div>;
 }

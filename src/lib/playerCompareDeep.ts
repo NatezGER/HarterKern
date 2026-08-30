@@ -192,6 +192,11 @@ const COMPARE_CATEGORY_DEFINITIONS = [
   ["fastest-first", "Schnellster erster Versuch", "Events", "lower"],
   ["most-wanted-all-time", "Most-Wanted Treffer", "Most Wanted", "higher"],
   ["most-wanted-season-first", "Saison-Ersttreffer", "Most Wanted", "higher"],
+  ["badge-bronze", "Mind. Bronze", "Badges", "higher"],
+  ["badge-silver", "Mind. Silber", "Badges", "higher"],
+  ["badge-gold", "Mind. Gold", "Badges", "higher"],
+  ["badge-diamond", "Mind. Diamond", "Badges", "higher"],
+  ["badge-emerald", "Smaragd", "Badges", "higher"],
 ] as const;
 
 export type CompareCategoryKey = typeof COMPARE_CATEGORY_DEFINITIONS[number][0];

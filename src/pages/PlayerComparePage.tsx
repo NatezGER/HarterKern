@@ -5,6 +5,7 @@ import { CompareMetricRow } from "@/components/compare/CompareMetricRow";
 import { ComparePlayerHeader } from "@/components/compare/ComparePlayerHeader";
 import {
   CompareAttemptNumbersSection,
+  CompareBadgePrestigeSection,
   CompareConsistencySection,
   CompareEventPerformanceSection,
   CompareMostWantedSection,
@@ -20,6 +21,7 @@ import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { usePlayerCompare } from "@/hooks/usePlayerCompare";
 import { usePlayerDeepCompare } from "@/hooks/usePlayerDeepCompare";
 import { usePlayerMostWantedStatistics } from "@/hooks/usePlayerMostWantedStatistics";
+import { usePlayerBadgePrestige } from "@/hooks/usePlayerBadgePrestige";
 import { useSeason } from "@/hooks/useSeason";
 import { DRINK_MILLILITERS_PER_VALID_ATTEMPT } from "@/constants/game";
 import { formatDrinkVolume } from "@/lib/media";
@@ -62,6 +64,7 @@ export function PlayerComparePage() {
   );
   const seasonYear = typeof season === "number" ? season : undefined;
   const mostWanted = usePlayerMostWantedStatistics([playerA?.id ?? null, playerB?.id ?? null], seasonYear);
+  const badgePrestige = usePlayerBadgePrestige([playerA?.id ?? null, playerB?.id ?? null]);
   const detailA = core.data?.playerA ?? null;
   const detailB = core.data?.playerB ?? null;
   const hasInvalidSelection = Boolean(
@@ -141,6 +144,11 @@ export function PlayerComparePage() {
     "fastest-first": pair(deep.sequence.data?.playerA.fastestFirstAttemptHundredths, deep.sequence.data?.playerB.fastestFirstAttemptHundredths),
     "most-wanted-all-time": pair(playerA ? mostWanted.data?.[playerA.id]?.allTimeHits : null, playerB ? mostWanted.data?.[playerB.id]?.allTimeHits : null),
     "most-wanted-season-first": pair(playerA ? mostWanted.data?.[playerA.id]?.seasonFirstHits : null, playerB ? mostWanted.data?.[playerB.id]?.seasonFirstHits : null),
+    "badge-bronze": pair(playerA ? badgePrestige.data?.[playerA.id]?.atLeastBronze : null, playerB ? badgePrestige.data?.[playerB.id]?.atLeastBronze : null),
+    "badge-silver": pair(playerA ? badgePrestige.data?.[playerA.id]?.atLeastSilver : null, playerB ? badgePrestige.data?.[playerB.id]?.atLeastSilver : null),
+    "badge-gold": pair(playerA ? badgePrestige.data?.[playerA.id]?.atLeastGold : null, playerB ? badgePrestige.data?.[playerB.id]?.atLeastGold : null),
+    "badge-diamond": pair(playerA ? badgePrestige.data?.[playerA.id]?.atLeastDiamond : null, playerB ? badgePrestige.data?.[playerB.id]?.atLeastDiamond : null),
+    "badge-emerald": pair(playerA ? badgePrestige.data?.[playerA.id]?.emerald : null, playerB ? badgePrestige.data?.[playerB.id]?.emerald : null),
   }, !isAllTime);
 
   return (
@@ -246,6 +254,8 @@ export function PlayerComparePage() {
       )}
 
       {playerA && playerB && <CompareMostWantedSection playerA={playerA} playerB={playerB} {...mostWanted} seasonYear={seasonYear} />}
+
+      {playerA && playerB && <CompareBadgePrestigeSection playerA={playerA} playerB={playerB} {...badgePrestige} />}
 
       {playerA && playerB && (
         <CompareSummarySection playerA={playerA} playerB={playerB} categories={categories} />

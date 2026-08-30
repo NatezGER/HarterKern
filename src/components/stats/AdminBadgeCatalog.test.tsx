@@ -19,6 +19,7 @@ describe("AdminBadgeCatalogContent", () => {
     const markup = renderToStaticMarkup(<AdminBadgeCatalogContent catalog={{
       families: [{
         familyKey: "wins", name: "Siege", category: "wins", description: "Events gewinnen",
+        progress: [{ playerId: "p1", playerName: "Karl", familyKey: "wins", currentProgress: 8, timeHundredths: null }],
         stages: [stage("bronze"), stage("silver", [{ awardKey: "a1", badgeKey: "wins-silver", playerId: "p1", playerName: "Karl", awardedAt: "2026-01-02T00:00:00Z", progress: 6 }]), stage("gold"), stage("diamond")],
       }],
       singles: [{ ...stage("special"), badgeKey: "special", familyKey: null, badgeKind: "single", designVariant: "positive_special", name: "Sonderbadge" }],
@@ -28,6 +29,8 @@ describe("AdminBadgeCatalogContent", () => {
     expect(markup.indexOf("Gold")).toBeLessThan(markup.indexOf("Diamond"));
     expect(markup).toContain("Karl");
     expect(markup).toContain("6 Siege");
+    expect(markup).toContain("Aktuell: 8 / 1");
+    expect(markup).toContain("0 bis Gold");
     expect(markup).toContain("Noch niemand");
     expect(markup).toContain('src="https://example.test/badge:wins-bronze.webp"');
     expect(markup).toContain('loading="lazy"');
@@ -42,5 +45,15 @@ describe("AdminBadgeCatalogContent", () => {
     const markup = renderToStaticMarkup(<AdminBadgeCatalogContent catalog={{ families: [], singles: [positive, wood] }} />);
     expect(markup.match(/border-emerald-300\/30/g)).toHaveLength(1);
     expect(markup).toContain("border-amber-700/30");
+  });
+
+  it("does not invent a next tier after Diamond", () => {
+    const achievement = (tier: AdminBadgeCatalogEntry["tier"]) => ({ awardKey: tier, badgeKey: `wins-${tier}`, playerId: "p1", playerName: "Karl", awardedAt: "2026-01-02T00:00:00Z" });
+    const markup = renderToStaticMarkup(<AdminBadgeCatalogContent catalog={{ families: [{
+      familyKey: "wins", name: "Siege", category: "wins", description: "Events gewinnen",
+      stages: (["bronze", "silver", "gold", "diamond"] as const).map((tier) => stage(tier, [achievement(tier)])),
+      progress: [{ playerId: "p1", playerName: "Karl", familyKey: "wins", currentProgress: 30, timeHundredths: null }],
+    }], singles: [] }} />);
+    expect(markup).toContain("Diamond erreicht · keine weitere Stufe");
   });
 });
