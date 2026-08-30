@@ -26,6 +26,16 @@ describe("P11.7 canonical rivalry architecture", () => {
     expect(sql).toContain("least(previous_player_id, player_id)");
     expect(sql).toContain("greatest(previous_player_id, player_id)");
     expect(sql).toContain("count(distinct prior.player_id) = 1");
+    expect(sql).toContain("then (array_agg(prior.player_id))[1] end");
+  });
+  it("never applies unsupported min/max aggregates to UUID identifiers", () => {
+    expect(sql).not.toMatch(/\b(?:min|max)\s*\(\s*(?:\w+\.)?\w*_id\s*\)/i);
+  });
+  it("can replace every rivalry view after a partially completed manual run", () => {
+    expect(sql).toContain("create or replace view public.event_direct_lead_takeovers");
+    expect(sql).toContain("create or replace view public.rivalry_pair_events");
+    expect(sql).toContain("create or replace view public.rivalry_badge_awards");
+    expect(sql).not.toMatch(/^create view public\.(?:event_direct_lead_takeovers|rivalry_pair_events|rivalry_badge_awards)/m);
   });
   it("counts event-pair proofs rather than distinct real events", () => {
     expect(sql).toContain("partition by player_id order by closed_at, event_id, rival_player_id");

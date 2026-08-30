@@ -15,7 +15,7 @@ on conflict (badge_key) do update set category = excluded.category, tier = exclu
   design_variant = excluded.design_variant, scope_type = excluded.scope_type,
   is_active = excluded.is_active;
 
-create view public.event_direct_lead_takeovers with (security_invoker = true) as
+create or replace view public.event_direct_lead_takeovers with (security_invoker = true) as
 with eligible as (
   select a.id attempt_id, a.event_id, a.player_id, a.submitted_at, a.time_hundredths
   from public.attempts a
@@ -31,7 +31,7 @@ with eligible as (
   from eligible
 ), changes as (
   select contextual.*,
-    (select case when count(distinct prior.player_id) = 1 then min(prior.player_id) end
+    (select case when count(distinct prior.player_id) = 1 then (array_agg(prior.player_id))[1] end
       from eligible prior
       where prior.event_id = contextual.event_id
         and (prior.submitted_at, prior.attempt_id) < (contextual.submitted_at, contextual.attempt_id)
@@ -47,7 +47,7 @@ select event_id, least(previous_player_id, player_id) player_low_id,
 from changes
 where previous_player_id is not null and previous_player_id <> player_id;
 
-create view public.rivalry_pair_events with (security_invoker = true) as
+create or replace view public.rivalry_pair_events with (security_invoker = true) as
 with common_pairs as (
   select left_side.event_id, least(left_side.player_id, right_side.player_id) player_low_id,
     greatest(left_side.player_id, right_side.player_id) player_high_id,
@@ -128,7 +128,7 @@ language sql stable security invoker set search_path = public as $$
   group by players.id, players.display_name;
 $$;
 
-create view public.rivalry_badge_awards with (security_invoker = true) as
+create or replace view public.rivalry_badge_awards with (security_invoker = true) as
 with proofs as (
   select player_id, rival_player_id, event_id, event_date, closed_at,
     row_number() over (partition by player_id order by closed_at, event_id, rival_player_id)::integer rivalry_sequence,

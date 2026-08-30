@@ -1,5 +1,5 @@
 begin;
-select plan(12);
+select plan(15);
 
 insert into public.players (id, display_name) values
 ('11700000-0000-0000-0000-000000000001', 'P117 Paul'),
@@ -10,12 +10,14 @@ insert into public.events (id, name, start_date, started_at, ends_at, status, cl
 ('11710000-0000-0000-0000-000000000001', 'P117 Rivalry', '2026-08-30', '2026-08-30 10:00Z', '2026-08-30 12:00Z', 'closed', '2026-08-30 12:00Z'),
 ('11710000-0000-0000-0000-000000000002', 'P117 Third', '2026-08-30', '2026-08-30 13:00Z', '2026-08-30 15:00Z', 'closed', '2026-08-30 15:00Z'),
 ('11710000-0000-0000-0000-000000000003', 'P117 Tie', '2026-08-30', '2026-08-30 16:00Z', '2026-08-30 18:00Z', 'closed', '2026-08-30 18:00Z'),
-('11710000-0000-0000-0000-000000000004', 'P117 Live', '2026-08-30', '2026-08-30 19:00Z', '2026-08-30 21:00Z', 'active', null);
+('11710000-0000-0000-0000-000000000004', 'P117 Live', '2026-08-30', '2026-08-30 19:00Z', '2026-08-30 21:00Z', 'active', null),
+('11710000-0000-0000-0000-000000000005', 'P117 Two Switches', '2026-08-30', '2026-08-30 22:00Z', '2026-08-30 23:00Z', 'closed', '2026-08-30 23:00Z');
 
 insert into public.event_participants (event_id, player_id)
 select event_id, player_id from (values
 ('11710000-0000-0000-0000-000000000001'::uuid), ('11710000-0000-0000-0000-000000000002'::uuid),
-('11710000-0000-0000-0000-000000000003'::uuid), ('11710000-0000-0000-0000-000000000004'::uuid)
+('11710000-0000-0000-0000-000000000003'::uuid), ('11710000-0000-0000-0000-000000000004'::uuid),
+('11710000-0000-0000-0000-000000000005'::uuid)
 ) events(event_id) cross join (values
 ('11700000-0000-0000-0000-000000000001'::uuid), ('11700000-0000-0000-0000-000000000002'::uuid),
 ('11700000-0000-0000-0000-000000000003'::uuid)
@@ -35,12 +37,18 @@ insert into public.attempts (id, player_id, event_id, status, time_hundredths, s
 ('11720000-0000-0000-0000-000000000011','11700000-0000-0000-0000-000000000001','11710000-0000-0000-0000-000000000004','approved',500,'2026-08-30 19:01Z','2026-08-30 19:01Z'),
 ('11720000-0000-0000-0000-000000000012','11700000-0000-0000-0000-000000000002','11710000-0000-0000-0000-000000000004','approved',490,'2026-08-30 19:02Z','2026-08-30 19:02Z'),
 ('11720000-0000-0000-0000-000000000013','11700000-0000-0000-0000-000000000001','11710000-0000-0000-0000-000000000004','approved',480,'2026-08-30 19:03Z','2026-08-30 19:03Z'),
-('11720000-0000-0000-0000-000000000014','11700000-0000-0000-0000-000000000002','11710000-0000-0000-0000-000000000004','approved',470,'2026-08-30 19:04Z','2026-08-30 19:04Z');
+('11720000-0000-0000-0000-000000000014','11700000-0000-0000-0000-000000000002','11710000-0000-0000-0000-000000000004','approved',470,'2026-08-30 19:04Z','2026-08-30 19:04Z'),
+('11720000-0000-0000-0000-000000000015','11700000-0000-0000-0000-000000000001','11710000-0000-0000-0000-000000000005','approved',500,'2026-08-30 22:01Z','2026-08-30 22:01Z'),
+('11720000-0000-0000-0000-000000000016','11700000-0000-0000-0000-000000000002','11710000-0000-0000-0000-000000000005','approved',490,'2026-08-30 22:02Z','2026-08-30 22:02Z'),
+('11720000-0000-0000-0000-000000000017','11700000-0000-0000-0000-000000000001','11710000-0000-0000-0000-000000000005','approved',480,'2026-08-30 22:03Z','2026-08-30 22:03Z');
 
+select is((select previous_player_id from public.event_direct_lead_takeovers where source_attempt_id='11720000-0000-0000-0000-000000000002'), '11700000-0000-0000-0000-000000000001'::uuid, 'unique prior leader becomes previous player');
 select is((select direct_takeovers from public.rivalry_pair_events where event_id='11710000-0000-0000-0000-000000000001' and player_low_id='11700000-0000-0000-0000-000000000001'), 3, 'three direct takeovers count');
 select ok((select is_rivalry_event from public.rivalry_pair_events where event_id='11710000-0000-0000-0000-000000000001' and player_low_id='11700000-0000-0000-0000-000000000001'), 'three takeovers form rivalry');
 select is((select direct_takeovers from public.rivalry_pair_events where event_id='11710000-0000-0000-0000-000000000002' and player_low_id='11700000-0000-0000-0000-000000000001' and player_high_id='11700000-0000-0000-0000-000000000002'), 0, 'third player prevents false direct pair takeover');
 select is((select direct_takeovers from public.rivalry_pair_events where event_id='11710000-0000-0000-0000-000000000003' and player_low_id='11700000-0000-0000-0000-000000000001' and player_high_id='11700000-0000-0000-0000-000000000002'), 0, 'tie removes unique leader and creates no takeover');
+select is((select count(*)::integer from public.event_direct_lead_takeovers where event_id='11710000-0000-0000-0000-000000000003'), 0, 'shared prior best leaves no previous player and no takeover');
+select ok(not (select is_rivalry_event from public.rivalry_pair_events where event_id='11710000-0000-0000-0000-000000000005' and player_low_id='11700000-0000-0000-0000-000000000001' and player_high_id='11700000-0000-0000-0000-000000000002'), 'two direct takeovers do not form rivalry');
 select is((select count(*)::integer from public.rivalry_pair_events where event_id='11710000-0000-0000-0000-000000000004'), 0, 'active event is not final rivalry');
 select is((select count(*)::integer from public.rivalry_badge_awards where player_id='11700000-0000-0000-0000-000000000001'), 1, 'one rivalry unlocks Bronze only');
 select is((select count(*)::integer from public.rivalry_badge_awards where player_id='11700000-0000-0000-0000-000000000002'), 1, 'proof is symmetric for opponent');
