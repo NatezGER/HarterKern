@@ -138,6 +138,11 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   besitzen, und endet spätestens mit Eventschluss. Eine direkte Führungsübernahme
   zählt nur beim Wechsel vom bislang führenden Gegner zum Einreicher; erster
   vergleichbarer Vorsprung und Gleichstände zählen nicht als Übernahme.
+- **Rivalitäts-Events:** `event_direct_lead_takeovers` projiziert strikte
+  Führungsübernahmen aus qualifizierten Versuchen. Drei direkte Wechsel desselben
+  kanonisierten Paars im abgeschlossenen Event bilden ein Rivalitäts-Event.
+  Compare nutzt einen pair-scoped RPC; Profile einen unabhängigen player-scoped
+  Summary-RPC. Badge-Proofs fließen durch den bestehenden Ledger-Sync.
 - **Kategorienbilanz:** 18 All-Time- beziehungsweise 19 Saisonkategorien sind
   zentral mit ihrer Richtung definiert. Semantisch überlappende Thresholds,
   PB-Abstände und variable Versuchnummern werden nicht mehrfach belohnt.

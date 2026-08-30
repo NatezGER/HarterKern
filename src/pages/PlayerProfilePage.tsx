@@ -29,6 +29,8 @@ import { getEventSeason } from "@/lib/season";
 import { dnfPercentage } from "@/lib/officialTimePerformance";
 import { ProfileCompareAction } from "@/components/compare/ProfileCompareAction";
 import { usePlayerMostWantedStatistics } from "@/hooks/usePlayerMostWantedStatistics";
+import { usePlayerRivalries } from "@/hooks/usePlayerRivalries";
+import { PlayerRivalries } from "@/components/players/PlayerRivalries";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -39,6 +41,7 @@ export function PlayerProfilePage() {
   const { season: selectedSeason, isAllTime } = useSeason();
   const seasonYear = typeof selectedSeason === "number" ? selectedSeason : undefined;
   const mostWanted = usePlayerMostWantedStatistics([id], seasonYear);
+  const rivalries = usePlayerRivalries(id);
   const { core, season, trophies, badges, prestige, progression, performance, bingo, attemptNumbers, events } =
     usePlayerProfileDetail(id);
   if (core.loading) return <DataState><div /></DataState>;
@@ -97,6 +100,8 @@ export function PlayerProfilePage() {
       <ProfileOptionalState state={badges}>{(data) => data.length > 0 ? (
         <section><SectionHeading eyebrow={isAllTime ? "Verdient" : "Karriere · All-Time"} title="Badge-Galerie" /><BadgeGallery badges={data} featured mobileLimit={2} desktopLimit={3} expanded={badgesExpanded} />{data.length > 2 && <Button type="button" variant="outline" className="mt-4 w-full sm:w-auto" aria-expanded={badgesExpanded} onClick={() => setBadgesExpanded((value) => !value)}>{badgeGalleryToggleLabel(badgesExpanded)}</Button>}</section>
       ) : null}</ProfileOptionalState>
+
+      {!player.isAk && <PlayerRivalries {...rivalries} />}
 
       <section className="panel p-5 sm:p-8">
         <SectionHeading eyebrow={isAllTime ? "Offizielle Events" : `Saison ${selectedSeason} · Offizielle Events`} title="Podiumsmedaillen" />

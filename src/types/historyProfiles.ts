@@ -160,6 +160,16 @@ export interface HeadToHeadEvent {
   playerBTimeHundredths: number;
   winner: HeadToHeadWinner;
   differenceHundredths: number;
+  isRivalryEvent?: boolean;
+  directTakeovers?: number;
+}
+
+export interface PairRivalrySummary {
+  commonEvents: number;
+  rivalryEvents: number;
+  directTakeovers: number;
+  firstRivalryDate: string | null;
+  lastRivalryDate: string | null;
 }
 
 export interface HeadToHeadStreak {
@@ -177,6 +187,17 @@ export interface HeadToHeadSummary {
   biggestWin: HeadToHeadEvent | null;
   currentStreak: HeadToHeadStreak | null;
   longestStreak: HeadToHeadStreak | null;
+  rivalry?: PairRivalrySummary;
+}
+
+export interface PlayerRivalrySummary {
+  rivalPlayerId: string;
+  rivalName: string;
+  rivalAvatarUrl: string | null;
+  rivalryEvents: number;
+  directTakeovers: number;
+  firstRivalryDate: string;
+  lastRivalryDate: string;
 }
 
 export interface AttemptNumberPoint {

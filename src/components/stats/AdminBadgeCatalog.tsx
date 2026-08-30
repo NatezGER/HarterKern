@@ -10,7 +10,7 @@ const categoryLabels: Record<string, string> = {
   attempts: "Versuche", bingo: "Bingo", consolation: "Trostpreis", dnf: "DNF",
   event_attempts: "Event-Versuche", rapid_fire: "Sperrfeuer", teamwork: "Teamwork",
   favorite_time: "Lieblingszeit", flawless: "Fehlerfrei", glitch: "Glitch",
-  performance: "Leistung", podium: "Podium", podiums: "Podien", precision: "Präzision",
+  performance: "Leistung", podium: "Podium", podiums: "Podien", precision: "Präzision", rivalry: "Rivalität",
   streak: "Serie", sub3_streak: "Sub-3-Serie", win_streak: "Siegesserie", wins: "Siege",
 };
 
