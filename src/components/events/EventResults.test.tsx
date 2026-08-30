@@ -3,6 +3,10 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import type { EventDetail } from "@/types/historyProfiles";
 
+vi.mock("@/hooks/useEffectivePublicData", () => ({
+  useEffectivePublicData: () => ({ data: { players: [], leaderboard: [] } }),
+}));
+
 vi.mock("@/components/progression/ProgressionTimeline", () => ({
   ProgressionTimeline: ({ domainStartAt, domainEndAt }: {
     domainStartAt?: string; domainEndAt?: string;
@@ -30,7 +34,7 @@ const detail: EventDetail = {
   averageHundredths: 350,
   podium: [],
   finalStandings: [
-    { playerId: "player-1", guestId: null, name: "Paul", avatarUrl: null,
+    { playerId: "player-1", guestId: null, name: "Paul", avatarUrl: "https://cdn.example/paul.webp",
       isGuest: false, isAk: false, attempts: 2, validAttempts: 2, dnfCount: 0,
       bestHundredths: 250, averageHundredths: 275, rank: 1,
       leadSeconds: 0, eventBestBreaks: 0 },
@@ -75,6 +79,7 @@ describe("EventResults polish", () => {
     expect(markup).toContain("Paul");
     expect(markup).toContain("Lars");
     expect(markup).toContain("Gast");
+    expect(markup).toContain('src="https://cdn.example/paul.webp"');
     const standings = markup.slice(markup.indexOf("Finale Bestenliste"),
       markup.indexOf("Event-Führungsprogression"));
     expect(standings.match(/>1\.<\/span>/g)?.length).toBe(2);

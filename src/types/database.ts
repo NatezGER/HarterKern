@@ -570,6 +570,13 @@ export interface Database {
         Args: { p_player_id: string; p_season_year: number };
         Returns: PlayerPbHistoryView["Row"][];
       };
+      get_player_progressions: {
+        Args: { p_player_ids: string[]; p_season_year?: number | null };
+        Returns: Array<PlayerPbHistoryView["Row"] & {
+          display_name: string;
+          avatar_url: string | null;
+        }>;
+      };
       get_player_trophies: {
         Args: { p_player_id: string };
         Returns: PlayerTrophyView["Row"][];

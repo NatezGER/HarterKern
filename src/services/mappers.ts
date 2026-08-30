@@ -11,10 +11,14 @@ type PlayerStats = Pick<Database["public"]["Views"]["player_statistics"]["Row"],
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
 type AttemptRow = Database["public"]["Tables"]["attempts"]["Row"];
 
+export function resolvePlayerAvatar(path: string | null, legacyUrl: string | null) {
+  return path
+    ? getSupabase().storage.from("player-avatars").getPublicUrl(path).data.publicUrl
+    : legacyUrl;
+}
+
 export function mapPlayer(row: PlayerRow, stats?: PlayerStats): Player {
-  const resolvedAvatar = row.avatar_path
-    ? getSupabase().storage.from("player-avatars").getPublicUrl(row.avatar_path).data.publicUrl
-    : row.avatar_url;
+  const resolvedAvatar = resolvePlayerAvatar(row.avatar_path, row.avatar_url);
   return {
     id: row.id,
     name: row.display_name,
