@@ -32,15 +32,15 @@ export function HeadToHeadSection({
 }: HeadToHeadSectionProps) {
   const [expanded, setExpanded] = useState(false);
   if (loading) {
-    return <section className="panel grid min-h-40 place-items-center"><LoaderCircle className="context-accent-text size-6 animate-spin" aria-label="Head to Head wird geladen" /></section>;
+    return <section data-compare-h2h className="panel grid min-h-40 place-items-center border-gold-400/15"><LoaderCircle className="context-accent-text size-6 animate-spin" aria-label="Head to Head wird geladen" /></section>;
   }
   if (error) {
-    return <section className="panel p-5 text-center text-sm text-amber-100/70">{error}</section>;
+    return <section data-compare-h2h className="panel border-gold-400/15 p-5 text-center text-sm text-amber-100/70">{error}</section>;
   }
   if (!data || data.totalDuels === 0) {
     return (
-      <section className="panel p-5 sm:p-7">
-        <SectionHeading eyebrow="Rivalry" title="Head to Head" />
+      <section data-compare-h2h className="panel border-gold-400/15 p-5 sm:p-7">
+        <SectionHeading eyebrow="Das direkte Duell" title="Head to Head" />
         <div className="grid min-h-32 place-items-center rounded-2xl border border-dashed border-white/10 bg-black/10 p-5 text-center">
           <div><History className="context-accent-text mx-auto size-5" /><p className="mt-3 font-display text-lg font-black uppercase">Noch keine gemeinsamen Duelle</p><p className="mt-1 text-sm text-white/40">Es zählen nur abgeschlossene Events mit einer gültigen Zeit auf beiden Seiten.</p></div>
         </div>
@@ -49,9 +49,9 @@ export function HeadToHeadSection({
   }
   const visibleEvents = visibleHeadToHeadEvents(data.events, expanded);
   return (
-    <section className="panel overflow-hidden">
+    <section data-compare-h2h className="panel overflow-hidden border-gold-400/15 shadow-[0_22px_70px_rgba(0,0,0,0.24)]">
       <div className="p-5 pb-4 sm:p-7 sm:pb-5">
-        <SectionHeading eyebrow="Rivalry" title="Head to Head" />
+        <SectionHeading eyebrow="Das direkte Duell · Rivalry" title="Head to Head" />
         <div className="rounded-3xl border border-white/[0.07] bg-black/15 px-3 py-6 text-center sm:px-6 sm:py-8">
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-6">
             <ScoreName name={playerAName} />

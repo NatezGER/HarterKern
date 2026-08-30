@@ -15,9 +15,10 @@ import type {
   ProgressionPoint,
 } from "@/types/historyProfiles";
 import type {
-  ComparableValue,
+  CompareCategoryValue,
   PlayerCompareProgressionPair,
   PlayerCompareSequencePair,
+  PlayerMostWantedStatistics,
 } from "@/types/playerCompare";
 import type { Player } from "@/types";
 import { formatTime } from "@/utils/format";
@@ -131,21 +132,55 @@ export function CompareEventPerformanceSection({
 export function CompareSummarySection({
   playerA,
   playerB,
-  values,
+  categories,
 }: {
   playerA: Player;
   playerB: Player;
-  values: ComparableValue[];
+  categories: CompareCategoryValue[];
 }) {
-  const summary = calculateCompareLeadSummary(values);
+  const summary = calculateCompareLeadSummary(categories);
   return (
     <section className="panel flex flex-col items-center gap-3 p-6 text-center sm:p-8">
       <BarChart3 className="context-accent-text size-6" />
-      <p className="font-display text-xl font-black uppercase sm:text-2xl">{playerA.name} liegt bei {summary.playerALeads} von {summary.compared} vergleichbaren Werten vorn.</p>
-      <p className="text-sm text-white/40">{playerB.name} bei {summary.playerBLeads} · {summary.ties} {summary.ties === 1 ? "Gleichstand" : "Gleichstände"}</p>
-      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/25">Experimentelle Übersicht · keine Gewichtung und kein Gesamtergebnis</p>
+      <p className="context-accent-text text-[10px] font-black uppercase tracking-[0.2em]">Kategorienbilanz</p>
+      <h2 className="display-title text-2xl sm:text-3xl">Wer liegt vorne?</h2>
+      <div className="grid w-full max-w-2xl grid-cols-3 gap-2 sm:gap-4">
+        <BalanceValue label={playerA.name} value={summary.playerALeads} />
+        <BalanceValue label="Gleichstand" value={summary.ties} />
+        <BalanceValue label={playerB.name} value={summary.playerBLeads} />
+      </div>
+      <p className="text-sm text-white/55">{summary.playerALeads === summary.playerBLeads
+        ? "Beide liegen in gleich vielen Vergleichskategorien vorne."
+        : `${summary.playerALeads > summary.playerBLeads ? playerA.name : playerB.name} liegt in mehr Vergleichskategorien vorne.`}</p>
+      <p className="max-w-2xl text-xs leading-5 text-white/35">Jede verfügbare Kategorie zählt einmal und ohne Gewichtung. Das ist eine transparente Bilanz, kein offizielles Gesamtranking.{summary.unavailable > 0 ? ` ${summary.unavailable} ${summary.unavailable === 1 ? "Kategorie war" : "Kategorien waren"} mangels Daten nicht vergleichbar.` : ""}</p>
     </section>
   );
+}
+
+export function CompareMostWantedSection({
+  playerA,
+  playerB,
+  data,
+  loading,
+  error,
+  seasonYear,
+}: {
+  playerA: Player;
+  playerB: Player;
+  data: Record<string, PlayerMostWantedStatistics> | null;
+  loading: boolean;
+  error: string;
+  seasonYear?: number;
+}) {
+  const metrics = [
+    metric("Most-Wanted Treffer", data?.[playerA.id]?.allTimeHits ?? null, data?.[playerB.id]?.allTimeHits ?? null, "higher", countValue),
+    ...(seasonYear == null ? [] : [metric(`Saison-Ersttreffer ${seasonYear}`, data?.[playerA.id]?.seasonFirstHits ?? null, data?.[playerB.id]?.seasonFirstHits ?? null, "higher", countValue)]),
+  ];
+  return <MetricSection eyebrow="Hundertstel-Endungen" title="Most Wanted" metrics={metrics} note={loading ? "Most-Wanted-Werte werden geladen …" : error} />;
+}
+
+function BalanceValue({ label, value }: { label: string; value: number }) {
+  return <div className="min-w-0 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3 sm:p-4"><strong className="font-display text-3xl font-black tabular-nums sm:text-4xl">{value}</strong><p className="mt-1 truncate text-[9px] font-bold uppercase tracking-wide text-white/40 sm:text-[10px]">{label}</p></div>;
 }
 
 function MetricSection({ eyebrow, title, metrics, note }: { eyebrow: string; title: string; metrics: Metric[]; note?: string }) {

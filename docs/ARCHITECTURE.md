@@ -145,3 +145,26 @@ Examples:
 - Hall of Fame must not wait for Most Wanted, BINGO, badge rarity or prestige activity.
 - A player profile should show core identity and performance data if BINGO temporarily fails.
 - Statistics should expose local module errors instead of one global failure screen.
+
+## Compare, statistics and award read rules
+- New profile, compare, statistics and award features project existing canonical
+  read models. A business rule must not be independently rebuilt in SQL, a
+  service, a TypeScript helper and a component.
+- Profile reads are player-scoped and compare reads are player- or pair-scoped,
+  with filters applied as early as possible. Loading the league and filtering it
+  in the browser is not a profile/compare read strategy.
+- The badge read hotpath is `player -> persisted award ledger -> definition / asset`.
+  Expensive eligibility belongs to sync, write and rebuild paths, never to a
+  profile or rarity request.
+- Raw attempts are reserved for sequence-dependent facts such as streaks,
+  takeovers and rolling windows. Ordinary totals and rates use aggregate read
+  models.
+- All-Time and season scope come from the central season context. Every new
+  seasonal metric must name its scope explicitly.
+- Sporting ties remain ties. Competition ranking uses `rank()`; deterministic
+  technical ordering does not change sporting placement. An H2H draw is not a win.
+- Optional analytics have independent loading and error states and must not block
+  core profile or compare content.
+- Most-Wanted player metrics are projections of `qualified_official_times` and
+  the deterministic seasonal first-hit view. They do not redefine a valid hit or
+  its first-hit tie-break in the frontend.

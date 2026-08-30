@@ -55,11 +55,25 @@ export interface ComparableValue {
   direction: "higher" | "lower";
 }
 
+export interface PlayerMostWantedStatistics {
+  allTimeHits: number;
+  seasonFirstHits: number | null;
+}
+
+export type CompareCategoryGroup = "Hauptwerte" | "Head to Head" | "Speed" | "Konstanz" | "Events" | "Most Wanted";
+
+export interface CompareCategoryValue extends ComparableValue {
+  key: string;
+  label: string;
+  group: CompareCategoryGroup;
+}
+
 export interface CompareLeadSummary {
   playerALeads: number;
   playerBLeads: number;
   ties: number;
   compared: number;
+  unavailable: number;
 }
 
 export interface ProgressionCrossover {

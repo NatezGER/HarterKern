@@ -109,16 +109,18 @@ describe("final deep compare sections", () => {
     const markup = renderToStaticMarkup(<CompareSummarySection
       playerA={player("a", "Anna")}
       playerB={player("b", "Berta")}
-      values={[
-        { left: 1, right: 2, direction: "lower" },
-        { left: 1, right: 2, direction: "higher" },
-        { left: 2, right: 2, direction: "higher" },
-        { left: null, right: 2, direction: "higher" },
+      categories={[
+        { key: "a", label: "A", group: "Hauptwerte", left: 1, right: 2, direction: "lower" },
+        { key: "b", label: "B", group: "Speed", left: 1, right: 2, direction: "higher" },
+        { key: "c", label: "C", group: "Events", left: 2, right: 2, direction: "higher" },
+        { key: "d", label: "D", group: "Most Wanted", left: null, right: 2, direction: "higher" },
       ]}
     />);
-    expect(markup).toContain("1 von 3 vergleichbaren Werten vorn");
-    expect(markup).toContain("Berta bei 1");
-    expect(markup).toContain("1 Gleichstand");
+    expect(markup).toContain("Wer liegt vorne?");
+    expect(markup).toContain("Kategorienbilanz");
+    expect(markup).toContain("1 Kategorie war");
+    expect(markup).toContain("kein offizielles Gesamtranking");
+    expect(markup).not.toContain("Experimentell");
     expect(markup).not.toContain("gewinnt");
   });
 });

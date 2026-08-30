@@ -28,6 +28,7 @@ import { useSeason } from "@/hooks/useSeason";
 import { getEventSeason } from "@/lib/season";
 import { dnfPercentage } from "@/lib/officialTimePerformance";
 import { ProfileCompareAction } from "@/components/compare/ProfileCompareAction";
+import { usePlayerMostWantedStatistics } from "@/hooks/usePlayerMostWantedStatistics";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -36,6 +37,8 @@ export function PlayerProfilePage() {
   const [badgesExpanded, setBadgesExpanded] = useState(false);
   const [pbDetailsExpanded, setPbDetailsExpanded] = useState(false);
   const { season: selectedSeason, isAllTime } = useSeason();
+  const seasonYear = typeof selectedSeason === "number" ? selectedSeason : undefined;
+  const mostWanted = usePlayerMostWantedStatistics([id], seasonYear);
   const { core, season, trophies, badges, prestige, progression, performance, bingo, attemptNumbers, events } =
     usePlayerProfileDetail(id);
   if (core.loading) return <DataState><div /></DataState>;
@@ -145,6 +148,16 @@ export function PlayerProfilePage() {
           ];
           return <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">{prestigeMetrics.map(({ label, value, icon: Icon }, index) => <AnimatedCard key={label} delay={index * 0.04} className="min-w-0 p-4 sm:p-5"><Icon className="size-5 text-gold-400" /><p className="mt-4 break-words text-[9px] font-bold uppercase tracking-[0.14em] text-white/30 sm:mt-6 sm:tracking-[0.18em]">{label}</p><p className="mt-1 break-words font-display text-2xl font-black sm:text-3xl">{value}</p></AnimatedCard>)}</div>;
         }}</ProfileOptionalState></div>
+        <div className="mt-3 sm:mt-4">
+          {mostWanted.data?.[player.id] && (
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+              <AnimatedCard className="min-w-0 p-4 sm:p-5"><Target className="context-accent-text size-5" /><p className="mt-4 break-words text-[9px] font-bold uppercase tracking-[0.14em] text-white/30 sm:mt-6">Most-Wanted Treffer · All-Time</p><p className="mt-1 font-display text-2xl font-black sm:text-3xl">{mostWanted.data[player.id].allTimeHits}</p></AnimatedCard>
+              {!isAllTime && <AnimatedCard className="min-w-0 p-4 sm:p-5"><Crown className="context-accent-text size-5" /><p className="mt-4 break-words text-[9px] font-bold uppercase tracking-[0.14em] text-white/30 sm:mt-6">Saison-Ersttreffer {selectedSeason}</p><p className="mt-1 font-display text-2xl font-black sm:text-3xl">{mostWanted.data[player.id].seasonFirstHits ?? "—"}</p></AnimatedCard>}
+            </div>
+          )}
+          {mostWanted.loading && <p className="py-3 text-xs text-white/35">Most-Wanted-Werte werden geladen …</p>}
+          {mostWanted.error && <p className="py-3 text-xs text-amber-100/55">{mostWanted.error}</p>}
+        </div>
       </section>
 
       <ProfileOptionalState state={events}>{(data) => (
