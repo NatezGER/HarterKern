@@ -307,3 +307,17 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   angeforderter Datenbank- oder Releaseprüfung.
 - **Direkte Abhängigkeiten:** sämtliche persistenten Datenmodule.
 - **Nicht enthalten:** React-Layout und UX.
+
+## 13. Dänemark Tools
+
+- **Zweck:** Temporäre mobile Auslosung von Reihenfolgen und Teams sowie lokale
+  Liga- und KO-Spielmodi für die feste Dänemark-Crew.
+- **Einstieg:** `src/pages/DkToolsPage.tsx`, Route `/dk`.
+- **Logik:** `src/lib/dkTools.ts`; sämtliche Auslosungen und Ergebnisse bleiben
+  im React-Zustand und werden bei einem Reload verworfen.
+- **Views/RPCs:** keine. Die Route erzeugt keine zusätzlichen Backend-Requests.
+- **Tests:** `npm test -- src/lib/dkTools.test.ts
+  src/constants/navigation.test.ts`.
+- **Direkte Abhängigkeiten:** App-Shell, Navigation und bestehende UI-Bausteine.
+- **Nicht enthalten:** 2-Fast-2-Drink-Events, Statistiken, Badges, Datenmodelle,
+  Supabase-Persistenz oder sonstige Dänemark-Plattformmodule.

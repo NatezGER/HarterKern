@@ -12,6 +12,7 @@ import { EventResultsPage } from "@/pages/EventResultsPage";
 import { EventsPage } from "@/pages/EventsPage";
 import { HistoricalAttemptsPage } from "@/pages/HistoricalAttemptsPage";
 import { PlayerComparePage } from "@/pages/PlayerComparePage";
+import { DkToolsPage } from "@/pages/DkToolsPage";
 
 export const router = createBrowserRouter([
   {
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
       { path: "events/:eventId", element: <EventResultsPage /> },
       { path: "events/:eventId/results", element: <EventResultsPage /> },
       { path: "history", element: <HistoricalAttemptsPage /> },
+      { path: "dk", element: <DkToolsPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

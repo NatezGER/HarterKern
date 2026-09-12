@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, LayoutDashboard, Radio, Settings, Trophy, Users } from "lucide-react";
+import { BarChart3, CalendarDays, LayoutDashboard, MapPinned, Radio, Settings, Trophy, Users } from "lucide-react";
 
 export const navigationItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -8,6 +8,7 @@ export const navigationItems = [
   { label: "Events", href: "/events", icon: CalendarDays },
   { label: "Statistiken", href: "/stats", icon: BarChart3 },
   { label: "Einstellungen", href: "/settings", icon: Settings },
+  { label: "DK", href: "/dk", icon: MapPinned, secondary: true },
 ] as const;
 
 export const brand = {
