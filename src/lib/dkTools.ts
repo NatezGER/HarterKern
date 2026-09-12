@@ -77,14 +77,56 @@ export interface DkGameState {
 }
 
 const TEAM_PREFIXES = [
-  "Hopfen", "Promille", "Bier", "Tresen", "Zapfhahn", "Suff", "Kneipen", "Malz",
-  "Pils", "Kronkorken", "Fass", "Durst", "Rausch", "Schluck", "Dosen", "Theken",
+  "Hopfen", "Promille", "Bier", "Bierbauch", "Tresen", "Zapfhahn", "Suff", "Kneipen",
+  "Malz", "Pils", "Kronkorken", "Fass", "Durst", "Rausch", "Vollrausch", "Schluck",
+  "Dosen", "Theken", "Pegel", "Kater", "Schaumkrone", "Schnaps", "Stammtisch", "Brauhaus",
+  "Bollerwagen", "Frühschoppen", "Feierabendbier", "Konterbier", "Restalkohol", "Trinkhorn",
+  "Bierdeckel", "Kühlfach",
 ];
 
 const TEAM_SUFFIXES = [
-  "Hooligans", "Panzer", "Berserker", "Zerstörer", "Söldner", "Titanen", "Piraten",
-  "Raketen", "Rambos", "Legenden", "Kommandos", "Kavaliere", "Banditen", "Barone",
-  "Wikinger", "Wölfe",
+  "Hooligans", "Höllenhunde", "Panzer", "Berserker", "Zerstörer", "Söldner", "Titanen",
+  "Piraten", "Raketen", "Rambos", "Legenden", "Kommandos", "Kavaliere", "Banditen",
+  "Barone", "Wikinger", "Wölfe", "Prätorianer", "Zombies", "Vandalen", "Schläger",
+  "Paladine", "Dämonen", "Samurai", "Hexer", "Schergen", "Psychos", "Rabauken",
+  "Ritter", "Randalierer", "Goblins", "Gladiatoren",
+];
+
+interface CaptainVocabulary {
+  possessive: string;
+  prefixes: string[];
+  suffixes: string[];
+}
+
+const CAPTAIN_VOCABULARY: Record<string, CaptainVocabulary> = {
+  Leif: { possessive: "Leifs", prefixes: ["Leber", "Lager", "Liter"], suffixes: ["Legion", "Legenden", "Lords", "Löwen"] },
+  Fipsi: { possessive: "Fipsis", prefixes: ["Fass", "Fusel", "Feierabend"], suffixes: ["Fanatiker", "Freibeuter", "Front", "Feger"] },
+  Henni: { possessive: "Hennis", prefixes: ["Hopfen", "Helles", "Humpen"], suffixes: ["Horde", "Hooligans", "Höllenhunde", "Hexer"] },
+  Boyke: { possessive: "Boykes", prefixes: ["Bier", "Brauhaus", "Bollerwagen"], suffixes: ["Berserker", "Banditen", "Barone", "Banausen"] },
+  Käptn: { possessive: "Käptns", prefixes: ["Kater", "Kneipen", "Kronkorken"], suffixes: ["Kommando", "Kavaliere", "Korsaren", "Krawallos"] },
+  Lars: { possessive: "Lars'", prefixes: ["Lager", "Leber", "Liter"], suffixes: ["Legion", "Legenden", "Lords", "Löwen"] },
+  Martin: { possessive: "Martins", prefixes: ["Malz", "Maß", "Morgenpils"], suffixes: ["Miliz", "Monster", "Machos", "Mob"] },
+  Paul: { possessive: "Pauls", prefixes: ["Pegel", "Pils", "Promille"], suffixes: ["Piraten", "Paladine", "Psychos", "Panzer", "Prätorianer"] },
+  Lonzo: { possessive: "Lonzos", prefixes: ["Lager", "Leber", "Liter"], suffixes: ["Lords", "Legion", "Legenden", "Löwen"] },
+  Fred: { possessive: "Freds", prefixes: ["Fass", "Frühschoppen", "Feierabend"], suffixes: ["Freibeuter", "Fanatiker", "Front", "Feger"] },
+  Mischa: { possessive: "Mischas", prefixes: ["Maß", "Malz", "Mischbier"], suffixes: ["Monster", "Miliz", "Magier", "Mob"] },
+};
+
+const DUO_PREFIXES = [
+  "Doppel-Promille", "Hopfen-Doppelpack", "Fass-Freunde", "Kater-Kumpanen",
+  "Suff-Syndikat", "Bier-Brüder", "Dosen-Doppel", "Pegel-Paar", "Tresen-Tandem",
+  "Zapfhahn-Zweier", "Malz-Mates", "Konterbier-Kumpel", "Humpen-Halbfinalisten",
+];
+
+const DUO_TEMPLATES = [
+  (first: string, second: string) => `${first} & ${second}: Pegel-Pakt`,
+  (first: string, second: string) => `${first} + ${second}: Hopfen-Duo`,
+  (first: string, second: string) => `${first} & ${second} am Zapfhahn`,
+  (first: string, second: string) => `${first} + ${second}: Doppelschluck`,
+  () => "Die Zwei vom Zapfhahn",
+  () => "Zwei gegen den Pegel",
+  () => "Promille-Pärchen",
+  () => "Doppelter Durst",
 ];
 
 export function shuffle<T>(items: readonly T[], random: () => number = Math.random): T[] {
@@ -114,10 +156,48 @@ export function getTeamSizes(participantCount: number, structure: TeamStructure)
 }
 
 export function generateTeamNames(count: number, random: () => number = Math.random): string[] {
-  const combinations = TEAM_PREFIXES.flatMap((prefix) =>
-    TEAM_SUFFIXES.map((suffix) => `${prefix}-${suffix}`),
-  );
+  const combinations = TEAM_PREFIXES.flatMap((prefix) => TEAM_SUFFIXES.flatMap((suffix) => [
+    `${prefix}-${suffix}`,
+    `Die ${prefix}-${suffix}`,
+  ]));
   return shuffle(combinations, random).slice(0, count);
+}
+
+function captainNameCandidates(captain: string): string[] {
+  const vocabulary = CAPTAIN_VOCABULARY[captain];
+  if (!vocabulary) return [];
+  return vocabulary.prefixes.flatMap((prefix) =>
+    vocabulary.suffixes.map((suffix) => `${vocabulary.possessive} ${prefix}-${suffix}`),
+  );
+}
+
+function duoNameCandidates(members: readonly string[]): string[] {
+  const [first, second] = members;
+  return [
+    ...DUO_PREFIXES,
+    ...DUO_TEMPLATES.map((template) => template(first, second)),
+  ];
+}
+
+export function generateNamesForTeams(
+  teams: readonly DkTeam[],
+  random: () => number = Math.random,
+): string[] {
+  const used = new Set<string>();
+  const fallbackNames = generateTeamNames(teams.length + 8, random);
+
+  return teams.map((team) => {
+    const preferred = team.members.length >= 3
+      ? captainNameCandidates(team.members[0])
+      : team.members.length === 2
+        ? duoNameCandidates(team.members)
+        : [];
+    const candidates = [...shuffle(preferred, random), ...fallbackNames];
+    const name = candidates.find((candidate) => !used.has(candidate));
+    if (!name) throw new Error("Kein eindeutiger DK-Teamname verfügbar.");
+    used.add(name);
+    return name;
+  });
 }
 
 export function createTeams(
@@ -127,8 +207,7 @@ export function createTeams(
 ): DkTeam[] {
   const shuffledParticipants = shuffle(participants, random);
   const sizes = getTeamSizes(shuffledParticipants.length, structure);
-  const names = generateTeamNames(sizes.length, random);
-  const teams = sizes.map((_, index) => ({ id: `team-${index + 1}`, name: names[index], members: [] as string[] }));
+  const teams = sizes.map((_, index) => ({ id: `team-${index + 1}`, name: "", members: [] as string[] }));
 
   let teamIndex = 0;
   for (const participant of shuffledParticipants) {
@@ -139,7 +218,8 @@ export function createTeams(
     teamIndex = (teamIndex + 1) % teams.length;
   }
 
-  return teams;
+  const names = generateNamesForTeams(teams, random);
+  return teams.map((team, index) => ({ ...team, name: names[index] }));
 }
 
 export function resetForNewTeams(

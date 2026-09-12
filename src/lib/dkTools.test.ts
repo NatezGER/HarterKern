@@ -7,6 +7,7 @@ import {
   DK_CREW,
   drawOrder,
   generateTeamNames,
+  generateNamesForTeams,
   resetForNewLeagueMatches,
   resetForNewTeams,
   setTournamentScore,
@@ -15,6 +16,10 @@ import {
 } from "@/lib/dkTools";
 
 const deterministicRandom = () => 0.42;
+const CAPTAIN_POSSESSIVES: Record<string, string> = {
+  Leif: "Leifs", Fipsi: "Fipsis", Henni: "Hennis", Boyke: "Boykes", Käptn: "Käptns",
+  Lars: "Lars'", Martin: "Martins", Paul: "Pauls", Lonzo: "Lonzos", Fred: "Freds", Mischa: "Mischas",
+};
 
 function makeTeams(count: number): DkTeam[] {
   return Array.from({ length: count }, (_, index) => ({
@@ -62,9 +67,68 @@ describe("DK draw helpers", () => {
   });
 
   it("generates the requested number of unique team names", () => {
-    const names = generateTeamNames(8, deterministicRandom);
-    expect(names).toHaveLength(8);
-    expect(new Set(names)).toHaveLength(8);
+    const names = generateTeamNames(100, deterministicRandom);
+    expect(names).toHaveLength(100);
+    expect(new Set(names)).toHaveLength(100);
+  });
+
+  it("uses the first member as captain for a three-person team", () => {
+    const names = generateNamesForTeams([{
+      id: "team-1",
+      name: "",
+      members: ["Paul", "Lars", "Fred"],
+    }], deterministicRandom);
+    expect(names[0]).toMatch(/^Pauls /);
+  });
+
+  it("offers different variants for different captains", () => {
+    const names = generateNamesForTeams([
+      { id: "team-1", name: "", members: ["Henni", "Paul", "Fred"] },
+      { id: "team-2", name: "", members: ["Boyke", "Lars", "Leif"] },
+    ], deterministicRandom);
+    expect(names[0]).toMatch(/^Hennis /);
+    expect(names[1]).toMatch(/^Boykes /);
+    expect(names[0]).not.toBe(names[1]);
+  });
+
+  it("offers multiple variants for the same captain", () => {
+    const team = [{ id: "team-1", name: "", members: ["Paul", "Lars", "Fred"] }];
+    const first = generateNamesForTeams(team, () => 0)[0];
+    const second = generateNamesForTeams(team, () => 0.99)[0];
+    expect(first).toMatch(/^Pauls /);
+    expect(second).toMatch(/^Pauls /);
+    expect(first).not.toBe(second);
+  });
+
+  it("uses a duo name instead of forcing a captain for two-person teams", () => {
+    const [name] = generateNamesForTeams([{
+      id: "team-1",
+      name: "",
+      members: ["Paul", "Lars"],
+    }], deterministicRandom);
+    expect(name).not.toMatch(/^Pauls /);
+    expect(name).toMatch(/Doppel|Duo|Freunde|Kump|Syndikat|Brüder|Paar|Tandem|Zwei|Pärchen|Durst|Pakt|Zapfhahn|Mates/);
+  });
+
+  it("uses captain naming for the three-person team in pairs mode and duo naming for the others", () => {
+    const teams = createTeams(DK_CREW, "pairs", deterministicRandom);
+    const triple = teams.find((team) => team.members.length === 3)!;
+    const captain = triple.members[0];
+    const possessive = CAPTAIN_POSSESSIVES[captain];
+    expect(triple.name).toMatch(new RegExp(`^${possessive} `));
+    expect(teams.filter((team) => team.members.length === 2).every((team) => !team.name.startsWith(`${CAPTAIN_POSSESSIVES[team.members[0]]} `))).toBe(true);
+  });
+
+  it("keeps names unique without changing team composition", () => {
+    const teams: DkTeam[] = [
+      { id: "team-1", name: "vorher", members: ["Paul", "Lars"] },
+      { id: "team-2", name: "vorher", members: ["Henni", "Fred"] },
+      { id: "team-3", name: "vorher", members: ["Leif", "Mischa", "Boyke"] },
+    ];
+    const membersBefore = teams.map((team) => [...team.members]);
+    const names = generateNamesForTeams(teams, deterministicRandom);
+    expect(new Set(names)).toHaveLength(teams.length);
+    expect(teams.map((team) => team.members)).toEqual(membersBefore);
   });
 });
 

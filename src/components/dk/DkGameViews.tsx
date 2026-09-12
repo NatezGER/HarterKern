@@ -32,7 +32,12 @@ function ScoreInput({ label, value, onChange, disabled }: ScoreInputProps) {
 }
 
 function TeamName({ team }: { team: DkTeam | undefined }) {
-  return <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">{team?.name ?? "Noch offen"}</span>;
+  return (
+    <span className="min-w-0 flex-1">
+      <span className="block truncate text-sm font-bold text-white">{team?.name ?? "Noch offen"}</span>
+      {team && <span className="mt-0.5 block text-[11px] leading-snug text-white/40">{team.members.join(" · ")}</span>}
+    </span>
+  );
 }
 
 interface LeagueViewProps {
@@ -61,7 +66,10 @@ export function LeagueView({ teams, matches, scores, onScoreChange, onRedraw }: 
             <article key={row.teamId} className="panel p-4">
               <div className="flex items-center gap-3">
                 <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gold-400/12 font-display text-xl font-black text-gold-300">{row.rank}</span>
-                <p className="min-w-0 flex-1 truncate font-bold">{row.teamName}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold">{row.teamName}</p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-white/40">{teamById.get(row.teamId)?.members.join(" · ")}</p>
+                </div>
                 <p className="font-display text-2xl font-black text-gold-300">{row.points} <span className="text-xs text-white/40">Pkt.</span></p>
               </div>
               <dl className="mt-3 grid grid-cols-7 gap-1 border-t border-white/[0.07] pt-3 text-center">
@@ -90,7 +98,8 @@ export function LeagueView({ teams, matches, scores, onScoreChange, onRedraw }: 
                 <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">Spiel {index + 1}</p>
                 <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
                   <div className="min-w-0 text-center">
-                    <p className="mb-2 truncate text-sm font-bold">{teamById.get(match.teamAId)?.name}</p>
+                    <p className="truncate text-sm font-bold">{teamById.get(match.teamAId)?.name}</p>
+                    <p className="mb-2 mt-0.5 text-[10px] leading-snug text-white/35">{teamById.get(match.teamAId)?.members.join(" · ")}</p>
                     <ScoreInput
                       label={`Ergebnis ${teamById.get(match.teamAId)?.name}`}
                       value={score.scoreA}
@@ -99,7 +108,8 @@ export function LeagueView({ teams, matches, scores, onScoreChange, onRedraw }: 
                   </div>
                   <span aria-hidden="true" className="mt-7 font-display text-2xl font-black text-white/35">:</span>
                   <div className="min-w-0 text-center">
-                    <p className="mb-2 truncate text-sm font-bold">{teamById.get(match.teamBId)?.name}</p>
+                    <p className="truncate text-sm font-bold">{teamById.get(match.teamBId)?.name}</p>
+                    <p className="mb-2 mt-0.5 text-[10px] leading-snug text-white/35">{teamById.get(match.teamBId)?.members.join(" · ")}</p>
                     <ScoreInput
                       label={`Ergebnis ${teamById.get(match.teamBId)?.name}`}
                       value={score.scoreB}

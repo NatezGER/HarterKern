@@ -113,7 +113,7 @@ export function DkToolsPage() {
       setPhase("order-result");
       return;
     }
-    const timer = window.setTimeout(() => setOrderRevealCount((count) => count + 1), 600);
+    const timer = window.setTimeout(() => setOrderRevealCount((count) => count + 1), 1200);
     return () => window.clearTimeout(timer);
   }, [order.length, orderRevealCount, phase]);
 
@@ -128,7 +128,7 @@ export function DkToolsPage() {
       setPhase("teams-result");
       return;
     }
-    const timer = window.setTimeout(() => setTeamRevealCount((count) => count + 1), 600);
+    const timer = window.setTimeout(() => setTeamRevealCount((count) => count + 1), 1200);
     return () => window.clearTimeout(timer);
   }, [phase, teamRevealCount, teamRevealOrder.length]);
 
