@@ -11,6 +11,7 @@ describe("navigationItems", () => {
       { label: "Events", href: "/events" },
       { label: "Statistiken", href: "/stats" },
       { label: "Einstellungen", href: "/settings" },
+      { label: "DK", href: "/dk" },
     ]);
   });
 });

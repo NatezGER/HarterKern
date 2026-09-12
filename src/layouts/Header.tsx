@@ -23,12 +23,13 @@ export function Header() {
         </NavLink>
 
         <nav className="hidden items-center gap-1 lg:flex">
-          {navigationItems.map(({ href, label }) => (
+          {navigationItems.map(({ href, label, ...item }) => (
             <NavLink
               key={href}
               to={href}
               className={({ isActive }) => cn(
-                "relative rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-[0.08em] text-white/45 transition hover:text-white",
+                "relative rounded-full px-3 py-2.5 text-xs font-bold uppercase tracking-[0.08em] text-white/45 transition hover:text-white",
+                "secondary" in item && item.secondary && "ml-1 border border-white/10 text-white/35",
                 isActive && "season-nav-active text-white",
               )}
             >
@@ -64,13 +65,14 @@ export function Header() {
       {isOpen && (
         <nav className="border-t border-white/[0.07] bg-background px-5 py-4 lg:hidden">
           <div className="mx-auto grid max-w-[1600px] gap-1">
-            {navigationItems.map(({ href, label, icon: Icon }) => (
+            {navigationItems.map(({ href, label, icon: Icon, ...item }) => (
               <NavLink
                 key={href}
                 to={href}
                 onClick={() => setIsOpen(false)}
                 className={({ isActive }) => cn(
                   "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/55",
+                  "secondary" in item && item.secondary && "mt-2 border-t border-white/10 text-white/40",
                   isActive && "season-mobile-nav-active",
                 )}
               >
