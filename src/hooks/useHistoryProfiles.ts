@@ -44,7 +44,7 @@ export function useEventDetail(eventId: string) {
         if (!active) return;
         setState({ data, loading: false, error: "" });
         if (!data) return;
-        void getEventDetailExtras(eventId).then((extras) => {
+        void getEventDetailExtras(eventId, data.awardsTrophies).then((extras) => {
           if (!active) return;
           setState((current) => current.data
             ? { ...current, data: { ...current.data, ...extras } }
@@ -60,6 +60,9 @@ export function useEventDetail(eventId: string) {
                 errors: {
                   badges: "Badge-Unlocks konnten nicht geladen werden.",
                   trophies: "Trophäen konnten nicht geladen werden.",
+                  ...(data.awardsTrophies ? {
+                    trophySpecialStats: "Event Most Wanted konnte nicht geladen werden.",
+                  } : {}),
                 },
               },
             },

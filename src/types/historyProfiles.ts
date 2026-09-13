@@ -1,5 +1,6 @@
 import type { BadgeTier } from "@/types/pr7Foundation";
 import type { BingoTier, TrophyTier } from "@/types/pr8";
+import type { TrophyEventSpecialStats } from "@/types/trophyEventStats";
 
 export interface MediaPhoto {
   id: string;
@@ -137,9 +138,10 @@ export interface EventDetail {
   photos: MediaPhoto[];
   attemptNumbers: EventAttemptNumberPoint[];
   trophies: TrophyAward[];
+  trophySpecialStats: TrophyEventSpecialStats | null;
   extras?: {
     loading: boolean;
-    errors: Partial<Record<"badges" | "trophies", string>>;
+    errors: Partial<Record<"badges" | "trophies" | "trophySpecialStats", string>>;
   };
 }
 

@@ -519,6 +519,10 @@ export interface Database {
       season_trophies: PlayerTrophyView;
     };
     Functions: DataPlatformFunctions & {
+      get_trophy_event_special_stats: {
+        Args: { p_event_id: string };
+        Returns: Json;
+      };
       get_player_badge_prestige: {
         Args: { p_player_ids: string[] };
         Returns: Array<{ player_id: string; at_least_bronze: number; at_least_silver: number; at_least_gold: number; at_least_diamond: number; emerald: number }>;

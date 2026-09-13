@@ -12,6 +12,7 @@ import type {
   PlayerProfileProgression,
   TrophyAward,
 } from "@/types/historyProfiles";
+import { getTrophyEventSpecialStats } from "@/services/trophyEventStatsService";
 import type { PlayerCompareTimelineAttempt } from "@/types/playerCompare";
 import type { BadgeUnlockCelebration } from "@/types/liveEvent";
 import { calculateComparePerformance } from "@/lib/playerCompareDeep";
@@ -333,19 +334,21 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
         slowestHundredths: Math.max(...times),
       })),
     trophies: [],
+    trophySpecialStats: null,
     extras: { loading: true, errors: {} },
   };
 }
 
-export async function getEventDetailExtras(eventId: string) {
+export async function getEventDetailExtras(eventId: string, includeTrophySpecialStats = false) {
   const client = getSupabase();
-  const [badgeResult, trophyResult] = await Promise.allSettled([
+  const [badgeResult, trophyResult, specialStatsResult] = await Promise.allSettled([
     client.from("event_badge_unlocks").select("*").eq("source_event_id", eventId)
       .order("tier_rank", { ascending: false })
       .order("is_special_event_badge", { ascending: false })
       .order("awarded_at"),
     client.from("player_trophies").select("*").eq("competition_id", eventId)
       .order("placement"),
+    includeTrophySpecialStats ? getTrophyEventSpecialStats(eventId) : Promise.resolve(null),
   ]);
   const errors: NonNullable<EventDetail["extras"]>["errors"] = {};
   const badges = badgeResult.status === "fulfilled" && !badgeResult.value.error
@@ -358,7 +361,13 @@ export async function getEventDetailExtras(eventId: string) {
   if (trophyResult.status === "rejected" || trophyResult.value.error) {
     errors.trophies = "Trophäen konnten nicht geladen werden.";
   }
-  return { badges, photos: [], trophies, extras: { loading: false, errors } };
+  const trophySpecialStats = specialStatsResult.status === "fulfilled"
+    ? specialStatsResult.value : null;
+  if (specialStatsResult.status === "rejected") {
+    errors.trophySpecialStats = "Event Most Wanted konnte nicht geladen werden.";
+  }
+  return { badges, photos: [], trophies, trophySpecialStats,
+    extras: { loading: false, errors } };
 }
 
 export async function getPlayerProfileCore(playerId: string): Promise<PlayerProfileCore | null> {

@@ -164,9 +164,11 @@ export interface MostWantedHit {
 
 export interface MostWantedHunter {
   id: string;
-  playerId: string;
+  playerId: string | null;
+  guestId?: string | null;
   playerName: string;
   avatarUrl: string | null;
+  isGuest?: boolean;
   endingCount: number;
 }
 
