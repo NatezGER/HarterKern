@@ -82,6 +82,8 @@ export interface TrophyAward {
   eventDate: string;
   placement: 1 | 2 | 3;
   tier: TrophyTier;
+  competitionKey: string | null;
+  competitionYear: number | null;
   playerId: string | null;
   guestId: string | null;
   playerName: string;
@@ -120,6 +122,8 @@ export interface EventDetail {
   description: string | null;
   isImportant: boolean;
   awardsTrophies: boolean;
+  trophyCompetitionKey: string | null;
+  trophyCompetitionYear: number | null;
   participants: number;
   validAttempts: number;
   dnfCount: number;

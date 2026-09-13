@@ -20,6 +20,8 @@ export interface PlayerTrophyView {
     is_guest: boolean;
     best_time_hundredths: number;
     awarded_at: string;
+    trophy_competition_key: string | null;
+    trophy_competition_year: number | null;
   };
   Relationships: [];
 }

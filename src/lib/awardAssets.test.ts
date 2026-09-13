@@ -58,6 +58,18 @@ describe("award asset identity and fallback", () => {
       .toBeNull();
   });
 
+  it("maps Denmark podium awards to the prepared gold, silver and bronze assets", () => {
+    for (const tier of ["gold", "silver", "bronze"] as const) {
+      expect(trophyAssetIdForAward({
+        competitionType: "event",
+        competitionKey: "denmark",
+        competitionYear: 2026,
+        year: 2026,
+        tier,
+      })).toBe(`trophy:denmark:2026:${tier}`);
+    }
+  });
+
   it("keeps normal and special badge variants distinct", () => {
     const groups = groupBadgeDefinitions([
       { badgeKey: "wins-bronze", familyKey: "wins", name: "Siege Bronze", tier: "bronze", designVariant: "standard", sortOrder: 1 },

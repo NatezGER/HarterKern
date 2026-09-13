@@ -9,6 +9,42 @@ import { MOBILE_CONTEXT_AVATAR_FRAME } from "@/constants/avatar";
 import type {
   StartLiveEventParticipant,
 } from "@/types/liveEvent";
+import {
+  competitionAfterTrophyToggle,
+  findSelectableTrophyCompetition,
+  SELECTABLE_TROPHY_EVENT_COMPETITIONS,
+  trophyCompetitionId,
+} from "@/lib/trophyCompetitions";
+
+export function TrophyCompetitionField({
+  visible,
+  value,
+  onChange,
+}: {
+  visible: boolean;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  if (!visible) return null;
+
+  return (
+    <label className="mt-3 block rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-xs font-semibold text-white/45">
+      Trophäenserie
+      <select
+        className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/30 px-3 text-sm text-white"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        <option value="">Allgemeines Trophäen-Event</option>
+        {SELECTABLE_TROPHY_EVENT_COMPETITIONS.map((competition) => (
+          <option key={trophyCompetitionId(competition)} value={trophyCompetitionId(competition)}>
+            {competition.key === "denmark" ? "🇩🇰 " : ""}{competition.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
 
 export function StartEventPanel({
   candidates,
@@ -27,6 +63,7 @@ export function StartEventPanel({
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [awardsTrophies, setAwardsTrophies] = useState(false);
+  const [trophyCompetitionIdValue, setTrophyCompetitionIdValue] = useState("");
   const allCandidates = useMemo(() => [...candidates, ...temporary], [candidates, temporary]);
   const visibleCandidates = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("de-DE");
@@ -81,7 +118,8 @@ export function StartEventPanel({
       return;
     }
     setError("");
-    const result = await startEvent({ name, date, participants, awardsTrophies });
+    const trophyCompetition = findSelectableTrophyCompetition(trophyCompetitionIdValue);
+    const result = await startEvent({ name, date, participants, awardsTrophies, trophyCompetition });
     if (!result.eventId) {
       setError(result.error ?? "Event konnte nicht gestartet werden.");
       return;
@@ -109,7 +147,13 @@ export function StartEventPanel({
             <input
               type="checkbox"
               checked={awardsTrophies}
-              onChange={(event) => setAwardsTrophies(event.target.checked)}
+              onChange={(event) => {
+                const enabled = event.target.checked;
+                setAwardsTrophies(enabled);
+                if (!competitionAfterTrophyToggle(enabled, findSelectableTrophyCompetition(trophyCompetitionIdValue))) {
+                  setTrophyCompetitionIdValue("");
+                }
+              }}
               className="mt-0.5 size-4 accent-amber-400"
             />
             <span>
@@ -119,6 +163,11 @@ export function StartEventPanel({
               </span>
             </span>
           </label>
+          <TrophyCompetitionField
+            visible={awardsTrophies}
+            value={trophyCompetitionIdValue}
+            onChange={setTrophyCompetitionIdValue}
+          />
           <fieldset className="mt-7">
             <legend className="text-xs font-bold uppercase tracking-[0.16em] text-gold-300">Teilnehmer</legend>
             <Input className="mt-3 rounded-xl" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Spieler suchen" aria-label="Spieler suchen" />

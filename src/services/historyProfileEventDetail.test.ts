@@ -48,6 +48,8 @@ const event = {
   description: null,
   is_important: false,
   awards_trophies: true,
+  trophy_competition_key: "denmark",
+  trophy_competition_year: 2026,
 };
 
 const playerAttempt = (id: string, attemptNumber: number, time: number) => ({
@@ -131,6 +133,8 @@ describe("event detail loading", () => {
     expect(detail).toMatchObject({
       id: event.id,
       status: "closed",
+      trophyCompetitionKey: "denmark",
+      trophyCompetitionYear: 2026,
       participants: 2,
       validAttempts: 2,
       badges: [],

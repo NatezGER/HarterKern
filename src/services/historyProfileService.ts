@@ -191,6 +191,8 @@ function mapTrophy(row: {
   guest_id: string | null;
   display_name: string;
   awarded_at: string;
+  trophy_competition_key: string | null;
+  trophy_competition_year: number | null;
 }): TrophyAward {
   return {
     key: row.trophy_key,
@@ -203,6 +205,8 @@ function mapTrophy(row: {
     eventDate: row.event_date,
     placement: row.placement,
     tier: row.trophy_tier,
+    competitionKey: row.trophy_competition_key,
+    competitionYear: row.trophy_competition_year,
     playerId: row.player_id,
     guestId: row.guest_id,
     playerName: row.display_name,
@@ -295,6 +299,8 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
     description: event.description,
     isImportant: event.is_important,
     awardsTrophies: event.awards_trophies,
+    trophyCompetitionKey: event.trophy_competition_key,
+    trophyCompetitionYear: event.trophy_competition_year,
     participants: Number(stats?.participant_count ?? 0),
     validAttempts: Number(stats?.valid_attempts ?? 0),
     dnfCount: Number(stats?.dnf_count ?? 0),

@@ -24,7 +24,7 @@ const event = (id: string, status: "active" | "closed" = "closed"): Event => ({
   id, title: `Event ${id}`, date: "2026-08-18", startedAt: "2026-08-18T18:00:00Z",
   endsAt: "2026-08-19T18:00:00Z", participantIds: ["p1", "p2"], attempts: 8,
   validAttempts: 7, dnfCount: 1, fastest: 2.8, average: 3.4, winnerNames: ["Paul"],
-  status, awardsTrophies: false,
+  status, awardsTrophies: false, trophyCompetitionKey: null, trophyCompetitionYear: null,
 });
 
 describe("EventsPage", () => {

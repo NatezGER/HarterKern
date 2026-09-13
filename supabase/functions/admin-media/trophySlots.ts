@@ -2,12 +2,12 @@ export const TROPHY_COMPETITIONS = [
   {
     key: "season",
     name: "Saison",
-    editions: [{ year: 2026, tiers: ["gold", "silver", "bronze"] }],
+    editions: [{ year: 2026, tiers: ["gold", "silver", "bronze"], selectableForNewEvents: false }],
   },
   {
     key: "denmark",
     name: "Dänemark",
-    editions: [{ year: 2026, tiers: ["gold", "silver", "bronze"] }],
+    editions: [{ year: 2026, tiers: ["gold", "silver", "bronze"], selectableForNewEvents: true }],
   },
 ] as const;
 

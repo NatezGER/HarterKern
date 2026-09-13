@@ -30,6 +30,7 @@ const detail: EventDetail = {
   id: "event-1", name: "Finale", date: "2026-08-20",
   startedAt: "2026-08-20T18:00:00Z", closedAt: "2026-08-21T08:00:00Z",
   status: "closed", description: null, isImportant: false, awardsTrophies: false,
+  trophyCompetitionKey: null, trophyCompetitionYear: null,
   participants: 3, validAttempts: 3, dnfCount: 1, fastestHundredths: 300,
   averageHundredths: 350,
   podium: [],
@@ -85,5 +86,18 @@ describe("EventResults polish", () => {
     expect(standings.match(/>1\.<\/span>/g)?.length).toBe(2);
     expect(markup).toContain("DNF");
     expect(markup.indexOf("Podium")).toBeLessThan(markup.indexOf("Finale Bestenliste"));
+  });
+
+  it("labels Denmark from structured competition metadata", () => {
+    const markup = renderToStaticMarkup(
+      <MemoryRouter><EventResults detail={{
+        ...detail,
+        awardsTrophies: true,
+        trophyCompetitionKey: "denmark",
+        trophyCompetitionYear: 2026,
+      }} /></MemoryRouter>,
+    );
+    expect(markup).toContain("Trophäen-Event");
+    expect(markup).toContain("Dänemark 2026");
   });
 });

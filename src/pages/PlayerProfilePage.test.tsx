@@ -109,6 +109,8 @@ describe("PlayerProfilePage optional failures", () => {
       eventDate: "2026-12-31",
       placement: 1,
       tier: "gold",
+      competitionKey: null,
+      competitionYear: null,
       playerId: "player-1",
       guestId: null,
       playerName: "Paul",

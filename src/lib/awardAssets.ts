@@ -68,12 +68,19 @@ export function trophyAssetIdForAward(trophy: {
   competitionType: "event" | "season" | "historical";
   year: number;
   tier: TrophyTier;
+  competitionKey?: string | null;
+  competitionYear?: number | null;
 }) {
   return trophy.competitionType === "historical"
     ? trophy.key ? `trophy:${trophy.key}` : null
     : trophy.competitionType === "season"
     ? trophySlotAssetId("season", trophy.year, trophy.tier)
-    : null;
+    : trophy.competitionKey && trophy.competitionYear
+      ? (() => {
+        const assetId = `trophy:${trophy.competitionKey}:${trophy.competitionYear}:${trophy.tier}`;
+        return isTrophySlotAssetId(assetId) ? assetId : null;
+      })()
+      : null;
 }
 
 export function awardAssetType(assetId: string): AwardAssetType | null {

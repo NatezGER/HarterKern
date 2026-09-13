@@ -99,6 +99,8 @@ export async function loadLiveState(publicPlayerRows: Player[]): Promise<LiveEve
     createdBy: "Supabase",
     winnerPlayerId: row.winner_player_id ?? row.winner_guest_id ?? undefined,
     awardsTrophies: row.awards_trophies,
+    trophyCompetitionKey: row.trophy_competition_key,
+    trophyCompetitionYear: row.trophy_competition_year,
     endReason: row.end_reason === "automatic"
       ? "automatic" as const
       : row.end_reason === "manual" ? "manual" as const : undefined,
@@ -162,7 +164,7 @@ export async function startRemoteEvent(
     name: participant.name,
     kind: participant.kind,
   }));
-  const { data, error } = await getSupabase().rpc("sync_start_event_v3", {
+  const { data, error } = await getSupabase().rpc("sync_start_event_v4", {
     p_name: input.name?.trim() || null,
     p_start_date: input.date,
     p_participants: participants,
@@ -170,6 +172,8 @@ export async function startRemoteEvent(
     p_ends_at: timing?.endsAt ?? null,
     p_legacy_source_id: legacySourceId ?? null,
     p_awards_trophies: input.awardsTrophies ?? false,
+    p_trophy_competition_key: input.awardsTrophies ? input.trophyCompetition?.key ?? null : null,
+    p_trophy_competition_year: input.awardsTrophies ? input.trophyCompetition?.year ?? null : null,
   });
   if (error) throw error;
   const participantIds = new Map(

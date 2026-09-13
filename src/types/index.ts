@@ -121,6 +121,8 @@ export interface Event {
   }>;
   status: "active" | "closed";
   awardsTrophies: boolean;
+  trophyCompetitionKey: string | null;
+  trophyCompetitionYear: number | null;
 }
 
 export interface MostWantedEnding {

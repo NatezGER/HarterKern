@@ -59,6 +59,8 @@ export function mapEvent(
       ? "active"
       : "closed",
     awardsTrophies: row.awards_trophies,
+    trophyCompetitionKey: row.trophy_competition_key,
+    trophyCompetitionYear: row.trophy_competition_year,
   };
 }
 
