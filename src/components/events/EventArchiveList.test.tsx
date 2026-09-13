@@ -44,7 +44,7 @@ describe("Event archive Trophy marker", () => {
     expect(render(event({ awardsTrophies: true }))).not.toContain("data-asset-id");
   });
 
-  it("keeps the established archive card padding and compact marker size", () => {
+  it("keeps the established card padding while the marker spans both text rows", () => {
     const markup = render(event({
       awardsTrophies: true,
       trophyCompetitionKey: "denmark",
@@ -52,6 +52,8 @@ describe("Event archive Trophy marker", () => {
     }));
     expect(markup).toContain("sm:items-center sm:gap-7");
     expect(markup).toContain("overflow-hidden p-5");
-    expect(markup).toContain("size-4 shrink-0");
+    expect(markup).toContain("grid-rows-[auto_auto]");
+    expect(markup).toContain("row-span-2");
+    expect(markup).toContain("size-11 shrink-0 sm:size-12");
   });
 });

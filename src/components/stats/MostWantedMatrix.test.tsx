@@ -76,6 +76,7 @@ describe("MostWantedMatrix", () => {
     const markup = renderToStaticMarkup(<MostWantedMatrix data={eventData}
       eventScope={{ eventId: "event-1", eventName: "Trophy Abend" }} />);
     expect(markup).toContain("Event-Jagd");
+    expect(markup).toContain("Trophy Abend – Most Wanted");
     expect(markup).toContain("Nur gültige Versuche aus Trophy Abend");
     expect(markup).toContain("Gast · Gast");
     expect(markup).toContain('role="grid"');

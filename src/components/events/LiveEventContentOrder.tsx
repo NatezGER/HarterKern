@@ -18,9 +18,9 @@ export function LiveEventContentOrder({
   endAction: ReactNode;
 }) {
   return <>
+    {attemptEntry}
     {leaderboard}
     {specialStats}
-    {attemptEntry}
     {leadStory}
     {participantManagement}
     {attemptHistory}

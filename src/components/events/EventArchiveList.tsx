@@ -16,27 +16,25 @@ export function EventArchiveList({ events, emptyLabel }: { events: Event[]; empt
       to={`/events/${event.id}`}
       className="panel group grid min-w-0 gap-4 overflow-hidden p-5 transition hover:border-gold-400/25 sm:grid-cols-[minmax(0,1fr)_repeat(4,auto)_auto] sm:items-center sm:gap-7"
     >
-      <div className="min-w-0">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <p className="truncate font-display text-xl font-black uppercase">{event.title}</p>
-          {event.awardsTrophies && trophyCompetitionAssetId(
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto] items-center gap-x-2">
+        <p className="truncate font-display text-xl font-black uppercase">{event.title}</p>
+        {event.awardsTrophies && trophyCompetitionAssetId(
+          event.trophyCompetitionKey,
+          event.trophyCompetitionYear,
+          "gold",
+        ) && <AwardAssetImage
+          assetId={trophyCompetitionAssetId(
             event.trophyCompetitionKey,
             event.trophyCompetitionYear,
             "gold",
-          ) && <AwardAssetImage
-            assetId={trophyCompetitionAssetId(
-              event.trophyCompetitionKey,
-              event.trophyCompetitionYear,
-              "gold",
-            ) ?? ""}
-            alt={`Trophy Event · ${trophyCompetitionName(
-              event.trophyCompetitionKey,
-              event.trophyCompetitionYear,
-            ) ?? "Competition"}`}
-            className="size-4 shrink-0"
-            fallback={null}
-          />}
-        </div>
+          ) ?? ""}
+          alt={`Trophy Event · ${trophyCompetitionName(
+            event.trophyCompetitionKey,
+            event.trophyCompetitionYear,
+          ) ?? "Competition"}`}
+          className="col-start-2 row-span-2 row-start-1 size-11 shrink-0 sm:size-12"
+          fallback={null}
+        />}
         <p className="mt-1 text-xs text-white/35">{formatDate(event.date)}</p>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:contents">

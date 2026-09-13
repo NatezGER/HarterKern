@@ -31,7 +31,9 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON, eventScope }:
             season === ALL_TIME_SEASON ? "text-gold-300" : "text-emerald-300")}>
             {eventScope ? "Event-Jagd" : season === ALL_TIME_SEASON ? "Liga-Jagd" : `Saison ${season}`}
           </p>
-          <h3 className="display-title mt-2 text-3xl sm:text-4xl">Most Wanted · 00–99</h3>
+          <h3 className="display-title mt-2 text-3xl sm:text-4xl">
+            {eventScope ? `${eventScope.eventName} – Most Wanted` : "Most Wanted · 00–99"}
+          </h3>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-white/45">
             {eventScope
               ? `Nur gültige Versuche aus ${eventScope.eventName}. Der erste Treffer jeder Endung verewigt den Finder.`
