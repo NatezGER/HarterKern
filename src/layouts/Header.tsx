@@ -1,13 +1,15 @@
 import { Menu, Timer, X } from "lucide-react";
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { brand, navigationItems } from "@/constants/navigation";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
 import { SeasonSelector } from "@/components/common/SeasonSelector";
+import { needsExactNavigationMatch } from "@/lib/navigation";
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const { pathname } = useLocation();
 
   return (
     <header className="app-header sticky top-0 z-40 border-b backdrop-blur-2xl transition-colors">
@@ -27,6 +29,7 @@ export function Header() {
             <NavLink
               key={href}
               to={href}
+              end={needsExactNavigationMatch(href, pathname)}
               className={({ isActive }) => cn(
                 "relative rounded-full px-3 py-2.5 text-xs font-bold uppercase tracking-[0.08em] text-white/45 transition hover:text-white",
                 "secondary" in item && item.secondary && "ml-1 border border-white/10 text-white/35",
@@ -69,6 +72,7 @@ export function Header() {
               <NavLink
                 key={href}
                 to={href}
+                end={needsExactNavigationMatch(href, pathname)}
                 onClick={() => setIsOpen(false)}
                 className={({ isActive }) => cn(
                   "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/55",
