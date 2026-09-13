@@ -367,6 +367,8 @@ describe("player profile core repository", () => {
         guest_id: null,
         display_name: "Paul",
         awarded_at: "2026-07-31T20:00:00Z",
+        trophy_competition_key: "denmark",
+        trophy_competition_year: 2026,
       }, {
         trophy_key: "season-trophy:2026:player-1:1",
         competition_type: "season",
@@ -382,6 +384,8 @@ describe("player profile core repository", () => {
         guest_id: null,
         display_name: "Paul",
         awarded_at: "2027-01-02T18:00:00Z",
+        trophy_competition_key: null,
+        trophy_competition_year: null,
       }],
       error: null,
     });
@@ -390,12 +394,16 @@ describe("player profile core repository", () => {
       expect.objectContaining({
         competitionType: "event",
         competitionName: "Special Finale",
+        competitionKey: "denmark",
+        competitionYear: 2026,
       }),
       expect.objectContaining({
         competitionType: "season",
         seasonKey: "2026",
         competitionName: "Saisonmeister 2026",
         placement: 1,
+        competitionKey: null,
+        competitionYear: null,
       }),
     ]);
     expect(mocks.rpc).toHaveBeenCalledWith("get_player_trophies", {

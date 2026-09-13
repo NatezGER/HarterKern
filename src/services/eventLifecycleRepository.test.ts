@@ -63,8 +63,10 @@ describe("event lifecycle repository", () => {
       participants: [existingPlayer, secondExistingPlayer],
     });
 
-    expect(mocks.rpc).toHaveBeenCalledWith("sync_start_event_v3", expect.objectContaining({
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_start_event_v4", expect.objectContaining({
       p_awards_trophies: false,
+      p_trophy_competition_key: null,
+      p_trophy_competition_year: null,
       p_participants: [
         expect.objectContaining({ id: existingPlayer.id, kind: "permanent" }),
         expect.objectContaining({ id: secondExistingPlayer.id, kind: "permanent" }),
@@ -137,17 +139,43 @@ describe("event lifecycle repository", () => {
     await closeRemoteEvent("event-one", "manual");
     expect((await startRemoteEvent(input)).eventId).toBe("event-two");
     expect(mocks.rpc.mock.calls.map(([name]) => name)).toEqual([
-      "sync_start_event_v3",
+      "sync_start_event_v4",
       "sync_close_event",
-      "sync_start_event_v3",
+      "sync_start_event_v4",
     ]);
     const startPayloads = mocks.rpc.mock.calls
-      .filter(([name]) => name === "sync_start_event_v3")
+      .filter(([name]) => name === "sync_start_event_v4")
       .map(([, args]) => args.p_participants);
     expect(startPayloads).toEqual([
       [expect.objectContaining({ id: existingPlayer.id })],
       [expect.objectContaining({ id: existingPlayer.id })],
     ]);
+  });
+
+  it("persists the selected Denmark competition through the start RPC", async () => {
+    mocks.rpc.mockResolvedValue({
+      data: {
+        eventId: "event-denmark",
+        participants: [{
+          clientId: existingPlayer.id,
+          participantId: existingPlayer.id,
+          kind: "permanent",
+        }],
+      },
+      error: null,
+    });
+
+    await startRemoteEvent({
+      ...input,
+      awardsTrophies: true,
+      trophyCompetition: { key: "denmark", year: 2026 },
+    });
+
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_start_event_v4", expect.objectContaining({
+      p_awards_trophies: true,
+      p_trophy_competition_key: "denmark",
+      p_trophy_competition_year: 2026,
+    }));
   });
 
   it("persists the trophy-event flag through the versioned update RPC", async () => {

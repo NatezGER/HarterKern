@@ -22,6 +22,8 @@ const trophy = (placement: 1 | 2 | 3): TrophyAward => ({
   eventDate: "2026-07-31",
   placement,
   tier: placement === 1 ? "gold" : placement === 2 ? "silver" : "bronze",
+  competitionKey: null,
+  competitionYear: null,
   playerId: "player-1",
   guestId: null,
   playerName: "Paul",
@@ -98,5 +100,18 @@ describe("TrophyCabinet", () => {
     expect(markup).toContain("trophy:historical:first-sub-3.webp");
     expect(markup).not.toContain("1. Platz");
     expect(markup).not.toContain("href=");
+  });
+
+  it("renders a Denmark event with its prepared asset, event link and date", () => {
+    const denmark: TrophyAward = {
+      ...trophy(1),
+      competitionKey: "denmark",
+      competitionYear: 2026,
+    };
+    const markup = renderToStaticMarkup(<TrophyCabinet trophies={[denmark]} />);
+    expect(markup).toContain("Dänemark 2026");
+    expect(markup).toContain("trophy:denmark:2026:gold.webp");
+    expect(markup).toContain('href="/events/event-1"');
+    expect(markup).toContain("31.07.2026");
   });
 });

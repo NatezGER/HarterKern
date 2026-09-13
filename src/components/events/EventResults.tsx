@@ -16,6 +16,7 @@ import { useMemo, useState } from "react";
 import { buildEventPlayerProgressions } from "@/services/playerProgressionOverlayService";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { getRankedPlayers } from "@/data/selectors";
+import { trophyCompetitionName } from "@/lib/trophyCompetitions";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -38,6 +39,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
     });
   }, [data.leaderboard, data.players, detail.participantStats]);
   const eventOverlays = useMemo(() => buildEventPlayerProgressions(detail.attempts, selectedPlayers), [detail.attempts, selectedPlayers]);
+  const competitionName = trophyCompetitionName(detail.trophyCompetitionKey, detail.trophyCompetitionYear);
   return (
     <div className="flex flex-col gap-6 sm:gap-8 lg:gap-10">
       <section className="panel relative order-1 overflow-hidden p-5 sm:p-10">
@@ -49,6 +51,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
             </span>
             {detail.isImportant && <span className="flex items-center gap-1 rounded-full border border-gold-400/25 bg-gold-400/[0.08] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-gold-300"><Star className="size-3" /> Wichtiges Event</span>}
             {detail.awardsTrophies && <span className="flex items-center gap-1 rounded-full border border-amber-300/25 bg-amber-300/[0.08] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200"><Trophy className="size-3" /> Trophäen-Event</span>}
+            {competitionName && <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">{competitionName}</span>}
           </div>
           <h1 className="display-title mt-4 text-4xl sm:text-6xl">{detail.name}</h1>
           <p className="mt-3 flex items-center gap-2 text-sm text-white/45"><CalendarDays className="size-4" /> {formatDate(detail.date)}</p>

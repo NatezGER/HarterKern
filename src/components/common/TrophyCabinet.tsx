@@ -7,6 +7,7 @@ import { formatDate } from "@/utils/format";
 import { Button } from "@/components/ui/button";
 import { AwardAssetImage } from "@/components/common/AwardAssetImage";
 import { trophyAssetIdForAward } from "@/lib/awardAssets";
+import { trophyCompetitionName } from "@/lib/trophyCompetitions";
 
 const trophyStyles = {
   gold: "from-yellow-100 via-yellow-400 to-amber-700 text-yellow-100",
@@ -31,12 +32,16 @@ export function TrophyCabinet({
       {trophies.map((trophy, index) => {
         const isSeasonTrophy = trophy.competitionType === "season";
         const isHistoricalTrophy = trophy.competitionType === "historical";
+        const displayCompetitionName = trophyCompetitionName(
+          trophy.competitionKey,
+          trophy.competitionYear,
+        ) ?? trophy.competitionName;
         const content = (
           <>
             <div data-trophy-artwork className="flex h-32 w-full items-center justify-center min-[375px]:h-36 sm:h-64 lg:h-72">
               <AwardAssetImage
                 assetId={trophyAssetIdForAward(trophy) ?? ""}
-                alt={isHistoricalTrophy ? trophy.competitionName : `${trophy.competitionName}, ${trophy.placement}. Platz`}
+                alt={isHistoricalTrophy ? trophy.competitionName : `${displayCompetitionName}, ${trophy.placement}. Platz`}
                 className="max-h-full max-w-full object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,.38)]"
                 fallback={<span className={cn(
                   "grid aspect-[3/4] h-24 place-items-center rounded-2xl bg-gradient-to-br shadow-xl min-[375px]:h-28 sm:h-44 sm:rounded-3xl",
@@ -49,7 +54,7 @@ export function TrophyCabinet({
             </p>
             {!isHistoricalTrophy && <>
               <p className="mt-1 break-words text-xs font-semibold leading-5 text-white/55 sm:mt-2 sm:text-sm">
-                {isSeasonTrophy ? `Saison ${trophy.year}` : trophy.competitionName}
+                {isSeasonTrophy ? `Saison ${trophy.year}` : displayCompetitionName}
               </p>
               <p className="mt-2 break-words text-[8px] uppercase tracking-[0.12em] text-white/30 sm:mt-3 sm:text-xs sm:tracking-[0.18em]">
                 {isSeasonTrophy ? "Karriere-Trophäe" : "Event-Trophäe"} · {formatDate(trophy.eventDate)}

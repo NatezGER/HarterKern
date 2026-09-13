@@ -93,6 +93,8 @@ export interface Database {
           description: string | null;
           is_important: boolean;
           awards_trophies: boolean;
+          trophy_competition_key: string | null;
+          trophy_competition_year: number | null;
           deleted_at: string | null;
           deleted_by: string | null;
         };
@@ -111,6 +113,8 @@ export interface Database {
           description?: string | null;
           is_important?: boolean;
           awards_trophies?: boolean;
+          trophy_competition_key?: string | null;
+          trophy_competition_year?: number | null;
           deleted_at?: string | null;
           deleted_by?: string | null;
         };
@@ -778,6 +782,27 @@ export interface Database {
           p_ends_at?: string | null;
           p_legacy_source_id?: string | null;
           p_awards_trophies?: boolean;
+        };
+        Returns: {
+          eventId: string;
+          participants: Array<{
+            clientId: string;
+            participantId: string;
+            kind: "permanent" | "guest";
+          }>;
+        };
+      };
+      sync_start_event_v4: {
+        Args: {
+          p_name: string | null;
+          p_start_date: string;
+          p_participants: import("@/types/dataPlatform").EventParticipantPayload[];
+          p_started_at?: string | null;
+          p_ends_at?: string | null;
+          p_legacy_source_id?: string | null;
+          p_awards_trophies?: boolean;
+          p_trophy_competition_key?: string | null;
+          p_trophy_competition_year?: number | null;
         };
         Returns: {
           eventId: string;
