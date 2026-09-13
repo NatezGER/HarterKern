@@ -10,6 +10,9 @@ import {
   calculateRageCagePoints,
   calculateTimeLegPoints,
   calculateTimeTrialPoints,
+  createDisciplineScoreboard,
+  createGolfScoreboard,
+  createTimeTrialTableRows,
   evaluateDisciplines,
   fillEmptyTeamSlots,
   fillEmptyTireSeeds,
@@ -20,7 +23,6 @@ import {
   normalizeGolfEntry,
   resolveTireBracket,
   teamSlices,
-  timeDeviation,
   validateTeamConfig,
   type HoleDefinition,
   type LastOneDrinkinState,
@@ -159,15 +161,47 @@ function KnifeEditor({ state, update }: EditorProps) {
   return <div><p className="mb-3 text-xs text-white/45">Punkte gemäß Turnierverlauf manuell eintragen.</p>{LOD_PLAYERS.map(({ id }) => <PlayerRow key={id} playerId={id} points={state.knife[id]}><NumberInput value={state.knife[id]} min={0} max={5} label={`${playerName(id)} manuelle Punkte`} onChange={(value) => update((next) => { next.knife[id] = value === null ? null : Math.min(5, Math.max(0, Math.floor(value))); })} /></PlayerRow>)}</div>;
 }
 
-const TIME_LEGS: Array<{ id: TimeLeg; label: string }> = [{ id: "fast", label: "2 Fast 2 Drink" }, { id: "blind", label: "Blind 10 Sekunden" }, { id: "visible", label: "Sichtbar 5 Sekunden" }];
-
 function TimeTrialEditor({ state, update }: EditorProps) {
   const overall = calculateTimeTrialPoints(state.timeTrial);
-  return <div className="space-y-5">{TIME_LEGS.map(({ id: leg, label }) => {
-    const values = Object.fromEntries(LOD_PLAYERS.map(({ id }) => [id, state.timeTrial.values[id][leg]]));
-    const evaluation = calculateTimeLegPoints(values, leg, state.timeTrial.manualLegPoints[leg]);
-    return <section key={leg}><h5 className="mb-2 text-xs font-black uppercase text-white/55">{label}</h5>{LOD_PLAYERS.map(({ id }) => <PlayerRow key={id} playerId={id} points={evaluation.points[id]}><div className="grid grid-cols-[1fr_auto] items-center gap-2"><NumberInput value={state.timeTrial.values[id][leg]} min={0} step={0.01} label={`${playerName(id)} ${label}`} onChange={(value) => update((next) => { next.timeTrial.values[id][leg] = value === null ? null : Math.max(0, value); })} /><span className="w-12 text-right text-[10px] text-white/35">{state.timeTrial.values[id][leg] === null ? "–" : timeDeviation(leg, state.timeTrial.values[id][leg]!).toFixed(2)}</span></div>{evaluation.ties.includes(id) && <NumberInput value={state.timeTrial.manualLegPoints[leg][id]} min={0} max={10} label={`${playerName(id)} manuelle Teilpunkte bei Gleichstand`} onChange={(value) => update((next) => { next.timeTrial.manualLegPoints[leg][id] = value === null ? null : Math.min(10, Math.max(0, Math.floor(value))); })} />}</PlayerRow>)}</section>;
-  })}{overall.totalTies.length > 0 && <section className="rounded-xl bg-amber-400/10 p-3"><p className="mb-2 text-xs text-amber-200">Gleichstand in der Gesamtwertung: Spielpunkte 0–5 manuell auflösen.</p>{overall.totalTies.map((id) => <PlayerRow key={id} playerId={id}><NumberInput value={state.timeTrial.manualFinalPoints[id]} min={0} max={5} label={`${playerName(id)} manuelle Gesamtpunkte Zeit-Dreikampf`} onChange={(value) => update((next) => { next.timeTrial.manualFinalPoints[id] = value === null ? null : Math.min(5, Math.max(0, Math.floor(value))); })} /></PlayerRow>)}</section>}</div>;
+  const rows = createTimeTrialTableRows(state.timeTrial);
+  const legs = (["fast", "blind", "visible"] as TimeLeg[]);
+  const evaluations = Object.fromEntries(legs.map((leg) => [leg, calculateTimeLegPoints(
+    Object.fromEntries(LOD_PLAYERS.map(({ id }) => [id, state.timeTrial.values[id][leg]])),
+    leg,
+    state.timeTrial.manualLegPoints[leg],
+  )])) as Record<TimeLeg, ReturnType<typeof calculateTimeLegPoints>>;
+  const updateRaw = (playerId: string, leg: TimeLeg, value: number | null) => update((next) => {
+    next.timeTrial.values[playerId][leg] = value === null ? null : Math.max(0, value);
+  });
+  const placementCell = (playerId: string, leg: TimeLeg, placement: number | null) => (
+    <div className="min-w-16 text-center">
+      <span className="font-bold">{placement ?? (evaluations[leg].ties.includes(playerId) ? "Tie" : "–")}</span>
+      {evaluations[leg].ties.includes(playerId) && (
+        <input
+          className="mt-1 h-8 w-14 rounded-lg border border-amber-300/25 bg-black/30 px-1 text-center text-xs outline-none focus:border-gold-400"
+          type="number"
+          min="0"
+          max="10"
+          aria-label={`${playerName(playerId)} manuelle Teilpunkte ${leg}`}
+          placeholder="Pkt."
+          value={state.timeTrial.manualLegPoints[leg][playerId] ?? ""}
+          onChange={(event) => update((next) => { next.timeTrial.manualLegPoints[leg][playerId] = event.target.value === "" ? null : Math.min(10, Math.max(0, Math.floor(Number(event.target.value)))); })}
+        />
+      )}
+    </div>
+  );
+  return (
+    <div className="space-y-5">
+      <div className="overflow-x-auto rounded-2xl border border-white/[0.08]">
+        <table className="w-full min-w-[980px] border-collapse text-xs">
+          <thead className="bg-black/35 text-[10px] uppercase tracking-wide text-white/45"><tr><th className="sticky left-0 z-10 min-w-28 bg-[#121312] px-3 py-3 text-left">Spieler</th><th className="min-w-28 px-2">2F2D Zeit</th><th className="min-w-28 px-2">Blind 10 s</th><th className="min-w-28 px-2">Sichtbar 5 s</th><th className="px-2">Platz A</th><th className="px-2">Platz B</th><th className="px-2">Platz C</th><th className="px-2">Intern</th><th className="px-2">Disziplin</th></tr></thead>
+          <tbody>{rows.slice().sort((a, b) => LOD_PLAYERS.findIndex(({ id }) => id === a.playerId) - LOD_PLAYERS.findIndex(({ id }) => id === b.playerId)).map((row) => <tr key={row.playerId} className="border-t border-white/[0.06]"><th className="sticky left-0 z-10 bg-[#101110] px-3 py-2 text-left font-semibold">{row.name}</th>{legs.map((leg) => <td key={leg} className="p-1.5"><NumberInput value={row.raw[leg]} min={0} step={0.01} label={`${row.name} ${leg}`} onChange={(value) => updateRaw(row.playerId, leg, value)} /></td>)}{legs.map((leg) => <td key={leg} className="px-2 py-2 text-center">{placementCell(row.playerId, leg, row.placements[leg])}</td>)}<td className="px-2 text-center font-black text-white">{row.internalTotal ?? "offen"}</td><td className="px-2 text-center font-black text-gold-300">{overall.totalTies.includes(row.playerId) ? <NumberInput value={state.timeTrial.manualFinalPoints[row.playerId]} min={0} max={5} label={`${row.name} manuelle Disziplinpunkte`} onChange={(value) => update((next) => { next.timeTrial.manualFinalPoints[row.playerId] = value === null ? null : Math.min(5, Math.max(0, Math.floor(value))); })} /> : row.disciplinePoints ?? "offen"}</td></tr>)}</tbody>
+        </table>
+      </div>
+      {(Object.values(evaluations).some(({ ties }) => ties.length > 0) || overall.totalTies.length > 0) && <p className="rounded-xl bg-amber-400/10 p-3 text-xs text-amber-200">Gleichstände bleiben offen und werden weiterhin über die vorhandenen manuellen Punktefelder aufgelöst.</p>}
+      <section><h5 className="mb-2 text-xs font-black uppercase tracking-[0.14em] text-white/55">Ranking Zeit-Dreikampf</h5><div className="overflow-x-auto rounded-xl border border-white/[0.08]"><table className="w-full min-w-[430px] text-xs"><thead className="bg-black/30 text-white/40"><tr><th className="px-3 py-2 text-center">Rang</th><th className="px-3 text-left">Spieler</th><th className="px-3 text-center">Intern</th><th className="px-3 text-center">Disziplin</th></tr></thead><tbody>{rows.map((row) => <tr key={row.playerId} className="border-t border-white/[0.06]"><td className="px-3 py-2 text-center font-bold">{row.rank ?? "–"}</td><td className="px-3 font-semibold">{row.name}</td><td className="px-3 text-center">{row.internalTotal ?? "offen"}</td><td className="px-3 text-center font-black text-gold-300">{row.disciplinePoints ?? "offen"}</td></tr>)}</tbody></table></div></section>
+    </div>
+  );
 }
 
 function ImpactEditor({ state, update }: EditorProps) {
@@ -217,7 +251,10 @@ function FinalEditor({ state, update }: EditorProps) {
 }
 
 function Standings({ state }: { state: LastOneDrinkinState }) {
-  return <section id="lod-ranking" className="scroll-mt-40"><div className="mb-4"><p className="text-xs font-black uppercase tracking-[0.18em] text-gold-400">Live</p><h3 className="display-title mt-1 text-3xl">Aktueller Gesamtstand</h3></div><div className="space-y-2">{calculateOverallStandings(state).map((row) => <article key={row.playerId} className="panel p-4"><div className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-full bg-gold-400/12 font-display text-xl font-black text-gold-300">{row.rank}</span><span className="min-w-0 flex-1 font-bold">{row.name}</span><span className="font-display text-2xl font-black text-gold-300">{row.total}</span></div><div className="mt-3 grid grid-cols-4 gap-1 border-t border-white/[0.07] pt-3 text-center text-xs"><div><span className="block text-white/35">Golf</span><b>{row.golf}{row.openGolf ? "*" : ""}</b></div><div><span className="block text-white/35">Spiele</span><b>{row.disciplines}{row.openDisciplines ? "*" : ""}</b></div><div><span className="block text-white/35">Finale</span><b>{row.final}{row.finalOpen ? "*" : ""}</b></div><div><span className="block text-white/35">Gesamt</span><b>{row.total}</b></div></div>{(row.openGolf > 0 || row.openDisciplines > 0 || row.finalOpen) && <p className="mt-2 text-[10px] text-white/30">* noch offene Eingaben werden aktuell als 0 gerechnet</p>}</article>)}</div></section>;
+  const disciplineRows = createDisciplineScoreboard(state);
+  const golfRows = createGolfScoreboard(state);
+  const scoreboard = (title: string, prefix: string, rows: ReturnType<typeof createGolfScoreboard>) => <section><h3 className="display-title mb-3 text-2xl">{title}</h3><div className="overflow-x-auto rounded-2xl border border-white/[0.08]"><table className="w-full min-w-[850px] text-xs"><thead className="bg-black/35 text-[10px] uppercase text-white/45"><tr><th className="sticky left-0 z-10 min-w-28 bg-[#121312] px-3 py-3 text-left">Spieler</th>{HOLES.map(({ id }) => <th key={id} className="w-12 px-2 text-center">{prefix} {id}</th>)}<th className="min-w-16 px-2 text-center">Summe</th></tr></thead><tbody>{rows.map((row) => <tr key={row.playerId} className="border-t border-white/[0.06]"><th className="sticky left-0 z-10 bg-[#101110] px-3 py-3 text-left font-semibold">{row.name}</th>{row.cells.map((cell, index) => <td key={index} className={`px-2 py-3 text-center font-bold ${cell.open ? "text-white/30" : "text-white"}`}><span>{cell.points}</span>{cell.open && <span className="ml-0.5 text-[9px]" aria-label="offen">*</span>}</td>)}<td className="px-2 text-center font-black text-gold-300">{row.sum}</td></tr>)}</tbody></table></div><p className="mt-2 text-[10px] text-white/35">* Eingabe noch offen; angezeigte Punkte sind der aktuelle Zwischenstand.</p></section>;
+  return <section id="lod-ranking" className="scroll-mt-40 space-y-8"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-gold-400">Live</p><h2 className="display-title mt-1 text-3xl">Scoreboards & Gesamtstand</h2></div>{scoreboard("Disziplinen 1–11", "D", disciplineRows)}{scoreboard("Beer-Golf-Kurs", "B", golfRows)}<section><h3 className="display-title mb-4 text-3xl">Aktueller Gesamtstand</h3><div className="space-y-2">{calculateOverallStandings(state).map((row) => <article key={row.playerId} className="panel p-4"><div className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-full bg-gold-400/12 font-display text-xl font-black text-gold-300">{row.rank}</span><span className="min-w-0 flex-1 font-bold">{row.name}</span><span className="font-display text-2xl font-black text-gold-300">{row.total}</span></div><div className="mt-3 grid grid-cols-4 gap-1 border-t border-white/[0.07] pt-3 text-center text-xs"><div><span className="block text-white/35">Golf</span><b>{row.golf}{row.openGolf ? "*" : ""}</b></div><div><span className="block text-white/35">Spiele</span><b>{row.disciplines}{row.openDisciplines ? "*" : ""}</b></div><div><span className="block text-white/35">Finale</span><b>{row.final}{row.finalOpen ? "*" : ""}</b></div><div><span className="block text-white/35">Gesamt</span><b>{row.total}</b></div></div>{(row.openGolf > 0 || row.openDisciplines > 0 || row.finalOpen) && <p className="mt-2 text-[10px] text-white/30">* noch offene Eingaben werden aktuell als 0 gerechnet</p>}</article>)}</div></section></section>;
 }
 
 export function LastOneDrinkinAdmin() {

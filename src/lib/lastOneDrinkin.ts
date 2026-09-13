@@ -331,6 +331,48 @@ export function calculateTimeTrialPoints(state: LastOneDrinkinState["timeTrial"]
   return { points, totalTies };
 }
 
+export interface TimeTrialTableRow {
+  rank: number | null;
+  playerId: LodPlayerId;
+  name: string;
+  raw: Record<TimeLeg, number | null>;
+  placements: Record<TimeLeg, number | null>;
+  internalTotal: number | null;
+  disciplinePoints: number | null;
+}
+
+export function createTimeTrialTableRows(state: LastOneDrinkinState["timeTrial"]): TimeTrialTableRow[] {
+  const legEvaluations = Object.fromEntries((["fast", "blind", "visible"] as TimeLeg[]).map((leg) => [leg, calculateTimeLegPoints(
+    Object.fromEntries(LOD_PLAYERS.map(({ id }) => [id, state.values[id][leg]])), leg, state.manualLegPoints[leg],
+  )])) as Record<TimeLeg, ReturnType<typeof calculateTimeLegPoints>>;
+  const discipline = calculateTimeTrialPoints(state);
+  const rows = LOD_PLAYERS.map(({ id, name }) => {
+    const legPoints = (["fast", "blind", "visible"] as TimeLeg[]).map((leg) => legEvaluations[leg].points[id]);
+    const internalTotal = legPoints.every((value) => value !== null)
+      ? legPoints.reduce<number>((sum, value) => sum + (value ?? 0), 0)
+      : null;
+    return {
+      rank: null,
+      playerId: id,
+      name,
+      raw: { ...state.values[id] },
+      placements: Object.fromEntries((["fast", "blind", "visible"] as TimeLeg[]).map((leg) => {
+        const points = legEvaluations[leg].points[id];
+        return [leg, points === null ? null : 11 - points];
+      })) as Record<TimeLeg, number | null>,
+      internalTotal,
+      disciplinePoints: discipline.points[id],
+    };
+  }).sort((a, b) => (b.internalTotal ?? -1) - (a.internalTotal ?? -1));
+
+  let rank = 0;
+  return rows.map((row, index) => {
+    if (row.internalTotal === null) return row;
+    if (index === 0 || row.internalTotal !== rows[index - 1].internalTotal) rank = index + 1;
+    return { ...row, rank };
+  });
+}
+
 export function calculateImpactPoints(state: LastOneDrinkinState["impact"]): Record<LodPlayerId, number | null> {
   const rounds = [...new Set(LOD_PLAYERS
     .filter(({ id }) => id !== state.winner)
@@ -381,6 +423,30 @@ export function evaluateDisciplines(state: LastOneDrinkinState): Record<HoleId, 
 }
 
 export interface LodStanding { rank: number; playerId: LodPlayerId; name: string; golf: number; disciplines: number; final: number; total: number; openGolf: number; openDisciplines: number; finalOpen: boolean }
+
+export interface ScoreboardCell { points: number; open: boolean }
+export interface ScoreboardRow { playerId: LodPlayerId; name: string; cells: ScoreboardCell[]; sum: number }
+
+export function createDisciplineScoreboard(state: LastOneDrinkinState): ScoreboardRow[] {
+  const evaluations = evaluateDisciplines(state);
+  return LOD_PLAYERS.map(({ id, name }) => {
+    const cells = HOLES.map(({ id: holeId }) => ({
+      points: evaluations[holeId].points[id] ?? 0,
+      open: evaluations[holeId].points[id] === null || evaluations[holeId].completed < evaluations[holeId].total,
+    }));
+    return { playerId: id, name, cells, sum: cells.reduce((sum, cell) => sum + cell.points, 0) };
+  });
+}
+
+export function createGolfScoreboard(state: LastOneDrinkinState): ScoreboardRow[] {
+  return LOD_PLAYERS.map(({ id, name }) => {
+    const cells = HOLES.map(({ id: holeId, par }) => {
+      const value = calculateGolfPoints(par, state.golf[holeId][id]);
+      return { points: value ?? 0, open: value === null };
+    });
+    return { playerId: id, name, cells, sum: cells.reduce((sum, cell) => sum + cell.points, 0) };
+  });
+}
 
 export function calculateOverallStandings(state: LastOneDrinkinState): LodStanding[] {
   const disciplines = evaluateDisciplines(state);

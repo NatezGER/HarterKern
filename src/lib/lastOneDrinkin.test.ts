@@ -16,6 +16,9 @@ import {
   calculateTimeTrialPoints,
   calculateTirePoints,
   createInitialLastOneDrinkinState,
+  createDisciplineScoreboard,
+  createGolfScoreboard,
+  createTimeTrialTableRows,
   fillEmptyTeamSlots,
   fillEmptyTireSeeds,
   flipFlopMatches,
@@ -207,5 +210,57 @@ describe("overall standings", () => {
     expect(rows[0]).toMatchObject({ playerId: ids[0], golf: 3, disciplines: 10, final: 8, total: 21, rank: 1 });
     expect(rows[1].rank).toBe(2);
     expect(rows[2].rank).toBe(2);
+  });
+
+  it("builds complete discipline and golf scoreboards while preserving open cells", () => {
+    const state = createInitialLastOneDrinkinState();
+    state.golf[1][ids[0]] = { strokes: 1, holed: true, failed: false };
+    state.beerPong[ids[0]] = 7;
+    const disciplines = createDisciplineScoreboard(state);
+    const golf = createGolfScoreboard(state);
+    expect(disciplines).toHaveLength(11);
+    expect(golf).toHaveLength(11);
+    expect(disciplines.every(({ cells }) => cells.length === 11)).toBe(true);
+    expect(golf.every(({ cells }) => cells.length === 11)).toBe(true);
+    expect(disciplines[0].cells[4]).toEqual({ points: 7, open: true });
+    expect(disciplines[0].sum).toBe(disciplines[0].cells.reduce((sum, cell) => sum + cell.points, 0));
+    expect(golf[0].cells[0]).toEqual({ points: 3, open: false });
+    expect(golf[0].cells[1]).toEqual({ points: 0, open: true });
+    expect(golf[0].sum).toBe(3);
+  });
+});
+
+describe("time trial table", () => {
+  it("contains all raw values, placements, internal totals and final discipline points", () => {
+    const state = createInitialLastOneDrinkinState();
+    ids.forEach((id, index) => {
+      state.timeTrial.values[id] = {
+        fast: index + 1,
+        blind: 10 + (index + 1) / 10,
+        visible: 5 + (index + 1) / 10,
+      };
+    });
+    const rows = createTimeTrialTableRows(state.timeTrial);
+    expect(rows).toHaveLength(11);
+    expect(rows[0]).toMatchObject({
+      playerId: ids[0],
+      rank: 1,
+      raw: { fast: 1, blind: 10.1, visible: 5.1 },
+      placements: { fast: 1, blind: 1, visible: 1 },
+      internalTotal: 30,
+      disciplinePoints: 5,
+    });
+    expect(rows[10]).toMatchObject({ rank: 11, internalTotal: 0, disciplinePoints: 0 });
+    expect(rows.map(({ internalTotal }) => internalTotal)).toEqual([...rows.map(({ internalTotal }) => internalTotal)].sort((a, b) => (b ?? -1) - (a ?? -1)));
+  });
+
+  it("keeps unresolved tied placements and totals visibly open", () => {
+    const state = createInitialLastOneDrinkinState();
+    state.timeTrial.values[ids[0]].fast = 1;
+    state.timeTrial.values[ids[1]].fast = 1;
+    const rows = createTimeTrialTableRows(state.timeTrial);
+    const tied = rows.filter(({ playerId }) => [ids[0], ids[1]].includes(playerId));
+    expect(tied.every(({ placements }) => placements.fast === null)).toBe(true);
+    expect(tied.every(({ internalTotal, disciplinePoints }) => internalTotal === null && disciplinePoints === null)).toBe(true);
   });
 });
