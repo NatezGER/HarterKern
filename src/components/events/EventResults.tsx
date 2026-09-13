@@ -18,6 +18,7 @@ import { buildEventPlayerProgressions } from "@/services/playerProgressionOverla
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { getRankedPlayers } from "@/data/selectors";
 import { trophyCompetitionName } from "@/lib/trophyCompetitions";
+import { TrophyEventSpecialStats } from "@/components/events/TrophyEventSpecialStats";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -96,6 +97,13 @@ export function EventResults({ detail }: { detail: EventDetail }) {
           })}
         </div>
       </section>}
+
+      {isClosedTrophyEvent && <TrophyEventSpecialStats
+        className="order-4"
+        data={detail.trophySpecialStats}
+        loading={Boolean(detail.extras?.loading)}
+        error={detail.extras?.errors.trophySpecialStats ?? ""}
+      />}
 
       {!isClosedTrophyEvent && detail.trophies.length > 0 && <section className="order-4"><h2 className="display-title mb-4 text-2xl sm:text-3xl">Vergebene Trophäen</h2><TrophyCabinet trophies={detail.trophies} mobileLimit={3} /></section>}
       {!isClosedTrophyEvent && detail.extras?.errors.trophies && <OptionalEventSectionError className="order-4" message={detail.extras.errors.trophies} />}

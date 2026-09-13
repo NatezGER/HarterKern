@@ -8,6 +8,7 @@ import {
   TROPHY_ASSET_DEFINITIONS,
   trophyAssetId,
   trophyAssetIdForAward,
+  trophyCompetitionAssetId,
 } from "@/lib/awardAssets";
 
 describe("award asset identity and fallback", () => {
@@ -68,6 +69,13 @@ describe("award asset identity and fallback", () => {
         tier,
       })).toBe(`trophy:denmark:2026:${tier}`);
     }
+  });
+
+  it("resolves archive markers through the competition registry without a generic fake", () => {
+    expect(trophyCompetitionAssetId("denmark", 2026, "gold"))
+      .toBe("trophy:denmark:2026:gold");
+    expect(trophyCompetitionAssetId("future", 2030, "gold")).toBeNull();
+    expect(trophyCompetitionAssetId(null, null, "gold")).toBeNull();
   });
 
   it("keeps normal and special badge variants distinct", () => {

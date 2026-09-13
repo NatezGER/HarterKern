@@ -76,11 +76,18 @@ export function trophyAssetIdForAward(trophy: {
     : trophy.competitionType === "season"
     ? trophySlotAssetId("season", trophy.year, trophy.tier)
     : trophy.competitionKey && trophy.competitionYear
-      ? (() => {
-        const assetId = `trophy:${trophy.competitionKey}:${trophy.competitionYear}:${trophy.tier}`;
-        return isTrophySlotAssetId(assetId) ? assetId : null;
-      })()
+      ? trophyCompetitionAssetId(trophy.competitionKey, trophy.competitionYear, trophy.tier)
       : null;
+}
+
+export function trophyCompetitionAssetId(
+  competitionKey: string | null,
+  competitionYear: number | null,
+  tier: TrophyTier,
+) {
+  if (!competitionKey || !competitionYear) return null;
+  const assetId = `trophy:${competitionKey}:${competitionYear}:${tier}`;
+  return isTrophySlotAssetId(assetId) ? assetId : null;
 }
 
 export function awardAssetType(assetId: string): AwardAssetType | null {

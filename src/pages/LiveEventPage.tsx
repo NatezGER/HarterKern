@@ -9,12 +9,15 @@ import { LiveEventContentOrder } from "@/components/events/LiveEventContentOrder
 import { LiveLeadProgression } from "@/components/events/LiveLeadProgression";
 import { LiveLeaderboard } from "@/components/events/LiveLeaderboard";
 import { LiveParticipantManager } from "@/components/events/LiveParticipantManager";
+import { TrophyEventSpecialStats } from "@/components/events/TrophyEventSpecialStats";
 import { ParticipantCard } from "@/components/events/ParticipantCard";
 import { StartEventPanel } from "@/components/events/StartEventPanel";
 import { TimeEntrySheet } from "@/components/events/TimeEntrySheet";
 import { Button } from "@/components/ui/button";
 import { DataState } from "@/components/common/DataState";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
+import { useDataGroup } from "@/hooks/useDataPlatform";
+import { useTrophyEventSpecialStats } from "@/hooks/useTrophyEventSpecialStats";
 import { usePublicData } from "@/hooks/usePublicData";
 import {
   getLiveStandings,
@@ -46,6 +49,12 @@ export function LiveEventPage() {
     leaderboardTransitionReady,
     completeLeaderboardTransition,
   } = useLiveEvent();
+  const { version: liveVersion } = useDataGroup("live");
+  const trophyStats = useTrophyEventSpecialStats(
+    activeEvent?.id ?? "",
+    Boolean(activeEvent?.awardsTrophies),
+    liveVersion,
+  );
   const [selected, setSelected] = useState<LiveStanding | null>(null);
   const [saved, setSaved] = useState<{ id: string; result: "time" | "dns" } | null>(null);
   const [endOpen, setEndOpen] = useState(false);
@@ -187,6 +196,7 @@ export function LiveEventPage() {
             }}
           />
         </div>}
+        specialStats={activeEvent.awardsTrophies ? <TrophyEventSpecialStats {...trophyStats} /> : null}
         attemptEntry={<section>
           <h2 className="display-title mb-4 text-3xl sm:mb-5">Versuch hinzufügen</h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">

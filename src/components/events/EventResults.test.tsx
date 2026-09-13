@@ -59,7 +59,7 @@ const detail: EventDetail = {
     attempt("player-3", "2026-08-20T23:10:00Z", 300),
     attempt("dnf", "2026-08-21T01:00:00Z", null, true),
   ],
-  badges: [], photos: [], attemptNumbers: [], trophies: [],
+  badges: [], photos: [], attemptNumbers: [], trophies: [], trophySpecialStats: null,
   extras: { loading: false, errors: {} },
 };
 
@@ -176,5 +176,44 @@ describe("EventResults polish", () => {
     expect(markup).toContain("sm:grid-cols-3");
     expect(markup).toContain("order-1");
     expect(markup).toContain("sm:order-2");
+  });
+
+  it("shows historical Trophy special stats after the final standings", () => {
+    const markup = renderToStaticMarkup(
+      <MemoryRouter><EventResults detail={{
+        ...detail,
+        awardsTrophies: true,
+        trophyCompetitionKey: "denmark",
+        trophyCompetitionYear: 2026,
+        trophySpecialStats: {
+          eventId: detail.id,
+          eventName: detail.name,
+          mostWanted: {
+            endings: [], reached: 1, total: 100, percent: 1, openEndings: [],
+            mostCommonEnding: 42, mostCommonHits: 2, rarestAchievedEndings: [42],
+            topHunters: [],
+          },
+          metrics: {
+            bingoLines: 0, distinctEndings: 1, snapEndings: 0,
+            matchingTimeParticipantCount: 1, matchingTimeHundredths: 342,
+            matchingTimeParticipantNames: ["Paul"], validAttempts: 2,
+            mostCommonEnding: 42, mostCommonEndingHits: 2,
+          },
+        },
+        extras: { loading: false, errors: {} },
+      }} /></MemoryRouter>,
+    );
+    expect(markup).toContain("data-trophy-event-special-stats");
+    expect(markup).toContain("Event-Meilensteine");
+    expect(markup.indexOf("Finale Bestenliste"))
+      .toBeLessThan(markup.indexOf("Event-Jagd"));
+  });
+
+  it("does not show special stats for a normal event", () => {
+    const markup = renderToStaticMarkup(
+      <MemoryRouter><EventResults detail={detail} /></MemoryRouter>,
+    );
+    expect(markup).not.toContain("data-trophy-event-special-stats");
+    expect(markup).not.toContain("Event-Meilensteine");
   });
 });

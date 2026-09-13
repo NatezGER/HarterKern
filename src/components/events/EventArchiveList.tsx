@@ -1,5 +1,8 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { AwardAssetImage } from "@/components/common/AwardAssetImage";
+import { trophyCompetitionAssetId } from "@/lib/awardAssets";
+import { trophyCompetitionName } from "@/lib/trophyCompetitions";
 import type { Event } from "@/types";
 import { formatDate, formatTime } from "@/utils/format";
 
@@ -14,7 +17,26 @@ export function EventArchiveList({ events, emptyLabel }: { events: Event[]; empt
       className="panel group grid min-w-0 gap-4 overflow-hidden p-5 transition hover:border-gold-400/25 sm:grid-cols-[minmax(0,1fr)_repeat(4,auto)_auto] sm:items-center sm:gap-7"
     >
       <div className="min-w-0">
-        <p className="truncate font-display text-xl font-black uppercase">{event.title}</p>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <p className="truncate font-display text-xl font-black uppercase">{event.title}</p>
+          {event.awardsTrophies && trophyCompetitionAssetId(
+            event.trophyCompetitionKey,
+            event.trophyCompetitionYear,
+            "gold",
+          ) && <AwardAssetImage
+            assetId={trophyCompetitionAssetId(
+              event.trophyCompetitionKey,
+              event.trophyCompetitionYear,
+              "gold",
+            ) ?? ""}
+            alt={`Trophy Event · ${trophyCompetitionName(
+              event.trophyCompetitionKey,
+              event.trophyCompetitionYear,
+            ) ?? "Competition"}`}
+            className="size-4 shrink-0"
+            fallback={null}
+          />}
+        </div>
         <p className="mt-1 text-xs text-white/35">{formatDate(event.date)}</p>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:contents">

@@ -1,7 +1,6 @@
 import { Check, Crosshair, LockKeyhole, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
-import { selectionAfterSeasonChange } from "@/components/stats/mostWantedSelection";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import type { MostWantedEnding, MostWantedSnapshot } from "@/types";
@@ -10,31 +9,33 @@ import { ALL_TIME_SEASON } from "@/lib/season";
 import type { SeasonSelection } from "@/lib/season";
 import { mostWantedProgressPercent } from "@/lib/mostWantedProgress";
 
-export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
+export function MostWantedMatrix({ data, season = ALL_TIME_SEASON, eventScope }: {
   data: MostWantedSnapshot;
   season?: SeasonSelection;
+  eventScope?: { eventId: string; eventName: string };
 }) {
   const progressPercent = mostWantedProgressPercent(data.reached, data.total);
   const [selected, setSelected] = useState<MostWantedEnding | null>(null);
-  const selectedSeason = useRef(season);
-  const visibleSelected = selectedSeason.current === season ? selected : null;
+  const scopeKey = eventScope ? `event:${eventScope.eventId}` : `season:${season}`;
+  const selectedScope = useRef(scopeKey);
+  const visibleSelected = selectedScope.current === scopeKey ? selected : null;
   useEffect(() => {
-    setSelected((current) => selectionAfterSeasonChange(
-      current, selectedSeason.current, season,
-    ));
-    selectedSeason.current = season;
-  }, [season]);
+    setSelected((current) => selectedScope.current === scopeKey ? current : null);
+    selectedScope.current = scopeKey;
+  }, [scopeKey]);
   return (
     <div className="panel overflow-hidden p-4 sm:p-7">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className={cn("text-xs font-black uppercase tracking-[0.2em]",
             season === ALL_TIME_SEASON ? "text-gold-300" : "text-emerald-300")}>
-            {season === ALL_TIME_SEASON ? "Liga-Jagd" : `Saison ${season}`}
+            {eventScope ? "Event-Jagd" : season === ALL_TIME_SEASON ? "Liga-Jagd" : `Saison ${season}`}
           </p>
           <h3 className="display-title mt-2 text-3xl sm:text-4xl">Most Wanted · 00–99</h3>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-white/45">
-            Jede Nachkommastellen-Kombination zählt einmal. Der erste offizielle Treffer verewigt den Finder.
+            {eventScope
+              ? `Nur gültige Versuche aus ${eventScope.eventName}. Der erste Treffer jeder Endung verewigt den Finder.`
+              : "Jede Nachkommastellen-Kombination zählt einmal. Der erste offizielle Treffer verewigt den Finder."}
           </p>
         </div>
         <p className={cn("font-display text-4xl font-black",
@@ -88,8 +89,8 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON }: {
         <ol className="mt-3 grid gap-2 sm:grid-cols-5">
           {data.topHunters.map((hunter, index) => <li key={hunter.id} className="flex min-w-0 items-center gap-2 rounded-xl bg-white/[0.035] px-3 py-2">
             <span className="w-4 text-[10px] font-black text-white/25">{index + 1}</span>
-            <ProfileAvatar id={hunter.playerId} name={hunter.playerName} url={hunter.avatarUrl} className="size-7" />
-            <span className="min-w-0 flex-1 truncate text-xs font-bold text-white/70">{hunter.playerName}</span>
+            <ProfileAvatar id={hunter.playerId ?? hunter.guestId ?? hunter.id} name={hunter.playerName} url={hunter.avatarUrl} className="size-7" />
+            <span className="min-w-0 flex-1 truncate text-xs font-bold text-white/70">{hunter.playerName}{hunter.isGuest ? " · Gast" : ""}</span>
             <strong className="font-display text-lg text-gold-300">{hunter.endingCount}</strong>
           </li>)}
         </ol>

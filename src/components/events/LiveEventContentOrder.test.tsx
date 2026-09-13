@@ -3,9 +3,10 @@ import { describe, expect, it } from "vitest";
 import { LiveEventContentOrder } from "@/components/events/LiveEventContentOrder";
 
 describe("LiveEventContentOrder", () => {
-  it("keeps attempt entry directly below the leaderboard and omits a WR block", () => {
+  it("places optional Trophy stats after the leaderboard and omits a WR block", () => {
     const markup = renderToStaticMarkup(<LiveEventContentOrder
       leaderboard={<div>Live-Rangliste</div>}
+      specialStats={<div>Trophy-Special-Stats</div>}
       attemptEntry={<div>Versuch hinzufügen</div>}
       leadStory={<div>Live-Führungsstory</div>}
       participantManagement={<div>Teilnehmerverwaltung</div>}
@@ -14,6 +15,7 @@ describe("LiveEventContentOrder", () => {
     />);
     const labels = [
       "Live-Rangliste",
+      "Trophy-Special-Stats",
       "Versuch hinzufügen",
       "Live-Führungsstory",
       "Teilnehmerverwaltung",

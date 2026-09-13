@@ -188,8 +188,10 @@ export async function getMostWantedSnapshot(
     topHunters: [...hunterEndings.entries()].map(([playerId, hunter]) => ({
       id: playerId,
       playerId,
+      guestId: null,
       playerName: hunter.name,
       avatarUrl: hunter.avatarUrl,
+      isGuest: false,
       endingCount: hunter.endings.size,
     })).sort((left, right) => right.endingCount - left.endingCount ||
       left.playerName.localeCompare(right.playerName, "de") ||

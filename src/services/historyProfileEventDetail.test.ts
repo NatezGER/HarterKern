@@ -140,6 +140,7 @@ describe("event detail loading", () => {
       badges: [],
       photos: [],
       trophies: [],
+      trophySpecialStats: null,
       extras: { loading: true, errors: {} },
     });
     expect(detail?.attempts.some(({ isGuest }) => isGuest)).toBe(true);
@@ -186,6 +187,7 @@ describe("event detail loading", () => {
       badges: [],
       photos: [],
       trophies: [],
+      trophySpecialStats: null,
       extras: { loading: false, errors: {} },
     });
     expect(mocks.from.mock.calls.map(([table]) => table)).not.toContain("event_photos");
@@ -230,6 +232,18 @@ describe("event detail loading", () => {
         loading: false,
         errors: { badges: "Badge-Unlocks konnten nicht geladen werden." },
       },
+    });
+  });
+
+  it("adds one bundled special-stat read only for Trophy Events", async () => {
+    mocks.from.mockReturnValue(query({ data: [], error: null }));
+    mocks.rpc.mockResolvedValue({ data: null, error: null });
+    await getEventDetailExtras(event.id, false);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    await getEventDetailExtras(event.id, true);
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+    expect(mocks.rpc).toHaveBeenCalledWith("get_trophy_event_special_stats", {
+      p_event_id: event.id,
     });
   });
 });

@@ -67,6 +67,20 @@ describe("MostWantedMatrix", () => {
     expect(season).toContain("Paul");
   });
 
+  it("reuses the full matrix for an event scope and marks guest hunters", () => {
+    const eventData = {
+      ...data,
+      topHunters: [{ ...data.topHunters[0], id: "guest:g1", playerId: null,
+        guestId: "g1", playerName: "Gast", isGuest: true }],
+    };
+    const markup = renderToStaticMarkup(<MostWantedMatrix data={eventData}
+      eventScope={{ eventId: "event-1", eventName: "Trophy Abend" }} />);
+    expect(markup).toContain("Event-Jagd");
+    expect(markup).toContain("Nur gültige Versuche aus Trophy Abend");
+    expect(markup).toContain("Gast · Gast");
+    expect(markup).toContain('role="grid"');
+  });
+
   it("derives the progress width from reached and total instead of the DB percent", () => {
     const markup = renderToStaticMarkup(<MostWantedMatrix data={{ ...data, reached: 24, percent: 100 }} />);
     expect(markup).toContain("width:24%");
