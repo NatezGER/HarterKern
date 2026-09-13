@@ -12,6 +12,7 @@ import { buildEventLeadProgression } from "@/lib/eventLeadProgression";
 import { PodiumMedal } from "@/components/common/PodiumMedal";
 import { cn } from "@/lib/cn";
 import { TrophyCabinet } from "@/components/common/TrophyCabinet";
+import { EventTrophyPodium } from "@/components/events/EventTrophyPodium";
 import { useMemo, useState } from "react";
 import { buildEventPlayerProgressions } from "@/services/playerProgressionOverlayService";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
@@ -40,6 +41,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
   }, [data.leaderboard, data.players, detail.participantStats]);
   const eventOverlays = useMemo(() => buildEventPlayerProgressions(detail.attempts, selectedPlayers), [detail.attempts, selectedPlayers]);
   const competitionName = trophyCompetitionName(detail.trophyCompetitionKey, detail.trophyCompetitionYear);
+  const isClosedTrophyEvent = detail.status === "closed" && detail.awardsTrophies;
   return (
     <div className="flex flex-col gap-6 sm:gap-8 lg:gap-10">
       <section className="panel relative order-1 overflow-hidden p-5 sm:p-10">
@@ -60,8 +62,18 @@ export function EventResults({ detail }: { detail: EventDetail }) {
       </section>
 
       <section className="order-2">
-        <h2 className="display-title mb-3 text-2xl sm:mb-5 sm:text-3xl">Podium</h2>
-        {podium.length ? (
+        <h2 className="display-title mb-3 text-2xl sm:mb-5 sm:text-3xl">
+          {isClosedTrophyEvent ? "Trophäen-Podium" : "Podium"}
+        </h2>
+        {isClosedTrophyEvent ? detail.trophies.length ? (
+          <EventTrophyPodium trophies={detail.trophies} standings={detail.finalStandings} />
+        ) : (
+          <div className="panel py-14 text-center text-sm text-white/40">
+            {detail.extras?.loading
+              ? "Trophäen werden nachgeladen …"
+              : detail.extras?.errors.trophies ?? "Keine Trophäen verfügbar."}
+          </div>
+        ) : podium.length ? (
           <div className="grid grid-cols-3 items-end gap-2 sm:gap-4">
             {podium.map((entry) => {
               const rank = entry.rank as 1 | 2 | 3;
@@ -85,8 +97,8 @@ export function EventResults({ detail }: { detail: EventDetail }) {
         </div>
       </section>}
 
-      {detail.trophies.length > 0 && <section className="order-4"><h2 className="display-title mb-4 text-2xl sm:text-3xl">Vergebene Trophäen</h2><TrophyCabinet trophies={detail.trophies} mobileLimit={3} /></section>}
-      {detail.extras?.errors.trophies && <OptionalEventSectionError className="order-4" message={detail.extras.errors.trophies} />}
+      {!isClosedTrophyEvent && detail.trophies.length > 0 && <section className="order-4"><h2 className="display-title mb-4 text-2xl sm:text-3xl">Vergebene Trophäen</h2><TrophyCabinet trophies={detail.trophies} mobileLimit={3} /></section>}
+      {!isClosedTrophyEvent && detail.extras?.errors.trophies && <OptionalEventSectionError className="order-4" message={detail.extras.errors.trophies} />}
 
       {detail.badges.length > 0 && <section className="order-5 lg:order-4"><h2 className="display-title mb-4 text-2xl sm:mb-5 sm:text-3xl">Freigeschaltet</h2><BadgeGallery badges={detail.badges} compact showPlayer /></section>}
       {detail.extras?.errors.badges && <OptionalEventSectionError className="order-5 lg:order-4" message={detail.extras.errors.badges} />}

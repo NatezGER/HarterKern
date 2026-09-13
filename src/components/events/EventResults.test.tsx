@@ -18,6 +18,10 @@ vi.mock("@/components/events/EventAttemptNumberChart", () => ({
 vi.mock("@/components/events/EventAttemptList", () => ({
   EventAttemptList: () => <div>Alle Versuche Inhalt</div>,
 }));
+vi.mock("@/components/common/AwardAssetImage", () => ({
+  AwardAssetImage: ({ assetId, alt }: { assetId: string; alt: string }) =>
+    <span data-award-asset-id={assetId}>{alt}</span>,
+}));
 
 import { EventResults } from "@/components/events/EventResults";
 
@@ -59,6 +63,30 @@ const detail: EventDetail = {
   extras: { loading: false, errors: {} },
 };
 
+const trophy = (
+  placement: 1 | 2 | 3,
+  playerId: string | null,
+  guestId: string | null,
+  playerName: string,
+): EventDetail["trophies"][number] => ({
+  key: `event-trophy:event-1:${playerId ?? `guest:${guestId}`}:${placement}`,
+  competitionType: "event",
+  scopeType: "event",
+  competitionId: "event-1",
+  seasonKey: null,
+  competitionName: "Finale",
+  year: 2026,
+  eventDate: "2026-08-20",
+  placement,
+  tier: placement === 1 ? "gold" : placement === 2 ? "silver" : "bronze",
+  competitionKey: "denmark",
+  competitionYear: 2026,
+  playerId,
+  guestId,
+  playerName,
+  awardedAt: "2026-08-21T08:00:00Z",
+});
+
 describe("EventResults polish", () => {
   it("uses valid-attempt visual bounds, omits photos and keeps attempts last", () => {
     const markup = renderToStaticMarkup(
@@ -99,5 +127,54 @@ describe("EventResults polish", () => {
     );
     expect(markup).toContain("Trophäen-Event");
     expect(markup).toContain("Dänemark 2026");
+  });
+
+  it("keeps the regular podium for a normal event", () => {
+    const markup = renderToStaticMarkup(
+      <MemoryRouter><EventResults detail={{
+        ...detail,
+        podium: [detail.finalStandings[0]],
+      }} /></MemoryRouter>,
+    );
+    expect(markup).toContain(">Podium</h2>");
+    expect(markup).not.toContain("Trophäen-Podium");
+    expect(markup).not.toContain("data-event-trophy-podium");
+  });
+
+  it("replaces the regular podium with the competition trophy podium", () => {
+    const markup = renderToStaticMarkup(
+      <MemoryRouter><EventResults detail={{
+        ...detail,
+        awardsTrophies: true,
+        trophyCompetitionKey: "denmark",
+        trophyCompetitionYear: 2026,
+        podium: [],
+        trophies: [
+          trophy(1, "player-1", null, "Paul"),
+          trophy(3, null, "guest-1", "Gast"),
+          trophy(2, "player-2", null, "Lars"),
+        ],
+        extras: { loading: false, errors: {} },
+      }} /></MemoryRouter>,
+    );
+    expect(markup).toContain("Trophäen-Podium");
+    expect(markup).toContain("data-event-trophy-podium");
+    expect(markup).not.toContain("Keine gültige Eventzeit vorhanden");
+    expect(markup).not.toContain("Vergebene Trophäen");
+
+    const silver = markup.indexOf("Lars, 2. Platz");
+    const gold = markup.indexOf("Paul, 1. Platz");
+    const bronze = markup.indexOf("Gast, 3. Platz");
+    expect(silver).toBeGreaterThan(-1);
+    expect(silver).toBeLessThan(gold);
+    expect(gold).toBeLessThan(bronze);
+    expect(markup).toContain('data-award-asset-id="trophy:denmark:2026:silver"');
+    expect(markup).toContain('data-award-asset-id="trophy:denmark:2026:gold"');
+    expect(markup).toContain('data-award-asset-id="trophy:denmark:2026:bronze"');
+    expect(markup).toContain("2,50 s");
+    expect(markup).toContain("grid-cols-1");
+    expect(markup).toContain("sm:grid-cols-3");
+    expect(markup).toContain("order-1");
+    expect(markup).toContain("sm:order-2");
   });
 });
