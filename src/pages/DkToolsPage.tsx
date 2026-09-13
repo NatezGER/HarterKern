@@ -3,8 +3,10 @@ import { ChevronDown, ChevronUp, Dices, ListOrdered, Play, RefreshCw, Swords, Tr
 import { PageHeader } from "@/components/common/PageHeader";
 import { DkTeamGrid } from "@/components/dk/DkTeamGrid";
 import { LeagueView, TournamentView } from "@/components/dk/DkGameViews";
+import { LastOneDrinkinAdmin } from "@/components/dk/LastOneDrinkinAdmin";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { useManagementMode } from "@/hooks/useManagementMode";
 import {
   createTournament,
   DK_CREW,
@@ -74,6 +76,7 @@ function ConfirmDialog({ intent, onCancel, onConfirm }: { intent: ResetIntent; o
 }
 
 export function DkToolsPage() {
+  const { unlocked } = useManagementMode();
   const [selected, setSelected] = useState<Set<string>>(() => new Set(DK_CREW));
   const [mode, setMode] = useState<MainMode>("order");
   const [structure, setStructure] = useState<TeamStructure>(2);
@@ -407,6 +410,8 @@ export function DkToolsPage() {
           onRedraw={() => setResetIntent("matches")}
         />
       )}
+
+      {unlocked && <LastOneDrinkinAdmin />}
 
       <ConfirmDialog intent={resetIntent} onCancel={() => setResetIntent(null)} onConfirm={confirmReset} />
     </div>
