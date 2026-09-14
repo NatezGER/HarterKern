@@ -12,6 +12,7 @@ import type {
   LiveParticipant,
   PostAttemptResult,
   RecordCelebration,
+  SnapEndingCelebration,
 } from "@/types/liveEvent";
 
 const hundredths = (seconds: number) => Math.round(seconds * 100);
@@ -153,11 +154,30 @@ export function recordCelebrationFor(result: PostAttemptResult): RecordCelebrati
   } : null;
 }
 
+export function snapEndingCelebrationFor(input: {
+  event: LiveEvent;
+  player: LiveParticipant;
+  attempt: LiveAttempt;
+}): SnapEndingCelebration | null {
+  const { event, player, attempt } = input;
+  if (event.status !== "active" || !event.awardsTrophies || attempt.result !== "time" ||
+    attempt.timeSeconds == null || !isEventEligibleLiveAttempt(attempt, player)) return null;
+  const ending = hundredths(attempt.timeSeconds) % 100;
+  if (ending % 11 !== 0) return null;
+  return {
+    attemptId: attempt.id,
+    playerName: player.name,
+    time: attempt.timeSeconds,
+  };
+}
+
 export function getPostAttemptSurface(input: {
+  snap?: SnapEndingCelebration | null;
   result: PostAttemptResult | null;
   record: RecordCelebration | null;
   badge: BadgeUnlockCelebration | null;
 }) {
+  if (input.snap) return "snap" as const;
   if (input.result) return "result" as const;
   if (input.record) return "record" as const;
   if (input.badge) return "badge" as const;

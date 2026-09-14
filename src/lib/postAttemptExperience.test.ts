@@ -4,6 +4,7 @@ import {
   getPostAttemptInitial,
   getPostAttemptSurface,
   recordCelebrationFor,
+  snapEndingCelebrationFor,
 } from "@/lib/postAttemptExperience";
 import type {
   BadgeUnlockCelebration,
@@ -141,8 +142,14 @@ describe("post-attempt presentation sequence", () => {
   };
   const attemptResult = result(1.9);
   const record = recordCelebrationFor(attemptResult);
+  const snap = snapEndingCelebrationFor({
+    event: { ...event, awardsTrophies: true },
+    player: before.players[0],
+    attempt: { ...before.attempts[0], id: "snap", playerId: "alice", timeSeconds: 3.33 },
+  });
 
   it("orders result, record and badge without competing surfaces", () => {
+    expect(getPostAttemptSurface({ snap, result: attemptResult, record, badge })).toBe("snap");
     expect(getPostAttemptSurface({ result: attemptResult, record, badge })).toBe("result");
     expect(getPostAttemptSurface({ result: null, record, badge })).toBe("record");
     expect(getPostAttemptSurface({ result: null, record: null, badge })).toBe("badge");
@@ -160,5 +167,46 @@ describe("post-attempt presentation sequence", () => {
     const remaining = queue.slice(1);
     expect(getPostAttemptSurface({ result: null, record: null, badge: remaining[0] })).toBe("badge");
     expect(remaining[0].key).toBe("badge-2");
+  });
+});
+
+describe("Trophy Event Schnapszahl celebration", () => {
+  const player = before.players[0];
+  const attempt = (timeSeconds?: number, result: "time" | "dns" = "time"): LiveAttempt => ({
+    id: `snap-${timeSeconds ?? result}`,
+    playerId: player.id,
+    eventId: event.id,
+    result,
+    timeSeconds: result === "time" ? timeSeconds : undefined,
+    date: event.date,
+    submittedAt: "2026-08-17T18:05:00Z",
+    outOfCompetition: false,
+  });
+
+  it.each([3.33, 2])("recognizes %.2f after a valid Trophy Event save", (time) => {
+    expect(snapEndingCelebrationFor({
+      event: { ...event, awardsTrophies: true }, player, attempt: attempt(time),
+    })).toMatchObject({ time, attemptId: `snap-${time}` });
+  });
+
+  it("ignores ordinary endings, normal events, DNF and invalid competitors", () => {
+    const trophyEvent = { ...event, awardsTrophies: true };
+    expect(snapEndingCelebrationFor({ event: trophyEvent, player, attempt: attempt(3.42) }))
+      .toBeNull();
+    expect(snapEndingCelebrationFor({ event, player, attempt: attempt(3.33) })).toBeNull();
+    expect(snapEndingCelebrationFor({ event: trophyEvent, player, attempt: attempt(undefined, "dns") }))
+      .toBeNull();
+    expect(snapEndingCelebrationFor({
+      event: trophyEvent,
+      player,
+      attempt: { ...attempt(3.33), outOfCompetition: true },
+    })).toBeNull();
+  });
+
+  it("uses the persisted attempt id as its one-shot identity", () => {
+    const value = snapEndingCelebrationFor({
+      event: { ...event, awardsTrophies: true }, player, attempt: attempt(4.44),
+    });
+    expect(value?.attemptId).toBe("snap-4.44");
   });
 });

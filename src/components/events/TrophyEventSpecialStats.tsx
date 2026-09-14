@@ -21,7 +21,7 @@ export function TrophyEventSpecialStats({ data, loading, error, className }: {
     </section>;
   }
   const families = buildTrophyEventMilestones(data.metrics);
-  return <div className={cn("space-y-6", className)} data-trophy-event-special-stats>
+  return <div className={cn("w-full min-w-0 space-y-6", className)} data-trophy-event-special-stats>
     <MostWantedMatrix
       data={data.mostWanted}
       eventScope={{ eventId: data.eventId, eventName: data.eventName }}

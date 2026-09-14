@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import { LiveEventContentOrder } from "@/components/events/LiveEventContentOrder";
 
 describe("LiveEventContentOrder", () => {
-  it("prioritizes attempt entry before leaderboard and Trophy stats", () => {
+  it("prioritizes entry, event header, leaderboard, and Trophy stats in that order", () => {
     const markup = renderToStaticMarkup(<LiveEventContentOrder
+      eventHeader={<div>Eventkopf / Live-Status</div>}
       leaderboard={<div>Live-Rangliste</div>}
       specialStats={<div>Trophy-Special-Stats</div>}
       attemptEntry={<div>Versuch hinzufügen</div>}
@@ -15,6 +16,7 @@ describe("LiveEventContentOrder", () => {
     />);
     const labels = [
       "Versuch hinzufügen",
+      "Eventkopf / Live-Status",
       "Live-Rangliste",
       "Trophy-Special-Stats",
       "Live-Führungsstory",
@@ -24,11 +26,12 @@ describe("LiveEventContentOrder", () => {
     ];
     expect(labels.map((label) => markup.indexOf(label)))
       .toEqual([...labels.map((label) => markup.indexOf(label))].sort((a, b) => a - b));
-    expect(markup).not.toContain("Offizieller Weltrekord");
+    expect(markup.match(/Versuch hinzufügen/g)).toHaveLength(1);
   });
 
-  it("also prioritizes attempt entry for a normal live event", () => {
+  it("keeps the same entry-first order for a normal live event", () => {
     const markup = renderToStaticMarkup(<LiveEventContentOrder
+      eventHeader={<div>Eventkopf / Live-Status</div>}
       leaderboard={<div>Live-Rangliste</div>}
       attemptEntry={<div>Versuch hinzufügen</div>}
       leadStory={<div>Live-Führungsstory</div>}
@@ -37,7 +40,10 @@ describe("LiveEventContentOrder", () => {
       endAction={<div>Event beenden</div>}
     />);
     expect(markup.indexOf("Versuch hinzufügen"))
+      .toBeLessThan(markup.indexOf("Eventkopf / Live-Status"));
+    expect(markup.indexOf("Eventkopf / Live-Status"))
       .toBeLessThan(markup.indexOf("Live-Rangliste"));
+    expect(markup.match(/Versuch hinzufügen/g)).toHaveLength(1);
     expect(markup).not.toContain("Trophy-Special-Stats");
   });
 });

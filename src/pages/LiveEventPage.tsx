@@ -181,8 +181,8 @@ export function LiveEventPage() {
 
   return (
     <div className="space-y-7 lg:space-y-10">
-      <LiveEventHeader event={activeEvent} attempts={attempts.length} />
       <LiveEventContentOrder
+        eventHeader={<LiveEventHeader event={activeEvent} attempts={attempts.length} />}
         leaderboard={<div ref={leaderboardRef} className="scroll-mt-28">
           <LiveLeaderboard
             standings={displayedStandings}

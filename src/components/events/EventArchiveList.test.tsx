@@ -54,6 +54,19 @@ describe("Event archive Trophy marker", () => {
     expect(markup).toContain("overflow-hidden p-5");
     expect(markup).toContain("grid-rows-[auto_auto]");
     expect(markup).toContain("row-span-2");
-    expect(markup).toContain("size-11 shrink-0 sm:size-12");
+    expect(markup).toContain("visible");
+    expect(markup).toContain("size-11 max-w-none shrink-0 self-center sm:size-12");
+  });
+
+  it.each([360, 390, 430])("keeps the Trophy asset visible and fixed-size at %ipx", () => {
+    const markup = render(event({
+      awardsTrophies: true,
+      trophyCompetitionKey: "denmark",
+      trophyCompetitionYear: 2026,
+    }));
+    expect(markup).toContain("visible");
+    expect(markup).toContain("size-11");
+    expect(markup).toContain("sm:size-12");
+    expect(markup).toContain("shrink-0");
   });
 });

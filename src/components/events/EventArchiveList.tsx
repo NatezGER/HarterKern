@@ -32,7 +32,7 @@ export function EventArchiveList({ events, emptyLabel }: { events: Event[]; empt
             event.trophyCompetitionKey,
             event.trophyCompetitionYear,
           ) ?? "Competition"}`}
-          className="col-start-2 row-span-2 row-start-1 size-11 shrink-0 sm:size-12"
+          className="visible col-start-2 row-span-2 row-start-1 block size-11 max-w-none shrink-0 self-center sm:size-12"
           fallback={null}
         />}
         <p className="mt-1 text-xs text-white/35">{formatDate(event.date)}</p>

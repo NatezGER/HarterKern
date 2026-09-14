@@ -12,9 +12,9 @@ const confetti = Array.from({ length: 14 }, (_, index) => ({
 }));
 
 export function RecordCelebration() {
-  const { celebration, postAttempt, dismissCelebration } = useLiveEvent();
+  const { celebration, postAttempt, snapEndingCelebration, dismissCelebration } = useLiveEvent();
   const reduced = useReducedMotion();
-  if (!celebration || postAttempt) return null;
+  if (!celebration || postAttempt || snapEndingCelebration) return null;
   const worldRecord = celebration.kind === "wr";
   const seasonRecord = celebration.kind === "season";
   return (
