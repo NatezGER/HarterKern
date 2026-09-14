@@ -20,6 +20,7 @@ import {
 import {
   derivePostAttemptResult,
   recordCelebrationFor,
+  snapEndingCelebrationFor,
 } from "@/lib/postAttemptExperience";
 import {
   addEventGuest,
@@ -47,6 +48,7 @@ import type {
   LiveLeaderboardTransition,
   StartLiveEventInput,
   StartLiveEventResult,
+  SnapEndingCelebration,
 } from "@/types/liveEvent";
 
 interface LiveEventContextValue {
@@ -55,6 +57,7 @@ interface LiveEventContextValue {
   celebration: RecordCelebration | null;
   badgeUnlock: BadgeUnlockCelebration | null;
   postAttempt: PostAttemptResult | null;
+  snapEndingCelebration: SnapEndingCelebration | null;
   leaderboardTransition: LiveLeaderboardTransition | null;
   leaderboardTransitionReady: boolean;
   mutationError: string | null;
@@ -79,6 +82,7 @@ interface LiveEventContextValue {
   refresh: () => Promise<void>;
   dismissCelebration: () => void;
   dismissPostAttempt: () => void;
+  dismissSnapEndingCelebration: () => void;
   dismissBadgeUnlock: () => void;
   completeLeaderboardTransition: () => void;
   clearMutationError: () => void;
@@ -92,6 +96,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
   const activeEvent = getActiveLiveEvent(state.events);
   const [celebration, setCelebration] = useState<RecordCelebration | null>(null);
   const [postAttempt, setPostAttempt] = useState<PostAttemptResult | null>(null);
+  const [snapEndingCelebration, setSnapEndingCelebration] = useState<SnapEndingCelebration | null>(null);
   const [badgeUnlocks, setBadgeUnlocks] = useState<BadgeUnlockCelebration[]>([]);
   const [pendingBadgeLookups, setPendingBadgeLookups] = useState(0);
   const [leaderboardTransitions, setLeaderboardTransitions] = useState<LiveLeaderboardTransition[]>([]);
@@ -174,6 +179,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
           setLeaderboardTransitions((current) =>
             enqueueLiveLeaderboardTransition(current, transition));
         }
+        setSnapEndingCelebration(snapEndingCelebrationFor({ event, player, attempt }));
         try {
           const result = derivePostAttemptResult({ before: state, event, player, attempt });
           setPostAttempt(result);
@@ -368,6 +374,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     activeEvent,
     celebration,
     postAttempt,
+    snapEndingCelebration,
     leaderboardTransition,
     leaderboardTransitionReady,
     badgeUnlock: badgeUnlocks[0] ?? null,
@@ -389,6 +396,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     refresh,
     dismissCelebration: () => setCelebration(null),
     dismissPostAttempt: () => setPostAttempt(null),
+    dismissSnapEndingCelebration: () => setSnapEndingCelebration(null),
     dismissBadgeUnlock: () => setBadgeUnlocks((current) => current.slice(1)),
     completeLeaderboardTransition: () => setLeaderboardTransitions((current) =>
       completeLiveLeaderboardTransition(current)),
@@ -400,6 +408,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     addAttempt,
     celebration,
     postAttempt,
+    snapEndingCelebration,
     badgeUnlocks,
     leaderboardTransition,
     leaderboardTransitionReady,

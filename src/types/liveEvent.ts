@@ -129,6 +129,12 @@ export interface RecordCelebration {
   seasonYear?: number;
 }
 
+export interface SnapEndingCelebration {
+  attemptId: string;
+  playerName: string;
+  time: number;
+}
+
 export interface PostAttemptResult {
   attemptId: string;
   playerName: string;

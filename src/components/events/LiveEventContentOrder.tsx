@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 export function LiveEventContentOrder({
+  eventHeader,
   leaderboard,
   specialStats,
   attemptEntry,
@@ -9,6 +10,7 @@ export function LiveEventContentOrder({
   attemptHistory,
   endAction,
 }: {
+  eventHeader: ReactNode;
   leaderboard: ReactNode;
   specialStats?: ReactNode;
   attemptEntry: ReactNode;
@@ -19,6 +21,7 @@ export function LiveEventContentOrder({
 }) {
   return <>
     {attemptEntry}
+    {eventHeader}
     {leaderboard}
     {specialStats}
     {leadStory}

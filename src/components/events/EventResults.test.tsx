@@ -172,10 +172,30 @@ describe("EventResults polish", () => {
     expect(markup).toContain('data-award-asset-id="trophy:denmark:2026:gold"');
     expect(markup).toContain('data-award-asset-id="trophy:denmark:2026:bronze"');
     expect(markup).toContain("2,50 s");
-    expect(markup).toContain("grid-cols-1");
-    expect(markup).toContain("sm:grid-cols-3");
-    expect(markup).toContain("order-1");
-    expect(markup).toContain("sm:order-2");
+    expect(markup).toContain("grid-cols-3");
+    expect(markup).not.toContain("grid-cols-1");
+    expect(markup).toContain("min-w-0");
+    expect(markup).toContain("order-2 min-h-[14rem]");
+    expect(markup).toContain("order-1 min-h-[13rem]");
+  });
+
+  it.each([360, 390, 430])("keeps the Trophy podium in three bounded columns at %ipx", () => {
+    const markup = renderToStaticMarkup(
+      <MemoryRouter><EventResults detail={{
+        ...detail,
+        awardsTrophies: true,
+        trophyCompetitionKey: "denmark",
+        trophyCompetitionYear: 2026,
+        trophies: [
+          trophy(1, "player-1", null, "Paul"),
+          trophy(2, "player-2", null, "Lars"),
+          trophy(3, null, "guest-1", "Gast"),
+        ],
+      }} /></MemoryRouter>,
+    );
+    expect(markup).toContain("grid min-w-0 grid-cols-3");
+    expect(markup).toContain("panel block min-w-0 overflow-hidden p-2");
+    expect(markup).not.toContain("grid-cols-1");
   });
 
   it("shows historical Trophy special stats after the final standings", () => {
@@ -204,6 +224,8 @@ describe("EventResults polish", () => {
       }} /></MemoryRouter>,
     );
     expect(markup).toContain("data-trophy-event-special-stats");
+    expect(markup).toContain("Finale – Most Wanted");
+    expect(markup).toContain("w-full min-w-0");
     expect(markup).toContain("Event-Meilensteine");
     expect(markup.indexOf("Finale Bestenliste"))
       .toBeLessThan(markup.indexOf("Event-Jagd"));

@@ -7,9 +7,9 @@ import { formatTime } from "@/utils/format";
 import { getPostAttemptInitial } from "@/lib/postAttemptExperience";
 
 export function PostAttemptResult() {
-  const { postAttempt, dismissPostAttempt } = useLiveEvent();
+  const { postAttempt, snapEndingCelebration, dismissPostAttempt } = useLiveEvent();
   const reduced = useReducedMotion();
-  if (!postAttempt) return null;
+  if (!postAttempt || snapEndingCelebration) return null;
   const special = ["pb", "event-best", "season-record", "wr"].includes(postAttempt.primaryKind);
   const record = ["season-record", "wr"].includes(postAttempt.primaryKind);
   const Icon = postAttempt.result === "dns" ? Flag : record ? Crown : special ? Sparkles : Check;
