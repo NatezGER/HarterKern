@@ -24,6 +24,7 @@ import {
   flipFlopMatches,
   LOD_PLAYERS,
   normalizeGolfEntry,
+  resolveTireBracket,
   restoreLastOneDrinkinState,
   serializeLastOneDrinkinState,
   timeDeviation,
@@ -157,6 +158,22 @@ describe("individual disciplines", () => {
     for (let index = 0; index < 16; index += 2) {
       expect(filled.seeds[index] ?? filled.seeds[index + 1]).not.toBeNull();
     }
+  });
+
+  it("keeps a later Reifenrollen match open while its second feeder is unresolved", () => {
+    const state = createInitialLastOneDrinkinState();
+    state.tire.seeds.splice(0, 4, ids[0], null, ids[1], ids[2]);
+    let rounds = resolveTireBracket(state.tire);
+    expect(rounds[0][0]).toMatchObject({ playerA: ids[0], playerB: null, winner: ids[0], played: false });
+    expect(rounds[0][1].winner).toBeNull();
+    expect(rounds[1][0]).toMatchObject({ playerA: ids[0], playerB: null, winner: null, played: false });
+
+    state.tire.winners["r0-m1"] = ids[1];
+    rounds = resolveTireBracket(state.tire);
+    expect(rounds[1][0]).toMatchObject({ playerA: ids[0], playerB: ids[1], winner: null });
+    state.tire.winners["r1-m0"] = ids[0];
+    rounds = resolveTireBracket(state.tire);
+    expect(rounds[1][0]).toMatchObject({ winner: ids[0], played: true });
   });
 
   it("scores Rage Cage rounds 0–4, gives a unique leader five, and leaves ties unresolved", () => {

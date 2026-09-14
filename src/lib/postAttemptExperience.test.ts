@@ -90,6 +90,41 @@ describe("post-attempt result derivation", () => {
     expect(recordCelebrationFor(world)?.kind).toBe("wr");
   });
 
+  it("does not celebrate a slower season time when a faster historical time exists", () => {
+    const withHistoricalRecord = {
+      ...before,
+      historicalAttempts: [{
+        id: "historical-record",
+        playerId: "bob",
+        displayName: "Bob",
+        date: "2026-01-15",
+        timeSeconds: 2.1,
+        isGuest: false,
+        outOfCompetition: false,
+        sortOrder: 0,
+      }],
+    };
+    const attempt: LiveAttempt = {
+      id: "slower-than-history",
+      playerId: "alice",
+      eventId: event.id,
+      result: "time",
+      timeSeconds: 2.3,
+      date: event.date,
+      submittedAt: "2026-08-17T18:03:00Z",
+      outOfCompetition: false,
+    };
+    const value = derivePostAttemptResult({
+      before: withHistoricalRecord,
+      event,
+      player: before.players[0],
+      attempt,
+    });
+    expect(value.primaryKind).toBe("pb");
+    expect(value.achievements).not.toContain("Neuer Saisonrekord 2026");
+    expect(recordCelebrationFor(value)?.kind).toBe("pb");
+  });
+
   it("handles DNF without record analysis", () => {
     const value = result(undefined, { result: "dns" });
     expect(value.primaryKind).toBe("dnf");

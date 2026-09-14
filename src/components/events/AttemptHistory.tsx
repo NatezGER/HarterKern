@@ -38,7 +38,7 @@ export function AttemptHistory({
         if (!player) return null;
         return (
           <article key={attempt.id} className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-white/[0.06] px-4 py-4 last:border-0 sm:grid-cols-[1fr_7rem_8rem_auto] sm:px-7">
-            {player.kind === "permanent" ? <Link to={`/player/${player.id}`} className="flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400">
+            {player.kind === "permanent" ? <Link to={`/player/${player.id}`} className="col-start-1 row-start-1 flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 sm:col-auto sm:row-auto">
               <LiveAvatar player={player} className="size-10" />
               <div className="min-w-0">
                 <p className="truncate font-bold">{player.name}</p>
@@ -47,7 +47,7 @@ export function AttemptHistory({
                 </p>
               </div>
             </Link> : (
-              <div className="flex min-w-0 items-center gap-3">
+              <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-3 sm:col-auto sm:row-auto">
                 <LiveAvatar player={player} className="size-10" />
                 <div className="min-w-0">
                   <p className="truncate font-bold">{player.name}</p>
@@ -57,14 +57,14 @@ export function AttemptHistory({
                 </div>
               </div>
             )}
-            <div className="flex gap-2">
+            <div className="col-start-1 row-start-2 flex gap-2 sm:col-auto sm:row-auto">
               {milestone?.isPersonalBest && <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-300"><Medal className="size-3" /> PB</span>}
               {milestone?.isWorldRecord && <span className="flex items-center gap-1 text-[10px] font-bold text-gold-300"><Trophy className="size-3" /> WR</span>}
             </div>
-            <p className="text-right font-display text-xl font-black">{attempt.result === "dns" ? "DNF" : formatTime(attempt.timeSeconds ?? 0)}</p>
+            <p className="col-start-2 row-start-1 text-right font-display text-xl font-black sm:col-auto sm:row-auto">{attempt.result === "dns" ? "DNF" : formatTime(attempt.timeSeconds ?? 0)}</p>
             {unlocked && (
-              <Button className="hidden lg:inline-flex" size="sm" variant="outline" onClick={() => setEditing(attempt)}>
-                <Edit3 className="size-4" /> Bearbeiten
+              <Button aria-label={`${player.name}: Versuch bearbeiten`} className="col-start-2 row-start-2 size-11 justify-self-end px-0 sm:col-auto sm:row-auto lg:h-9 lg:w-auto lg:px-3" size="sm" variant="outline" onClick={() => setEditing(attempt)}>
+                <Edit3 className="size-4" /> <span className="hidden lg:inline">Bearbeiten</span>
               </Button>
             )}
           </article>

@@ -194,6 +194,35 @@ describe("DK tournament", () => {
     const updated = setTournamentScore(bracket, openingMatch.id, { scoreA: 1, scoreB: 3 });
     expect(updated.rounds[1].matches[0].teamAId).toBe(openingMatch.teamBId);
   });
+
+  it("keeps a 3-team final open while the other semifinal is unresolved", () => {
+    const bracket = createTournament(makeTeams(3), deterministicRandom);
+    const bye = bracket.rounds[0].matches.find((match) => Boolean(match.teamAId) !== Boolean(match.teamBId));
+    const semifinal = bracket.rounds[0].matches.find((match) => match.teamAId && match.teamBId);
+    expect(bye?.winnerId).not.toBeNull();
+    expect(semifinal?.winnerId).toBeNull();
+    expect(bracket.rounds[1].matches[0].winnerId).toBeNull();
+    expect(bracket.championId).toBeNull();
+
+    const finalists = setTournamentScore(bracket, semifinal!.id, { scoreA: 2, scoreB: 1 });
+    expect(finalists.rounds[1].matches[0].teamAId).not.toBeNull();
+    expect(finalists.rounds[1].matches[0].teamBId).not.toBeNull();
+    expect(finalists.championId).toBeNull();
+  });
+
+  it("does not declare a 4-team champion until both semifinals and the final are decided", () => {
+    let bracket = createTournament(makeTeams(4), deterministicRandom);
+    bracket = setTournamentScore(bracket, bracket.rounds[0].matches[0].id, { scoreA: 1, scoreB: 0 });
+    expect(bracket.rounds[1].matches[0]).toMatchObject({ teamAId: expect.any(String), teamBId: null, winnerId: null });
+    expect(bracket.championId).toBeNull();
+
+    bracket = setTournamentScore(bracket, bracket.rounds[0].matches[1].id, { scoreA: 0, scoreB: 1 });
+    expect(bracket.rounds[1].matches[0]).toMatchObject({ teamAId: expect.any(String), teamBId: expect.any(String), winnerId: null });
+    expect(bracket.championId).toBeNull();
+
+    bracket = setTournamentScore(bracket, bracket.rounds[1].matches[0].id, { scoreA: 3, scoreB: 2 });
+    expect(bracket.championId).toBe(bracket.rounds[1].matches[0].teamAId);
+  });
 });
 
 describe("DK resets", () => {

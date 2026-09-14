@@ -239,7 +239,9 @@ export function resolveTireBracket(state: TireBracketState): ResolvedTireMatch[]
       const playerB = entrants[index + 1] ?? null;
       const id = `r${round}-m${index / 2}`;
       const selected = state.winners[id];
-      const automatic = playerA && !playerB ? playerA : playerB && !playerA ? playerB : null;
+      const automatic = round === 0
+        ? playerA && !playerB ? playerA : playerB && !playerA ? playerB : null
+        : null;
       const winner = automatic ?? (selected && (selected === playerA || selected === playerB) ? selected : null);
       matches.push({ id, round, playerA, playerB, winner, played: Boolean(playerA && playerB && winner) });
       next.push(winner);

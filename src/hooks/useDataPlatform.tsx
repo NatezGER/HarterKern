@@ -35,7 +35,7 @@ import {
   profileSectionsForDataGroups,
 } from "@/services/playerProfileService";
 import { useSeason } from "@/hooks/useSeason";
-import { mergePatchForRun } from "@/hooks/dataPlatformRunGuard";
+import { loadDataGroups, mergePatchForRun } from "@/hooks/dataPlatformRunGuard";
 
 export type DataStatus = "loading" | "ready" | "error" | "unconfigured";
 export type RealtimeStatus = "connecting" | "connected" | "disconnected";
@@ -141,7 +141,7 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
 
   const loadPlan = useCallback(async (nextPlan: RouteDataPlan, runId?: number) => {
     try {
-      await Promise.all(nextPlan.required.map((group) => loadGroup(group, runId)));
+      await loadDataGroups(nextPlan.required, loadGroup, runId);
       if (runId == null || routeRun.current === runId) {
         setStatus("ready");
         setError(null);
@@ -175,7 +175,7 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
     const optional = selected.filter((group) => currentPlan.optional.includes(group));
     if (required.length) {
       try {
-        await Promise.all(required.map(loadGroup));
+        await loadDataGroups(required, loadGroup);
         setStatus("ready");
         setError(null);
       } catch (caught) {

@@ -393,9 +393,9 @@ export function createTournament(teams: readonly DkTeam[], random: () => number 
   return resolveTournament({ rounds, championId: null });
 }
 
-function winnerFor(match: TournamentMatch): string | null {
-  if (match.teamAId && !match.teamBId) return match.teamAId;
-  if (match.teamBId && !match.teamAId) return match.teamBId;
+function winnerFor(match: TournamentMatch, allowBye: boolean): string | null {
+  if (allowBye && match.teamAId && !match.teamBId) return match.teamAId;
+  if (allowBye && match.teamBId && !match.teamAId) return match.teamBId;
   if (!match.teamAId || !match.teamBId || match.scoreA === null || match.scoreB === null || match.scoreA === match.scoreB) {
     return null;
   }
@@ -421,7 +421,7 @@ function resolveTournament(bracket: TournamentBracket): TournamentBracket {
         match.teamAId = teamAId;
         match.teamBId = teamBId;
       }
-      match.winnerId = winnerFor(match);
+      match.winnerId = winnerFor(match, roundIndex === 0);
     }
   }
 

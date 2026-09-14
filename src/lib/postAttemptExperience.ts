@@ -72,10 +72,16 @@ export function derivePostAttemptResult(input: {
   ]) : null;
   const seasonYear = getEventSeason(event.date);
   const previousSeasonRecord = official && seasonYear != null
-    ? minimumHundredths(before.attempts.flatMap((item) =>
-      getEventSeason(item.date) === seasonYear && isOfficialAttempt(item, before)
-        ? [item.timeSeconds!] : [],
-    ))
+    ? minimumHundredths([
+      ...before.attempts.flatMap((item) =>
+        getEventSeason(item.date) === seasonYear && isOfficialAttempt(item, before)
+          ? [item.timeSeconds!] : [],
+      ),
+      ...before.historicalAttempts.flatMap((item) =>
+        getEventSeason(item.date) === seasonYear && !item.isGuest && !item.outOfCompetition
+          ? [item.timeSeconds] : [],
+      ),
+    ])
     : null;
 
   const isEventBest = eventEligible && (eventBest == null || attemptHundredths < eventBest);

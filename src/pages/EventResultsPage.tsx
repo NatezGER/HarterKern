@@ -15,7 +15,7 @@ export function EventResultsPage() {
   return (
     <div className="space-y-7">
       <EventResults detail={data} />
-      <Button asChild variant="ghost"><Link to="/stats#events">Zur Eventübersicht</Link></Button>
+      <Button asChild variant="ghost"><Link to="/events">Zur Eventübersicht</Link></Button>
     </div>
   );
 }

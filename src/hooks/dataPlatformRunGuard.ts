@@ -1,5 +1,13 @@
-import type { DataGroupPatch } from "@/services/dataGroupService";
+import type { DataGroup, DataGroupPatch } from "@/services/dataGroupService";
 import type { DataPlatformSnapshot } from "@/services/dataPlatformRepository";
+
+export function loadDataGroups(
+  groups: DataGroup[],
+  loadGroup: (group: DataGroup, expectedRun?: number) => Promise<void>,
+  expectedRun?: number,
+) {
+  return Promise.all(groups.map((group) => loadGroup(group, expectedRun)));
+}
 
 export function shouldMergeRun(expectedRun: number | undefined, currentRun: number) {
   return expectedRun == null || expectedRun === currentRun;

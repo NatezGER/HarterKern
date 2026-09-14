@@ -67,7 +67,7 @@ export function TimeEntrySheet({
 
   return (
     <>
-    <EventModal open title="Neue Zeit" onClose={onClose} className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-7">
+    <EventModal open title="Neue Zeit" onClose={onClose} closeDisabled={saving} className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-7">
       <div className="mb-3 flex items-center gap-3 rounded-2xl bg-white/[0.035] p-3 sm:mb-5 sm:gap-4 sm:p-4">
         <LiveAvatar player={standing.player} />
         <div className="min-w-0">
@@ -98,7 +98,7 @@ export function TimeEntrySheet({
           onClick={() => void save("time")}
           className="h-14"
         >
-          <Check className="size-5" /> Zeit speichern
+          <Check className="size-5" /> {saving ? "Wird gespeichert …" : "Zeit speichern"}
         </Button>
         <Button size="lg" variant="outline" disabled={saving} onClick={() => setConfirmingDnf(true)} className="h-14">
           <Flag className="size-5" /> DNF
@@ -128,7 +128,7 @@ export function DnfConfirmationDialog({
   onConfirm: () => void;
 }) {
   return (
-    <EventModal open={open} title="DNF eintragen" onClose={() => !saving && onCancel()}>
+    <EventModal open={open} title="DNF eintragen" closeDisabled={saving} onClose={onCancel}>
       <p className="text-sm text-white/65">Wirklich DNF eintragen?</p>
       <div className="mt-5 grid grid-cols-2 gap-2">
         <Button variant="ghost" disabled={saving} onClick={onCancel}>Abbrechen</Button>

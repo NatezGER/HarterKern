@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { mergePatchForRun } from "@/hooks/dataPlatformRunGuard";
+import { describe, expect, it, vi } from "vitest";
+import { loadDataGroups, mergePatchForRun } from "@/hooks/dataPlatformRunGuard";
 import type { DataPlatformSnapshot } from "@/services/dataPlatformRepository";
 
 const snapshot = (reached: number): DataPlatformSnapshot => ({
@@ -21,6 +21,26 @@ const snapshot = (reached: number): DataPlatformSnapshot => ({
       rarestAchievedEndings: [], topHunters: [] },
   },
   liveState: { version: 2, players: [], events: [], attempts: [], historicalAttempts: [] },
+});
+
+describe("data group callback arguments", () => {
+  it("does not leak array indexes into scheduled refresh run guards", async () => {
+    const loadGroup = vi.fn(async () => undefined);
+    await loadDataGroups(["live", "events"], loadGroup);
+    expect(loadGroup.mock.calls).toEqual([
+      ["live", undefined],
+      ["events", undefined],
+    ]);
+  });
+
+  it("forwards the real route run to guarded initial loads", async () => {
+    const loadGroup = vi.fn(async () => undefined);
+    await loadDataGroups(["live", "events"], loadGroup, 7);
+    expect(loadGroup.mock.calls).toEqual([
+      ["live", 7],
+      ["events", 7],
+    ]);
+  });
 });
 
 describe("season request merge protection", () => {
