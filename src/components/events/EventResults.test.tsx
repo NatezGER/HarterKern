@@ -24,6 +24,7 @@ vi.mock("@/components/common/AwardAssetImage", () => ({
 }));
 
 import { EventResults } from "@/components/events/EventResults";
+import { eventParticipantOptions } from "@/services/playerProgressionOverlayService";
 
 const attempt = (id: string, submittedAt: string, timeHundredths: number | null,
   isDnf = false) => ({ id, playerId: id, guestId: null, name: id,
@@ -88,6 +89,18 @@ const trophy = (
 });
 
 describe("EventResults polish", () => {
+  it("builds direct-route overlay choices from the event detail itself", () => {
+    expect(eventParticipantOptions([
+      { ...detail.finalStandings[0], isAk: false },
+      { ...detail.finalStandings[1], isAk: true },
+      { ...detail.finalStandings[2], isAk: false },
+    ])).toEqual([{
+      id: "player-1",
+      name: "Paul",
+      avatarUrl: "https://cdn.example/paul.webp",
+    }]);
+  });
+
   it("uses valid-attempt visual bounds, omits photos and keeps attempts last", () => {
     const markup = renderToStaticMarkup(
       <MemoryRouter><EventResults detail={detail} /></MemoryRouter>,

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { LiveEventHeader } from "@/components/events/LiveEventHeader";
 import { StartEventPanel } from "@/components/events/StartEventPanel";
 import { DnfConfirmationDialog } from "@/components/events/TimeEntrySheet";
+import { EventModal } from "@/components/events/EventModal";
 import { Button } from "@/components/ui/button";
 import { claimAttemptSave } from "@/lib/attemptSaveGuard";
 
@@ -52,10 +53,23 @@ describe("live mobile safety", () => {
   });
 
   it("disables both DNF confirmation actions while saving", () => {
-    const buttons = findButtons(DnfConfirmationDialog({
+    const dialog = DnfConfirmationDialog({
       open: true, saving: true, onCancel: vi.fn(), onConfirm: vi.fn(),
-    }));
+    });
+    const buttons = findButtons(dialog);
     expect(buttons.every(({ props }) => props.disabled)).toBe(true);
+    expect(dialog.type).toBe(EventModal);
+    expect(dialog.props.closeDisabled).toBe(true);
+    expect(renderToStaticMarkup(dialog)).toContain("Wird gespeichert …");
+  });
+
+  it("disables the modal close button while saving", () => {
+    const markup = renderToStaticMarkup(
+      <EventModal open title="Speichern" closeDisabled onClose={vi.fn()}>
+        <p>Wird gespeichert …</p>
+      </EventModal>,
+    );
+    expect(markup).toMatch(/aria-label="Dialog schließen"[^>]*disabled/);
   });
 });
 

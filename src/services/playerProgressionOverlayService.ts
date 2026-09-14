@@ -1,6 +1,7 @@
 import { getSupabase } from "@/lib/supabase";
 import type { TimelineOverlaySeries, TimelinePoint } from "@/components/progression/ProgressionTimeline";
 import type { OverlayPlayerOption } from "@/components/progression/PlayerOverlaySelector";
+import type { EventParticipantDetail } from "@/types/historyProfiles";
 import { resolvePlayerAvatar } from "@/services/mappers";
 
 type OverlayRow = { source_id: string; player_id: string; display_name: string; avatar_url: string | null; time_hundredths: number; achieved_at: string; achieved_date: string; event_id: string | null; source_label: string; source_type: string; previous_best_hundredths: number | null; improvement_hundredths: number | null; duration_days: number; is_current: boolean };
@@ -47,3 +48,11 @@ export function buildEventPlayerProgressions(attempts: Array<{ id: string; playe
 }
 
 export function regularPlayerOptions(players: Array<{ id: string; name: string; avatarUrl?: string | null; isAk?: boolean; isArchived?: boolean }>, excluded: string[] = []): OverlayPlayerOption[] { return players.filter((player) => !player.isAk && !player.isArchived && !excluded.includes(player.id)).map((player) => ({ id: player.id, name: player.name, avatarUrl: player.avatarUrl })); }
+
+export function eventParticipantOptions(participants: EventParticipantDetail[]): OverlayPlayerOption[] {
+  return participants.flatMap((participant) =>
+    participant.playerId && !participant.isAk
+      ? [{ id: participant.playerId, name: participant.name, avatarUrl: participant.avatarUrl }]
+      : [],
+  );
+}

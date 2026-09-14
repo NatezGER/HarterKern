@@ -8,12 +8,14 @@ export function EventModal({
   onClose,
   children,
   className,
+  closeDisabled = false,
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
   className?: string;
+  closeDisabled?: boolean;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -23,7 +25,7 @@ export function EventModal({
     document.body.style.overflow = "hidden";
     window.setTimeout(() => panelRef.current?.focus(), 0);
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !closeDisabled) onClose();
       if (event.key !== "Tab" || !panelRef.current) return;
       const focusable = [...panelRef.current.querySelectorAll<HTMLElement>(
         "button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex='0']",
@@ -45,12 +47,12 @@ export function EventModal({
       document.removeEventListener("keydown", onKey);
       previous?.focus();
     };
-  }, [onClose, open]);
+  }, [closeDisabled, onClose, open]);
   if (!open) return null;
   return (
     <div
       className="fixed inset-0 z-[70] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-5"
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+      onMouseDown={(event) => event.target === event.currentTarget && !closeDisabled && onClose()}
     >
       <div
         ref={panelRef}
@@ -68,8 +70,9 @@ export function EventModal({
           <button
             type="button"
             aria-label="Dialog schließen"
-            onClick={onClose}
-            className="grid size-11 place-items-center rounded-full border border-white/10 text-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
+            disabled={closeDisabled}
+            onClick={() => !closeDisabled && onClose()}
+            className="grid size-11 place-items-center rounded-full border border-white/10 text-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 disabled:cursor-not-allowed disabled:opacity-35"
           >
             <X className="size-5" />
           </button>

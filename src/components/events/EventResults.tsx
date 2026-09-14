@@ -14,16 +14,13 @@ import { cn } from "@/lib/cn";
 import { TrophyCabinet } from "@/components/common/TrophyCabinet";
 import { EventTrophyPodium } from "@/components/events/EventTrophyPodium";
 import { useMemo, useState } from "react";
-import { buildEventPlayerProgressions } from "@/services/playerProgressionOverlayService";
-import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
-import { getRankedPlayers } from "@/data/selectors";
+import { buildEventPlayerProgressions, eventParticipantOptions } from "@/services/playerProgressionOverlayService";
 import { trophyCompetitionName } from "@/lib/trophyCompetitions";
 import { TrophyEventSpecialStats } from "@/components/events/TrophyEventSpecialStats";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
 export function EventResults({ detail }: { detail: EventDetail }) {
-  const { data } = useEffectivePublicData();
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const podium = detail.podium.filter(({ rank }) => rank != null && rank <= 3);
   const validAttempts = detail.attempts.filter((attempt) => !attempt.isDnf
@@ -33,13 +30,10 @@ export function EventResults({ detail }: { detail: EventDetail }) {
   const visualStartAt = validAttempts[0]?.submittedAt;
   const visualEndAt = validAttempts.at(-1)?.submittedAt;
   const eventProgression = buildEventLeadProgression(detail.attempts, visualEndAt ?? null).map((point) => ({ id: point.id, playerId: point.playerId ?? point.guestId ?? undefined, playerName: point.name, avatarUrl: point.avatarUrl, timeHundredths: point.timeHundredths, achievedAt: point.submittedAt, achievedDate: point.submittedAt.slice(0, 10), periodEndAt: point.periodEndAt, eventId: detail.id, sourceLabel: detail.name, improvementHundredths: point.improvementHundredths, durationDays: 0, durationLabel: point.durationLabel, attemptNumber: point.attemptNumber, hasExactTime: true, isCurrent: false }));
-  const eventOptions = useMemo(() => {
-    const participants = new Map(detail.participantStats.filter((participant) => participant.playerId && !participant.isAk).map((participant) => [participant.playerId!, participant]));
-    return getRankedPlayers(data.players, data.leaderboard).flatMap(({ player }) => {
-      const participant = participants.get(player.id);
-      return participant ? [{ id: player.id, name: participant.name, avatarUrl: participant.avatarUrl }] : [];
-    });
-  }, [data.leaderboard, data.players, detail.participantStats]);
+  const eventOptions = useMemo(
+    () => eventParticipantOptions(detail.participantStats),
+    [detail.participantStats],
+  );
   const eventOverlays = useMemo(() => buildEventPlayerProgressions(detail.attempts, selectedPlayers), [detail.attempts, selectedPlayers]);
   const competitionName = trophyCompetitionName(detail.trophyCompetitionKey, detail.trophyCompetitionYear);
   const isClosedTrophyEvent = detail.status === "closed" && detail.awardsTrophies;
