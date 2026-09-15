@@ -523,6 +523,19 @@ export interface Database {
         Args: { p_event_id: string };
         Returns: Json;
       };
+      get_live_attempt_badge_unlocks: {
+        Args: { p_attempt_id: string };
+        Returns: Array<{
+          award_key: string;
+          badge_key: string;
+          name: string;
+          tier: Database["public"]["Enums"]["badge_tier"];
+          description: string;
+          category: string;
+          metadata: Json;
+          awarded_at: string;
+        }>;
+      };
       get_player_badge_prestige: {
         Args: { p_player_ids: string[] };
         Returns: Array<{ player_id: string; at_least_bronze: number; at_least_silver: number; at_least_gold: number; at_least_diamond: number; emerald: number }>;
