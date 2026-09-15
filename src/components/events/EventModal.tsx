@@ -51,7 +51,7 @@ export function EventModal({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-5"
+      className="safe-dialog-gutter fixed inset-0 z-[70] flex min-w-0 max-w-full items-end justify-center overflow-x-clip bg-black/75 py-0 backdrop-blur-sm sm:items-center sm:py-5"
       onMouseDown={(event) => event.target === event.currentTarget && !closeDisabled && onClose()}
     >
       <div
@@ -61,7 +61,7 @@ export function EventModal({
         aria-label={title}
         tabIndex={-1}
         className={cn(
-          "max-h-[92dvh] w-full overflow-y-auto rounded-t-3xl border border-white/10 bg-[#111312] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl outline-none sm:max-w-xl sm:rounded-3xl sm:p-7",
+          "max-h-[92dvh] w-full min-w-0 max-w-full overflow-y-auto rounded-t-3xl border border-white/10 bg-[#111312] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl outline-none sm:max-w-xl sm:rounded-3xl sm:p-7",
           className,
         )}
       >

@@ -27,7 +27,7 @@ function AppFrame() {
       <Header />
       <LiveEventBanner />
       <SyncStatusNotice />
-      <main className="mx-auto w-full max-w-[1600px] flex-1 px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+      <main className="viewport-gutter mx-auto w-full min-w-0 max-w-[1600px] flex-1 py-8 sm:py-10 lg:py-12">
         <Outlet />
       </main>
       <Footer />

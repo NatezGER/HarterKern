@@ -22,8 +22,8 @@ export function ManagementPanel() {
   const [historyExpanded, setHistoryExpanded] = useState(false);
   return (
     <section>
-      <div className="panel p-7">
-        <div className="flex items-center justify-between gap-4">
+      <div className="panel min-w-0 p-4 sm:p-7">
+        <div className="flex min-w-0 flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold-300">
               Administration
@@ -82,7 +82,7 @@ export function ManagementPanel() {
             <p className="flex items-center gap-2 text-sm text-emerald-300">
               <ShieldCheck className="size-4" /> Verwaltungsmodus aktiv
             </p>
-            <section className="rounded-2xl border border-white/10 p-5">
+            <section className="min-w-0 rounded-2xl border border-white/10 p-3 sm:p-5">
               <h3 className="display-title text-2xl">Versuche verwalten</h3>
               <div className="mt-4 max-h-96 space-y-2 overflow-y-auto">
                 {state.attempts.map((attempt) => {
@@ -133,7 +133,7 @@ export function HistoricalManagementDisclosure({
   onToggle: () => void;
 }) {
   return (
-    <section className="rounded-2xl border border-white/10 p-5">
+    <section className="min-w-0 rounded-2xl border border-white/10 p-3 sm:p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="display-title text-2xl">Historische Versuche</h3>

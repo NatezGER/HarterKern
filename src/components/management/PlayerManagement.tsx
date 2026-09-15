@@ -59,7 +59,7 @@ export function PlayerManagement() {
   };
 
   return (
-    <section className="rounded-2xl border border-white/10 p-5">
+    <section className="min-w-0 rounded-2xl border border-white/10 p-3 sm:p-5">
       <h3 className="display-title text-2xl">Spieler bearbeiten</h3>
       <div className="mt-4 flex items-center gap-4">
         <ProfileAvatar
@@ -99,11 +99,11 @@ export function PlayerManagement() {
           )}
         </div>
       </div>
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+      <div className="mt-4 grid min-w-0 gap-3 lg:grid-cols-2">
         <select
           value={selectedId}
           onChange={(event) => setSelectedId(event.target.value)}
-          className="h-11 rounded-xl border border-white/10 bg-black/30 px-3 text-sm"
+          className="h-11 w-full min-w-0 max-w-full rounded-xl border border-white/10 bg-black/30 px-3 text-sm"
         >
           {permanentPlayers.map((item) => (
             <option key={item.id} value={item.id}>{item.name}</option>

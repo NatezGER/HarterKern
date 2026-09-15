@@ -32,7 +32,7 @@ describe("event close badge batch hotfix", () => {
   it("collects each event player once and invokes one batched ledger refresh", () => {
     const refresh = functionBody("refresh_badge_ledger_after_event_change",
       "revoke all on function");
-    expect(refresh).toContain("union\n    select attempts.player_id");
+    expect(refresh).toMatch(/union\s+select attempts\.player_id/);
     expect(refresh).toContain("array_agg(affected.player_id order by affected.player_id)");
     expect(refresh.match(/sync_player_badge_award_ledgers\(requested_player_ids\)/g))
       .toHaveLength(1);
