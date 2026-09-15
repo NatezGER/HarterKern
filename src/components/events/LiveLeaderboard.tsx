@@ -42,7 +42,8 @@ export function LiveLeaderboard({ standings, transition, onTransitionComplete }:
         layout="position"
         key={standing.player.id}
         transition={{
-          layout: { duration: motionConfig.layoutDuration, ease: [0.22, 1, 0.36, 1] },
+          layout: { delay: affected ? motionConfig.layoutDelay : 0,
+            duration: motionConfig.layoutDuration, ease: [0.22, 1, 0.36, 1] },
           backgroundColor: { duration: motionConfig.highlightDuration },
           boxShadow: { duration: motionConfig.highlightDuration },
         }}
@@ -64,7 +65,7 @@ export function LiveLeaderboard({ standings, transition, onTransitionComplete }:
         <ParticipantName standing={standing} />
         <p className="hidden text-right text-sm text-white/40 sm:block">{standing.player.kind === "permanent" ? `PB ${formatTime(standing.player.personalBest)}` : "Nur Eventwertung"}</p>
         <div className="text-right">
-          <AnimatePresence mode="popLayout" initial={false}><motion.p key={standing.bestTime ?? "no-time"} initial={affected && !reducedMotion ? { opacity: 0, y: 6 } : false} animate={{ opacity: 1, y: 0 }} exit={reducedMotion ? undefined : { opacity: 0, y: -6 }} transition={{ duration: reducedMotion ? 0 : 0.25 }} className="font-display text-xl font-black">{standing.bestTime == null ? "—" : formatTime(standing.bestTime)}</motion.p></AnimatePresence>
+          <AnimatePresence mode="popLayout" initial={false}><motion.p key={standing.bestTime ?? "no-time"} initial={affected && !reducedMotion ? { opacity: 0, y: 8, scale: 1.08 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={reducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: motionConfig.timeDuration }} className="font-display text-xl font-black">{standing.bestTime == null ? "—" : formatTime(standing.bestTime)}</motion.p></AnimatePresence>
           <span className={cn("text-[10px] font-semibold", affected ? "text-emerald-300" : "text-white/35", affected && transition.intensity === "lead" && "text-gold-300")}>
             {affected ? transitionLabel(transition) : standing.rank === 1 ? "Aktueller Leader" : standing.bestTime == null ? "Noch keine Zeit" : "Eventzeit"}
           </span>

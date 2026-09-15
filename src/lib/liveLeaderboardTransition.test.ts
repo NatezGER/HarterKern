@@ -195,10 +195,18 @@ describe("live leaderboard transition", () => {
 
   it("removes all motion durations for reduced motion", () => {
     expect(getLiveLeaderboardMotion(true)).toMatchObject({
+      timeDuration: 0,
+      layoutDelay: 0,
       layoutDuration: 0,
       highlightDuration: 0,
+      completionDelay: 0,
     });
-    expect(getLiveLeaderboardMotion(false).layoutDuration).toBeGreaterThan(0);
+    expect(getLiveLeaderboardMotion(false)).toMatchObject({
+      timeDuration: 0.32,
+      layoutDelay: 0.28,
+      layoutDuration: 0.92,
+      completionDelay: 1_350,
+    });
     expect(getLeaderboardPresentationSettings(true)).toEqual({
       behavior: "auto",
       fallbackTimeout: 0,

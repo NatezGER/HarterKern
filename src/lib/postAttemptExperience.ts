@@ -14,6 +14,7 @@ import type {
   RecordCelebration,
   SnapEndingCelebration,
 } from "@/types/liveEvent";
+import { isSnapEnding } from "@/lib/snapEnding";
 
 const hundredths = (seconds: number) => Math.round(seconds * 100);
 
@@ -168,8 +169,7 @@ export function snapEndingCelebrationFor(input: {
   const { event, player, attempt } = input;
   if (event.status !== "active" || !event.awardsTrophies || attempt.result !== "time" ||
     attempt.timeSeconds == null || !isEventEligibleLiveAttempt(attempt, player)) return null;
-  const ending = hundredths(attempt.timeSeconds) % 100;
-  if (ending % 11 !== 0) return null;
+  if (!isSnapEnding(hundredths(attempt.timeSeconds))) return null;
   return {
     attemptId: attempt.id,
     playerName: player.name,

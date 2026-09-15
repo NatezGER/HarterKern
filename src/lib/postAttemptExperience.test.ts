@@ -218,15 +218,19 @@ describe("Trophy Event Schnapszahl celebration", () => {
     outOfCompetition: false,
   });
 
-  it.each([3.33, 2])("recognizes %.2f after a valid Trophy Event save", (time) => {
-    expect(snapEndingCelebrationFor({
-      event: { ...event, awardsTrophies: true }, player, attempt: attempt(time),
-    })).toMatchObject({ time, attemptId: `snap-${time}` });
-  });
+  it.each([3.11, 3.22, 3.33, 3.44, 3.55, 3.66, 3.77, 3.88, 3.99])(
+    "recognizes %.2f after a valid Trophy Event save", (time) => {
+      expect(snapEndingCelebrationFor({
+        event: { ...event, awardsTrophies: true }, player, attempt: attempt(time),
+      })).toMatchObject({ time, attemptId: `snap-${time}` });
+    },
+  );
 
   it("ignores ordinary endings, normal events, DNF and invalid competitors", () => {
     const trophyEvent = { ...event, awardsTrophies: true };
     expect(snapEndingCelebrationFor({ event: trophyEvent, player, attempt: attempt(3.42) }))
+      .toBeNull();
+    expect(snapEndingCelebrationFor({ event: trophyEvent, player, attempt: attempt(2) }))
       .toBeNull();
     expect(snapEndingCelebrationFor({ event, player, attempt: attempt(3.33) })).toBeNull();
     expect(snapEndingCelebrationFor({ event: trophyEvent, player, attempt: attempt(undefined, "dns") }))
