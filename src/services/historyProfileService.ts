@@ -49,12 +49,19 @@ export async function getAttemptBadgeUnlocks(
   attemptId: string,
   playerName: string,
 ): Promise<BadgeUnlockCelebration[]> {
-  const { data, error } = await getSupabase().from("player_badge_award_achievements")
-    .select("award_key,badge_key,name,tier,description,category,metadata")
-    .eq("source_attempt_id", attemptId)
-    .order("awarded_at");
+  const abortController = new AbortController();
+  const timeout = globalThis.setTimeout(() => abortController.abort(), 3_000);
+  let response;
+  try {
+    response = await getSupabase()
+      .rpc("get_live_attempt_badge_unlocks", { p_attempt_id: attemptId })
+      .abortSignal(abortController.signal);
+  } finally {
+    globalThis.clearTimeout(timeout);
+  }
+  const { data, error } = response;
   if (error) throw error;
-  return data.map((row) => ({
+  return (data ?? []).map((row) => ({
     key: row.award_key,
     badgeKey: row.badge_key,
     name: getAwardBadgeDisplayName(row.name, row.category,

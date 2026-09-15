@@ -156,6 +156,11 @@ Examples:
 - The badge read hotpath is `player -> persisted award ledger -> definition / asset`.
   Expensive eligibility belongs to sync, write and rebuild paths, never to a
   profile or rarity request.
+- The post-attempt celebration path is a separate bounded evaluator:
+  `attempt -> player/player-event scope -> active definitions -> ledger dedupe`.
+  It never wraps the global award union and never performs ledger sync. Global
+  Matrix-Glitch evidence is persisted separately and joined back into the
+  canonical sync source for event close and later rebuilds.
 - Raw attempts are reserved for sequence-dependent facts such as streaks,
   takeovers and rolling windows. Ordinary totals and rates use aggregate read
   models.

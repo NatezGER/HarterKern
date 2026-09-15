@@ -15,4 +15,14 @@ describe("useLiveEvent Schnapszahl save contract", () => {
   it("has one presentation trigger per saved attempt", () => {
     expect(source.match(/setSnapEndingCelebration\(snapEndingCelebrationFor/g)).toHaveLength(1);
   });
+
+  it("keeps live badge lookup optional after persistence", () => {
+    const persisted = source.indexOf("const id = await createRemoteAttempt(input)");
+    const lookup = source.indexOf("void getAttemptBadgeUnlocks(id, player.name)");
+    const ignoredFailure = source.indexOf(".catch(() => undefined)", lookup);
+    const released = source.indexOf("setPendingBadgeLookups", ignoredFailure);
+    expect(lookup).toBeGreaterThan(persisted);
+    expect(ignoredFailure).toBeGreaterThan(lookup);
+    expect(released).toBeGreaterThan(ignoredFailure);
+  });
 });

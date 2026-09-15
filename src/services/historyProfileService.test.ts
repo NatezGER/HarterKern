@@ -274,11 +274,9 @@ describe("player profile core repository", () => {
     expect(mocks.from).not.toHaveBeenCalled();
   });
 
-  it("loads post-attempt unlocks from the persisted ledger projection", async () => {
+  it("loads post-attempt unlocks from the scoped live evaluator", async () => {
     const builder = {
-      select: vi.fn(),
-      eq: vi.fn(),
-      order: vi.fn().mockResolvedValue({
+      abortSignal: vi.fn().mockResolvedValue({
         data: [{
           award_key: "player-1:favorite-time-bronze:294",
           badge_key: "favorite-time-bronze",
@@ -291,9 +289,7 @@ describe("player profile core repository", () => {
         error: null,
       }),
     };
-    builder.select.mockReturnValue(builder);
-    builder.eq.mockReturnValue(builder);
-    mocks.from.mockReturnValueOnce(builder);
+    mocks.rpc.mockReturnValueOnce(builder);
 
     await expect(getAttemptBadgeUnlocks("attempt-1", "Paul")).resolves.toEqual([
       expect.objectContaining({
@@ -302,22 +298,33 @@ describe("player profile core repository", () => {
         playerName: "Paul",
       }),
     ]);
-    expect(mocks.from).toHaveBeenCalledWith("player_badge_award_achievements");
-    expect(builder.eq).toHaveBeenCalledWith("source_attempt_id", "attempt-1");
+    expect(mocks.rpc).toHaveBeenCalledWith("get_live_attempt_badge_unlocks", {
+      p_attempt_id: "attempt-1",
+    });
+    expect(builder.abortSignal).toHaveBeenCalledWith(expect.any(AbortSignal));
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 
-  it("does not announce a repeated qualification that is not a new ledger row", async () => {
+  it("does not announce a repeated qualification rejected by the evaluator", async () => {
     const builder = {
-      select: vi.fn(),
-      eq: vi.fn(),
-      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      abortSignal: vi.fn().mockResolvedValue({ data: [], error: null }),
     };
-    builder.select.mockReturnValue(builder);
-    builder.eq.mockReturnValue(builder);
-    mocks.from.mockReturnValueOnce(builder);
+    mocks.rpc.mockReturnValueOnce(builder);
 
     await expect(getAttemptBadgeUnlocks("later-proof", "Paul")).resolves.toEqual([]);
-    expect(builder.eq).toHaveBeenCalledWith("source_attempt_id", "later-proof");
+    expect(mocks.rpc).toHaveBeenCalledWith("get_live_attempt_badge_unlocks", {
+      p_attempt_id: "later-proof",
+    });
+  });
+
+  it("surfaces an optional live evaluator failure to the non-blocking caller", async () => {
+    const failure = new Error("live badge timeout");
+    mocks.rpc.mockReturnValueOnce({
+      abortSignal: vi.fn().mockResolvedValue({ data: null, error: failure }),
+    });
+
+    await expect(getAttemptBadgeUnlocks("attempt-timeout", "Paul"))
+      .rejects.toBe(failure);
   });
 
   it("uses dedicated player-scoped RPCs for extended profile reads", async () => {

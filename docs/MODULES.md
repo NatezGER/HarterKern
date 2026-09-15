@@ -172,9 +172,11 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   src/components/events/NumericTimePad.test.ts`.
 - **Direkte Abhängigkeiten:** Datenplattform, Realtime, Badge-Unlock-Anzeige.
 - **Post-Attempt:** Ergebnis, Rekord und Badge-Queue werden aus dem bereits
-  gespeicherten Versuch und dem Live-Vorzustand präsentiert. Es entstehen
-  keine zusätzlichen Pflichtrequests; Badge-Lookup und Refresh bleiben
-  nachgelagerte, nicht blockierende Präsentations-/Synchronisationsschritte.
+  gespeicherten Versuch und dem Live-Vorzustand präsentiert. Ein optionaler,
+  zeitbegrenzter `get_live_attempt_badge_unlocks`-Request evaluiert nur den
+  betroffenen Attempt sowie Player-/Player-Event-Scopes; Badge-Lookup und
+  Refresh bleiben nachgelagerte, nicht blockierende Präsentationsschritte.
+  Die Scope-, Tabellen- und Indexzuordnung steht in `docs/LIVE_BADGE_ENGINE.md`.
 - **Nicht enthalten:** Eventarchiv-Auswertung und globale Statistiken.
 
 ## 7. Eventarchiv und Eventdetail
