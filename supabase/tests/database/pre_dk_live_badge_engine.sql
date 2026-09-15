@@ -249,6 +249,23 @@ insert into public.attempts (id, player_id, event_id, status, time_hundredths, i
   ('56000000-0000-0000-0000-000000000014', '50000000-0000-0000-0000-000000000015', '50000000-0000-0000-0000-000000000101', 'approved', 245, false, '2026-09-15 15:24+00', 'admin');
 select is((select metadata->>'mode' from public.get_live_attempt_badge_unlocks('56000000-0000-0000-0000-000000000014') where badge_key = 'matrix-glitch'), 'global', 'global Matrix skips DNF, AK and unqualified attempts');
 
+select lives_ok($$update public.attempts set time_hundredths = 241 where id = '56000000-0000-0000-0000-000000000002'$$, 'active event can change a valid time');
+select ok(not exists(select 1 from public.matrix_glitch_event_evidence where source_attempt_id = '56000000-0000-0000-0000-000000000002'), 'changing the second equal Matrix attempt removes its evidence');
+select lives_ok($$update public.attempts set time_hundredths = 242 where id = '56000000-0000-0000-0000-000000000002'$$, 'active event can restore a valid time');
+select ok(exists(select 1 from public.matrix_glitch_event_evidence where source_attempt_id = '56000000-0000-0000-0000-000000000002'), 'restoring the second equal Matrix attempt recreates its evidence');
+select lives_ok($$update public.attempts set time_hundredths = null, is_dnf = true where id = '56000000-0000-0000-0000-000000000002'$$, 'active event can change time to DNF');
+select ok(not exists(select 1 from public.matrix_glitch_event_evidence where source_attempt_id = '56000000-0000-0000-0000-000000000002'), 'time to DNF removes Matrix evidence');
+select lives_ok($$update public.attempts set time_hundredths = 242, is_dnf = false where id = '56000000-0000-0000-0000-000000000002'$$, 'active event can change DNF to time');
+select ok(exists(select 1 from public.matrix_glitch_event_evidence where source_attempt_id = '56000000-0000-0000-0000-000000000002'), 'DNF to time recreates Matrix evidence');
+
+insert into public.attempts (id, player_id, event_id, status, time_hundredths, is_dnf, submitted_at, source) values
+  ('56000000-0000-0000-0000-000000000030', '50000000-0000-0000-0000-000000000014', '50000000-0000-0000-0000-000000000101', 'approved', 247, false, '2026-09-15 15:25+00', 'admin'),
+  ('56000000-0000-0000-0000-000000000031', '50000000-0000-0000-0000-000000000015', '50000000-0000-0000-0000-000000000101', 'approved', 248, false, '2026-09-15 15:26+00', 'admin'),
+  ('56000000-0000-0000-0000-000000000032', '50000000-0000-0000-0000-000000000014', '50000000-0000-0000-0000-000000000101', 'approved', 247, false, '2026-09-15 15:27+00', 'admin');
+select ok(not exists(select 1 from public.matrix_glitch_event_evidence where source_attempt_id = '56000000-0000-0000-0000-000000000032'), 'separated equal Matrix attempts do not initially match');
+select lives_ok($$delete from public.attempts where id = '56000000-0000-0000-0000-000000000031'$$, 'active event can delete an attempt');
+select is((select mode from public.matrix_glitch_event_evidence where source_attempt_id = '56000000-0000-0000-0000-000000000032'), 'global', 'delete repairs neighbors and can create new Matrix evidence');
+
 alter table public.badge_definitions disable trigger badge_definitions_refresh_badge_ledger;
 update public.badge_definitions set is_active = false where badge_key = 'first-official-attempt';
 insert into public.attempts (id, player_id, event_id, status, time_hundredths, is_dnf, submitted_at, source)
@@ -263,6 +280,9 @@ select lives_ok($$select * from public.get_live_attempt_badge_unlocks('56000000-
 update public.events set status = 'closed', closed_at = '2026-09-15 20:00+00'
 where id = '50000000-0000-0000-0000-000000000101';
 select ok(exists(select 1 from public.player_badge_award_ledger where player_id = '50000000-0000-0000-0000-000000000015' and badge_key = 'matrix-glitch'), 'event-close ledger sync reproduces persisted global Matrix evidence');
+select lives_ok($$update public.attempts set time_hundredths = 249 where id = '56000000-0000-0000-0000-000000000021'$$, 'closed event can update an attempt');
+select lives_ok($$delete from public.attempts where id = '56000000-0000-0000-0000-000000000020'$$, 'closed event can delete an attempt');
+select lives_ok($$select public.sync_player_badge_award_ledgers(array['50000000-0000-0000-0000-000000000015'::uuid])$$, 'scoped ledger batch remains callable after closed-event mutations');
 
 select * from finish();
 rollback;

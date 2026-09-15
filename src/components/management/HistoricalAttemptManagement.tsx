@@ -21,7 +21,7 @@ export function HistoricalAttemptManagement() {
     (a, b) => compareHistoricalAttempts(b, a),
   );
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
       <HistoricalAttemptForm
         key={editing?.id ?? "new"}
         players={players}
@@ -35,7 +35,7 @@ export function HistoricalAttemptManagement() {
           return saved;
         }}
       />
-      <section className="rounded-2xl border border-white/10 p-5">
+      <section className="min-w-0 rounded-2xl border border-white/10 p-3 sm:p-5">
         <h3 className="display-title text-2xl">Historische Versuche verwalten</h3>
         <div className="mt-4 max-h-96 space-y-2 overflow-y-auto">
           {ordered.map((attempt) => (

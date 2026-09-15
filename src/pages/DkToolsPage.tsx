@@ -49,13 +49,13 @@ function ConfirmDialog({ intent, onCancel, onConfirm }: { intent: ResetIntent; o
   if (!intent) return null;
   const isConfiguration = intent === "configuration";
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-5 backdrop-blur-sm" role="presentation" onMouseDown={onCancel}>
+    <div className="safe-dialog-gutter fixed inset-0 z-50 grid min-w-0 max-w-full place-items-center overflow-x-clip bg-black/75 py-5 backdrop-blur-sm" role="presentation" onMouseDown={onCancel}>
       <div
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="dk-confirm-title"
         aria-describedby="dk-confirm-description"
-        className="panel w-full max-w-md border-white/15 bg-[#101210] p-6 shadow-2xl"
+        className="panel w-full min-w-0 max-w-md border-white/15 bg-[#101210] p-4 shadow-2xl sm:p-6"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <h2 id="dk-confirm-title" className="display-title text-3xl">{isConfiguration ? "Auslosung bearbeiten?" : "Wirklich neu auslosen?"}</h2>

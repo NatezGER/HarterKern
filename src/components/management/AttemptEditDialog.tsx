@@ -57,7 +57,7 @@ export function AttemptEditDialog({
     <EventModal open title="Versuch bearbeiten" onClose={onClose}>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-xs text-white/45">Spieler
-          <select value={playerId} onChange={(event) => setPlayerId(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/30 px-3 text-sm">
+          <select value={playerId} onChange={(event) => setPlayerId(event.target.value)} className="mt-2 h-11 w-full min-w-0 max-w-full rounded-xl border border-white/10 bg-black/30 px-3 text-sm">
             {state.players.filter((player) =>
               attempt.eventId
                 ? state.events.find(({ id }) => id === attempt.eventId)?.participantIds.includes(player.id)
@@ -66,7 +66,7 @@ export function AttemptEditDialog({
           </select>
         </label>
         <label className="text-xs text-white/45">Ergebnis
-          <select value={result} onChange={(event) => setResult(event.target.value as "time" | "dns")} className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/30 px-3 text-sm">
+          <select value={result} onChange={(event) => setResult(event.target.value as "time" | "dns")} className="mt-2 h-11 w-full min-w-0 max-w-full rounded-xl border border-white/10 bg-black/30 px-3 text-sm">
             <option value="time">Zeit</option><option value="dns">DNF</option>
           </select>
         </label>

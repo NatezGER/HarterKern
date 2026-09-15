@@ -18,10 +18,10 @@ export function EventManagement() {
   }, [selected]);
   if (!selected) return null;
   return (
-    <section className="rounded-2xl border border-white/10 p-5">
+    <section className="min-w-0 rounded-2xl border border-white/10 p-3 sm:p-5">
       <h3 className="display-title text-2xl">Event bearbeiten</h3>
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)} className="h-11 rounded-xl border border-white/10 bg-black/30 px-3 text-sm">
+      <div className="mt-4 grid min-w-0 gap-3 lg:grid-cols-2">
+        <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)} className="h-11 w-full min-w-0 max-w-full rounded-xl border border-white/10 bg-black/30 px-3 text-sm">
           {state.events.map((event) => <option key={event.id} value={event.id}>{event.name || "Spieleabend"} · {event.date}</option>)}
         </select>
         <Input className="rounded-xl" value={name} onChange={(event) => setName(event.target.value)} placeholder="Eventname" />

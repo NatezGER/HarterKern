@@ -12,8 +12,8 @@ export function Header() {
   const { pathname } = useLocation();
 
   return (
-    <header className="app-header sticky top-0 z-40 border-b backdrop-blur-2xl transition-colors">
-      <div className="mx-auto flex h-20 max-w-[1600px] items-center justify-between gap-2 px-4 sm:gap-4 sm:px-8 lg:px-12">
+    <header className="app-header sticky top-0 z-40 min-w-0 max-w-full border-b backdrop-blur-2xl transition-colors">
+      <div className="viewport-gutter-compact mx-auto flex h-20 min-w-0 max-w-[1600px] items-center justify-between gap-2 sm:gap-4">
         <NavLink to="/" onClick={() => setIsOpen(false)} className="flex shrink-0 items-center gap-3">
           <span className="grid size-10 skew-x-[-8deg] place-items-center rounded-lg bg-gold-400 font-display text-lg font-black text-black shadow-gold-sm">
             {brand.shortName}
@@ -66,7 +66,7 @@ export function Header() {
       </div>
 
       {isOpen && (
-        <nav className="border-t border-white/[0.07] bg-background px-5 py-4 lg:hidden">
+        <nav className="viewport-gutter border-t border-white/[0.07] bg-background py-4 lg:hidden">
           <div className="mx-auto grid max-w-[1600px] gap-1">
             {navigationItems.map(({ href, label, icon: Icon, ...item }) => (
               <NavLink

@@ -13,13 +13,17 @@
 }
 
 html {
+  width: 100%;
+  max-width: 100%;
   background: #080909;
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
-  min-width: 320px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 100vh;
   margin: 0;
   background:
@@ -29,7 +33,52 @@ body {
   font-family: "Inter", sans-serif;
 }
 
+#root {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.viewport-gutter {
+  padding-left: max(1.25rem, env(safe-area-inset-left));
+  padding-right: max(1.25rem, env(safe-area-inset-right));
+}
+
+.viewport-gutter-compact {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+.safe-dialog-gutter {
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
+}
+
+@media (min-width: 640px) {
+  .viewport-gutter,
+  .viewport-gutter-compact {
+    padding-left: max(2rem, env(safe-area-inset-left));
+    padding-right: max(2rem, env(safe-area-inset-right));
+  }
+
+  .safe-dialog-gutter {
+    padding-left: max(1.25rem, env(safe-area-inset-left));
+    padding-right: max(1.25rem, env(safe-area-inset-right));
+  }
+}
+
+@media (min-width: 1024px) {
+  .viewport-gutter,
+  .viewport-gutter-compact {
+    padding-left: max(3rem, env(safe-area-inset-left));
+    padding-right: max(3rem, env(safe-area-inset-right));
+  }
+}
+
 .app-frame {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   --context-accent: #e7ba4b;
   --context-accent-soft: rgba(231, 186, 75, 0.1);
   --context-accent-text: #f1cf72;

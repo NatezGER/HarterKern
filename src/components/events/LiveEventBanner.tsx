@@ -37,7 +37,7 @@ export function LiveEventBanner() {
     <aside className="sticky top-20 z-30 border-b border-red-400/20 bg-[#160b0b]/95 backdrop-blur-xl">
       <Link
         to="/events/live"
-        className="mx-auto flex min-h-12 max-w-[1600px] items-center gap-3 overflow-hidden px-5 py-2 text-xs sm:px-8 lg:px-12"
+        className="viewport-gutter mx-auto flex min-h-12 min-w-0 max-w-[1600px] items-center gap-3 overflow-hidden py-2 text-xs"
       >
         <span className="flex shrink-0 items-center gap-2 font-black uppercase tracking-[0.16em] text-red-300">
           <span className="relative flex size-2.5">
