@@ -277,6 +277,12 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Views/RPCs:** `most_wanted_endings`, `most_wanted_progress`,
   `season_most_wanted_endings`, `get_player_most_wanted_statistics`,
   `player_bingo_fields`, `player_bingo_statistics`, `player_bingo_hits`.
+- **Top-Hunter-Semantik:** Die Stats-Projektion zählt ausschließlich die
+  kanonischen Erstfinder aus `most_wanted_endings` beziehungsweise
+  `season_most_wanted_endings`. Ein entdecktes Feld gehört damit exakt einem
+  Hunter; spätere oder nur unterschiedliche Treffer erhöhen den Wert nicht.
+- **Schnapszahl:** Ausschließlich die Endungen 11, 22, …, 99 zählen. `00` bleibt
+  ein normales BINGO-Feld und kann unabhängig davon `time-stopper` erfüllen.
 - **Tests:** `npm test -- src/components/stats/MostWantedMatrix.test.tsx
   src/components/players/PersonalBingo.test.tsx`.
 - **Direkte Abhängigkeiten:** Statistiken beziehungsweise Spielerprofil.

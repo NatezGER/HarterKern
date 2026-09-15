@@ -74,8 +74,10 @@ export function canPresentLiveLeaderboardTransition(input: {
 
 export function getLiveLeaderboardMotion(reducedMotion: boolean) {
   return reducedMotion
-    ? { layoutDuration: 0, highlightDuration: 0, completionDelay: 1_300 }
-    : { layoutDuration: 0.65, highlightDuration: 1.15, completionDelay: 1_300 };
+    ? { timeDuration: 0, layoutDelay: 0, layoutDuration: 0, highlightDuration: 0,
+        completionDelay: 0 }
+    : { timeDuration: 0.32, layoutDelay: 0.28, layoutDuration: 0.92,
+        highlightDuration: 1.2, completionDelay: 1_350 };
 }
 
 export type LeaderboardPresentationStage =

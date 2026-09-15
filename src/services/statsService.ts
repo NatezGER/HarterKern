@@ -17,6 +17,39 @@ import { ALL_TIME_SEASON, getSeasonDateRange } from "@/lib/season";
 import type { SeasonSelection } from "@/lib/season";
 import { dnfPercentage } from "@/lib/officialTimePerformance";
 
+type DiscoveryEnding = {
+  achieved: boolean;
+  first_player_id: string | null;
+  first_guest_id: string | null;
+  first_display_name: string | null;
+  first_avatar_path: string | null;
+  first_avatar_url: string | null;
+  first_is_guest: boolean;
+};
+
+export function buildDiscoveryHunters(rows: DiscoveryEnding[]) {
+  const discoveries = new Map<string, MostWantedSnapshot["topHunters"][number]>();
+  for (const row of rows) {
+    if (!row.achieved || !row.first_display_name) continue;
+    const id = row.first_player_id ?? (row.first_guest_id ? `guest:${row.first_guest_id}` : null);
+    if (!id) continue;
+    const current = discoveries.get(id);
+    discoveries.set(id, {
+      id,
+      playerId: row.first_player_id,
+      guestId: row.first_guest_id,
+      playerName: row.first_display_name,
+      avatarUrl: resolveAvatar(row.first_avatar_path, row.first_avatar_url),
+      isGuest: row.first_is_guest,
+      endingCount: (current?.endingCount ?? 0) + 1,
+    });
+  }
+  return [...discoveries.values()].sort((left, right) =>
+    right.endingCount - left.endingCount ||
+    left.playerName.localeCompare(right.playerName, "de") ||
+    left.id.localeCompare(right.id));
+}
+
 export async function getLeaderboard(season: SeasonSelection = ALL_TIME_SEASON): Promise<LeaderboardEntry[]> {
   const query = season === ALL_TIME_SEASON
     ? getSupabase().from("public_hall_of_fame").select("*")
@@ -129,19 +162,9 @@ export async function getMostWantedSnapshot(
     left.source_order - right.source_order ||
     left.source_id.localeCompare(right.source_id));
   const hitsByEnding = new Map<number, typeof hits>();
-  const hunterEndings = new Map<string, { name: string; avatarUrl: string | null; endings: Set<number> }>();
   for (const hit of hits) {
     const ending = hit.time_hundredths % 100;
     hitsByEnding.set(ending, [...(hitsByEnding.get(ending) ?? []), hit]);
-    if (!hit.is_guest && hit.player_id) {
-      const hunter = hunterEndings.get(hit.player_id) ?? {
-        name: hit.display_name,
-        avatarUrl: resolveAvatar(hit.avatar_path, hit.avatar_url),
-        endings: new Set<number>(),
-      };
-      hunter.endings.add(ending);
-      hunterEndings.set(hit.player_id, hunter);
-    }
   }
   return {
     endings: endingsResult.data.map((row) => ({
@@ -185,17 +208,7 @@ export async function getMostWantedSnapshot(
     mostCommonEnding: progress.most_common_ending,
     mostCommonHits: Number(progress.most_common_hit_count),
     rarestAchievedEndings: progress.rarest_achieved_endings ?? [],
-    topHunters: [...hunterEndings.entries()].map(([playerId, hunter]) => ({
-      id: playerId,
-      playerId,
-      guestId: null,
-      playerName: hunter.name,
-      avatarUrl: hunter.avatarUrl,
-      isGuest: false,
-      endingCount: hunter.endings.size,
-    })).sort((left, right) => right.endingCount - left.endingCount ||
-      left.playerName.localeCompare(right.playerName, "de") ||
-      left.playerId.localeCompare(right.playerId)).slice(0, 5),
+    topHunters: buildDiscoveryHunters(endingsResult.data).slice(0, 5),
   };
 }
 

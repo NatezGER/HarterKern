@@ -16,6 +16,10 @@ export function WRProgression({ compact = false, collapsibleHistory = false }: {
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const overlays = usePlayerProgressionOverlays(selectedPlayers, isAllTime ? undefined : Number(season));
+  const playerOptions = regularPlayerOptions(getRankedPlayers(data.players, data.leaderboard)
+    .map(({ player }) => player));
+  const playersWithoutData = !overlays.loading ? selectedPlayers.filter((id) =>
+    !overlays.data.some((series) => series.id === id && series.points.length > 0)) : [];
   const points = data.worldRecordHistory.map((record) => {
     const player = getPlayerById(data.players, record.playerId);
     return {
@@ -41,7 +45,8 @@ export function WRProgression({ compact = false, collapsibleHistory = false }: {
         title={isAllTime ? "WR Progression" : "Saisonrekord-Progression"}
       />
       <AnimatedCard className="overflow-hidden p-5 sm:p-8" hover={false}>
-        <PlayerOverlaySelector options={regularPlayerOptions(getRankedPlayers(data.players, data.leaderboard).map(({ player }) => player))} selectedIds={selectedPlayers} onChange={setSelectedPlayers} loading={overlays.loading} error={overlays.error} />
+        <PlayerOverlaySelector options={playerOptions} selectedIds={selectedPlayers} onChange={setSelectedPlayers} loading={overlays.loading} error={overlays.error} />
+        {playersWithoutData.length > 0 && <p className="mb-4 text-xs text-white/40" role="status">Keine Verlaufsdaten für {playersWithoutData.map((id) => playerOptions.find((option) => option.id === id)?.name ?? id).join(", ")} in diesem Zeitraum.</p>}
         <ProgressionTimeline points={compact ? points.slice(0, 6) : points} overlaySeries={overlays.data} primaryLabel={isAllTime ? "Weltrekord" : "Saisonrekord"} primaryToggleable showHistory={!collapsibleHistory || historyExpanded} emptyLabel={isAllTime ? "Noch kein offizieller Weltrekord." : `Noch kein Saisonrekord ${season}.`} />
         {collapsibleHistory && points.length > 0 && <Button type="button" variant="outline" className="mt-5 w-full sm:w-auto" aria-expanded={historyExpanded} onClick={() => setHistoryExpanded((value) => !value)}>{historyExpanded ? (isAllTime ? "Weltrekorde einklappen" : "Saisonrekorde einklappen") : (isAllTime ? "Alle Weltrekorde anzeigen" : "Alle Saisonrekorde anzeigen")}</Button>}
       </AnimatedCard>

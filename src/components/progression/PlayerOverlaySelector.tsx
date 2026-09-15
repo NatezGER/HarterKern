@@ -1,6 +1,7 @@
 import { ChevronDown, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { toggleOverlayPlayer } from "@/lib/playerOverlaySelection";
 
 export interface OverlayPlayerOption { id: string; name: string; avatarUrl?: string | null }
 
@@ -14,7 +15,7 @@ export function PlayerOverlaySelector({ options, selectedIds, onChange, loading 
       <Button type="button" variant="outline" size="sm" aria-expanded={open} onClick={() => setOpen((value) => !value)}>Linien anzeigen <ChevronDown className="size-4" /></Button>
       {options.filter(({ id }) => selectedIds.includes(id)).map((option) => <button key={option.id} type="button" onClick={() => onChange(selectedIds.filter((value) => value !== option.id))} className="inline-flex max-w-full items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-xs text-white/65"><span className="truncate">{option.name}</span><X className="size-3" /><span className="sr-only">{option.name} ausblenden</span></button>)}
     </div>
-    {open && <div className="mt-2 grid max-h-64 w-full gap-1 overflow-y-auto rounded-xl border border-white/10 bg-[#151610] p-2 shadow-xl sm:absolute sm:z-30 sm:w-72">{options.map((option) => { const checked = selectedIds.includes(option.id); const disabled = !checked && selectedIds.length >= max; return <label key={option.id} className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/[0.04]"><input type="checkbox" checked={checked} disabled={disabled} onChange={() => { const next = checked ? selectedIds.filter((id) => id !== option.id) : [...selectedIds, option.id]; onChange(options.filter(({ id }) => next.includes(id)).map(({ id }) => id)); }} /><span className="truncate">{option.name}</span></label>; })}</div>}
+    {open && <div className="mt-2 grid max-h-64 w-full gap-1 overflow-y-auto rounded-xl border border-white/10 bg-[#151610] p-2 shadow-xl sm:absolute sm:z-30 sm:w-72">{options.map((option) => { const checked = selectedIds.includes(option.id); const disabled = !checked && selectedIds.length >= max; return <label key={option.id} className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/[0.04]"><input type="checkbox" checked={checked} disabled={disabled} onChange={() => onChange(toggleOverlayPlayer(options, selectedIds, option.id, max))} /><span className="truncate">{option.name}</span></label>; })}</div>}
     {loading && <p className="mt-2 text-xs text-white/35">Spielerlinien werden geladen …</p>}
     {error && <p className="mt-2 text-xs text-amber-200/70">{error}</p>}
   </div>;

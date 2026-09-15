@@ -94,4 +94,13 @@ describe("ProgressionTimeline mobile history disclosure", () => {
     expect(markup).toContain("stroke-violet-300");
     expect(markup).toContain("stroke-gold-400");
   });
+
+  it("keeps the record line and omits empty player series from the legend", () => {
+    const markup = renderToStaticMarkup(<ProgressionTimeline points={[point]}
+      primaryLabel="Weltrekord" overlaySeries={[
+        { id: "empty", label: "Ohne Daten", points: [] },
+      ]} />);
+    expect(markup).toContain("stroke-gold-400");
+    expect(markup).not.toContain("Ohne Daten");
+  });
 });
