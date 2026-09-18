@@ -4,6 +4,24 @@ import type { Event } from "@/types";
 import type { Database } from "@/types/database";
 import { ALL_TIME_SEASON, getSeasonDateRange } from "@/lib/season";
 import type { SeasonSelection } from "@/lib/season";
+import { resolveEventTheme, type EventTheme } from "@/lib/eventTheme";
+
+// One small, season-independent shell read. Event details and archive cards
+// use the competition metadata already present in their route payloads.
+export async function getActiveEventTheme(): Promise<EventTheme> {
+  const { data, error } = await getSupabase().from("events")
+    .select("awards_trophies,trophy_competition_key")
+    .eq("status", "active")
+    .is("deleted_at", null)
+    .order("started_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return resolveEventTheme({
+    awardsTrophies: data?.awards_trophies,
+    trophyCompetitionKey: data?.trophy_competition_key,
+  });
+}
 
 export async function getEvents(
   season: SeasonSelection = ALL_TIME_SEASON,

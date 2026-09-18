@@ -14,14 +14,17 @@ import { ManagementModeProvider } from "@/hooks/useManagementMode";
 import { SeasonProvider, useSeason } from "@/hooks/useSeason";
 import { getSeasonTheme } from "@/lib/season";
 import { AwardAssetProvider } from "@/hooks/useAwardAssets";
+import { useDataPlatform } from "@/hooks/useDataPlatform";
 
 function AppFrame() {
   const { season } = useSeason();
+  const { activeEventTheme } = useDataPlatform();
 
   return (
     <div
       data-season={season}
       data-season-theme={getSeasonTheme(season)}
+      data-event-theme={activeEventTheme}
       className="app-frame flex min-h-screen flex-col overflow-x-clip"
     >
       <Header />

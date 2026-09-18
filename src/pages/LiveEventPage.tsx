@@ -35,6 +35,8 @@ import type {
   StartLiveEventParticipant,
 } from "@/types/liveEvent";
 import type { EventLeadAttempt } from "@/lib/eventLeadProgression";
+import { resolveEventTheme } from "@/lib/eventTheme";
+import { cn } from "@/lib/cn";
 
 export function LiveEventPage() {
   const navigate = useNavigate();
@@ -174,13 +176,14 @@ export function LiveEventPage() {
       };
     });
   const entryStandings = sortStandingsForEntry(displayedStandings);
+  const eventTheme = resolveEventTheme(activeEvent);
   const confirmEnd = async () => {
     const id = await endEvent();
     if (id) navigate(`/events/${id}/results`);
   };
 
   return (
-    <div className="space-y-7 lg:space-y-10">
+    <div data-event-theme={eventTheme} className={cn("space-y-7 lg:space-y-10", eventTheme === "denmark" && "denmark-surface")}>
       <LiveEventContentOrder
         eventHeader={<LiveEventHeader event={activeEvent} attempts={attempts.length} />}
         leaderboard={<div ref={leaderboardRef} className="scroll-mt-28">

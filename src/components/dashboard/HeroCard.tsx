@@ -1,15 +1,19 @@
 import { motion } from "framer-motion";
 import { useSeason } from "@/hooks/useSeason";
+import { DenmarkThemeDecoration } from "@/components/events/DenmarkThemeDecoration";
+import { cn } from "@/lib/cn";
+import { Link } from "react-router-dom";
 
-export function HeroCard() {
+export function HeroCard({ denmark = false }: { denmark?: boolean }) {
   const { season, isAllTime } = useSeason();
   return (
     <motion.section
       initial={{ opacity: 0, scale: 0.985 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.65 }}
-      className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#10120f] px-6 py-8 shadow-2xl sm:px-10 sm:py-10 lg:px-16 lg:py-12"
+      className={cn("relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#10120f] px-6 py-8 shadow-2xl sm:px-10 sm:py-10 lg:px-16 lg:py-12", denmark && "denmark-hero denmark-dashboard-hero")}
     >
+      {denmark && <DenmarkThemeDecoration />}
       <div className="absolute inset-0 bg-hero-grid bg-[size:44px_44px] opacity-70 [mask-image:linear-gradient(to_bottom,black,transparent_90%)]" />
       <div className="context-hero-glow absolute -right-24 -top-32 size-[32rem] rounded-full blur-[110px]" />
       <div className="absolute bottom-0 right-0 h-full w-1/2 opacity-60">
@@ -23,6 +27,8 @@ export function HeroCard() {
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
+            {denmark && <p className="denmark-championship-label mb-4">Dänemark · Championship live</p>}
+            {denmark && <div className="denmark-dashboard-callout"><p className="display-title">Dänemark</p><p>Das jährliche Special ist live.</p></div>}
             <h1 className="display-title text-[clamp(3.25rem,10vw,7.5rem)] italic leading-[0.78]">
               Harter Kern
             </h1>
@@ -30,6 +36,7 @@ export function HeroCard() {
               2 Fast 2 Drink
             </p>
             {!isAllTime && <p className="context-accent-text mt-4 text-xs font-bold uppercase tracking-[0.2em] sm:text-sm">Saison {season}</p>}
+            {denmark && <Link className="denmark-hero-cta mt-6 inline-flex" to="/events/live">Zum Live-Championship <span aria-hidden="true">→</span></Link>}
           </motion.div>
       </div>
     </motion.section>

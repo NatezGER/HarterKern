@@ -34,7 +34,7 @@ export function LiveLeaderboard({ standings, transition, onTransitionComplete }:
     return () => window.clearTimeout(timeout);
   }, [motionConfig.completionDelay, transition]);
 
-  return <section className="panel overflow-hidden">
+  return <section className="panel overflow-hidden" data-live-leaderboard>
     <div className="border-b border-white/[0.07] px-5 py-4 sm:px-7"><h2 className="display-title text-2xl">Live-Rangliste</h2></div>
     <div>{standings.map((standing) => {
       const affected = transition?.playerId === standing.player.id;

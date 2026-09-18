@@ -140,6 +140,20 @@ describe("EventResults polish", () => {
     );
     expect(markup).toContain("Trophäen-Event");
     expect(markup).toContain("Dänemark 2026");
+    expect(markup).toContain('data-event-theme="denmark"');
+    expect(markup).toContain("denmark-hero");
+    expect(markup).toContain("denmark-decoration");
+  });
+
+  it("keeps normal and non-Denmark Trophy events visually unthemed", () => {
+    for (const changes of [{}, { awardsTrophies: true, trophyCompetitionKey: null }]) {
+      const markup = renderToStaticMarkup(
+        <MemoryRouter><EventResults detail={{ ...detail, ...changes }} /></MemoryRouter>,
+      );
+      expect(markup).toContain('data-event-theme="default"');
+      expect(markup).not.toContain("denmark-decoration");
+      expect(markup).not.toContain("denmark-hero");
+    }
   });
 
   it("keeps the regular podium for a normal event", () => {

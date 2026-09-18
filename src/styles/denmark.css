@@ -1,0 +1,429 @@
+/* Competition layer: season selection remains independent of event identity. */
+.app-frame[data-event-theme="denmark"],
+.denmark-surface,
+.denmark-archive-card {
+  --dk-red: #b7142c;
+  --dk-red-bright: #dc2540;
+  --dk-red-deep: #370b16;
+  --dk-ink: #1a070c;
+  --dk-cream: #fff8e9;
+  --dk-white: #fffdf8;
+  --dk-gold: #f4d788;
+  --dk-gold-deep: #b98a39;
+  --dk-line: rgba(244, 215, 136, 0.37);
+  --dk-card: rgba(56, 12, 23, 0.92);
+}
+
+.denmark-live-banner {
+  --dk-red: #b7142c;
+  --dk-red-bright: #dc2540;
+  --dk-gold: #f4d788;
+  --dk-gold-deep: #b98a39;
+  --dk-cream: #fff8e9;
+  --dk-white: #fffdf8;
+}
+
+.app-frame[data-event-theme="denmark"] {
+  --context-accent: var(--dk-gold);
+  --context-accent-text: var(--dk-gold);
+  --context-accent-soft: rgba(244, 215, 136, 0.12);
+  --context-border: rgba(244, 215, 136, 0.3);
+  --context-header: rgba(55, 11, 22, 0.96);
+  --context-nav-active: rgba(244, 215, 136, 0.17);
+  --context-mobile-nav-active: rgba(244, 215, 136, 0.15);
+  --context-control-border: rgba(244, 215, 136, 0.45);
+  --context-control-background: rgba(244, 215, 136, 0.09);
+  --context-glow: rgba(244, 215, 136, 0.28);
+  background:
+    radial-gradient(ellipse 48rem 38rem at 93% 5%, rgba(220, 37, 64, 0.36), transparent 75%),
+    radial-gradient(ellipse 35rem 40rem at 5% 40%, rgba(130, 18, 38, 0.25), transparent 78%),
+    linear-gradient(170deg, #4f0b1c 0, #25090f 44rem, #0c090b 82rem);
+}
+
+.app-frame[data-event-theme="denmark"] .app-header {
+  border-bottom: 1px solid var(--dk-line);
+  box-shadow: 0 8px 30px rgba(16, 2, 6, 0.32), inset 0 -2px 0 rgba(244, 215, 136, 0.08);
+}
+
+.app-frame[data-event-theme="denmark"] .app-header::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--dk-gold-deep), var(--dk-cream), var(--dk-gold-deep), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+.app-frame[data-event-theme="denmark"] .page-header {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  border: 1px solid var(--dk-line);
+  border-radius: 1.5rem;
+  background: linear-gradient(110deg, rgba(130, 20, 43, 0.78), rgba(45, 9, 20, 0.82));
+  box-shadow: inset 3px 0 0 var(--dk-gold-deep), 0 20px 42px rgba(17, 2, 7, 0.17);
+}
+
+.app-frame[data-event-theme="denmark"] .page-header .display-title {
+  color: var(--dk-cream);
+  text-shadow: 0 4px 20px rgba(16, 2, 6, 0.35);
+}
+
+.denmark-surface {
+  --context-panel: var(--dk-card);
+  --context-panel-border: var(--dk-line);
+  isolation: isolate;
+}
+
+.denmark-surface .panel {
+  background: linear-gradient(135deg, rgba(92, 17, 34, 0.93), var(--dk-card) 55%, rgba(35, 8, 16, 0.95));
+  border-color: var(--dk-line);
+  box-shadow: inset 0 1px 0 rgba(255, 253, 248, 0.08), 0 20px 48px rgba(12, 2, 6, 0.16);
+}
+
+.denmark-surface .text-white\/30,
+.denmark-surface .text-white\/35,
+.denmark-surface .text-white\/40,
+.denmark-surface .text-white\/45,
+.denmark-archive-card .text-white\/30,
+.denmark-archive-card .text-white\/35,
+.denmark-archive-card .text-white\/40 {
+  color: rgba(255, 248, 233, 0.72);
+}
+
+.denmark-surface section > .display-title,
+.denmark-surface section > h2.display-title,
+.denmark-surface .panel > h2.display-title {
+  color: var(--dk-gold);
+  text-shadow: 0 2px 18px rgba(8, 1, 3, 0.28);
+}
+
+.denmark-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(255, 248, 233, 0.42) !important;
+  background: linear-gradient(116deg, #630d20 0%, var(--dk-red) 49%, #6d0d22 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), inset 0 -5px 0 rgba(244, 215, 136, 0.23), 0 24px 65px rgba(20, 2, 8, 0.36) !important;
+}
+
+.denmark-hero::after {
+  position: absolute;
+  right: 2%;
+  bottom: -12rem;
+  width: min(37rem, 90vw);
+  aspect-ratio: 1;
+  border: 1px solid rgba(244, 215, 136, 0.22);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2rem rgba(244, 215, 136, 0.025), 0 0 0 5rem rgba(244, 215, 136, 0.022);
+  content: "";
+  pointer-events: none;
+}
+
+.denmark-hero > .relative {
+  z-index: 2;
+}
+
+.denmark-hero-title {
+  max-width: 18ch;
+  color: var(--dk-cream);
+  font-size: clamp(2.4rem, 7vw, 6.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+  text-shadow: 0 3px 0 rgba(72, 8, 22, 0.75), 0 12px 34px rgba(14, 2, 7, 0.46);
+}
+
+.denmark-championship-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: 100%;
+  color: var(--dk-gold);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.denmark-championship-label::before {
+  display: inline-block;
+  width: 1.35rem;
+  height: 1rem;
+  flex: none;
+  background:
+    linear-gradient(90deg, transparent 31%, var(--dk-white) 31% 43%, transparent 43%),
+    linear-gradient(0deg, transparent 42%, var(--dk-white) 42% 59%, transparent 59%),
+    var(--dk-red);
+  border: 1px solid rgba(255, 253, 248, 0.62);
+  border-radius: 2px;
+  box-shadow: 0 2px 7px rgba(20, 2, 8, 0.32);
+  content: "";
+}
+
+.denmark-decoration {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.denmark-flag {
+  position: absolute;
+  display: block;
+  width: clamp(18rem, 50vw, 46rem);
+  aspect-ratio: 37 / 28;
+  background:
+    linear-gradient(90deg, transparent 30%, var(--dk-white) 30% 41%, transparent 41%),
+    linear-gradient(0deg, transparent 43%, var(--dk-white) 43% 58%, transparent 58%),
+    var(--dk-red-bright);
+  border-radius: 3% 9% 8% 3% / 3% 8% 13% 4%;
+  box-shadow: 0 18px 55px rgba(23, 2, 8, 0.28);
+  mask-image: linear-gradient(110deg, transparent, black 14%, black 78%, transparent);
+  opacity: 0.27;
+}
+
+.denmark-flag::after {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(95deg, rgba(12, 2, 6, 0.24) 0, rgba(255, 255, 255, 0.13) 8%, rgba(12, 2, 6, 0.2) 17%, transparent 26%);
+  border-radius: inherit;
+  content: "";
+  mix-blend-mode: multiply;
+}
+
+.denmark-flag-primary {
+  top: -26%;
+  right: -8%;
+  transform: rotate(-12deg) skewY(-5deg);
+}
+
+.denmark-flag-secondary {
+  bottom: -64%;
+  left: -13%;
+  transform: rotate(15deg) skewY(7deg);
+  opacity: 0.13;
+}
+
+.denmark-pennants {
+  position: absolute;
+  top: 0.75rem;
+  right: 2rem;
+  left: 2rem;
+  height: 1.3rem;
+  border-top: 1px solid rgba(244, 215, 136, 0.68);
+  opacity: 0.6;
+}
+
+.denmark-pennants::after {
+  position: absolute;
+  inset: 0.08rem 0 0;
+  background: repeating-linear-gradient(90deg, var(--dk-gold) 0 0.5rem, var(--dk-cream) 0.5rem 1rem, var(--dk-red) 1rem 1.5rem, transparent 1.5rem 2.3rem);
+  clip-path: polygon(0 0, 100% 0, 100% 38%, 98% 95%, 96% 38%, 94% 95%, 92% 38%, 90% 95%, 88% 38%, 86% 95%, 84% 38%, 82% 95%, 80% 38%, 78% 95%, 76% 38%, 74% 95%, 72% 38%, 70% 95%, 68% 38%, 66% 95%, 64% 38%, 62% 95%, 60% 38%, 58% 95%, 56% 38%, 54% 95%, 52% 38%, 50% 95%, 48% 38%, 46% 95%, 44% 38%, 42% 95%, 40% 38%, 38% 95%, 36% 38%, 34% 95%, 32% 38%, 30% 95%, 28% 38%, 26% 95%, 24% 38%, 22% 95%, 20% 38%, 18% 95%, 16% 38%, 14% 95%, 12% 38%, 10% 95%, 8% 38%, 6% 95%, 4% 38%, 2% 95%, 0 38%);
+  content: "";
+}
+
+.denmark-surface .denmark-podium-section {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--dk-line);
+  border-radius: 1.6rem;
+  background: linear-gradient(145deg, rgba(131, 19, 42, 0.85), rgba(48, 9, 20, 0.91));
+  box-shadow: 0 25px 65px rgba(17, 2, 7, 0.25);
+}
+
+.denmark-surface [data-live-leaderboard] {
+  border-top: 2px solid var(--dk-gold-deep);
+}
+
+.denmark-surface [data-live-leaderboard] > div:first-child {
+  background: linear-gradient(90deg, rgba(244, 215, 136, 0.14), transparent 72%);
+}
+
+.denmark-surface [data-live-leaderboard] > div:nth-child(2) > :first-child {
+  background: linear-gradient(90deg, rgba(244, 215, 136, 0.14), transparent);
+  box-shadow: inset 3px 0 0 var(--dk-gold);
+}
+
+.denmark-surface .denmark-podium-section::before {
+  position: absolute;
+  top: 0;
+  right: 7%;
+  left: 7%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--dk-gold), var(--dk-white), var(--dk-gold), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+.denmark-surface [data-event-trophy-podium] [data-placement="1"] {
+  border-color: rgba(244, 215, 136, 0.8);
+  background: linear-gradient(155deg, rgba(149, 37, 46, 0.96), rgba(66, 11, 25, 0.96));
+  box-shadow: inset 0 2px 0 rgba(255, 248, 233, 0.3), 0 0 35px rgba(244, 215, 136, 0.2);
+}
+
+.denmark-surface [data-event-trophy-podium] [data-placement="2"] {
+  border-color: rgba(222, 233, 241, 0.48);
+}
+
+.denmark-surface [data-event-trophy-podium] [data-placement="3"] {
+  border-color: rgba(224, 150, 99, 0.46);
+}
+
+.denmark-surface .denmark-results-list > :first-child {
+  background: linear-gradient(90deg, rgba(244, 215, 136, 0.13), transparent);
+  box-shadow: inset 3px 0 0 var(--dk-gold);
+}
+
+.denmark-surface [data-trophy-event-special-stats] > .panel {
+  border-top: 2px solid var(--dk-gold-deep);
+}
+
+.denmark-surface #most-wanted-grid button[aria-label*="gefunden"] {
+  border-color: rgba(244, 215, 136, 0.38);
+  background: rgba(244, 215, 136, 0.08);
+}
+
+.denmark-live-banner {
+  border-color: var(--dk-gold-deep);
+  background: linear-gradient(90deg, #6f1024, #ad1a32 55%, #5e0e20);
+  box-shadow: inset 0 -2px 0 rgba(244, 215, 136, 0.38), 0 12px 26px rgba(16, 2, 6, 0.24);
+}
+
+.denmark-live-banner::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 14%, rgba(255, 253, 248, 0.06) 14% 16%, transparent 16%);
+  content: "";
+  pointer-events: none;
+}
+
+.denmark-live-banner > a {
+  position: relative;
+}
+
+.denmark-live-banner > a > span:first-child {
+  color: var(--dk-gold);
+}
+
+.denmark-archive-card {
+  border-color: var(--dk-line) !important;
+  background: linear-gradient(105deg, #7e142c, #43101f 58%, #260b15) !important;
+  box-shadow: inset 4px 0 0 var(--dk-gold-deep), 0 14px 34px rgba(15, 2, 6, 0.19);
+}
+
+.denmark-archive-card:hover {
+  border-color: var(--dk-gold) !important;
+}
+
+.denmark-archive-card .denmark-decoration-compact .denmark-flag-primary {
+  top: -170%;
+  right: -6%;
+  width: 19rem;
+  opacity: 0.2;
+}
+
+.denmark-archive-card .denmark-decoration-compact .denmark-flag-secondary,
+.denmark-archive-card .denmark-decoration-compact .denmark-pennants {
+  display: none;
+}
+
+.denmark-archive-card .relative > p:first-child {
+  color: var(--dk-cream);
+}
+
+.denmark-dashboard-hero .denmark-decoration,
+.denmark-current-event .denmark-decoration {
+  z-index: 0;
+}
+
+.denmark-dashboard-hero .context-gradient-text {
+  background-image: linear-gradient(90deg, var(--dk-cream), var(--dk-gold), var(--dk-cream));
+}
+
+.denmark-dashboard-callout {
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 1.3rem;
+  padding: 0.65rem 1rem 0.75rem;
+  border-left: 3px solid var(--dk-gold);
+  background: linear-gradient(90deg, rgba(28, 3, 9, 0.56), transparent);
+}
+
+.denmark-dashboard-callout > p:first-child {
+  color: var(--dk-gold);
+  font-size: clamp(1.8rem, 5vw, 3.6rem);
+  line-height: 0.95;
+  letter-spacing: 0.03em;
+}
+
+.denmark-dashboard-callout > p:last-child {
+  margin-top: 0.35rem;
+  color: var(--dk-cream);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.denmark-hero-cta {
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 2.75rem;
+  max-width: 100%;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--dk-gold);
+  border-radius: 999px;
+  background: rgba(244, 215, 136, 0.13);
+  color: var(--dk-cream);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: background-color 180ms ease;
+}
+
+.denmark-hero-cta:hover,
+.denmark-hero-cta:focus-visible {
+  background: rgba(244, 215, 136, 0.28);
+  outline: 2px solid var(--dk-cream);
+  outline-offset: 2px;
+}
+
+@media (max-width: 639px) {
+  .denmark-flag-primary {
+    top: -8%;
+    right: -58%;
+    width: 24rem;
+    opacity: 0.2;
+  }
+
+  .denmark-flag-secondary,
+  .denmark-pennants {
+    display: none;
+  }
+
+  .denmark-hero-title {
+    max-width: 100%;
+    font-size: clamp(2rem, 10vw, 3.4rem);
+  }
+
+  .denmark-championship-label {
+    font-size: 0.59rem;
+    letter-spacing: 0.14em;
+  }
+
+  .denmark-surface .denmark-podium-section {
+    padding: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .denmark-decoration, .denmark-decoration * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -38,7 +38,7 @@ export function TrophyCompetitionField({
         <option value="">Allgemeines Trophäen-Event</option>
         {SELECTABLE_TROPHY_EVENT_COMPETITIONS.map((competition) => (
           <option key={trophyCompetitionId(competition)} value={trophyCompetitionId(competition)}>
-            {competition.key === "denmark" ? "🇩🇰 " : ""}{competition.name}
+            {competition.name}
           </option>
         ))}
       </select>

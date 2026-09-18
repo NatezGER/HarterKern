@@ -80,8 +80,8 @@ export function EventTrophyPodium({
           placementStyles[trophy.placement],
         );
         return trophy.playerId
-          ? <Link key={trophy.key} to={`/player/${trophy.playerId}`} className={className}>{content}</Link>
-          : <article key={trophy.key} className={className}>{content}</article>;
+          ? <Link key={trophy.key} to={`/player/${trophy.playerId}`} data-placement={trophy.placement} className={className}>{content}</Link>
+          : <article key={trophy.key} data-placement={trophy.placement} className={className}>{content}</article>;
       })}
     </div>
   );

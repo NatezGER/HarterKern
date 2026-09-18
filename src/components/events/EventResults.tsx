@@ -17,6 +17,8 @@ import { useMemo, useState } from "react";
 import { buildEventPlayerProgressions, eventParticipantOptions } from "@/services/playerProgressionOverlayService";
 import { trophyCompetitionName } from "@/lib/trophyCompetitions";
 import { TrophyEventSpecialStats } from "@/components/events/TrophyEventSpecialStats";
+import { resolveEventTheme } from "@/lib/eventTheme";
+import { DenmarkThemeDecoration } from "@/components/events/DenmarkThemeDecoration";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -37,11 +39,14 @@ export function EventResults({ detail }: { detail: EventDetail }) {
   const eventOverlays = useMemo(() => buildEventPlayerProgressions(detail.attempts, selectedPlayers), [detail.attempts, selectedPlayers]);
   const competitionName = trophyCompetitionName(detail.trophyCompetitionKey, detail.trophyCompetitionYear);
   const isClosedTrophyEvent = detail.status === "closed" && detail.awardsTrophies;
+  const denmark = resolveEventTheme(detail) === "denmark";
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 lg:gap-10">
-      <section className="panel relative order-1 overflow-hidden p-5 sm:p-10">
+    <div data-event-theme={resolveEventTheme(detail)} className={cn("flex flex-col gap-6 sm:gap-8 lg:gap-10", denmark && "denmark-surface")}>
+      <section className={cn("panel relative order-1 overflow-hidden p-5 sm:p-10", denmark && "denmark-hero")}>
+        {denmark && <DenmarkThemeDecoration />}
         <div className="absolute -right-20 -top-24 size-72 rounded-full bg-gold-400/10 blur-[90px]" />
         <div className="relative">
+          {denmark && <p className="denmark-championship-label">Dänemark · Championship {detail.trophyCompetitionYear ?? ""}</p>}
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-emerald-400/20 bg-emerald-400/[0.07] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">
               {detail.status === "closed" ? "Beendet" : "Live"}
@@ -50,13 +55,13 @@ export function EventResults({ detail }: { detail: EventDetail }) {
             {detail.awardsTrophies && <span className="flex items-center gap-1 rounded-full border border-amber-300/25 bg-amber-300/[0.08] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200"><Trophy className="size-3" /> Trophäen-Event</span>}
             {competitionName && <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">{competitionName}</span>}
           </div>
-          <h1 className="display-title mt-4 text-4xl sm:text-6xl">{detail.name}</h1>
+          <h1 className={cn("display-title mt-4 text-4xl sm:text-6xl", denmark && "denmark-hero-title")}>{detail.name}</h1>
           <p className="mt-3 flex items-center gap-2 text-sm text-white/45"><CalendarDays className="size-4" /> {formatDate(detail.date)}</p>
           {detail.description && <p className="mt-5 max-w-3xl text-sm leading-relaxed text-white/55">{detail.description}</p>}
         </div>
       </section>
 
-      <section className="order-2">
+      <section className={cn("order-2", denmark && "denmark-podium-section")}>
         <h2 className="display-title mb-3 text-2xl sm:mb-5 sm:text-3xl">
           {isClosedTrophyEvent ? "Trophäen-Podium" : "Podium"}
         </h2>
@@ -82,7 +87,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
 
       {detail.status === "closed" && <section className="order-3">
         <h2 className="display-title mb-3 text-2xl sm:mb-5 sm:text-3xl">Finale Bestenliste</h2>
-        <div className="panel divide-y divide-white/[0.06] overflow-hidden">
+        <div className={cn("panel divide-y divide-white/[0.06] overflow-hidden", denmark && "denmark-results-list")}>
           {detail.finalStandings.map((entry) => {
             const placement = entry.rank != null ? `${entry.rank}.` : entry.isAk ? "AK" : "DNF";
             const row = <><span className="w-10 shrink-0 text-center font-display text-xl font-black text-gold-300 sm:w-14 sm:text-2xl">{placement}</span><ProfileAvatar id={entry.playerId ?? entry.guestId ?? entry.name} name={entry.name} url={entry.avatarUrl} className="size-10 shrink-0 sm:size-12" /><div className="min-w-0 flex-1"><p className="truncate font-bold">{entry.name}</p><p className="text-[10px] uppercase tracking-wider text-white/35">{entry.isGuest ? "Gast" : entry.isAk ? "Außer Konkurrenz" : `${entry.attempts} Versuche`}</p></div><span className="shrink-0 font-display text-lg font-black sm:text-2xl">{entry.bestHundredths == null ? "DNF" : displayTime(entry.bestHundredths)}</span></>;

@@ -13,12 +13,14 @@ import { LatestEventCard } from "@/components/dashboard/LatestEventCard";
 import { OptionalDataState } from "@/components/common/OptionalDataState";
 import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { useSeason } from "@/hooks/useSeason";
+import { useDataPlatform } from "@/hooks/useDataPlatform";
 
 export function DashboardPage() {
   const { season, isAllTime } = useSeason();
+  const { activeEventTheme } = useDataPlatform();
   return (
     <div className="space-y-8 sm:space-y-12 lg:space-y-16">
-      <HeroCard />
+      <HeroCard denmark={activeEventTheme === "denmark"} />
       <SeasonContextBadge />
       <DataState>
         <div className="space-y-8 sm:space-y-12 lg:space-y-16">

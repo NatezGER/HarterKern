@@ -35,6 +35,8 @@ import {
   profileSectionsForDataGroups,
 } from "@/services/playerProfileService";
 import { useSeason } from "@/hooks/useSeason";
+import { getActiveEventTheme } from "@/services/eventService";
+import type { EventTheme } from "@/lib/eventTheme";
 import { loadDataGroups, mergePatchForRun } from "@/hooks/dataPlatformRunGuard";
 
 export type DataStatus = "loading" | "ready" | "error" | "unconfigured";
@@ -63,6 +65,7 @@ const emptySnapshot: DataPlatformSnapshot = {
 const emptyGroupState = (): DataGroupState => ({ status: "idle", error: null, version: 0 });
 
 interface DataPlatformContextValue {
+  activeEventTheme: EventTheme;
   snapshot: DataPlatformSnapshot;
   status: DataStatus;
   realtimeStatus: RealtimeStatus;
@@ -87,10 +90,12 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
   const planRef = useRef(plan);
   planRef.current = plan;
   const routeRun = useRef(0);
+  const themeRun = useRef(0);
   const routeRefresh = useRef<Promise<void> | null>(null);
   const refetchTimer = useRef<number | null>(null);
   const scheduledGroups = useRef(new Set<DataGroup>());
   const [snapshot, setSnapshot] = useState(emptySnapshot);
+  const [activeEventTheme, setActiveEventTheme] = useState<EventTheme>("default");
   const [status, setStatus] = useState<DataStatus>(isSupabaseConfigured ? "loading" : "unconfigured");
   const [groups, setGroups] = useState<Partial<Record<DataGroup, DataGroupState>>>({});
   const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>("connecting");
@@ -198,6 +203,21 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
     }, 120);
   }, [refreshSelectedGroups]);
 
+  const refreshActiveEventTheme = useCallback(async () => {
+    const run = ++themeRun.current;
+    try {
+      const theme = await getActiveEventTheme();
+      if (run === themeRun.current) setActiveEventTheme(theme);
+    } catch {
+      // The optional visual layer must never block route data.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    void refreshActiveEventTheme();
+  }, [refreshActiveEventTheme]);
+
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const runId = ++routeRun.current;
@@ -234,6 +254,7 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const unsubscribe = subscribeToDataPlatform((table) => {
+      if (table === "events") void refreshActiveEventTheme();
       const activeGroups = allPlanGroups(planRef.current);
       const affected = groupsForRealtimeTable(table).filter((group) => activeGroups.includes(group));
       if (affected.length) scheduleGroups(affected);
@@ -248,21 +269,27 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
       unsubscribe();
       if (refetchTimer.current != null) window.clearTimeout(refetchTimer.current);
     };
-  }, [scheduleGroups]);
+  }, [refreshActiveEventTheme, scheduleGroups]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const refreshVisible = () => {
-      if (document.visibilityState === "visible") scheduleGroups(allPlanGroups(planRef.current));
+      if (document.visibilityState === "visible") {
+        scheduleGroups(allPlanGroups(planRef.current));
+        void refreshActiveEventTheme();
+      }
     };
-    const refreshFocused = () => scheduleGroups(allPlanGroups(planRef.current));
+    const refreshFocused = () => {
+      scheduleGroups(allPlanGroups(planRef.current));
+      void refreshActiveEventTheme();
+    };
     window.addEventListener("focus", refreshFocused);
     document.addEventListener("visibilitychange", refreshVisible);
     return () => {
       window.removeEventListener("focus", refreshFocused);
       document.removeEventListener("visibilitychange", refreshVisible);
     };
-  }, [scheduleGroups]);
+  }, [refreshActiveEventTheme, scheduleGroups]);
 
   const hasActiveEvent = plan.required.includes("live") &&
     snapshot.liveState.events.some(({ status: value }) => value === "active");
@@ -276,6 +303,7 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
   }, [hasActiveEvent, scheduleGroups]);
 
   const value = useMemo(() => ({
+    activeEventTheme,
     snapshot,
     status,
     realtimeStatus,
@@ -285,7 +313,7 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
     groups,
     refresh,
     refreshGroup,
-  }), [error, groups, migration, migrationError, realtimeStatus, refresh, refreshGroup, snapshot, status]);
+  }), [activeEventTheme, error, groups, migration, migrationError, realtimeStatus, refresh, refreshGroup, snapshot, status]);
   return <DataPlatformContext.Provider value={value}>{children}</DataPlatformContext.Provider>;
 }
 

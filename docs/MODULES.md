@@ -14,6 +14,12 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Tests:** noch nicht dokumentiert.
 - **Direkte Abhängigkeiten:** Datenplattform, Realtime und aktive Page.
 - **Nicht enthalten:** fachliche Inhalte der einzelnen Routen.
+- **Dänemark-Theme:** `eventTheme` liest ausschließlich strukturierte
+  Trophy-/Competition-Metadaten. Die Shell fragt unabhängig von Route und
+  Saison die neueste aktive Eventzeile mit zwei Feldern ab (ein zusätzlicher
+  kleiner Request beim Start sowie bei Event-Realtime und Fokus/Rückkehr).
+  Archiv und Eventdetail verwenden ihre bereits geladenen Eventdaten, ohne
+  weitere Theme-Requests. CSS-Layer und Saisonwahl bleiben getrennt.
 
 ## 2. Dashboard
 
