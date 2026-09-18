@@ -36,11 +36,11 @@ export function DenmarkSectionHeading({ eyebrow, title, id, className }: {
   className?: string;
 }) {
   return <div className={cn("denmark-section-heading", className)}>
-    <span className="denmark-section-mark" aria-hidden="true" />
+    <span className="denmark-section-mark denmark-shield" aria-hidden="true" />
     <div>{eyebrow && <p className="denmark-section-eyebrow">{eyebrow}</p>}<h2 id={id} className="display-title">{title}</h2></div>
   </div>;
 }
 
 export function DenmarkDivider() {
-  return <div className="denmark-divider" aria-hidden="true"><span className="denmark-shield" /></div>;
+  return <div className="denmark-divider" aria-hidden="true"><span className="denmark-divider-center"><span className="denmark-shield" /></span></div>;
 }

@@ -327,10 +327,12 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Championship-Visuals:** `/dk` aktiviert den lokalen
   `DenmarkChampionshipShell` dauerhaft. Live-Event und historisches Eventdetail
   verwenden denselben Layer nur bei `awardsTrophies=true` und
-  `trophyCompetitionKey="denmark"`; Dashboard und Archiv markieren allein die
-  betreffende Eventkarte. Globale Stats, Header und andere Routen bleiben
-  unverändert. Der Theme-Resolver benötigt keinen zusätzlichen Request:
-  Er nutzt die bereits geladenen Event-Metadaten.
+  `trophyCompetitionKey="denmark"`. Solange ein solches Event aktiv ist, setzt
+  `AppFrame` zusätzlich `data-event-theme="denmark"` für die gesamte App-Shell;
+  nach Eventende kehren normale Routen zum Standard zurück. Historische
+  Denmark-Eventseiten und `/dk` behalten ihren lokalen Layer unabhängig vom
+  Live-Status. Der Theme-Resolver benötigt keinen zusätzlichen Request: Er
+  nutzt die bereits geladenen Event-Metadaten.
 - **Tests:** `npm test -- src/lib/dkTools.test.ts
   src/constants/navigation.test.ts`.
 - **Direkte Abhängigkeiten:** App-Shell, Navigation und bestehende UI-Bausteine.

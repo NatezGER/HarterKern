@@ -16,11 +16,11 @@ export function LeaderboardPage() {
       <PageHeader eyebrow={isAllTime ? "Hall of Fame" : `Saison ${season}`} title={isAllTime ? "Die Besten" : "Saison-Hall-of-Fame"} description={isAllTime ? appMeta.leaderboardDescription : `Die schnellsten qualifizierten Einzelzeiten der Saison ${season}.`} action={<SeasonContextBadge />} />
       <DataState>
         <div className="space-y-10">
-          <section className="panel px-4 pt-8 sm:px-10">
+          <section className="panel dk-frame dk-hof-podium px-4 pt-8 sm:px-10">
             <Podium />
           </section>
-          <section>
-            <h2 className="display-title mb-5 text-3xl">{isAllTime ? "Gesamtrangliste" : `Saisonrangliste ${season}`}</h2>
+          <section className="dk-hof-ranking">
+            <h2 className="dk-hof-heading display-title mb-5 text-3xl">{isAllTime ? "Gesamtrangliste" : `Saisonrangliste ${season}`}</h2>
             <LeaderboardList
               entries={entries}
               emptyLabel={isAllTime

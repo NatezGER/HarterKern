@@ -8,7 +8,7 @@ export function HeroCard() {
       initial={{ opacity: 0, scale: 0.985 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.65 }}
-      className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#10120f] px-6 py-8 shadow-2xl sm:px-10 sm:py-10 lg:px-16 lg:py-12"
+      className="dashboard-hero relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#10120f] px-6 py-8 shadow-2xl sm:px-10 sm:py-10 lg:px-16 lg:py-12"
     >
       <div className="absolute inset-0 bg-hero-grid bg-[size:44px_44px] opacity-70 [mask-image:linear-gradient(to_bottom,black,transparent_90%)]" />
       <div className="context-hero-glow absolute -right-24 -top-32 size-[32rem] rounded-full blur-[110px]" />

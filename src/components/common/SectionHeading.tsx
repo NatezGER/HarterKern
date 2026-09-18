@@ -8,7 +8,7 @@ interface SectionHeadingProps {
 
 export function SectionHeading({ eyebrow, title, action }: SectionHeadingProps) {
   return (
-    <div className="mb-5 flex items-end justify-between gap-4">
+    <div className="section-heading mb-5 flex items-end justify-between gap-4">
       <div>
         {eyebrow && (
           <p className="context-accent-text mb-1 text-[10px] font-semibold uppercase leading-relaxed tracking-[0.24em] sm:text-[11px]">

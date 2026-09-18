@@ -24,8 +24,8 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON, eventScope }:
     selectedScope.current = scopeKey;
   }, [scopeKey]);
   return (
-    <div className="panel overflow-hidden p-4 sm:p-7">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="panel dk-frame dk-most-wanted overflow-hidden p-4 sm:p-7">
+      <div className="dk-hunt-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className={cn("text-xs font-black uppercase tracking-[0.2em]",
             season === ALL_TIME_SEASON ? "text-gold-300" : "text-emerald-300")}>
@@ -40,10 +40,10 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON, eventScope }:
               : "Jede Nachkommastellen-Kombination zählt einmal. Der erste offizielle Treffer verewigt den Finder."}
           </p>
         </div>
-        <p className={cn("font-display text-4xl font-black",
+        <p className={cn("dk-hunt-count font-display text-4xl font-black",
           season === ALL_TIME_SEASON ? "text-gold-300" : "text-emerald-300")}>{data.reached}<span className="text-xl text-white/25">/{data.total}</span></p>
       </div>
-      <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.07]" role="progressbar" aria-label="Most-Wanted-Fortschritt" aria-valuemin={0} aria-valuemax={data.total} aria-valuenow={data.reached}>
+      <div className="dk-hunt-progress mt-5 h-2 overflow-hidden rounded-full bg-white/[0.07]" role="progressbar" aria-label="Most-Wanted-Fortschritt" aria-valuemin={0} aria-valuemax={data.total} aria-valuenow={data.reached}>
         <div className={cn("h-full rounded-full transition-[width]",
           season === ALL_TIME_SEASON
             ? "bg-gradient-to-r from-amber-600 to-yellow-300"
@@ -52,13 +52,14 @@ export function MostWantedMatrix({ data, season = ALL_TIME_SEASON, eventScope }:
       {season !== ALL_TIME_SEASON && data.reached === 0 && (
         <p className="mt-4 text-sm text-white/40">In Saison {season} wurde noch keine Endung gefunden.</p>
       )}
-      <div id="most-wanted-grid" className="mx-auto mt-5 grid max-w-3xl grid-cols-10 gap-1" role="grid" aria-label="Matrix der Nachkommastellen 00 bis 99">
+      <div id="most-wanted-grid" className="dk-hunt-grid mx-auto mt-5 grid max-w-3xl grid-cols-10 gap-1" role="grid" aria-label="Matrix der Nachkommastellen 00 bis 99">
         {data.endings.map((ending) => (
           <button
             key={ending.ending}
             type="button"
             onClick={() => setSelected(ending)}
             aria-label={`${ending.label}: ${ending.achieved ? `gefunden von ${ending.playerName}` : "noch offen"}`}
+            data-found={ending.achieved}
             role="gridcell"
             className={cn(
               "group relative aspect-square min-w-0 rounded-md border text-[9px] font-black tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300 sm:text-[11px]",

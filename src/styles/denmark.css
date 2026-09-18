@@ -1,4 +1,5 @@
-/* Route- and event-scoped championship layer. The normal app shell is untouched. */
+/* Local Denmark routes and the live-event app frame share one visual language. */
+.app-frame[data-event-theme="denmark"],
 .denmark-championship,
 .denmark-event-highlight,
 .denmark-archive-card {
@@ -149,12 +150,35 @@
 }
 
 .denmark-section-heading {
+  position: relative;
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 0.9rem;
-  margin-bottom: 1.15rem;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  border: 1px solid var(--dk-line);
+  border-radius: 0.35rem 1rem 0.35rem 1rem;
+  background:
+    linear-gradient(105deg, rgba(21, 6, 11, 0.94), rgba(87, 13, 29, 0.88) 55%, rgba(27, 8, 14, 0.94)),
+    repeating-linear-gradient(125deg, transparent 0 16px, rgba(228, 199, 123, 0.04) 17px 18px);
+  padding: 0.95rem 1.25rem;
+  box-shadow: inset 0 0 0 3px rgba(16, 12, 13, 0.55), inset 0 0 0 4px rgba(228, 199, 123, 0.16), 0 14px 32px rgba(9, 2, 5, 0.2);
 }
+
+.denmark-section-heading::before,
+.denmark-section-heading::after {
+  position: absolute;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-color: var(--dk-gold-bright);
+  content: "";
+  opacity: 0.8;
+  pointer-events: none;
+}
+.denmark-section-heading::before { top: 0.38rem; left: 0.38rem; border-top: 1px solid; border-left: 1px solid; }
+.denmark-section-heading::after { right: 0.38rem; bottom: 0.38rem; border-right: 1px solid; border-bottom: 1px solid; }
+.denmark-section-heading > div { min-width: 0; }
 
 .denmark-section-heading .display-title {
   margin-top: 0.15rem;
@@ -163,11 +187,9 @@
 }
 
 .denmark-section-mark {
-  width: 0.24rem;
-  height: 2.7rem;
-  flex: none;
-  border-radius: 99px;
-  background: linear-gradient(var(--dk-gold-bright), var(--dk-red));
+  width: 1.5rem;
+  height: 1.8rem;
+  filter: drop-shadow(0 0 8px rgba(228, 199, 123, 0.35));
 }
 
 .denmark-divider {
@@ -180,16 +202,50 @@
 
 .denmark-divider::before,
 .denmark-divider::after {
-  height: 1px;
+  height: 5px;
   flex: 1;
-  background: linear-gradient(90deg, transparent, var(--dk-line));
+  border-top: 1px solid rgba(228, 199, 123, 0.52);
+  border-bottom: 1px solid rgba(228, 199, 123, 0.16);
+  background: linear-gradient(90deg, transparent, rgba(228, 199, 123, 0.34));
   content: "";
 }
 .denmark-divider::after { transform: rotate(180deg); }
 
+.denmark-divider-center {
+  position: relative;
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: none;
+  place-items: center;
+}
+.denmark-divider-center::before {
+  position: absolute;
+  inset: 0.24rem;
+  border: 1px solid var(--dk-gold-bright);
+  background: var(--dk-bordeaux);
+  box-shadow: 0 0 12px rgba(228, 199, 123, 0.25);
+  content: "";
+  transform: rotate(45deg);
+}
+.denmark-divider-center .denmark-shield { z-index: 1; width: 0.85rem; height: 1rem; }
+
 .denmark-championship .dk-event-panel {
+  position: relative;
   border-color: var(--dk-line);
-  box-shadow: inset 3px 0 0 rgba(201, 164, 92, 0.5), 0 18px 40px rgba(16, 2, 6, 0.14);
+  box-shadow: inset 0 0 0 3px rgba(16, 12, 13, 0.45), inset 0 0 0 4px rgba(228, 199, 123, 0.13), 0 18px 40px rgba(16, 2, 6, 0.14);
+}
+.denmark-championship .dk-event-panel::before {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1rem;
+  height: 1rem;
+  border-top: 1px solid var(--dk-gold-bright);
+  border-right: 1px solid var(--dk-gold-bright);
+  content: "";
+  opacity: 0.62;
+  pointer-events: none;
 }
 
 .denmark-championship .dk-scoreboard {
@@ -215,9 +271,10 @@
   border: 1px solid var(--dk-gold-bright);
   background: linear-gradient(115deg, #a41a30, var(--dk-deep));
   color: var(--dk-cream);
-  box-shadow: inset 0 1px 0 rgba(243, 235, 221, 0.2), 0 10px 25px rgba(32, 4, 11, 0.24);
+  box-shadow: inset 0 0 0 2px rgba(53, 10, 19, 0.85), inset 0 0 0 3px rgba(243, 235, 221, 0.18), 0 10px 25px rgba(32, 4, 11, 0.24);
 }
-.denmark-championship .dk-primary-action:hover { background: var(--dk-red); }
+.denmark-championship .dk-primary-action:hover { background: linear-gradient(115deg, var(--dk-red), #7e1128); box-shadow: inset 0 0 0 2px rgba(53, 10, 19, 0.75), inset 0 0 0 3px rgba(243, 235, 221, 0.26), 0 12px 30px rgba(32, 4, 11, 0.32); }
+.denmark-championship .dk-primary-action:active { transform: translateY(1px); box-shadow: inset 0 0 0 2px rgba(53, 10, 19, 0.9), inset 0 2px 8px rgba(16, 4, 7, 0.4); }
 .denmark-championship .dk-primary-action:focus-visible { outline: 2px solid var(--dk-gold-bright); outline-offset: 2px; }
 
 .denmark-championship input,
@@ -327,6 +384,254 @@
   border-color: var(--dk-line);
 }
 
+/* An active Denmark event changes the shared stage, not the underlying pages. */
+.app-frame[data-event-theme="denmark"] {
+  --context-accent: #e4c77b;
+  --context-accent-soft: rgba(201, 164, 92, 0.12);
+  --context-accent-text: #e4c77b;
+  --context-border: rgba(228, 199, 123, 0.3);
+  --context-glow: rgba(200, 16, 46, 0.28);
+  --context-panel: rgba(34, 13, 20, 0.83);
+  --context-panel-border: rgba(201, 164, 92, 0.23);
+  --context-header: rgba(19, 8, 12, 0.94);
+  --context-nav-active: rgba(105, 14, 32, 0.6);
+  --context-mobile-nav-active: rgba(105, 14, 32, 0.68);
+  --context-control-border: rgba(228, 199, 123, 0.48);
+  --context-control-background: rgba(105, 14, 32, 0.3);
+  --context-control-shadow: inset 0 1px 0 rgba(243, 235, 221, 0.08);
+  --context-hero-glow: rgba(200, 16, 46, 0.19);
+  --context-hero-beam: rgba(228, 199, 123, 0.38);
+  color: var(--dk-cream);
+  background:
+    radial-gradient(ellipse 44rem 32rem at 93% 4%, rgba(105, 14, 32, 0.29), transparent 76%),
+    radial-gradient(ellipse 38rem 32rem at 4% 48%, rgba(86, 13, 27, 0.14), transparent 76%),
+    repeating-linear-gradient(120deg, transparent 0 52px, rgba(228, 199, 123, 0.012) 53px 54px),
+    #100c0d;
+}
+
+.app-frame[data-event-theme="denmark"] .app-header {
+  border-bottom: 1px solid rgba(228, 199, 123, 0.48);
+  background: linear-gradient(90deg, rgba(16, 12, 13, 0.97), rgba(53, 10, 19, 0.94), rgba(16, 12, 13, 0.97));
+  box-shadow: 0 8px 30px rgba(9, 2, 5, 0.3);
+}
+.app-frame[data-event-theme="denmark"] .season-nav-active {
+  border: 1px solid rgba(228, 199, 123, 0.32);
+  color: var(--dk-cream);
+}
+.app-frame[data-event-theme="denmark"] .season-nav-indicator {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--dk-gold-bright), transparent);
+}
+.app-frame[data-event-theme="denmark"] .app-header nav a:hover,
+.app-frame[data-event-theme="denmark"] .app-header nav a:focus-visible { color: var(--dk-gold-bright); }
+.app-frame[data-event-theme="denmark"] .app-header nav a:focus-visible { outline: 2px solid var(--dk-gold-bright); outline-offset: 2px; }
+.app-frame[data-event-theme="denmark"] .app-header nav.lg\:hidden { background: #190c11; }
+.app-frame[data-event-theme="denmark"] footer { border-color: rgba(228, 199, 123, 0.27); }
+.app-frame[data-event-theme="denmark"] footer p:last-child { color: rgba(228, 199, 123, 0.65); }
+
+.app-frame[data-event-theme="denmark"] .panel {
+  border-color: var(--context-panel-border);
+  background-color: var(--context-panel);
+  box-shadow: inset 0 1px 0 rgba(243, 235, 221, 0.035), 0 12px 32px rgba(8, 2, 5, 0.13);
+}
+
+.app-frame[data-event-theme="denmark"] .page-header {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(228, 199, 123, 0.38);
+  border-radius: 0.45rem 1.4rem 0.45rem 1.4rem;
+  background:
+    linear-gradient(110deg, rgba(39, 9, 18, 0.93), rgba(84, 14, 29, 0.52), rgba(22, 9, 13, 0.88)),
+    repeating-linear-gradient(130deg, transparent 0 22px, rgba(228, 199, 123, 0.035) 23px 24px);
+  padding: clamp(1.2rem, 3vw, 2.4rem) clamp(1.1rem, 3vw, 2.4rem) clamp(1.2rem, 3vw, 2.4rem) clamp(3.6rem, 6vw, 5rem);
+  box-shadow: inset 0 0 0 4px rgba(16, 12, 13, 0.45), inset 0 0 0 5px rgba(228, 199, 123, 0.14), 0 18px 42px rgba(9, 2, 5, 0.22);
+}
+.app-frame[data-event-theme="denmark"] .page-header::before,
+.app-frame[data-event-theme="denmark"] .section-heading::before {
+  position: absolute;
+  left: 1.2rem;
+  top: 50%;
+  width: 1.25rem;
+  height: 1.5rem;
+  border: 1px solid var(--dk-gold-bright);
+  background:
+    linear-gradient(90deg, transparent 32%, var(--dk-cream) 32% 44%, transparent 44%),
+    linear-gradient(0deg, transparent 43%, var(--dk-cream) 43% 57%, transparent 57%),
+    var(--dk-red);
+  clip-path: polygon(0 0, 100% 0, 100% 76%, 50% 100%, 0 76%);
+  content: "";
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+.app-frame[data-event-theme="denmark"] .page-header::after,
+.app-frame[data-event-theme="denmark"] .section-heading::after {
+  position: absolute;
+  inset: 0.4rem;
+  border: 1px solid rgba(228, 199, 123, 0.16);
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+}
+.app-frame[data-event-theme="denmark"] .page-header h1 { color: var(--dk-cream); text-shadow: 0 2px 18px rgba(8, 2, 5, 0.5); }
+.app-frame[data-event-theme="denmark"] .section-heading {
+  position: relative;
+  min-width: 0;
+  align-items: center;
+  border: 1px solid rgba(228, 199, 123, 0.38);
+  border-radius: 0.35rem 1rem 0.35rem 1rem;
+  background: linear-gradient(100deg, rgba(55, 9, 21, 0.96), rgba(80, 14, 29, 0.66), rgba(24, 8, 14, 0.92));
+  padding: 0.9rem 1.1rem 0.9rem 3.5rem;
+  box-shadow: inset 0 0 0 3px rgba(16, 12, 13, 0.5), 0 12px 26px rgba(8, 2, 5, 0.16);
+}
+.app-frame[data-event-theme="denmark"] .section-heading > div { min-width: 0; }
+.app-frame[data-event-theme="denmark"] .section-heading h2 { color: var(--dk-cream); overflow-wrap: anywhere; }
+
+/* The frame is opt-in for featured content; ordinary panels stay quiet. */
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-frame,
+.denmark-championship .dk-scoreboard,
+.denmark-championship .dk-lod #lod-finale {
+  position: relative;
+  border: 1px solid rgba(228, 199, 123, 0.5);
+  box-shadow: inset 0 0 0 3px rgba(16, 12, 13, 0.58), inset 0 0 0 4px rgba(228, 199, 123, 0.16), 0 20px 42px rgba(8, 2, 5, 0.24);
+}
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-frame::before,
+.denmark-championship .dk-scoreboard::before,
+.denmark-championship .dk-lod #lod-finale::before {
+  position: absolute;
+  inset: 0.65rem;
+  z-index: 1;
+  background:
+    linear-gradient(var(--dk-gold-bright), var(--dk-gold-bright)) left top / 1.3rem 1px no-repeat,
+    linear-gradient(var(--dk-gold-bright), var(--dk-gold-bright)) left top / 1px 1.3rem no-repeat,
+    linear-gradient(var(--dk-gold-bright), var(--dk-gold-bright)) right top / 1.3rem 1px no-repeat,
+    linear-gradient(var(--dk-gold-bright), var(--dk-gold-bright)) right top / 1px 1.3rem no-repeat,
+    linear-gradient(var(--dk-gold-bright), var(--dk-gold-bright)) left bottom / 1.3rem 1px no-repeat,
+    linear-gradient(var(--dk-gold-bright), var(--dk-gold-bright)) left bottom / 1px 1.3rem no-repeat,
+    linear-gradient(var(--dk-gold-bright), var(--dk-gold-bright)) right bottom / 1.3rem 1px no-repeat,
+    linear-gradient(var(--dk-gold-bright), var(--dk-gold-bright)) right bottom / 1px 1.3rem no-repeat;
+  content: "";
+  opacity: 0.75;
+  pointer-events: none;
+}
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-frame::after,
+.denmark-championship .dk-scoreboard::after,
+.denmark-championship .dk-lod #lod-finale::after {
+  position: absolute;
+  inset: 0.38rem;
+  border: 1px solid rgba(228, 199, 123, 0.16);
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+}
+.app-frame[data-event-theme="denmark"] .dashboard-hero,
+.app-frame[data-event-theme="denmark"] .dk-profile-hero {
+  border-color: rgba(228, 199, 123, 0.45);
+  background-color: #220d14;
+  background-image: radial-gradient(ellipse at 86% 22%, rgba(200, 16, 46, 0.2), transparent 54%), linear-gradient(120deg, #1a0d12, #38101c 64%, #140c0e);
+}
+.app-frame[data-event-theme="denmark"] .dk-hof-podium {
+  background:
+    linear-gradient(110deg, rgba(24, 8, 13, 0.93), rgba(64, 12, 26, 0.76)),
+    var(--dk-event-backdrop),
+    var(--dk-bordeaux);
+  background-size: cover;
+  background-position: center, 58% center, center;
+}
+.app-frame[data-event-theme="denmark"] .dk-hof-heading {
+  position: relative;
+  overflow-wrap: anywhere;
+  border: 1px solid rgba(228, 199, 123, 0.38);
+  border-radius: 0.35rem 1rem 0.35rem 1rem;
+  background: linear-gradient(100deg, rgba(55, 9, 21, 0.96), rgba(80, 14, 29, 0.66), rgba(24, 8, 14, 0.92));
+  color: var(--dk-cream);
+  padding: 0.9rem 1rem 0.9rem 3.5rem;
+  box-shadow: inset 0 0 0 3px rgba(16, 12, 13, 0.5), 0 12px 26px rgba(8, 2, 5, 0.16);
+}
+.app-frame[data-event-theme="denmark"] .dk-hof-heading::before {
+  position: absolute;
+  left: 1.2rem;
+  top: 50%;
+  width: 1rem;
+  height: 1.2rem;
+  border: 1px solid var(--dk-gold-bright);
+  background: linear-gradient(90deg, transparent 32%, var(--dk-cream) 32% 44%, transparent 44%), linear-gradient(0deg, transparent 43%, var(--dk-cream) 43% 57%, transparent 57%), var(--dk-red);
+  clip-path: polygon(0 0, 100% 0, 100% 76%, 50% 100%, 0 76%);
+  content: "";
+  transform: translateY(-50%);
+}
+.app-frame[data-event-theme="denmark"] .dk-hof-ranking a { border-color: rgba(228, 199, 123, 0.18); }
+.app-frame[data-event-theme="denmark"] .dk-hof-ranking a:hover { border-color: rgba(228, 199, 123, 0.5); }
+
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-most-wanted {
+  background:
+    linear-gradient(115deg, rgba(20, 7, 12, 0.94), rgba(61, 9, 23, 0.84)),
+    var(--dk-event-backdrop),
+    var(--dk-bordeaux);
+  background-size: cover;
+  background-position: center, 60% center, center;
+}
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-most-wanted .dk-hunt-header {
+  position: relative;
+  border-bottom: 3px double rgba(228, 199, 123, 0.46);
+  padding: 0.35rem 0.45rem 1.2rem;
+}
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-hunt-header::before {
+  position: absolute;
+  left: 0.45rem;
+  bottom: -0.3rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1px solid var(--dk-gold-bright);
+  background: var(--dk-bordeaux);
+  content: "";
+  transform: rotate(45deg);
+}
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-hunt-count {
+  min-width: 5ch;
+  border: 1px solid rgba(228, 199, 123, 0.45);
+  border-radius: 0.5rem;
+  background: rgba(16, 12, 13, 0.64);
+  padding: 0.35rem 0.7rem;
+  text-align: center;
+  box-shadow: inset 0 0 0 3px rgba(228, 199, 123, 0.08);
+}
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-hunt-progress {
+  height: 0.6rem;
+  border: 1px solid rgba(228, 199, 123, 0.35);
+  background: rgba(10, 5, 8, 0.65);
+}
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-hunt-progress > div {
+  background: linear-gradient(90deg, #a96738, #e4c77b, #f3ebdd);
+}
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-hunt-grid {
+  width: min(100%, 44rem);
+  border: 1px solid rgba(228, 199, 123, 0.42);
+  background: rgba(13, 5, 9, 0.72);
+  padding: clamp(0.35rem, 1.5vw, 0.9rem);
+  box-shadow: inset 0 0 0 3px rgba(228, 199, 123, 0.08), 0 18px 36px rgba(8, 2, 5, 0.23);
+}
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-hunt-grid [role="gridcell"][data-found="false"] {
+  border-color: rgba(228, 199, 123, 0.22);
+  background: linear-gradient(145deg, #6b0e21, #370a16);
+  color: rgba(243, 235, 221, 0.78);
+}
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-hunt-grid [role="gridcell"][data-found="false"]:is(:nth-child(10n+4), :nth-child(10n+5), :nth-child(n+41):nth-child(-n+60)) {
+  border-color: rgba(243, 235, 221, 0.6);
+  background: linear-gradient(145deg, #f3ebdd, #c9a45c);
+  color: #350a13;
+}
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-hunt-grid [role="gridcell"][data-found="true"] {
+  border-color: var(--dk-gold-bright);
+  background: #230b14;
+  box-shadow: inset 0 0 0 2px rgba(228, 199, 123, 0.2), 0 0 12px rgba(228, 199, 123, 0.14);
+}
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-hunt-grid [role="gridcell"][data-found="true"] [class*="ring-"] { --tw-ring-color: rgba(228, 199, 123, 0.72); }
+:is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-most-wanted ol li {
+  border: 1px solid rgba(228, 199, 123, 0.2);
+  background: rgba(31, 9, 17, 0.72);
+}
+
 @media (max-width: 639px) {
   .denmark-championship { padding: 0.65rem; }
   .denmark-hero { min-height: 17rem; }
@@ -336,8 +641,22 @@
   .denmark-hero-title { font-size: clamp(2rem, 11vw, 3.3rem); }
   .denmark-eyebrow { font-size: 0.62rem; letter-spacing: 0.11em; }
   .denmark-divider { margin: 1.3rem 0; }
+  .denmark-section-heading { gap: 0.65rem; padding: 0.8rem 0.9rem; }
+  .denmark-section-mark { width: 1.15rem; height: 1.4rem; }
+  .denmark-section-heading::before,
+  .denmark-section-heading::after { width: 0.75rem; height: 0.75rem; }
+  .app-frame[data-event-theme="denmark"] .page-header { padding: 1.2rem 0.85rem 1.2rem 3rem; }
+  .app-frame[data-event-theme="denmark"] .page-header::before { left: 0.8rem; }
+  .app-frame[data-event-theme="denmark"] .page-header h1 { font-size: clamp(2.1rem, 10vw, 3.5rem); overflow-wrap: anywhere; }
+  .app-frame[data-event-theme="denmark"] .section-heading { flex-wrap: wrap; gap: 0.6rem; padding: 0.8rem 0.7rem 0.8rem 2.8rem; }
+  .app-frame[data-event-theme="denmark"] .section-heading::before { left: 0.7rem; width: 1rem; height: 1.2rem; }
+  .app-frame[data-event-theme="denmark"] .section-heading h2 { font-size: clamp(1.3rem, 6vw, 1.8rem); }
+  :is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-frame::before { inset: 0.45rem; background-size: 0.8rem 1px, 1px 0.8rem, 0.8rem 1px, 1px 0.8rem, 0.8rem 1px, 1px 0.8rem, 0.8rem 1px, 1px 0.8rem; }
+  :is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-hunt-grid { gap: 2px; padding: 0.3rem; }
+  :is(.app-frame[data-event-theme="denmark"], .denmark-championship) .dk-hunt-grid [role="gridcell"] { border-radius: 0.2rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .denmark-championship .dk-primary-action { transition: none; }
+  .denmark-championship .dk-primary-action:active { transform: none; }
 }

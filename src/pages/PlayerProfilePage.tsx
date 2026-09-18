@@ -78,7 +78,7 @@ export function PlayerProfilePage() {
   return (
     <div className="space-y-7 sm:space-y-10">
       <Button asChild variant="ghost" size="sm"><Link to="/players"><ArrowLeft className="size-4" /> Zurück zu Spielern</Link></Button>
-      <section className="panel relative overflow-hidden p-5 sm:p-10">
+      <section className="panel dk-frame dk-profile-hero relative overflow-hidden p-5 sm:p-10">
         <div className="absolute -right-24 -top-36 size-96 rounded-full bg-gold-400/10 blur-[100px]" />
         <div className="relative flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
           <div className="flex w-full flex-col items-center gap-5 text-center sm:w-auto sm:flex-row sm:items-center sm:text-left">

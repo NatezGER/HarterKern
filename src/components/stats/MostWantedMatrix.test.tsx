@@ -44,6 +44,19 @@ const data: MostWantedSnapshot = {
 };
 
 describe("MostWantedMatrix", () => {
+  it("keeps all 100 accessible cells and first-hit avatars inside the Denmark hunt frame", () => {
+    const markup = renderToStaticMarkup(<MostWantedMatrix data={data} />);
+    expect(markup).toContain("dk-frame dk-most-wanted");
+    expect(markup).toContain("dk-hunt-header");
+    expect(markup).toContain("dk-hunt-grid");
+    expect(markup.match(/role="gridcell"/g)).toHaveLength(100);
+    expect(markup).toContain('data-found="true"');
+    expect(markup).toContain('data-found="false"');
+    expect(markup).toContain("00: gefunden von Paul");
+    expect(markup).toContain('role="progressbar"');
+    expect(markup).toContain('aria-label="Matrix der Nachkommastellen 00 bis 99"');
+  });
+
   it("shows the matrix immediately without a disclosure toggle", () => {
     const markup = renderToStaticMarkup(<MostWantedMatrix data={data} />);
     expect(markup).toContain('role="grid"');
