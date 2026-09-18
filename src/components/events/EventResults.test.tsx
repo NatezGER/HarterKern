@@ -140,6 +140,9 @@ describe("EventResults polish", () => {
     );
     expect(markup).toContain("Trophäen-Event");
     expect(markup).toContain("Dänemark 2026");
+    expect(markup).toContain('data-denmark-context="history"');
+    expect(markup).toContain("dk-results-hero");
+    expect(markup).toContain("dk-scoreboard");
   });
 
   it("keeps the regular podium for a normal event", () => {
@@ -150,6 +153,8 @@ describe("EventResults polish", () => {
       }} /></MemoryRouter>,
     );
     expect(markup).toContain(">Podium</h2>");
+    expect(markup).toContain('data-event-theme="default"');
+    expect(markup).not.toContain("dk-results-hero");
     expect(markup).not.toContain("Trophäen-Podium");
     expect(markup).not.toContain("data-event-trophy-podium");
   });
@@ -172,6 +177,7 @@ describe("EventResults polish", () => {
     );
     expect(markup).toContain("Trophäen-Podium");
     expect(markup).toContain("data-event-trophy-podium");
+    expect(markup).toContain('data-placement="1"');
     expect(markup).not.toContain("Keine gültige Eventzeit vorhanden");
     expect(markup).not.toContain("Vergebene Trophäen");
 

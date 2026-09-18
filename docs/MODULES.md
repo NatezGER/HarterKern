@@ -324,6 +324,13 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Logik:** `src/lib/dkTools.ts`; sämtliche Auslosungen und Ergebnisse bleiben
   im React-Zustand und werden bei einem Reload verworfen.
 - **Views/RPCs:** keine. Die Route erzeugt keine zusätzlichen Backend-Requests.
+- **Championship-Visuals:** `/dk` aktiviert den lokalen
+  `DenmarkChampionshipShell` dauerhaft. Live-Event und historisches Eventdetail
+  verwenden denselben Layer nur bei `awardsTrophies=true` und
+  `trophyCompetitionKey="denmark"`; Dashboard und Archiv markieren allein die
+  betreffende Eventkarte. Globale Stats, Header und andere Routen bleiben
+  unverändert. Der Theme-Resolver benötigt keinen zusätzlichen Request:
+  Er nutzt die bereits geladenen Event-Metadaten.
 - **Tests:** `npm test -- src/lib/dkTools.test.ts
   src/constants/navigation.test.ts`.
 - **Direkte Abhängigkeiten:** App-Shell, Navigation und bestehende UI-Bausteine.

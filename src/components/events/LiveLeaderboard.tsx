@@ -34,13 +34,14 @@ export function LiveLeaderboard({ standings, transition, onTransitionComplete }:
     return () => window.clearTimeout(timeout);
   }, [motionConfig.completionDelay, transition]);
 
-  return <section className="panel overflow-hidden">
+  return <section className="panel dk-scoreboard overflow-hidden" data-live-leaderboard>
     <div className="border-b border-white/[0.07] px-5 py-4 sm:px-7"><h2 className="display-title text-2xl">Live-Rangliste</h2></div>
     <div>{standings.map((standing) => {
       const affected = transition?.playerId === standing.player.id;
       return <motion.div
         layout="position"
         key={standing.player.id}
+        data-rank={standing.rank ?? undefined}
         transition={{
           layout: { delay: affected ? motionConfig.layoutDelay : 0,
             duration: motionConfig.layoutDuration, ease: [0.22, 1, 0.36, 1] },

@@ -26,6 +26,20 @@ describe("live mobile safety", () => {
     expect(markup).not.toContain("Event beenden");
   });
 
+  it("renders a Denmark live event as a championship without changing normal live headers", () => {
+    const base = {
+      id: "event-1", name: "Dänemark Cup", date: "2026-08-18", startedAt: "2026-08-18T18:00:00Z",
+      endsAt: "2026-08-19T18:00:00Z", createdBy: "admin-1", participantIds: ["player-1"],
+      status: "active" as const, awardsTrophies: true, trophyCompetitionYear: 2026,
+    };
+    const denmark = renderToStaticMarkup(<LiveEventHeader event={{ ...base, trophyCompetitionKey: "denmark" }} attempts={4} />);
+    const normal = renderToStaticMarkup(<LiveEventHeader event={{ ...base, trophyCompetitionKey: "other" }} attempts={4} />);
+    expect(denmark).toContain("denmark-hero");
+    expect(denmark).toContain("Harter Kern · Dänemark");
+    expect(denmark).toContain("4 Eventversuche insgesamt");
+    expect(normal).not.toContain("denmark-hero");
+  });
+
   it("gives the native date input a shrinkable responsive container", () => {
     const markup = renderToStaticMarkup(<StartEventPanel candidates={[]} onStarted={vi.fn()} />);
     expect(markup).toMatch(/type="date"[^>]*class="[^"]*min-w-0[^"]*max-w-full/);

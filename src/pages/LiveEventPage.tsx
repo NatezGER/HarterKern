@@ -15,6 +15,7 @@ import { StartEventPanel } from "@/components/events/StartEventPanel";
 import { TimeEntrySheet } from "@/components/events/TimeEntrySheet";
 import { Button } from "@/components/ui/button";
 import { DataState } from "@/components/common/DataState";
+import { DenmarkChampionshipShell, DenmarkSectionHeading } from "@/components/denmark/DenmarkChampionship";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { useDataGroup } from "@/hooks/useDataPlatform";
 import { useTrophyEventSpecialStats } from "@/hooks/useTrophyEventSpecialStats";
@@ -35,6 +36,7 @@ import type {
   StartLiveEventParticipant,
 } from "@/types/liveEvent";
 import type { EventLeadAttempt } from "@/lib/eventLeadProgression";
+import { resolveEventTheme } from "@/lib/eventTheme";
 
 export function LiveEventPage() {
   const navigate = useNavigate();
@@ -174,13 +176,14 @@ export function LiveEventPage() {
       };
     });
   const entryStandings = sortStandingsForEntry(displayedStandings);
+  const denmark = resolveEventTheme(activeEvent) === "denmark";
   const confirmEnd = async () => {
     const id = await endEvent();
     if (id) navigate(`/events/${id}/results`);
   };
 
   return (
-    <div className="space-y-7 lg:space-y-10">
+    <DenmarkChampionshipShell context="live" active={denmark} className="space-y-7 lg:space-y-10">
       <LiveEventContentOrder
         eventHeader={<LiveEventHeader event={activeEvent} attempts={attempts.length} />}
         leaderboard={<div ref={leaderboardRef} className="scroll-mt-28">
@@ -197,8 +200,8 @@ export function LiveEventPage() {
           />
         </div>}
         specialStats={activeEvent.awardsTrophies ? <TrophyEventSpecialStats {...trophyStats} /> : null}
-        attemptEntry={<section>
-          <h2 className="display-title mb-4 text-3xl sm:mb-5">Versuch hinzufügen</h2>
+        attemptEntry={<section className={denmark ? "dk-attempt-entry" : undefined}>
+          {denmark ? <DenmarkSectionHeading eyebrow="Live-Wettbewerb" title="Versuch hinzufügen" /> : <h2 className="display-title mb-4 text-3xl sm:mb-5">Versuch hinzufügen</h2>}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
             {entryStandings.map((standing) => (
               <ParticipantCard
@@ -230,6 +233,6 @@ export function LiveEventPage() {
         onConfirm={() => void confirmEnd()}
         busy={endingEvent}
       />
-    </div>
+    </DenmarkChampionshipShell>
   );
 }

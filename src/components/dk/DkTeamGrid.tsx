@@ -5,7 +5,7 @@ export function DkTeamGrid({ teams }: { teams: DkTeam[] }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-live="polite">
       {teams.map((team, index) => (
-        <article key={team.id} className="panel min-w-0 overflow-hidden p-5">
+        <article key={team.id} className="panel dk-event-panel min-w-0 overflow-hidden p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/35">Team {index + 1}</p>

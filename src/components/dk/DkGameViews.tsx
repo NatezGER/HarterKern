@@ -61,9 +61,9 @@ export function LeagueView({ teams, matches, scores, onScoreChange, onRedraw }: 
             <h2 id="league-table-heading" className="display-title mt-1 text-3xl">Ligatabelle</h2>
           </div>
         </div>
-        <div className="space-y-2">
+        <div className="dk-scoreboard space-y-2">
           {standings.map((row) => (
-            <article key={row.teamId} className="panel p-4">
+            <article key={row.teamId} data-rank={row.rank} className="panel p-4">
               <div className="flex items-center gap-3">
                 <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gold-400/12 font-display text-xl font-black text-gold-300">{row.rank}</span>
                 <div className="min-w-0 flex-1">
@@ -94,7 +94,7 @@ export function LeagueView({ teams, matches, scores, onScoreChange, onRedraw }: 
           {matches.map((match, index) => {
             const score = scores[match.id] ?? { scoreA: null, scoreB: null };
             return (
-              <article key={match.id} className="panel p-4 sm:p-5">
+              <article key={match.id} className="panel dk-event-panel p-4 sm:p-5">
                 <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">Spiel {index + 1}</p>
                 <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
                   <div className="min-w-0 text-center">
@@ -152,7 +152,7 @@ export function TournamentView({ teams, bracket, onScoreChange, onRedraw }: Tour
 
       <div className="grid gap-6 lg:grid-cols-3">
         {bracket.rounds.map((round) => (
-          <section key={round.id} aria-labelledby={`${round.id}-heading`} className="min-w-0">
+          <section key={round.id} aria-labelledby={`${round.id}-heading`} className="dk-bracket-round min-w-0">
             <h3 id={`${round.id}-heading`} className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-white/55">
               <Swords className="size-4 text-gold-400" /> {round.label}
             </h3>
@@ -161,7 +161,7 @@ export function TournamentView({ teams, bracket, onScoreChange, onRedraw }: Tour
                 const playable = Boolean(match.teamAId && match.teamBId);
                 const tied = playable && match.scoreA !== null && match.scoreB !== null && match.scoreA === match.scoreB;
                 return (
-                  <article key={match.id} className="panel overflow-hidden p-4">
+                  <article key={match.id} className="panel dk-event-panel overflow-hidden p-4">
                     {(["A", "B"] as const).map((side) => {
                       const teamId = side === "A" ? match.teamAId : match.teamBId;
                       const score = side === "A" ? match.scoreA : match.scoreB;
@@ -192,7 +192,7 @@ export function TournamentView({ teams, bracket, onScoreChange, onRedraw }: Tour
       </div>
 
       {champion && (
-        <section aria-live="polite" className="relative overflow-hidden rounded-3xl border border-gold-400/35 bg-gold-400/10 p-6 text-center shadow-gold">
+        <section aria-live="polite" className="dk-prestige relative overflow-hidden rounded-3xl border border-gold-400/35 bg-gold-400/10 p-6 text-center shadow-gold">
           <Crown className="mx-auto size-10 text-gold-300" />
           <p className="mt-3 text-xs font-black uppercase tracking-[0.25em] text-gold-400">Turniersieger</p>
           <h2 className="display-title gold-text mt-2 text-4xl">{champion.name}</h2>

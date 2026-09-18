@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Dices, ListOrdered, Play, RefreshCw, Swords, Trophy, Users } from "lucide-react";
-import { PageHeader } from "@/components/common/PageHeader";
+import { DenmarkChampionshipShell, DenmarkDivider, DenmarkHero, DenmarkSectionHeading } from "@/components/denmark/DenmarkChampionship";
 import { DkTeamGrid } from "@/components/dk/DkTeamGrid";
 import { LeagueView, TournamentView } from "@/components/dk/DkGameViews";
 import { LastOneDrinkinAdmin } from "@/components/dk/LastOneDrinkinAdmin";
@@ -207,20 +207,23 @@ export function DkToolsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
-      <PageHeader
-        eyebrow="Harter Kern unterwegs"
-        title="Dänemark Tools"
-        description="Reihenfolgen & Teams auslosen – spontan, lokal und ohne Speicherung."
-        action={phase !== "config" ? (
+    <>
+    <DenmarkChampionshipShell context="tools" className="mx-auto max-w-5xl space-y-8">
+      <DenmarkHero
+        eyebrow="Harter Kern · Dänemark"
+        title="Dänemark"
+        edition="2026"
+        description="Auslosungen · Spiele · Last One Drinkin’"
+      >
+        {phase !== "config" && (
           <Button type="button" variant="outline" onClick={editConfiguration} className="w-full sm:w-auto">
             <ChevronDown className="size-4" /> Auslosung bearbeiten
           </Button>
-        ) : undefined}
-      />
+        )}
+      </DenmarkHero>
 
       {(phase === "config" || configOpen) && (
-        <section className="panel p-4 sm:p-6" aria-labelledby="draw-config-heading">
+        <section className="panel dk-event-panel p-4 sm:p-6" aria-labelledby="draw-config-heading">
           <button
             type="button"
             onClick={() => setConfigOpen((open) => !open)}
@@ -312,7 +315,7 @@ export function DkToolsPage() {
                 size="lg"
                 disabled={selectedParticipants.length < minimumParticipants}
                 onClick={mode === "order" ? startOrderDraw : startTeamDraw}
-                className="w-full"
+                className="dk-primary-action w-full"
               >
                 <Dices className="size-5" /> Auslosung starten
               </Button>
@@ -327,10 +330,7 @@ export function DkToolsPage() {
       {(phase === "drawing-order" || phase === "order-result") && (
         <section aria-labelledby="order-heading">
           <div className="mb-4 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold-400">Die Reihenfolge steht</p>
-              <h2 id="order-heading" className="display-title mt-1 text-3xl">Auslosung</h2>
-            </div>
+            <DenmarkSectionHeading eyebrow="Die Reihenfolge steht" title="Auslosung" id="order-heading" className="mb-0" />
             <span className="text-sm font-bold text-white/35">{orderRevealCount}/{order.length}</span>
           </div>
           <ol className="space-y-2" aria-live="polite">
@@ -352,10 +352,7 @@ export function DkToolsPage() {
       {["drawing-teams", "teams-result", "game-choice", "league", "tournament"].includes(phase) && (
         <section aria-labelledby="teams-heading">
           <div className="mb-4 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold-400">{phase === "drawing-teams" ? "Auslosung läuft" : "Eure Teams"}</p>
-              <h2 id="teams-heading" className="display-title mt-1 text-3xl">Teamaufstellung</h2>
-            </div>
+            <DenmarkSectionHeading eyebrow={phase === "drawing-teams" ? "Auslosung läuft" : "Eure Teams"} title="Teamaufstellung" id="teams-heading" className="mb-0" />
             {phase === "drawing-teams" && <span className="text-sm font-bold text-white/35">{teamRevealCount}/{teamRevealOrder.length}</span>}
           </div>
           <DkTeamGrid teams={displayedTeams} />
@@ -368,22 +365,22 @@ export function DkToolsPage() {
       )}
 
       {phase === "teams-result" && (
-        <Button type="button" size="lg" onClick={() => setPhase("game-choice")} className="w-full">
+        <Button type="button" size="lg" onClick={() => setPhase("game-choice")} className="dk-primary-action w-full">
           <Play className="size-5" /> Spiel starten
         </Button>
       )}
 
       {phase === "game-choice" && (
-        <section className="panel p-5 sm:p-7" aria-labelledby="game-mode-heading">
+        <section className="panel dk-event-panel p-5 sm:p-7" aria-labelledby="game-mode-heading">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-gold-400">Nächster Schritt</p>
           <h2 id="game-mode-heading" className="display-title mt-1 text-3xl">Spielmodus wählen</h2>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <button type="button" onClick={startLeague} className="min-h-28 rounded-3xl border border-white/10 bg-white/[0.03] p-5 text-left transition hover:border-gold-400/40 hover:bg-gold-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400">
+            <button type="button" onClick={startLeague} className="dk-event-panel min-h-28 rounded-3xl border border-white/10 bg-white/[0.03] p-5 text-left transition hover:border-gold-400/40 hover:bg-gold-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400">
               <Trophy className="size-6 text-gold-400" />
               <span className="mt-3 block font-display text-2xl font-black uppercase">Liga</span>
               <span className="mt-1 block text-sm text-white/45">Jeder gegen jeden</span>
             </button>
-            <button type="button" onClick={startTournament} className="min-h-28 rounded-3xl border border-white/10 bg-white/[0.03] p-5 text-left transition hover:border-gold-400/40 hover:bg-gold-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400">
+            <button type="button" onClick={startTournament} className="dk-event-panel min-h-28 rounded-3xl border border-white/10 bg-white/[0.03] p-5 text-left transition hover:border-gold-400/40 hover:bg-gold-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400">
               <Swords className="size-6 text-gold-400" />
               <span className="mt-3 block font-display text-2xl font-black uppercase">Turnier</span>
               <span className="mt-1 block text-sm text-white/45">KO-Modus mit Turnierbaum</span>
@@ -411,9 +408,9 @@ export function DkToolsPage() {
         />
       )}
 
-      {unlocked && <LastOneDrinkinAdmin />}
-
-      <ConfirmDialog intent={resetIntent} onCancel={() => setResetIntent(null)} onConfirm={confirmReset} />
-    </div>
+      {unlocked && <><DenmarkDivider /><LastOneDrinkinAdmin /></>}
+    </DenmarkChampionshipShell>
+    <ConfirmDialog intent={resetIntent} onCancel={() => setResetIntent(null)} onConfirm={confirmReset} />
+    </>
   );
 }

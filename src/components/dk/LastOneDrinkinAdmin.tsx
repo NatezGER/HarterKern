@@ -235,7 +235,7 @@ function DisciplineEditor({ holeId, state, update }: EditorProps & { holeId: num
 function HoleCard({ hole, state, update }: { hole: HoleDefinition; state: LastOneDrinkinState; update: EditorProps["update"] }) {
   const discipline = evaluateDisciplines(state)[hole.id];
   return (
-    <details id={`lod-hole-${hole.id}`} className="panel scroll-mt-40 overflow-hidden" open={hole.id === 1}>
+    <details id={`lod-hole-${hole.id}`} className="panel dk-event-panel scroll-mt-40 overflow-hidden" open={hole.id === 1}>
       <summary className="flex min-h-20 cursor-pointer list-none items-center gap-3 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold-400">
         <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-gold-400/12 font-display text-2xl font-black text-gold-300">{hole.id}</span>
         <span className="min-w-0 flex-1"><span className="display-title block truncate text-xl">{hole.title}</span><span className="block truncate text-xs text-white/40">PAR {hole.par} · {hole.discipline} · {hole.summary}</span><span className="mt-1 block text-[10px] text-white/30">Golf {golfProgress(state, hole.id)}/11 · Spiel {discipline.completed}/{discipline.total}</span></span>
@@ -262,8 +262,8 @@ export function LastOneDrinkinAdmin() {
   const update = (recipe: (next: LastOneDrinkinState) => void) => setState((current) => { const next = structuredClone(current); recipe(next); return next; });
   if (error || !state) return <section className="panel border-red-400/25 p-6"><AlertTriangle className="size-7 text-red-300" /><h2 className="display-title mt-3 text-2xl">Lokaler Eventstand nicht verfügbar</h2><p className="mt-2 text-sm text-red-200/75">{error}</p><p className="mt-2 text-xs text-white/40">Der vorhandene Speicher wurde weder überschrieben noch gelöscht.</p></section>;
   return (
-    <section className="mt-16 space-y-6 border-t border-white/[0.1] pt-10" aria-labelledby="lod-heading">
-      <div><p className="text-xs font-black uppercase tracking-[0.22em] text-gold-400">Nur im Verwaltungsmodus</p><h2 id="lod-heading" className="display-title mt-2 text-4xl sm:text-5xl">Last One Drinkin’ 2026</h2><p className="mt-2 flex items-center gap-2 text-sm text-white/50"><Trophy className="size-4 text-gold-400" /> Spielleitung · automatisch lokal gespeichert</p></div>
+    <section className="dk-lod mt-16 space-y-6 border-t border-white/[0.1] pt-10" aria-labelledby="lod-heading">
+      <div className="dk-prestige rounded-3xl p-5 sm:p-8"><p className="text-xs font-black uppercase tracking-[0.22em] text-gold-400">Nur im Verwaltungsmodus</p><h2 id="lod-heading" className="display-title mt-2 text-4xl sm:text-5xl">Last One Drinkin’ 2026</h2><p className="mt-2 flex items-center gap-2 text-sm text-white/50"><Trophy className="size-4 text-gold-400" /> Spielleitung · automatisch lokal gespeichert</p></div>
       <nav aria-label="Last One Drinkin Schnellnavigation" className="sticky top-20 z-30 flex min-w-0 max-w-full gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-[#0b0c0b]/95 p-2 backdrop-blur-xl">{HOLES.map(({ id }) => <a key={id} href={`#lod-hole-${id}`} className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/[0.05] text-xs font-black hover:bg-gold-400/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400">{id}</a>)}<a href="#lod-finale" className="grid h-10 shrink-0 place-items-center rounded-xl bg-white/[0.05] px-3 text-xs font-black">Finale</a><a href="#lod-ranking" className="grid h-10 shrink-0 place-items-center rounded-xl bg-gold-400/15 px-3 text-xs font-black text-gold-300">Rangliste</a></nav>
       <div className="space-y-3">{HOLES.map((hole) => <HoleCard key={hole.id} hole={hole} state={state} update={update} />)}<FinalEditor state={state} update={update} /></div>
       <Standings state={state} />

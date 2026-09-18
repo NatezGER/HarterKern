@@ -1,0 +1,343 @@
+/* Route- and event-scoped championship layer. The normal app shell is untouched. */
+.denmark-championship,
+.denmark-event-highlight,
+.denmark-archive-card {
+  --dk-red: #c8102e;
+  --dk-deep: #690e20;
+  --dk-bordeaux: #350a13;
+  --dk-cream: #f3ebdd;
+  --dk-gold: #c9a45c;
+  --dk-gold-bright: #e4c77b;
+  --dk-black: #100c0d;
+  --dk-line: rgba(228, 199, 123, 0.38);
+  --dk-card: rgba(32, 12, 18, 0.93);
+  --dk-hero-image: image-set(
+    url("/assets/denmark/denmark-championship-hero.webp") type("image/webp"),
+    url("/assets/denmark/denmark-championship-hero.png") type("image/png")
+  );
+  --dk-event-backdrop: image-set(
+    url("/assets/denmark/denmark-event-backdrop.webp") type("image/webp"),
+    url("/assets/denmark/denmark-event-backdrop.png") type("image/png")
+  );
+  color: var(--dk-cream);
+}
+
+.denmark-championship {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  border: 1px solid rgba(228, 199, 123, 0.22);
+  border-radius: clamp(1.2rem, 3vw, 2rem);
+  background:
+    radial-gradient(ellipse 40rem 26rem at 95% 0%, rgba(200, 16, 46, 0.25), transparent 72%),
+    radial-gradient(ellipse 38rem 30rem at 0% 55%, rgba(105, 14, 32, 0.22), transparent 75%),
+    linear-gradient(165deg, #290d15, var(--dk-black) 64rem);
+  padding: clamp(0.75rem, 2.6vw, 2.25rem);
+}
+
+.denmark-championship .panel,
+.denmark-event-highlight.panel {
+  border-color: rgba(228, 199, 123, 0.18);
+  background: linear-gradient(145deg, rgba(58, 15, 27, 0.91), var(--dk-card) 68%);
+  box-shadow: inset 0 1px 0 rgba(243, 235, 221, 0.06), 0 18px 42px rgba(10, 2, 5, 0.17);
+}
+
+.denmark-championship .dk-prestige,
+.denmark-event-highlight.dk-prestige {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--dk-line);
+  background:
+    linear-gradient(115deg, rgba(23, 6, 11, 0.88), rgba(105, 14, 32, 0.78)),
+    var(--dk-event-backdrop, none),
+    var(--dk-bordeaux);
+  background-size: cover;
+  background-position: center, 58% center, center;
+  box-shadow: inset 0 2px 0 rgba(243, 235, 221, 0.08), 0 24px 55px rgba(10, 2, 5, 0.22);
+}
+
+.denmark-championship .dk-prestige::after {
+  position: absolute;
+  inset: 0.65rem;
+  border: 1px solid rgba(228, 199, 123, 0.24);
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+}
+
+.denmark-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  min-height: clamp(19rem, 39vw, 31rem);
+  align-items: flex-end;
+  overflow: hidden;
+  border: 1px solid rgba(243, 235, 221, 0.4);
+  border-radius: 1.7rem;
+  background:
+    linear-gradient(90deg, rgba(16, 12, 13, 0.91) 0%, rgba(53, 10, 19, 0.72) 56%, rgba(105, 14, 32, 0.23)),
+    var(--dk-hero-image),
+    linear-gradient(150deg, #281015 15%, #8e1830 62%, #241217);
+  background-position: center, center, center;
+  background-size: cover;
+  box-shadow: inset 0 -5px 0 rgba(201, 164, 92, 0.3), 0 30px 65px rgba(8, 2, 5, 0.27);
+}
+
+.denmark-hero-compact { min-height: clamp(15rem, 29vw, 24rem); }
+
+.denmark-hero-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-width: 0;
+  padding: clamp(1.35rem, 5vw, 4.5rem);
+}
+
+.denmark-eyebrow,
+.denmark-section-eyebrow {
+  color: var(--dk-gold-bright);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.denmark-eyebrow { display: flex; align-items: center; gap: 0.7rem; }
+
+.denmark-shield {
+  display: inline-block;
+  width: 1.2rem;
+  height: 1.4rem;
+  flex: none;
+  border: 1px solid var(--dk-gold-bright);
+  background:
+    linear-gradient(90deg, transparent 31%, var(--dk-cream) 31% 43%, transparent 43%),
+    linear-gradient(0deg, transparent 43%, var(--dk-cream) 43% 57%, transparent 57%),
+    var(--dk-red);
+  clip-path: polygon(0 0, 100% 0, 100% 76%, 50% 100%, 0 76%);
+}
+
+.denmark-hero-title {
+  max-width: 15ch;
+  margin-top: 0.8rem;
+  color: var(--dk-cream);
+  font-family: inherit;
+  font-size: clamp(2.5rem, 7vw, 6.75rem);
+  font-weight: 950;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  overflow-wrap: anywhere;
+  text-shadow: 0 4px 25px rgba(16, 4, 7, 0.55);
+  text-transform: uppercase;
+}
+
+.denmark-edition {
+  margin-top: 0.7rem;
+  color: var(--dk-gold-bright);
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  font-weight: 900;
+  letter-spacing: 0.22em;
+}
+
+.denmark-hero-description {
+  max-width: 50ch;
+  margin-top: 1rem;
+  color: rgba(243, 235, 221, 0.88);
+  font-size: clamp(0.9rem, 1.5vw, 1.05rem);
+  line-height: 1.6;
+}
+
+.denmark-section-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1.15rem;
+}
+
+.denmark-section-heading .display-title {
+  margin-top: 0.15rem;
+  color: var(--dk-cream);
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.denmark-section-mark {
+  width: 0.24rem;
+  height: 2.7rem;
+  flex: none;
+  border-radius: 99px;
+  background: linear-gradient(var(--dk-gold-bright), var(--dk-red));
+}
+
+.denmark-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0;
+  pointer-events: none;
+}
+
+.denmark-divider::before,
+.denmark-divider::after {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, var(--dk-line));
+  content: "";
+}
+.denmark-divider::after { transform: rotate(180deg); }
+
+.denmark-championship .dk-event-panel {
+  border-color: var(--dk-line);
+  box-shadow: inset 3px 0 0 rgba(201, 164, 92, 0.5), 0 18px 40px rgba(16, 2, 6, 0.14);
+}
+
+.denmark-championship .dk-scoreboard {
+  border-top: 2px solid var(--dk-gold);
+  background:
+    linear-gradient(105deg, rgba(24, 7, 13, 0.93), rgba(53, 10, 19, 0.87)),
+    var(--dk-event-backdrop),
+    var(--dk-bordeaux);
+  background-position: center, 58% center, center;
+  background-size: cover;
+}
+.denmark-championship .dk-scoreboard > :first-child {
+  background: linear-gradient(90deg, rgba(201, 164, 92, 0.15), transparent);
+}
+.denmark-championship .dk-scoreboard [data-placement="1"],
+.denmark-championship .dk-scoreboard [data-rank="1"] {
+  border-color: var(--dk-gold-bright);
+  background: linear-gradient(100deg, rgba(201, 164, 92, 0.17), rgba(105, 14, 32, 0.3));
+  box-shadow: inset 3px 0 0 var(--dk-gold-bright);
+}
+
+.denmark-championship .dk-primary-action {
+  border: 1px solid var(--dk-gold-bright);
+  background: linear-gradient(115deg, #a41a30, var(--dk-deep));
+  color: var(--dk-cream);
+  box-shadow: inset 0 1px 0 rgba(243, 235, 221, 0.2), 0 10px 25px rgba(32, 4, 11, 0.24);
+}
+.denmark-championship .dk-primary-action:hover { background: var(--dk-red); }
+.denmark-championship .dk-primary-action:focus-visible { outline: 2px solid var(--dk-gold-bright); outline-offset: 2px; }
+
+.denmark-championship input,
+.denmark-championship select {
+  color-scheme: dark;
+}
+
+.denmark-championship .text-white\/30,
+.denmark-championship .text-white\/35,
+.denmark-championship .text-white\/40 {
+  color: rgba(243, 235, 221, 0.66);
+}
+
+.denmark-event-highlight {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--dk-line) !important;
+  background: linear-gradient(115deg, var(--dk-deep), var(--dk-bordeaux) 70%, var(--dk-black)) !important;
+  box-shadow: inset 4px 0 0 var(--dk-gold), 0 18px 40px rgba(16, 2, 6, 0.22);
+}
+
+.denmark-live-banner {
+  border-color: #c9a45c;
+  background: linear-gradient(90deg, #350a13, #690e20 52%, #350a13);
+  box-shadow: inset 0 -2px 0 rgba(228, 199, 123, 0.3), 0 12px 25px rgba(16, 2, 6, 0.2);
+}
+.denmark-live-banner > a > span:first-child { color: #e4c77b; }
+
+.denmark-championship .dk-results-hero {
+  isolation: isolate;
+  border-color: rgba(243, 235, 221, 0.42);
+  background:
+    linear-gradient(90deg, rgba(16, 12, 13, 0.92), rgba(105, 14, 32, 0.72)),
+    var(--dk-event-backdrop),
+    linear-gradient(135deg, #350a13, #a01831);
+  background-position: center, 58% center, center;
+  background-size: cover;
+  box-shadow: inset 0 -4px 0 rgba(201, 164, 92, 0.45), 0 25px 55px rgba(16, 2, 6, 0.25);
+}
+.denmark-championship .dk-results-hero h1 {
+  max-width: 17ch;
+  color: var(--dk-cream);
+  font-size: clamp(2.4rem, 6vw, 5.5rem);
+  overflow-wrap: anywhere;
+  text-shadow: 0 4px 22px rgba(16, 2, 6, 0.5);
+}
+
+.denmark-championship .dk-podium-section {
+  min-width: 0;
+}
+.denmark-championship .dk-podium-section [data-placement="1"] {
+  border-color: var(--dk-gold-bright);
+  background: linear-gradient(155deg, rgba(118, 29, 39, 0.92), rgba(37, 11, 19, 0.95));
+  box-shadow: inset 0 2px 0 rgba(243, 235, 221, 0.16), 0 0 38px rgba(201, 164, 92, 0.2);
+}
+.denmark-championship .dk-podium-section [data-placement="2"] { border-color: rgba(219, 229, 235, 0.47); }
+.denmark-championship .dk-podium-section [data-placement="3"] { border-color: rgba(218, 150, 111, 0.47); }
+
+.denmark-championship .dk-bracket-round {
+  border-top: 1px solid var(--dk-line);
+  padding-top: 1rem;
+}
+.denmark-championship .dk-bracket-round h3 { color: var(--dk-gold-bright); }
+
+.denmark-championship .dk-lod nav {
+  border-color: var(--dk-line);
+  background: rgba(25, 9, 14, 0.96);
+  box-shadow: 0 12px 25px rgba(16, 2, 6, 0.26);
+}
+.denmark-championship .dk-lod #lod-finale {
+  border-color: var(--dk-gold-bright);
+  background:
+    linear-gradient(110deg, rgba(34, 7, 15, 0.87), rgba(105, 14, 32, 0.75)),
+    var(--dk-event-backdrop),
+    var(--dk-bordeaux);
+  background-size: cover;
+  background-position: center, 58% center, center;
+}
+.denmark-championship .dk-lod #lod-ranking > section > .overflow-x-auto {
+  border-color: var(--dk-line);
+  background: rgba(24, 8, 14, 0.77);
+}
+.denmark-championship .dk-lod #lod-ranking > section:last-child article:first-child {
+  border-color: var(--dk-gold-bright);
+  background: linear-gradient(100deg, rgba(201, 164, 92, 0.15), rgba(53, 10, 19, 0.9));
+}
+
+.denmark-championship .denmark-hero-content > button {
+  margin-top: 1.5rem;
+}
+
+.denmark-archive-card {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--dk-line) !important;
+  background: linear-gradient(115deg, #641020, #30101a 65%, #171014) !important;
+  box-shadow: inset 3px 0 0 var(--dk-gold);
+}
+
+.denmark-championship [data-event-trophy-podium] [data-placement="1"] {
+  border-color: var(--dk-gold-bright);
+  box-shadow: 0 0 30px rgba(201, 164, 92, 0.17);
+}
+
+.denmark-championship [data-trophy-event-special-stats] > .panel,
+.denmark-championship #most-wanted-grid {
+  border-color: var(--dk-line);
+}
+
+@media (max-width: 639px) {
+  .denmark-championship { padding: 0.65rem; }
+  .denmark-hero { min-height: 17rem; }
+  .denmark-hero-compact { min-height: 14rem; }
+  .denmark-hero { background-position: center, 38% center, center; }
+  .denmark-championship .dk-results-hero { background-position: center, 54% center, center; }
+  .denmark-hero-title { font-size: clamp(2rem, 11vw, 3.3rem); }
+  .denmark-eyebrow { font-size: 0.62rem; letter-spacing: 0.11em; }
+  .denmark-divider { margin: 1.3rem 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .denmark-championship .dk-primary-action { transition: none; }
+}

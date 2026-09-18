@@ -27,6 +27,8 @@ const render = (value: Event) => renderToStaticMarkup(
 describe("Event archive Trophy marker", () => {
   it("does not mark normal events", () => {
     expect(render(event())).not.toContain("data-asset-id");
+    expect(render(event())).toContain('data-event-theme="default"');
+    expect(render(event())).not.toContain("denmark-archive-card");
   });
 
   it("shows the competition gold asset immediately after the Trophy Event name", () => {
@@ -37,6 +39,8 @@ describe("Event archive Trophy marker", () => {
     }));
     expect(markup).toContain('data-asset-id="trophy:denmark:2026:gold"');
     expect(markup).toContain("Trophy Event · Dänemark 2026");
+    expect(markup).toContain('data-event-theme="denmark"');
+    expect(markup).toContain("denmark-archive-card");
     expect(markup.indexOf("Spieleabend")).toBeLessThan(markup.indexOf("data-asset-id"));
   });
 

@@ -5,6 +5,8 @@ import { trophyCompetitionAssetId } from "@/lib/awardAssets";
 import { trophyCompetitionName } from "@/lib/trophyCompetitions";
 import type { Event } from "@/types";
 import { formatDate, formatTime } from "@/utils/format";
+import { resolveEventTheme } from "@/lib/eventTheme";
+import { cn } from "@/lib/cn";
 
 export function EventArchiveList({ events, emptyLabel }: { events: Event[]; emptyLabel: string }) {
   if (events.length === 0) {
@@ -14,7 +16,8 @@ export function EventArchiveList({ events, emptyLabel }: { events: Event[]; empt
     {events.map((event) => <Link
       key={event.id}
       to={`/events/${event.id}`}
-      className="panel group grid min-w-0 gap-4 overflow-hidden p-5 transition hover:border-gold-400/25 sm:grid-cols-[minmax(0,1fr)_repeat(4,auto)_auto] sm:items-center sm:gap-7"
+      data-event-theme={resolveEventTheme(event)}
+      className={cn("panel group grid min-w-0 gap-4 overflow-hidden p-5 transition hover:border-gold-400/25 sm:grid-cols-[minmax(0,1fr)_repeat(4,auto)_auto] sm:items-center sm:gap-7", resolveEventTheme(event) === "denmark" && "denmark-archive-card")}
     >
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto] items-center gap-x-2">
         <p className="truncate font-display text-xl font-black uppercase">{event.title}</p>
@@ -35,7 +38,7 @@ export function EventArchiveList({ events, emptyLabel }: { events: Event[]; empt
           className="visible col-start-2 row-span-2 row-start-1 block size-11 max-w-none shrink-0 self-center sm:size-12"
           fallback={null}
         />}
-        <p className="mt-1 text-xs text-white/35">{formatDate(event.date)}</p>
+        <p className="mt-1 text-xs text-white/35">{resolveEventTheme(event) === "denmark" ? `Dänemark Championship · ${formatDate(event.date)}` : formatDate(event.date)}</p>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:contents">
         <EventValue label="Sieger" value={event.winnerNames.join(" & ") || "—"} />

@@ -2,6 +2,8 @@ import { CalendarDays, Clock3, Users } from "lucide-react";
 import { useElapsedTime } from "@/hooks/useElapsedTime";
 import { formatDate } from "@/utils/format";
 import type { LiveEvent } from "@/types/liveEvent";
+import { DenmarkHero } from "@/components/denmark/DenmarkChampionship";
+import { resolveEventTheme } from "@/lib/eventTheme";
 
 export function LiveEventHeader({
   event,
@@ -11,6 +13,17 @@ export function LiveEventHeader({
   attempts: number;
 }) {
   const elapsed = useElapsedTime(event.startedAt);
+  if (resolveEventTheme(event) === "denmark") {
+    return <DenmarkHero eyebrow="Harter Kern · Dänemark" title={event.name || "Dänemark Championship"} edition={event.trophyCompetitionYear} compact>
+      <p className="mt-4 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-red-200"><span className="size-2 animate-pulse rounded-full bg-red-300 motion-reduce:animate-none" />Live Event</p>
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-white/75 sm:text-sm">
+        <span className="flex items-center gap-2"><CalendarDays className="size-4" /> {formatDate(event.date)}</span>
+        <span className="flex items-center gap-2"><Clock3 className="size-4" /> {elapsed}</span>
+        <span className="flex items-center gap-2"><Users className="size-4" /> {event.participantIds.length} Teilnehmer</span>
+      </div>
+      <p className="mt-2 text-xs text-white/70">{attempts} Eventversuche insgesamt</p>
+    </DenmarkHero>;
+  }
   return (
     <section className="relative overflow-hidden rounded-3xl border border-red-400/15 bg-gradient-to-br from-red-500/[0.12] via-white/[0.035] to-gold-400/[0.06] p-4 sm:p-9">
       <div className="absolute right-0 top-0 size-52 rounded-full bg-red-500/10 blur-3xl" />

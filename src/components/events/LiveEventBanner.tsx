@@ -4,11 +4,14 @@ import { useElapsedTime } from "@/hooks/useElapsedTime";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { formatDate, formatTime } from "@/utils/format";
 import { getAttemptMilestones } from "@/lib/liveEventCalculations";
+import { resolveEventTheme } from "@/lib/eventTheme";
+import { cn } from "@/lib/cn";
 
 export function LiveEventBanner() {
   const { activeEvent, state } = useLiveEvent();
   const elapsed = useElapsedTime(activeEvent?.startedAt ?? new Date().toISOString());
   if (!activeEvent) return null;
+  const denmark = resolveEventTheme(activeEvent) === "denmark";
   const attempts = state.attempts
     .filter(({ eventId }) => eventId === activeEvent.id)
     .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
@@ -34,7 +37,7 @@ export function LiveEventBanner() {
     `Läuft seit ${elapsed}`,
   ];
   return (
-    <aside className="sticky top-20 z-30 border-b border-red-400/20 bg-[#160b0b]/95 backdrop-blur-xl">
+    <aside className={cn("sticky top-20 z-30 border-b border-red-400/20 bg-[#160b0b]/95 backdrop-blur-xl", denmark && "denmark-live-banner")}>
       <Link
         to="/events/live"
         className="viewport-gutter mx-auto flex min-h-12 min-w-0 max-w-[1600px] items-center gap-3 overflow-hidden py-2 text-xs"
@@ -44,7 +47,7 @@ export function LiveEventBanner() {
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-400 opacity-70 motion-reduce:animate-none" />
             <span className="relative inline-flex size-2.5 rounded-full bg-red-400" />
           </span>
-          Live
+          {denmark ? "Dänemark live" : "Live"}
         </span>
         <span className="min-w-0 flex-1 overflow-hidden">
           <span className="live-ticker-track flex w-max items-center whitespace-nowrap text-white/70">
