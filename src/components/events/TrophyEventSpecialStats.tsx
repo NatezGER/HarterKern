@@ -3,12 +3,15 @@ import { MostWantedMatrix } from "@/components/stats/MostWantedMatrix";
 import { cn } from "@/lib/cn";
 import { buildTrophyEventMilestones } from "@/lib/trophyEventMilestones";
 import type { TrophyEventSpecialStats as TrophyEventSpecialStatsData } from "@/types/trophyEventStats";
+import { MetricDashboardGrid } from "@/components/stats/MetricTopThreeCard";
+import { RivalryPairList } from "@/components/stats/RivalryPairList";
 
-export function TrophyEventSpecialStats({ data, loading, error, className }: {
+export function TrophyEventSpecialStats({ data, loading, error, className, live = false }: {
   data: TrophyEventSpecialStatsData | null;
   loading: boolean;
   error: string;
   className?: string;
+  live?: boolean;
 }) {
   if (loading && !data) {
     return <section className={cn("panel p-5 text-sm text-white/40", className)}>
@@ -22,6 +25,10 @@ export function TrophyEventSpecialStats({ data, loading, error, className }: {
   }
   const families = buildTrophyEventMilestones(data.metrics);
   return <div className={cn("w-full min-w-0 space-y-6", className)} data-trophy-event-special-stats>
+    {data.dashboard && <section aria-label="Trophy-Event-Top-3-Statistiken" className="space-y-3">
+      <MetricDashboardGrid metrics={data.dashboard.metrics} />
+      {live && <RivalryPairList pairs={data.dashboard.rivalryPairs} live />}
+    </section>}
     <MostWantedMatrix
       data={data.mostWanted}
       eventScope={{ eventId: data.eventId, eventName: data.eventName }}

@@ -242,7 +242,7 @@ describe("event detail loading", () => {
     expect(mocks.rpc).not.toHaveBeenCalled();
     await getEventDetailExtras(event.id, true);
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
-    expect(mocks.rpc).toHaveBeenCalledWith("get_trophy_event_special_stats", {
+    expect(mocks.rpc).toHaveBeenCalledWith("get_trophy_event_dashboard", {
       p_event_id: event.id,
     });
   });

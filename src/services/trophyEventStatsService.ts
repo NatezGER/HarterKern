@@ -1,6 +1,7 @@
 import { getSupabase } from "@/lib/supabase";
 import type { MostWantedEnding, MostWantedHit, MostWantedHunter } from "@/types";
 import type { TrophyEventSpecialStats } from "@/types/trophyEventStats";
+import { mapStatisticDashboard } from "@/services/statDashboardService";
 
 type JsonObject = Record<string, unknown>;
 
@@ -78,12 +79,14 @@ function mapHunter(value: unknown): MostWantedHunter {
 export async function getTrophyEventSpecialStats(
   eventId: string,
 ): Promise<TrophyEventSpecialStats | null> {
-  const { data, error } = await getSupabase().rpc("get_trophy_event_special_stats", {
+  const { data, error } = await getSupabase().rpc("get_trophy_event_dashboard", {
     p_event_id: eventId,
   });
   if (error) throw error;
   if (data == null) return null;
-  const root = object(data);
+  const envelope = object(data);
+  const root = object(envelope.special);
+  const dashboard = mapStatisticDashboard(envelope.dashboard, "special-event");
   const metrics = object(root.metrics);
   const endings = array(root.endings).map(mapEnding);
   const reached = number(metrics.distinctEndings);
@@ -116,5 +119,6 @@ export async function getTrophyEventSpecialStats(
       mostCommonEnding: nullableNumber(metrics.mostCommonEnding),
       mostCommonEndingHits: number(metrics.mostCommonEndingHits),
     },
+    dashboard,
   };
 }

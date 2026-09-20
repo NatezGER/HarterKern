@@ -238,11 +238,20 @@ describe("EventResults polish", () => {
             matchingTimeParticipantNames: ["Paul"], validAttempts: 2,
             mostCommonEnding: 42, mostCommonEndingHits: 2,
           },
+          dashboard: {
+            scope: "special-event", rivalryPairs: [], metrics: [{
+              key: "fastest", title: "Schnellste Zeit", description: "Event",
+              format: "time", direction: "asc", minimumSample: 1,
+              overallValue: 342, overallCount: null, overallTotal: null,
+              overallDetail: null, rankings: [],
+            }],
+          },
         },
         extras: { loading: false, errors: {} },
       }} /></MemoryRouter>,
     );
     expect(markup).toContain("data-trophy-event-special-stats");
+    expect(markup).toContain("data-metric-dashboard");
     expect(markup).toContain("Finale – Most Wanted");
     expect(markup).toContain("w-full min-w-0");
     expect(markup).toContain("Event-Meilensteine");

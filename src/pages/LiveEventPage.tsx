@@ -202,7 +202,7 @@ export function LiveEventPage() {
             }}
           />
         </div>}
-        specialStats={activeEvent.awardsTrophies ? <TrophyEventSpecialStats {...trophyStats} /> : null}
+        specialStats={activeEvent.awardsTrophies ? <TrophyEventSpecialStats {...trophyStats} live /> : null}
         attemptEntry={<section className={denmark ? "dk-attempt-entry" : undefined}>
           {denmark ? <DenmarkSectionHeading eyebrow="Live-Wettbewerb" title="Versuch hinzufügen" /> : <h2 className="display-title mb-4 text-3xl sm:mb-5">Versuch hinzufügen</h2>}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
