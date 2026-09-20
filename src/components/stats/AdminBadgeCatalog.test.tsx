@@ -56,4 +56,12 @@ describe("AdminBadgeCatalogContent", () => {
     }], singles: [] }} />);
     expect(markup).toContain("Diamond erreicht · keine weitere Stufe");
   });
+
+  it("shows a loading state without claiming nobody earned a badge", () => {
+    const markup = renderToStaticMarkup(<AdminBadgeCatalogContent catalog={{
+      families: [], singles: [{ ...stage("bronze"), familyKey: null, badgeKind: "single" }],
+    }} loadingAchievements />);
+    expect(markup).toContain("Wird geladen");
+    expect(markup).not.toContain("Noch niemand");
+  });
 });

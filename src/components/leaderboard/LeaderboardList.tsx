@@ -5,9 +5,10 @@ import { formatDate, formatTime } from "@/utils/format";
 import { Avatar } from "@/components/common/Avatar";
 import { HallOfFameRankEmblem } from "@/components/common/HallOfFameRankEmblem";
 
-export function LeaderboardList({ entries, emptyLabel = "Kein Spieler gefunden." }: {
+export function LeaderboardList({ entries, emptyLabel = "Kein Spieler gefunden.", mode = "best" }: {
   entries: ReturnTypeRankedPlayers;
   emptyLabel?: string;
+  mode?: "best" | "average";
 }) {
   if (entries.length === 0) {
     return <div className="panel py-20 text-center text-sm text-white/40">{emptyLabel}</div>;
@@ -37,18 +38,18 @@ export function LeaderboardList({ entries, emptyLabel = "Kein Spieler gefunden."
               <p className="truncate font-display text-xl font-black uppercase">{player.name}</p>
             </div>
           </div>
-          <p className="hidden text-xs text-white/35 sm:block">{formatDate(recordDate)}</p>
+          <p className="hidden text-xs text-white/35 sm:block">{mode === "best" ? formatDate(recordDate) : "Offizieller Schnitt"}</p>
           <div className="hidden text-right sm:block">
             <p className="text-[9px] font-bold uppercase tracking-widest text-white/25">Gültig</p>
             <p className="mt-1 font-display text-lg font-bold text-white/60">{player.validAttempts.toLocaleString("de-DE")}</p>
           </div>
           <div className="hidden text-right sm:block">
-            <p className="text-[9px] font-bold uppercase tracking-widest text-white/25">Ø Zeit</p>
-            <p className="mt-1 font-display text-lg font-bold text-white/60">{formatTime(player.average)}</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-white/25">{mode === "best" ? "Ø Zeit" : "Bestzeit"}</p>
+            <p className="mt-1 font-display text-lg font-bold text-white/60">{formatTime(mode === "best" ? player.average : player.personalBest)}</p>
           </div>
           <div className="text-right">
-            <p className="text-[9px] font-bold uppercase tracking-widest text-white/25">Bestzeit</p>
-            <p className="mt-1 font-display text-xl font-black text-white transition group-hover:text-gold-300">{formatTime(player.personalBest)}</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-white/25">{mode === "best" ? "Bestzeit" : "Durchschnitt"}</p>
+            <p className="mt-1 font-display text-xl font-black text-white transition group-hover:text-gold-300">{formatTime(mode === "best" ? player.personalBest : player.average)}{mode === "average" ? " Ø" : ""}</p>
           </div>
         </Link>
       ))}

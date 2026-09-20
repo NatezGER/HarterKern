@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getRankedPlayers, getRosterPlayers, resolveEventPodiumAvatar } from "@/data/selectors";
+import { getAverageRankedPlayers, getRankedPlayers, getRosterPlayers, resolveEventPodiumAvatar } from "@/data/selectors";
 import type { LeaderboardEntry, Player } from "@/types";
 
 const createPlayer = (
@@ -65,6 +65,28 @@ describe("getRankedPlayers", () => {
     const leaderboard = [entry("ak", 1), entry("regular", 2)];
 
     expect(getRankedPlayers(players, leaderboard).map(({ player }) => player.id)).toEqual(["regular"]);
+  });
+});
+
+describe("getAverageRankedPlayers", () => {
+  it("uses official averages and competition ranks without changing PB order", () => {
+    const players = [
+      createPlayer("best-pb", 1.99, 3.18),
+      createPlayer("fast-average-b", 2.2, 2.9),
+      createPlayer("fast-average-a", 2.3, 2.9),
+    ];
+    expect(getAverageRankedPlayers(players).map(({ player, rank }) => [player.id, rank])).toEqual([
+      ["fast-average-a", 1], ["fast-average-b", 1], ["best-pb", 3],
+    ]);
+    expect(getRankedPlayers(players, [entry("best-pb", 1), entry("fast-average-b", 2)]).map(({ player }) => player.id))
+      .toEqual(["best-pb", "fast-average-b"]);
+  });
+
+  it("excludes AK, archived and players without valid official averages", () => {
+    const players = [createPlayer("regular", 2.5, 3), createPlayer("ak", 2, 2, true),
+      { ...createPlayer("archived", 2, 2), isArchived: true },
+      { ...createPlayer("none", 0, 0), validAttempts: 0 }];
+    expect(getAverageRankedPlayers(players).map(({ player }) => player.id)).toEqual(["regular"]);
   });
 });
 
