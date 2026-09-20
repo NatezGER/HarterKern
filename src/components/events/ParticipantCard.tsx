@@ -40,10 +40,12 @@ function Identity({ standing, onAdd }: { standing: LiveStanding; onAdd: () => vo
 
 export function ParticipantCard({
   standing,
+  firstAttemptBenchmark,
   saved,
   onAdd,
 }: {
   standing: LiveStanding;
+  firstAttemptBenchmark?: number | null;
   saved: boolean;
   onAdd: () => void;
 }) {
@@ -68,6 +70,9 @@ export function ParticipantCard({
         <Metric label="Event-Durchschnitt" value={formatTime(standing.averageTime ?? 0)} />
         <Metric label="Versuche" value={String(standing.attempts)} />
       </div>
+      {firstAttemptBenchmark != null && <p className="mb-3 mt-1 text-center text-[11px] font-semibold text-gold-300/80 md:mt-0">
+        Bester 1. Versuch bisher: {formatTime(firstAttemptBenchmark / 100)}
+      </p>}
       <Button size="lg" onClick={onAdd} className="mt-auto hidden h-14 w-full md:flex">
         <Plus className="size-5" /> Neue Zeit
       </Button>

@@ -2,10 +2,12 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+const seasonState = vi.hoisted(() => ({ isAllTime: false }));
+
 vi.mock("@/hooks/useLeaderboard", () => ({
   useLeaderboard: () => ({ entries: [], mode: "best", setMode: vi.fn() }),
 }));
-vi.mock("@/hooks/useSeason", () => ({ useSeason: () => ({ season: 2026, isAllTime: false }) }));
+vi.mock("@/hooks/useSeason", () => ({ useSeason: () => ({ season: 2026, isAllTime: seasonState.isAllTime }) }));
 vi.mock("@/components/common/DataState", () => ({ DataState: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/leaderboard/Podium", () => ({ Podium: () => <div>Podium</div> }));
 vi.mock("@/components/leaderboard/LeaderboardList", () => ({
@@ -18,6 +20,7 @@ import { SettingsPage } from "@/pages/SettingsPage";
 
 describe("information architecture pages", () => {
   it("shows the leaderboard directly without search or filter controls", () => {
+    seasonState.isAllTime = false;
     const markup = renderToStaticMarkup(<LeaderboardPage />);
     expect(markup).toContain("Saisonrangliste 2026");
     expect(markup).toMatch(/aria-pressed="true"[^>]*>Bestzeit<\/button>/);
@@ -26,6 +29,15 @@ describe("information architecture pages", () => {
     expect(markup).not.toContain("Spieler suchen");
     expect(markup).not.toContain("Filter vorbereiten");
     expect(markup).not.toContain("Kein Spieler gefunden.");
+    expect(markup).not.toContain("Secret Hall of Fame");
+    expect(markup).not.toContain("Alle Einzelversuche");
+  });
+
+  it("shows advanced Hall of Fame only in All-Time mode", () => {
+    seasonState.isAllTime = true;
+    const markup = renderToStaticMarkup(<LeaderboardPage />);
+    expect(markup).toContain("Secret Hall of Fame");
+    expect(markup).toContain("Alle Einzelversuche");
   });
 
   it("keeps Settings focused on real administration", () => {

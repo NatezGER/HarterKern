@@ -519,6 +519,30 @@ export interface Database {
       season_trophies: PlayerTrophyView;
     };
     Functions: DataPlatformFunctions & {
+      get_two_in_sixty_hall_of_fame: {
+        Args: { p_mode?: string };
+        Returns: Array<{
+          rank: number; player_id: string; display_name: string;
+          run_count: number; first_time_hundredths: number;
+          second_time_hundredths: number; sum_hundredths: number;
+          event_id: string; event_name: string; event_date: string;
+        }>;
+      };
+      get_ranked_official_attempts: {
+        Args: { p_limit?: number; p_offset?: number };
+        Returns: Array<{
+          rank: number; total_count: number; source_id: string;
+          source_type: string; player_id: string | null;
+          guest_id: string | null; display_name: string;
+          time_hundredths: number; event_name: string | null;
+          source_label: string | null; occurred_date: string;
+          attempt_number: number | null;
+        }>;
+      };
+      get_event_first_attempt_benchmarks: {
+        Args: { p_event_id: string };
+        Returns: Array<{ player_id: string; best_time_hundredths: number }>;
+      };
       get_trophy_event_special_stats: {
         Args: { p_event_id: string };
         Returns: Json;
