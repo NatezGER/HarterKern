@@ -19,6 +19,7 @@ import { DenmarkChampionshipShell, DenmarkSectionHeading } from "@/components/de
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { useDataGroup } from "@/hooks/useDataPlatform";
 import { useTrophyEventSpecialStats } from "@/hooks/useTrophyEventSpecialStats";
+import { useFirstAttemptBenchmarks } from "@/hooks/useFirstAttemptBenchmarks";
 import { usePublicData } from "@/hooks/usePublicData";
 import {
   getLiveStandings,
@@ -37,6 +38,7 @@ import type {
 } from "@/types/liveEvent";
 import type { EventLeadAttempt } from "@/lib/eventLeadProgression";
 import { resolveEventTheme } from "@/lib/eventTheme";
+import { visibleFirstAttemptBenchmark } from "@/lib/firstAttemptBenchmark";
 
 export function LiveEventPage() {
   const navigate = useNavigate();
@@ -52,6 +54,7 @@ export function LiveEventPage() {
     completeLeaderboardTransition,
   } = useLiveEvent();
   const { version: liveVersion } = useDataGroup("live");
+  const firstAttemptBenchmarks = useFirstAttemptBenchmarks(activeEvent?.id ?? "", liveVersion);
   const trophyStats = useTrophyEventSpecialStats(
     activeEvent?.id ?? "",
     Boolean(activeEvent?.awardsTrophies),
@@ -207,6 +210,9 @@ export function LiveEventPage() {
               <ParticipantCard
                 key={standing.player.id}
                 standing={standing}
+                firstAttemptBenchmark={visibleFirstAttemptBenchmark(
+                  standing.player, attempts, firstAttemptBenchmarks.get(standing.player.id),
+                )}
                 saved={saved?.id === standing.player.id}
                 onAdd={() => setSelected(standing)}
               />

@@ -7,6 +7,7 @@ import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { useSeason } from "@/hooks/useSeason";
 import { Button } from "@/components/ui/button";
+import { AdvancedHallOfFame } from "@/components/leaderboard/AdvancedHallOfFame";
 
 export function LeaderboardPage() {
   const { entries, mode, setMode } = useLeaderboard();
@@ -36,6 +37,7 @@ export function LeaderboardPage() {
           </section>
         </div>
       </DataState>
+      <AdvancedHallOfFame />
     </div>
   );
 }
