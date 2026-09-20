@@ -46,13 +46,24 @@ function FamilyProgress({ family, progress }: { family: AdminBadgeFamily; progre
     stage.achievements.some(({ playerId }) => playerId === progress.playerId) ? index : highest, -1);
   const next = family.stages[highestAchievedIndex + 1] ?? null;
   const current = family.category === "favorite_time" && progress.timeHundredths != null
-    ? `${progress.currentProgress}× ${formatBadgeTime(progress.timeHundredths)}` : String(progress.currentProgress);
+    ? `${progress.currentProgress}× ${formatBadgeTime(progress.timeHundredths)}`
+    : family.category === "bingo_completion" ? `${progress.currentProgress}/100 verschiedene Felder`
+      : family.category === "bingo" ? `${progress.currentProgress} Bronze-Linien`
+        : String(progress.currentProgress);
   const remaining = next?.threshold == null ? null : family.category === "performance"
     ? Math.max(0, progress.currentProgress - next.threshold + 1)
     : Math.max(0, next.threshold - progress.currentProgress);
   return <li className="rounded-lg bg-white/[0.035] px-3 py-2">
     <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1"><strong className="text-sm">{progress.playerName}</strong><span className="text-xs tabular-nums text-white/65">Aktuell: {current}{next?.threshold != null ? ` / ${next.threshold}` : ""}</span></div>
-    <p className="mt-1 text-xs text-white/40">{next ? `${remaining ?? "—"} bis ${getBadgeMaterialLabel(next)}` : "Diamond erreicht · keine weitere Stufe"}</p>
+    <p className="mt-1 text-xs text-white/40">{next
+      ? family.category === "bingo_completion"
+        ? highestAchievedIndex < 0
+          ? `${Math.max(0, 100 - progress.currentProgress)} Felder bis Bronze`
+          : `Weitere Mehrfachtreffer für ${getBadgeMaterialLabel(next)} erforderlich`
+        : family.category === "bingo"
+          ? `Weitere Linien für ${getBadgeMaterialLabel(next)} erforderlich`
+          : `${remaining ?? "—"} bis ${getBadgeMaterialLabel(next)}`
+      : "Diamond erreicht · keine weitere Stufe"}</p>
   </li>;
 }
 
