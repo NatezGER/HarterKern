@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { formatBadgeTime, getBadgeMaterialLabel } from "@/lib/badgePresentation";
-import { getAdminBadgeCatalog } from "@/services/adminBadgeCatalogService";
+import { getAdminBadgeAchievements, getAdminBadgeCatalog, getAdminBadgeProgress, withAdminBadgeAchievements, withAdminBadgeProgress } from "@/services/adminBadgeCatalogService";
 import type { AdminBadgeCatalog as AdminBadgeCatalogData, AdminBadgeCatalogEntry } from "@/services/adminBadgeCatalogService";
 import type { AdminBadgeFamily, AdminBadgeFamilyProgress } from "@/services/adminBadgeCatalogService";
 import { formatDate } from "@/utils/format";
 import { PrestigeBadgeEmblem } from "@/components/common/PrestigeBadgeEmblem";
 
 const categoryLabels: Record<string, string> = {
-  attempts: "Versuche", bingo: "Bingo", consolation: "Trostpreis", dnf: "DNF",
+  attempts: "Versuche", bingo: "Bingo", bingo_completion: "BINGO · Volle Karte", consolation: "Trostpreis", dnf: "DNF",
   event_attempts: "Event-Versuche", rapid_fire: "Sperrfeuer", teamwork: "Teamwork",
   favorite_time: "Lieblingszeit", flawless: "Fehlerfrei", glitch: "Glitch",
   performance: "Leistung", podium: "Podium", podiums: "Podien", precision: "Präzision", rivalry: "Rivalität",
@@ -32,6 +32,7 @@ function progressLabel(entry: AdminBadgeCatalogEntry, progress?: number | null, 
   if (entry.category === "events") return `${progress} Events`;
   if (entry.category === "podiums") return `${progress} Podien`;
   if (entry.category === "bingo") return `${progress} BINGO-Linien`;
+  if (entry.category === "bingo_completion") return `${progress} BINGO-Felder`;
   return `${progress}`;
 }
 
@@ -45,17 +46,28 @@ function FamilyProgress({ family, progress }: { family: AdminBadgeFamily; progre
     stage.achievements.some(({ playerId }) => playerId === progress.playerId) ? index : highest, -1);
   const next = family.stages[highestAchievedIndex + 1] ?? null;
   const current = family.category === "favorite_time" && progress.timeHundredths != null
-    ? `${progress.currentProgress}× ${formatBadgeTime(progress.timeHundredths)}` : String(progress.currentProgress);
+    ? `${progress.currentProgress}× ${formatBadgeTime(progress.timeHundredths)}`
+    : family.category === "bingo_completion" ? `${progress.currentProgress}/100 verschiedene Felder`
+      : family.category === "bingo" ? `${progress.currentProgress} Bronze-Linien`
+        : String(progress.currentProgress);
   const remaining = next?.threshold == null ? null : family.category === "performance"
     ? Math.max(0, progress.currentProgress - next.threshold + 1)
     : Math.max(0, next.threshold - progress.currentProgress);
   return <li className="rounded-lg bg-white/[0.035] px-3 py-2">
     <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1"><strong className="text-sm">{progress.playerName}</strong><span className="text-xs tabular-nums text-white/65">Aktuell: {current}{next?.threshold != null ? ` / ${next.threshold}` : ""}</span></div>
-    <p className="mt-1 text-xs text-white/40">{next ? `${remaining ?? "—"} bis ${getBadgeMaterialLabel(next)}` : "Diamond erreicht · keine weitere Stufe"}</p>
+    <p className="mt-1 text-xs text-white/40">{next
+      ? family.category === "bingo_completion"
+        ? highestAchievedIndex < 0
+          ? `${Math.max(0, 100 - progress.currentProgress)} Felder bis Bronze`
+          : `Weitere Mehrfachtreffer für ${getBadgeMaterialLabel(next)} erforderlich`
+        : family.category === "bingo"
+          ? `Weitere Linien für ${getBadgeMaterialLabel(next)} erforderlich`
+          : `${remaining ?? "—"} bis ${getBadgeMaterialLabel(next)}`
+      : "Diamond erreicht · keine weitere Stufe"}</p>
   </li>;
 }
 
-export function AdminBadgeCatalogContent({ catalog }: { catalog: AdminBadgeCatalogData }) {
+export function AdminBadgeCatalogContent({ catalog, loadingAchievements = false }: { catalog: AdminBadgeCatalogData; loadingAchievements?: boolean }) {
   return <div className="mt-6 space-y-10">
     {catalog.families.length > 0 && <section aria-labelledby="admin-badge-families-title">
       <h3 id="admin-badge-families-title" className="display-title text-2xl">Badge-Familien</h3>
@@ -66,7 +78,7 @@ export function AdminBadgeCatalogContent({ catalog }: { catalog: AdminBadgeCatal
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{family.stages.map((stage) => <section key={stage.badgeKey} className={`min-w-0 overflow-hidden rounded-xl border p-4 ${stageStyles[stage.tier as keyof typeof stageStyles]}`}>
           <div className="flex min-w-0 items-start gap-3"><PrestigeBadgeEmblem badge={stage} size="sm" /><div className="min-w-0 flex-1"><h5 className="font-display text-lg font-black uppercase">{getBadgeMaterialLabel(stage)}</h5><span className="text-xs font-bold text-white/45">Schwelle {stage.threshold ?? "—"}</span></div></div>
           <p className="mt-2 text-xs leading-5 text-white/55">{stage.requirement?.trim() || stage.description}</p>
-          <div className="mt-4 border-t border-white/10 pt-3"><p className="text-[10px] font-bold uppercase tracking-wider text-white/35">Freigeschaltet von</p><AchievementList entry={stage} /></div>
+          <div className="mt-4 border-t border-white/10 pt-3"><p className="text-[10px] font-bold uppercase tracking-wider text-white/35">Freigeschaltet von</p><AchievementList entry={stage} emptyLabel={loadingAchievements ? "Wird geladen…" : "Noch niemand"} /></div>
         </section>)}</div>
         {(family.progress?.length ?? 0) > 0 && <details className="mt-4 rounded-xl border border-white/[0.07] bg-black/15 p-3"><summary className="cursor-pointer text-xs font-bold uppercase tracking-wider text-white/55">Aktueller Fortschritt · {family.progress!.length} Spieler</summary><ul className="mt-3 grid gap-2 sm:grid-cols-2">{family.progress!.map((progress) => <FamilyProgress key={progress.playerId} family={family} progress={progress} />)}</ul></details>}
       </article>)}</div>
@@ -80,7 +92,7 @@ export function AdminBadgeCatalogContent({ catalog }: { catalog: AdminBadgeCatal
           <div className="flex min-w-0 flex-wrap items-start gap-3"><PrestigeBadgeEmblem badge={entry} size="sm" /><div className="min-w-0 flex-1"><h4 className="font-display text-lg font-black uppercase">{entry.name}</h4><p className="mt-1 break-all text-xs text-white/40">{entry.badgeKey}</p></div><span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold text-white/55">{getBadgeMaterialLabel(entry)}</span></div>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3"><div><dt className="text-white/35">Kategorie</dt><dd className="mt-0.5 font-semibold">{categoryLabels[entry.category] ?? entry.category}</dd></div><div><dt className="text-white/35">Schwelle</dt><dd className="mt-0.5 font-semibold">{entry.threshold ?? "—"}</dd></div><div><dt className="text-white/35">Geltung</dt><dd className="mt-0.5 font-semibold">{entry.scopeType}</dd></div></dl>
           <p className="mt-4 text-sm leading-6 text-white/70">{requirement}</p>
-          <AchievementList entry={entry} />
+          <AchievementList entry={entry} emptyLabel={loadingAchievements ? "Wird geladen…" : "Noch niemand"} />
         </article>;
       })}</div>
     </section>}
@@ -90,11 +102,31 @@ export function AdminBadgeCatalogContent({ catalog }: { catalog: AdminBadgeCatal
 export function AdminBadgeCatalog() {
   const [catalog, setCatalog] = useState<AdminBadgeCatalogData>({ families: [], singles: [] });
   const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(false);
+  const [loadingAchievements, setLoadingAchievements] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
     void getAdminBadgeCatalog().then((nextCatalog) => {
-      if (active) setCatalog(nextCatalog);
+      if (!active) return;
+      setCatalog(nextCatalog);
+      setLoading(false);
+      setLoadingProgress(true);
+      setLoadingAchievements(true);
+      void getAdminBadgeAchievements().then((result) => {
+        if (active) setCatalog((current) => withAdminBadgeAchievements(current, result));
+      }).catch(() => {
+        if (active) setCatalog((current) => ({ ...current, warnings: [
+          ...(current.warnings ?? []), "Vergaben konnten nicht geladen werden.",
+        ] }));
+      }).finally(() => { if (active) setLoadingAchievements(false); });
+      void getAdminBadgeProgress().then((result) => {
+        if (active) setCatalog((current) => withAdminBadgeProgress(current, result));
+      }).catch(() => {
+        if (active) setCatalog((current) => ({ ...current, warnings: [
+          ...(current.warnings ?? []), "Fortschrittsdaten sind vorübergehend nicht verfügbar.",
+        ] }));
+      }).finally(() => { if (active) setLoadingProgress(false); });
     }).catch((cause) => {
       if (active) setError(cause instanceof Error ? cause.message : "Badge-Katalog konnte nicht geladen werden.");
     }).finally(() => {
@@ -109,6 +141,9 @@ export function AdminBadgeCatalog() {
     <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">Aktive Badge-Familien, Sonderbadges und tatsächliche Vergaben zur Kontrolle.</p>
     {loading && <p className="mt-6 text-sm text-white/45">Badge-Katalog wird geladen…</p>}
     {error && <p className="mt-6 text-sm text-red-300" role="alert">{error}</p>}
-    {!loading && !error && <AdminBadgeCatalogContent catalog={catalog} />}
+    {!loading && loadingProgress && <p className="mt-4 text-xs text-white/40" role="status">Fortschritt wird ergänzt…</p>}
+    {!loading && loadingAchievements && <p className="mt-4 text-xs text-white/40" role="status">Vergaben werden ergänzt…</p>}
+    {!loading && !error && (catalog.warnings?.length ?? 0) > 0 && <div className="mt-5 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-3 text-xs text-amber-100/80" role="status">{catalog.warnings!.map((warning) => <p key={warning}>{warning}</p>)}</div>}
+    {!loading && !error && <AdminBadgeCatalogContent catalog={catalog} loadingAchievements={loadingAchievements} />}
   </section>;
 }

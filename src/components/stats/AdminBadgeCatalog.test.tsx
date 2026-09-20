@@ -56,4 +56,30 @@ describe("AdminBadgeCatalogContent", () => {
     }], singles: [] }} />);
     expect(markup).toContain("Diamond erreicht · keine weitere Stufe");
   });
+
+  it("shows a loading state without claiming nobody earned a badge", () => {
+    const markup = renderToStaticMarkup(<AdminBadgeCatalogContent catalog={{
+      families: [], singles: [{ ...stage("bronze"), familyKey: null, badgeKind: "single" }],
+    }} loadingAchievements />);
+    expect(markup).toContain("Wird geladen");
+    expect(markup).not.toContain("Noch niemand");
+  });
+
+  it("keeps line and full-card progress labels separate", () => {
+    const bingoStages = (["bronze", "silver", "gold", "diamond"] as const)
+      .map((tier) => ({ ...stage(tier), category: "bingo", familyKey: "bingo" }));
+    const cardStages = (["bronze", "silver", "gold", "diamond"] as const)
+      .map((tier) => ({ ...stage(tier), category: "bingo_completion", familyKey: "bingo-completion" }));
+    const markup = renderToStaticMarkup(<AdminBadgeCatalogContent catalog={{
+      families: [
+        { familyKey: "bingo", name: "BINGO", category: "bingo", description: "Linien",
+          stages: bingoStages, progress: [{ playerId: "p1", playerName: "Karl", familyKey: "bingo", currentProgress: 2, timeHundredths: null }] },
+        { familyKey: "bingo-completion", name: "Volle Karte", category: "bingo_completion", description: "Felder",
+          stages: cardStages, progress: [{ playerId: "p1", playerName: "Karl", familyKey: "bingo-completion", currentProgress: 48, timeHundredths: null }] },
+      ], singles: [],
+    }} />);
+    expect(markup).toContain("2 Bronze-Linien");
+    expect(markup).toContain("48/100 verschiedene Felder");
+    expect(markup).toContain("52 Felder bis Bronze");
+  });
 });

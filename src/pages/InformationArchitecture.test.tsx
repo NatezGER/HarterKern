@@ -2,7 +2,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/hooks/useLeaderboard", () => ({ useLeaderboard: () => ({ entries: [] }) }));
+vi.mock("@/hooks/useLeaderboard", () => ({
+  useLeaderboard: () => ({ entries: [], mode: "best", setMode: vi.fn() }),
+}));
 vi.mock("@/hooks/useSeason", () => ({ useSeason: () => ({ season: 2026, isAllTime: false }) }));
 vi.mock("@/components/common/DataState", () => ({ DataState: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/leaderboard/Podium", () => ({ Podium: () => <div>Podium</div> }));
@@ -18,6 +20,8 @@ describe("information architecture pages", () => {
   it("shows the leaderboard directly without search or filter controls", () => {
     const markup = renderToStaticMarkup(<LeaderboardPage />);
     expect(markup).toContain("Saisonrangliste 2026");
+    expect(markup).toMatch(/aria-pressed="true"[^>]*>Bestzeit<\/button>/);
+    expect(markup).toMatch(/aria-pressed="false"[^>]*>Durchschnitt<\/button>/);
     expect(markup).toContain("Noch keine qualifizierten Zeiten in Saison 2026.");
     expect(markup).not.toContain("Spieler suchen");
     expect(markup).not.toContain("Filter vorbereiten");
