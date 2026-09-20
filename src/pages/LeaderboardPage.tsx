@@ -37,7 +37,7 @@ export function LeaderboardPage() {
           </section>
         </div>
       </DataState>
-      <AdvancedHallOfFame />
+      {isAllTime && <AdvancedHallOfFame />}
     </div>
   );
 }
