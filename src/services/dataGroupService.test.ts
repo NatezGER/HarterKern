@@ -48,14 +48,9 @@ describe("route data groups", () => {
   it("keeps expensive statistics and prestige models optional", () => {
     const stats = getRouteDataPlan("/stats");
     expect(stats.required).toEqual(["statistics", "historical"]);
-    expect(stats.optional).toEqual([
-      "group-milestones",
-      "most-wanted",
-      "league-time",
-      "badge-rarity",
-    ]);
+    expect(stats.optional).toEqual(["most-wanted", "badge-rarity"]);
     expect(getRouteDataPlan("/").optional).toEqual(["prestige-activities"]);
-    expect(dataGroupRequestCounts.statistics).toBe(6);
+    expect(dataGroupRequestCounts.statistics).toBe(5);
     expect(dataGroupRequestCounts["badge-rarity"]).toBe(1);
     expect(dataGroupRequestCounts.bingo).toBe(1);
   });

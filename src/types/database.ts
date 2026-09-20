@@ -519,6 +519,14 @@ export interface Database {
       season_trophies: PlayerTrophyView;
     };
     Functions: DataPlatformFunctions & {
+      get_unified_statistics_dashboard: {
+        Args: { p_season_year?: number | null; p_event_id?: string | null };
+        Returns: Json;
+      };
+      get_trophy_event_dashboard: {
+        Args: { p_event_id: string };
+        Returns: Json;
+      };
       get_two_in_sixty_hall_of_fame: {
         Args: { p_mode?: string };
         Returns: Array<{

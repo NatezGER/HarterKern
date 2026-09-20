@@ -75,15 +75,16 @@ describe("Trophy event special-stat service", () => {
     mocks.storageFrom.mockReturnValue({
       getPublicUrl: (path: string) => ({ data: { publicUrl: `https://cdn.test/${path}` } }),
     });
-    mocks.rpc.mockResolvedValue({ data: payload, error: null });
+    mocks.rpc.mockResolvedValue({ data: { special: payload, dashboard: { metrics: [], rivalryPairs: [] } }, error: null });
   });
 
   it("loads the complete event read model with exactly one request", async () => {
     const result = await getTrophyEventSpecialStats("event-a");
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
-    expect(mocks.rpc).toHaveBeenCalledWith("get_trophy_event_special_stats", {
+    expect(mocks.rpc).toHaveBeenCalledWith("get_trophy_event_dashboard", {
       p_event_id: "event-a",
     });
+    expect(result?.dashboard?.scope).toBe("special-event");
     expect(result?.mostWanted).toMatchObject({
       reached: 1,
       mostCommonEnding: 42,

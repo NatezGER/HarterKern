@@ -4,7 +4,7 @@ import { getPlayers } from "@/services/playerService";
 import {
   getBadgeRarity,
   getDailyWinners,
-  getGlobalStatistics, getEventLeadPlayerStatistics,
+  getGlobalStatistics,
   getGroupMilestones,
   getLeaderboard,
   getLeagueTimeStatistics,
@@ -69,7 +69,7 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
   "event-detail": 0,
   live: 8,
   dashboard: 12,
-  statistics: 6,
+  statistics: 5,
   "prestige-activities": 2,
   "group-milestones": 1,
   "badge-rarity": 1,
@@ -110,7 +110,7 @@ export function getRouteDataPlan(pathname: string): RouteDataPlan {
   if (pathname === "/stats") {
     return {
       required: ["statistics", "historical"],
-      optional: ["group-milestones", "most-wanted", "league-time", "badge-rarity"],
+      optional: ["most-wanted", "badge-rarity"],
     };
   }
   if (pathname === "/events/live" || pathname === "/settings") {
@@ -188,15 +188,14 @@ async function loadUncached(group: DataGroup, season: SeasonSelection): Promise<
       return { publicData: { players, leaderboard, dailyWinners, worldRecordHistory, seasonRecord, events } };
     }
     case "statistics": {
-      const [players, worldRecordHistory, statistics, eventLeadStatistics] =
+      const [players, worldRecordHistory, statistics] =
         await Promise.all([
           getPlayers(season),
           getWorldRecordHistory(season),
           getGlobalStatistics(season),
-          getEventLeadPlayerStatistics(season),
         ]);
       return {
-        publicData: { players, worldRecordHistory, statistics, eventLeadStatistics },
+        publicData: { players, worldRecordHistory, statistics },
       };
     }
     case "prestige-activities":

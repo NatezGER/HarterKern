@@ -1,4 +1,5 @@
 import type { MostWantedSnapshot } from "@/types";
+import type { StatisticDashboard } from "@/types/statDashboard";
 
 export interface TrophyEventSpecialMetrics {
   bingoLines: number;
@@ -17,6 +18,7 @@ export interface TrophyEventSpecialStats {
   eventName: string;
   mostWanted: MostWantedSnapshot;
   metrics: TrophyEventSpecialMetrics;
+  dashboard?: StatisticDashboard | null;
 }
 
 export interface TrophyEventMilestoneStage {

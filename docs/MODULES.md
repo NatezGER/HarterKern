@@ -194,6 +194,11 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Eventdetail:** Eventfotos werden nicht mehr geladen oder gerendert. Ein
   gebündelter Lead-Read ergänzt pro permanentem Spieler Führungssekunden und
   gebrochene Eventbestzeiten.
+- **Trophy-Statistiken:** Live und geschlossenes Trophy-Event nutzen denselben
+  `get_trophy_event_dashboard`-Read (eine Client-Anfrage pro Refresh). Er bündelt
+  die vorhandenen Most-Wanted-/BINGO-Daten mit event-gefilterten Top-Rankings;
+  normale Events fragen ihn nicht ab. Die Live-Rivalry-Watch ist rein lesend und
+  ändert die Closed-Event-View `rivalry_pair_events` nicht.
 - **Event-PB-Overlays:** Reguläre Eventteilnehmer können lokal eingeblendet
   werden. Nur strikt schnellere, gültige und freigegebene Eventzeiten bilden
   Punkte; DNF, AK, Gäste, gleiche und langsamere Zeiten werden verworfen.
@@ -218,10 +223,16 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Tests:** `npm test -- src/services/dataGroupService.test.ts`.
 - **Direkte Abhängigkeiten:** historische Versuche und optionale Statistikmodule.
 - **Nicht enthalten:** Spielerprofil und Live-Verwaltung.
-- **Route Load:** Der Statistik-Kern benötigt All-Time 5 und saisonal 6
+- **Route Load:** Der Statistik-Kern benötigt All-Time 4 und saisonal 5
   Requests; der saisonale Zusatzrequest liest nur die Bestzeit aus
   `season_qualified_official_times`. Events und die nicht
   mehr verwendete Recent-Attempt-Vorschau werden dort nicht geladen.
+- **Gemeinsames Dashboard:** Ein unabhängiger read-only RPC ergänzt die
+  scope-fähigen Top-Rankings nach dem Kern-Load. Die optionalen Gruppen
+  `group-milestones` und `league-time` werden auf `/stats` nicht mehr geladen;
+  Most Wanted und Badge-Seltenheit bleiben unabhängig. Der RPC verwendet
+  All-Time-/Saison-Read-Models und liefert pro Kennzahl Rangzeilen, nicht drei
+  fest verdrahtete Plätze. Ein Fehler betrifft nur den Statistikblock.
 - **Zeitquoten/Versuchsnummern:** Werden ohne weiteren Request aus den bereits
   für Most Wanted geladenen qualifizierten offiziellen Zeiten des gewählten
   Scopes abgeleitet. Historische Zeiten zählen für Quoten, aber nicht für die

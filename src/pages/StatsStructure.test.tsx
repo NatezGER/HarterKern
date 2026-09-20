@@ -4,10 +4,26 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/hooks/useSeason", () => ({ useSeason: () => ({ season: "all-time", isAllTime: true }) }));
 vi.mock("@/hooks/useEffectivePublicData", () => ({ useEffectivePublicData: () => ({ data: {
-  statistics: [], eventLeadStatistics: [], mostWanted: {},
+  statistics: [
+    { id: "fastest", label: "Schnellste Zeit", value: "2,99 s", change: "Weltrekord", icon: "timer" },
+    { id: "valid", label: "Gültige Eventversuche", value: "10", change: "Offiziell", icon: "timer" },
+    { id: "players", label: "Reguläre Spieler", value: "3", change: "Aktiv", icon: "users" },
+    { id: "events", label: "Events", value: "2", change: "Abende", icon: "trophy" },
+  ], eventLeadStatistics: [], mostWanted: {},
   leagueTimeStatistics: {}, badgeRarity: [],
 } }) }));
-vi.mock("@/hooks/useDataPlatform", () => ({ useDataPlatform: () => ({ snapshot: { liveState: { historicalAttempts: [] } } }) }));
+vi.mock("@/hooks/useDataPlatform", () => ({
+  useDataPlatform: () => ({ snapshot: { liveState: { historicalAttempts: [] } } }),
+  useDataGroup: () => ({ version: 1 }),
+}));
+vi.mock("@/hooks/useStatisticDashboard", () => ({ useStatisticDashboard: () => ({ data: {
+  metrics: [{
+    key: "fastest", title: "Schnellste Zeit", description: "Bestzeiten",
+    format: "time", direction: "asc", minimumSample: 1,
+    overallValue: 299, overallCount: null, overallTotal: null,
+    overallDetail: null, rankings: [],
+  }], rivalryPairs: [],
+}, loading: false, error: "" }) }));
 vi.mock("@/hooks/useManagementMode", () => ({ useManagementMode: () => ({ unlocked: false }) }));
 vi.mock("@/components/common/DataState", () => ({ DataState: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/common/OptionalDataState", () => ({ OptionalDataState: ({ children }: { children: ReactNode }) => children }));
@@ -25,16 +41,17 @@ vi.mock("@/components/history/HistoricalAttemptsDisclosure", () => ({ Historical
 import { StatsPage } from "@/pages/StatsPage";
 
 describe("StatsPage structure", () => {
-  it("puts Most Wanted before milestones and keeps events out of statistics", () => {
+  it("moves the six base cards into the shared block and removes league milestones", () => {
     const markup = renderToStaticMarkup(<StatsPage />);
-    expect(markup.indexOf("Most Wanted Matrix")).toBeLessThan(markup.indexOf("Liga-Meilensteine Inhalt"));
+    expect(markup.indexOf("Record Progression")).toBeLessThan(markup.indexOf("Most Wanted Matrix"));
     expect(markup).toContain("Versuchnummern-Chart");
-    expect(markup.indexOf("Versuchnummern-Chart")).toBeLessThan(markup.indexOf("Liga-Meilensteine Inhalt"));
-    expect(markup.indexOf("Ligastatistiken Inhalt")).toBeLessThan(markup.indexOf("Führungswerte kompakt"));
-    expect(markup).not.toContain("Event-Führungsstatistiken");
+    expect(markup.indexOf("Versuchnummern-Chart")).toBeLessThan(markup.indexOf("Ligastatistiken"));
+    expect(markup.indexOf("Record Progression")).toBeLessThan(markup.indexOf("Schnellste Zeit"));
+    expect(markup).toContain("Reguläre Spieler");
+    expect(markup).not.toContain("Gültige Eventversuche");
+    expect(markup).not.toContain("Liga-Meilensteine");
+    expect(markup).toContain("data-metric-dashboard");
     expect(markup).toContain("Badge-Seltenheit");
-    expect(markup).toContain("grid grid-cols-2 gap-3");
-    expect(markup).not.toContain("col-span-2");
     expect(markup).not.toContain("Vergangene Events");
     expect(markup).not.toContain("Eventarchiv");
   });
