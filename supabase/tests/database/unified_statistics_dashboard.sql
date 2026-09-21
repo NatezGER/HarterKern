@@ -6,18 +6,26 @@ select no_plan();
 alter table public.attempts disable trigger attempts_insert_refresh_badge_ledger;
 alter table public.historical_attempts disable trigger historical_attempts_refresh_badge_ledger;
 alter table public.event_participants disable trigger event_participants_refresh_badge_ledger;
+alter table public.badge_definitions disable trigger badge_definitions_refresh_badge_ledger;
 
 insert into public.players (id, display_name, is_ak) values
   ('96000000-0000-0000-0000-000000000001', 'Stats A', false),
   ('96000000-0000-0000-0000-000000000002', 'Stats B', false),
   ('96000000-0000-0000-0000-000000000003', 'Stats C', false),
   ('96000000-0000-0000-0000-000000000004', 'Stats D', false),
-  ('96000000-0000-0000-0000-000000000005', 'Stats AK', true);
+  ('96000000-0000-0000-0000-000000000005', 'Stats AK', true),
+  ('96000000-0000-0000-0000-000000000006', 'Stats Split Window', false),
+  ('96000000-0000-0000-0000-000000000007', 'Stats Invalid First', false),
+  ('96000000-0000-0000-0000-000000000008', 'Stats One Shot', false);
 
 insert into public.events (id, name, start_date, started_at, ends_at, status, closed_at, awards_trophies) values
   ('96000000-0000-0000-0000-000000000100', 'Old', '2025-09-01', '2025-09-01 09:00+00', '2025-09-01 20:00+00', 'closed', '2025-09-01 20:00+00', false),
   ('96000000-0000-0000-0000-000000000101', 'Trophy Live', '2026-09-01', '2026-09-01 09:00+00', '2026-09-01 20:00+00', 'active', null, true),
-  ('96000000-0000-0000-0000-000000000102', 'Normal', '2026-09-02', '2026-09-02 09:00+00', '2026-09-02 20:00+00', 'closed', '2026-09-02 20:00+00', false);
+  ('96000000-0000-0000-0000-000000000102', 'Normal', '2026-09-02', '2026-09-02 09:00+00', '2026-09-02 20:00+00', 'closed', '2026-09-02 20:00+00', false),
+  ('96000000-0000-0000-0000-000000000103', 'Split One', '2026-09-03', '2026-09-03 09:00+00', '2026-09-03 20:00+00', 'closed', '2026-09-03 20:00+00', false),
+  ('96000000-0000-0000-0000-000000000104', 'Split Two', '2026-09-04', '2026-09-04 09:00+00', '2026-09-04 20:00+00', 'closed', '2026-09-04 20:00+00', false),
+  ('96000000-0000-0000-0000-000000000105', 'Invalid First', '2026-09-05', '2026-09-05 09:00+00', '2026-09-05 20:00+00', 'closed', '2026-09-05 20:00+00', false),
+  ('96000000-0000-0000-0000-000000000106', 'One Shot Trophy', '2026-09-06', '2026-09-06 09:00+00', '2026-09-06 20:00+00', 'closed', '2026-09-06 20:00+00', true);
 
 insert into public.event_participants (event_id, player_id)
 select '96000000-0000-0000-0000-000000000101', id from public.players
@@ -25,6 +33,16 @@ where id in ('96000000-0000-0000-0000-000000000001',
   '96000000-0000-0000-0000-000000000002',
   '96000000-0000-0000-0000-000000000003',
   '96000000-0000-0000-0000-000000000004');
+
+insert into public.event_participants (event_id, player_id) values
+  ('96000000-0000-0000-0000-000000000103', '96000000-0000-0000-0000-000000000006'),
+  ('96000000-0000-0000-0000-000000000104', '96000000-0000-0000-0000-000000000006'),
+  ('96000000-0000-0000-0000-000000000105', '96000000-0000-0000-0000-000000000007'),
+  ('96000000-0000-0000-0000-000000000106', '96000000-0000-0000-0000-000000000008');
+
+insert into public.event_guests (id, event_id, display_name) values
+  ('96000000-0000-0000-0000-000000000009',
+   '96000000-0000-0000-0000-000000000101', 'Stats Guest');
 
 -- Alternating strictly faster leaders give A/B direct takeovers while exact
 -- threshold values, a DNF and a sub-3 interruption stay in the same event.
@@ -55,6 +73,44 @@ insert into public.attempts (
   'approved', 100, false, false, '2026-09-02 10:00+00', 'admin'
 );
 
+-- Six valid attempts split across two events must never form one rolling
+-- five-attempt window. A separate five-attempt event starts with a DNF so its
+-- first valid time cannot be promoted to attempt one.
+insert into public.attempts (
+  player_id, event_id, status, time_hundredths, is_dnf, is_ak, submitted_at, source
+)
+select '96000000-0000-0000-0000-000000000006', v.event_id, 'approved',
+  v.time_hundredths, false, false, v.submitted_at, 'admin'
+from (values
+  ('96000000-0000-0000-0000-000000000103'::uuid, 710, '2026-09-03 10:00+00'::timestamptz),
+  ('96000000-0000-0000-0000-000000000103'::uuid, 720, '2026-09-03 10:01+00'::timestamptz),
+  ('96000000-0000-0000-0000-000000000103'::uuid, 730, '2026-09-03 10:02+00'::timestamptz),
+  ('96000000-0000-0000-0000-000000000104'::uuid, 740, '2026-09-04 10:00+00'::timestamptz),
+  ('96000000-0000-0000-0000-000000000104'::uuid, 750, '2026-09-04 10:01+00'::timestamptz),
+  ('96000000-0000-0000-0000-000000000104'::uuid, 760, '2026-09-04 10:02+00'::timestamptz)
+) v(event_id, time_hundredths, submitted_at);
+
+insert into public.attempts (
+  player_id, event_id, status, time_hundredths, is_dnf, is_ak, submitted_at, source
+) values
+  ('96000000-0000-0000-0000-000000000007', '96000000-0000-0000-0000-000000000105', 'approved', null, true, false, '2026-09-05 10:00+00', 'admin'),
+  ('96000000-0000-0000-0000-000000000007', '96000000-0000-0000-0000-000000000105', 'approved', 810, false, false, '2026-09-05 10:01+00', 'admin'),
+  ('96000000-0000-0000-0000-000000000007', '96000000-0000-0000-0000-000000000105', 'approved', 800, false, false, '2026-09-05 10:02+00', 'admin'),
+  ('96000000-0000-0000-0000-000000000007', '96000000-0000-0000-0000-000000000105', 'approved', 790, false, false, '2026-09-05 10:03+00', 'admin'),
+  ('96000000-0000-0000-0000-000000000007', '96000000-0000-0000-0000-000000000105', 'approved', 780, false, false, '2026-09-05 10:04+00', 'admin'),
+  ('96000000-0000-0000-0000-000000000008', '96000000-0000-0000-0000-000000000106', 'approved', 600, false, false, '2026-09-06 10:00+00', 'admin'),
+  ('96000000-0000-0000-0000-000000000008', '96000000-0000-0000-0000-000000000106', 'approved', 650, false, false, '2026-09-06 10:01+00', 'admin'),
+  ('96000000-0000-0000-0000-000000000008', '96000000-0000-0000-0000-000000000106', 'approved', 700, false, false, '2026-09-06 10:02+00', 'admin');
+
+insert into public.attempts (
+  player_id, guest_id, event_id, status, time_hundredths,
+  is_dnf, is_ak, submitted_at, source
+) values (
+  null, '96000000-0000-0000-0000-000000000009',
+  '96000000-0000-0000-0000-000000000101', 'approved', 340,
+  false, false, '2026-09-01 11:02+00', 'admin'
+);
+
 insert into public.attempts (
   player_id, event_id, status, time_hundredths, is_dnf, is_ak,
   submitted_at, source, deleted_at
@@ -70,8 +126,25 @@ insert into public.attempts (
 insert into public.historical_attempts (
   player_id, display_name, attempt_date, time_hundredths, sort_order
 ) values (
-  '96000000-0000-0000-0000-000000000001', 'Stats A', '2025-08-01', 90, 1
+  '96000000-0000-0000-0000-000000000001', 'Stats A', '1900-08-01', 90, 1
 );
+
+insert into public.player_badge_award_ledger (
+  award_key, player_id, badge_key, source_type, source_awarded_at, awarded_at
+) values
+  ('test-stats-a-attempts-bronze', '96000000-0000-0000-0000-000000000001',
+    'valid-attempts-bronze', 'test', '2026-09-01 12:00+00', '2026-09-01 12:00+00'),
+  ('test-stats-a-attempts-silver', '96000000-0000-0000-0000-000000000001',
+    'valid-attempts-silver', 'test', '2026-09-01 12:01+00', '2026-09-01 12:01+00'),
+  ('test-stats-a-attempts-inactive-gold', '96000000-0000-0000-0000-000000000001',
+    'valid-attempts-gold', 'test', '2026-09-01 12:02+00', '2026-09-01 12:02+00'),
+  ('test-stats-a-positive', '96000000-0000-0000-0000-000000000001',
+    'time-stopper', 'test', '2026-09-01 12:03+00', '2026-09-01 12:03+00'),
+  ('test-stats-a-consolation', '96000000-0000-0000-0000-000000000001',
+    'false-starter', 'test', '2026-09-01 12:04+00', '2026-09-01 12:04+00');
+
+update public.badge_definitions set is_active = false
+where badge_key = 'valid-attempts-gold';
 
 select is((select (m->>'overallValue')::numeric
   from jsonb_array_elements(public.get_unified_statistics_dashboard(null,
@@ -155,6 +228,22 @@ select is((select string_agg((r->>'rank')::text, ',' order by r->>'playerId')
     '96000000-0000-0000-0000-000000000003'
   )), '3,1,1',
   'equal 100-percent players share rank one; next player has competition rank three');
+select is((select string_agg(r->>'playerId', ',' order by ranking_position)
+  from jsonb_array_elements(public.get_unified_statistics_dashboard(null,
+    '96000000-0000-0000-0000-000000000101')->'metrics') m,
+    jsonb_array_elements(m->'rankings') with ordinality ranked(r, ranking_position)
+  where m->>'key' = 'sub5' and r->>'playerId' in (
+    '96000000-0000-0000-0000-000000000002',
+    '96000000-0000-0000-0000-000000000003'
+  )), '96000000-0000-0000-0000-000000000002,96000000-0000-0000-0000-000000000003',
+  'larger sample only sorts equal-rate players without changing their shared rank');
+select ok(not exists (
+  select 1 from jsonb_array_elements(public.get_unified_statistics_dashboard(null,
+    '96000000-0000-0000-0000-000000000101')->'metrics') m,
+    jsonb_array_elements(m->'rankings') r
+  where m->>'key' = 'sub5' and r->>'playerId' =
+    '96000000-0000-0000-0000-000000000004'
+), 'threshold rankings omit players with zero hits');
 select is((select (r->>'count')::numeric
   from jsonb_array_elements(public.get_unified_statistics_dashboard(null,
     '96000000-0000-0000-0000-000000000101')->'metrics') m,
@@ -197,6 +286,173 @@ select ok(not exists (select 1 from public.rivalry_pair_events where event_id =
 select ok(public.get_trophy_event_dashboard(
   '96000000-0000-0000-0000-000000000101') ?& array['special', 'dashboard'],
   'Trophy event returns existing special stats and ranked stats in one response');
+
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'median'),
+  350::numeric, 'median averages the two middle values for an even sample');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000003'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'median'),
+  410::numeric, 'median returns the middle value for an odd sample');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'fastest-five'),
+  250::numeric, 'fastest-five averages exactly the five fastest valid times');
+select ok(not exists (select 1 from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000007'::uuid], null,
+  '96000000-0000-0000-0000-000000000105') where metric_key = 'fastest-five'),
+  'fewer than five valid times do not qualify for fastest-five');
+select ok(not exists (select 1 from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000006'::uuid], 2026, null)
+  where metric_key = 'best-five-window'),
+  'rolling five-attempt windows never cross an event boundary');
+select ok(not exists (select 1 from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000007'::uuid], null,
+  '96000000-0000-0000-0000-000000000105') where metric_key = 'best-five-window'),
+  'a DNF invalidates its five-attempt rolling window');
+select ok(not exists (select 1 from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000007'::uuid], null,
+  '96000000-0000-0000-0000-000000000105') where metric_key = 'consistency'),
+  'consistency requires five valid times');
+select ok(exists (select 1 from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'consistency'),
+  'consistency is emitted once the minimum valid-time sample is met');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'fastest-first'),
+  500::numeric, 'fastest-first uses the actual first event attempt');
+select ok(not exists (select 1 from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000007'::uuid], null,
+  '96000000-0000-0000-0000-000000000105') where metric_key = 'fastest-first'),
+  'an invalid attempt one is not replaced by the first later valid attempt');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'fast-starter'),
+  301::numeric, 'fast-starter measures first valid attempt against final event PB');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'late-bloomer'),
+  100::numeric, 'late-bloomer recognizes a final PB first reached after event midpoint');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'clutch'),
+  100::numeric, 'clutch recognizes a strict PB improvement in the final two attempts');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000008'::uuid], null,
+  '96000000-0000-0000-0000-000000000106') where metric_key = 'one-shot'),
+  100::numeric, 'one-shot recognizes an attempt-one time that remains the event PB');
+select is((select hit_count from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'near-repeat'),
+  2::numeric, 'near-repeat counts adjacent valid pairs within five hundredths');
+select is((select sample_count from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'near-repeat'),
+  9::numeric, 'near-repeat excludes the pair ending in DNF from its denominator');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'bingo-fields'),
+  6::numeric, 'BINGO includes ending 00 and 99 but deduplicates repeated endings');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null, null)
+  where metric_key = 'bingo-fields'), 7::numeric,
+  'all-time BINGO includes the additional historical ending');
+select is((select count(distinct player_id) from public.qualified_official_times
+  where player_id is not null and not is_guest and mod(time_hundredths, 100) = 40),
+  2::bigint, 'Rare Hunter popularity excludes the matching guest and AK attempt');
+select is((select count(distinct player_id) from public.qualified_official_times
+  where player_id is not null and not is_guest and mod(time_hundredths, 100) = 50),
+  4::bigint, 'an ending held by more than three regular players is common');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null, null)
+  where metric_key = 'rare-hunter'), 4::numeric,
+  'Rare Hunter counts endings held by at most three regular players, excludes more common endings, guests and AK');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null, null)
+  where metric_key = 'badge-total'), 3::numeric,
+  'badge total deduplicates the tier family and adds each active special variant');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null, null)
+  where metric_key = 'badge-silver'), 1::numeric,
+  'the highest family tier still contributes to the cumulative silver ladder');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null, null)
+  where metric_key = 'badge-gold'), 0::numeric,
+  'an inactive badge definition does not contribute to badge rankings');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null, null)
+  where metric_key = 'badge-positive'), 1::numeric,
+  'active positive specials are counted separately');
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null, null)
+  where metric_key = 'badge-consolation'), 1::numeric,
+  'active consolation badges are counted separately');
+select is((select improvement_hundredths from public.world_record_history
+  where player_id = '96000000-0000-0000-0000-000000000001'
+    and time_hundredths = 90), null::integer,
+  'the initial all-time world record has no improvement value');
+select ok(not exists (select 1 from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null, null)
+  where metric_key = 'wr-improvements'),
+  'the initial all-time world record does not count as a WR improvement');
+select ok(not exists (select 1 from public.season_world_record_history
+  where season_year = 2026 and player_id = '96000000-0000-0000-0000-000000000002'
+    and time_hundredths = 300),
+  'a world-record tie is not recorded as an improvement');
+select ok(coalesce((select max(value) from public.get_advanced_statistic_player_metrics(
+  null, 2026, null) where metric_key = 'wr-reign'), 0) <= 122,
+  'season world-record reign is capped no later than the season end');
+select ok(not exists (select 1 from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid,
+    '96000000-0000-0000-0000-000000000002'::uuid], null, null)
+  where metric_key = 'chaos-magnet'),
+  'advanced rivalry metrics remain closed-event-only and ignore the live event');
+select is((select string_agg(player->>'playerId', ',' order by position)
+  from jsonb_array_elements(public.get_player_compare_metric_bundle(array[
+    '96000000-0000-0000-0000-000000000002'::uuid,
+    '96000000-0000-0000-0000-000000000001'::uuid
+  ], null)->'players') with ordinality requested(player, position)),
+  '96000000-0000-0000-0000-000000000002,96000000-0000-0000-0000-000000000001',
+  'compare preserves deterministic requested-player order without UUID aggregates');
+select is((select jsonb_array_length(public.get_player_compare_metric_bundle(array[
+    '96000000-0000-0000-0000-000000000001'::uuid,
+    '96000000-0000-0000-0000-000000000001'::uuid,
+    '96000000-0000-0000-0000-000000000002'::uuid
+  ], null)->'players')), 2,
+  'compare deduplicates requested UUIDs and handles exactly two distinct players');
+select is(public.get_player_compare_metric_bundle(array[
+    '96000000-0000-0000-0000-000000000001'::uuid
+  ], null)->'pair', '{}'::jsonb,
+  'compare does not synthesize a pair when fewer than two distinct players are requested');
+select is(jsonb_array_length(public.get_player_compare_metric_bundle(
+  array[]::uuid[], null)->'players'), 0,
+  'an empty compare request remains empty instead of expanding to global metrics');
+select is(public.get_player_compare_metric_bundle(
+  array[null::uuid], null), jsonb_build_object('players', '[]'::jsonb, 'pair', '{}'::jsonb),
+  'an all-NULL compare request returns the typed empty bundle before metric aggregation');
+select is((select string_agg(player->>'playerId', ',' order by position)
+  from jsonb_array_elements(public.get_player_compare_metric_bundle(array[
+    '96000000-0000-0000-0000-000000000001'::uuid,
+    null::uuid,
+    '96000000-0000-0000-0000-000000000002'::uuid
+  ], null)->'players') with ordinality requested(player, position)),
+  '96000000-0000-0000-0000-000000000001,96000000-0000-0000-0000-000000000002',
+  'NULL elements in the SQL UUID array are ignored without changing pair order');
+select ok(not exists (
+  select 1 from jsonb_array_elements(public.get_unified_statistics_dashboard(null,
+    '96000000-0000-0000-0000-000000000101')->'metrics') metric
+  where metric->>'key' = 'pb-jump'
+), 'Trophy dashboards exclude the career-only PB jump metric server-side');
+select ok(exists (
+  select 1 from jsonb_array_elements(public.get_unified_statistics_dashboard(null, null)->'metrics') metric
+  where metric->>'key' = 'pb-jump'
+), 'all-time dashboards retain the PB jump metric');
+select ok(exists (
+  select 1 from jsonb_array_elements(public.get_unified_statistics_dashboard(2026, null)->'metrics') metric
+  where metric->>'key' = 'pb-jump'
+), 'season dashboards retain the PB jump metric');
 
 select * from finish();
 rollback;

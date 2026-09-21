@@ -49,6 +49,7 @@ const emptyHeadToHead = {
   playerAWins: 0, playerBWins: 0, ties: 0, totalDuels: 0, events: [],
   closestDuel: null, biggestWin: null, currentStreak: null, longestStreak: null,
 };
+const emptyMetricBundle = { data: null, loading: false, error: "" };
 
 describe("PlayerComparePage", () => {
   beforeEach(() => {
@@ -58,6 +59,7 @@ describe("PlayerComparePage", () => {
       core: { data: { playerA: coreA, playerB: coreB }, loading: false, error: "" },
       speed: { data: { playerA: performance(90, 250), playerB: performance(80, 290) }, loading: false, error: "" },
       headToHead: { data: emptyHeadToHead, loading: false, error: "" },
+      metricBundle: emptyMetricBundle,
     };
     state.deep = {
       sequence: { data: sequence(), loading: false, error: "" },
@@ -103,6 +105,7 @@ describe("PlayerComparePage", () => {
       core: { data: { playerA: { ...coreA, statistics: { ...coreA.statistics, rank: 1, personalBestHundredths: 280 } }, playerB: { ...coreB, statistics: { ...coreB.statistics, rank: null, personalBestHundredths: null, averageHundredths: null, validAttempts: 0, dnfCount: 0 } } }, loading: false, error: "" },
       speed: { data: { playerA: performance(100, 280), playerB: performance(0, null, 0) }, loading: false, error: "" },
       headToHead: { data: emptyHeadToHead, loading: false, error: "" },
+      metricBundle: emptyMetricBundle,
     };
     const markup = renderCompare("/compare?playerA=a&playerB=b");
     expect(markup).toContain("Saison 2026");
@@ -116,6 +119,7 @@ describe("PlayerComparePage", () => {
       core: { data: { playerA: coreA, playerB: coreB }, loading: false, error: "" },
       speed: { data: null, loading: false, error: "Die Speed-Werte konnten nicht geladen werden." },
       headToHead: { data: emptyHeadToHead, loading: false, error: "" },
+      metricBundle: emptyMetricBundle,
     };
     const markup = renderCompare("/compare?playerA=a&playerB=b");
     expect(markup).toContain("Hauptstatistiken");
@@ -141,6 +145,7 @@ describe("PlayerComparePage", () => {
         currentStreak: { winners: ["a"], length: 1 },
         longestStreak: { winners: ["a"], length: 4 },
       }, loading: false, error: "" },
+      metricBundle: emptyMetricBundle,
     };
     const markup = renderCompare("/compare?playerA=a&playerB=b");
     expect(markup).toContain("Head to Head");
@@ -159,6 +164,7 @@ describe("PlayerComparePage", () => {
       core: { data: { playerA: coreA, playerB: coreB }, loading: false, error: "" },
       speed: { data: null, loading: false, error: "" },
       headToHead: { data: null, loading: false, error: "Head to Head konnte nicht geladen werden." },
+      metricBundle: emptyMetricBundle,
     };
     const markup = renderCompare("/compare?playerA=a&playerB=b");
     expect(markup).toContain("Hauptstatistiken");

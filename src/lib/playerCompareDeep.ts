@@ -76,13 +76,16 @@ export function calculateLongestAttemptStreak(
 ) {
   let longest = 0;
   let running = 0;
+  let previousEventId: string | null = null;
   for (const attempt of attempts) {
+    if (previousEventId !== null && attempt.eventId !== previousEventId) running = 0;
     if (isValidAttempt(attempt) && qualifies(attempt.timeHundredths!)) {
       running += 1;
       longest = Math.max(longest, running);
     } else {
       running = 0;
     }
+    previousEventId = attempt.eventId;
   }
   return longest;
 }

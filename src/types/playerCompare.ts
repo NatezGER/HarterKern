@@ -1,4 +1,70 @@
 import type { ProgressionPoint } from "@/types/historyProfiles";
+import type { CompareBlockKey } from "@/types/statDashboard";
+
+export interface CompareBundleMetric {
+  key: string;
+  value: number | null;
+  count: number | null;
+  total: number | null;
+  detail: string | null;
+  qualified: boolean;
+}
+
+export interface CompareBundlePlayer {
+  playerId: string;
+  metrics: CompareBundleMetric[];
+}
+
+export interface ComparePairContext {
+  commonEvents: number;
+  decidedEvents: number;
+  playerAWins: number;
+  playerBWins: number;
+  ties: number;
+  directTakeovers: number;
+  playerATakeovers: number;
+  playerBTakeovers: number;
+  rivalryEvents: number;
+  rivalrySpanDays: number | null;
+  intensityPercent: number | null;
+  balancePercent: number | null;
+  playerANemesisLosses: number;
+  playerBNemesisLosses: number;
+  playerAFavoriteWins: number;
+  playerBFavoriteWins: number;
+}
+
+export interface PlayerCompareMetricBundle {
+  players: CompareBundlePlayer[];
+  pair: ComparePairContext;
+}
+
+export interface CompareBlockMetricResult {
+  key: string;
+  label: string;
+  left: CompareBundleMetric | null;
+  right: CompareBundleMetric | null;
+  scoreable: boolean;
+  comparable: boolean;
+  winner: "a" | "b" | "tie" | null;
+}
+
+export interface CompareBlockResult {
+  key: CompareBlockKey;
+  title: string;
+  metrics: CompareBlockMetricResult[];
+  playerAPoints: number;
+  playerBPoints: number;
+  winner: "a" | "b" | "tie" | null;
+  comparable: boolean;
+}
+
+export interface CompareBlockScore {
+  playerA: number;
+  playerB: number;
+  comparableBlocks: number;
+  totalBlocks: number;
+}
 
 export interface PlayerCompareTimelineAttempt {
   id: string;

@@ -47,6 +47,17 @@ describe("final player compare statistics", () => {
     expect(result.fastestFirstAttemptHundredths).toBe(290);
   });
 
+  it("resets attempt streaks at event boundaries", () => {
+    const result = calculatePlayerSequenceStatistics([
+      attempt("e1", "a", 1, 290, "00:01"),
+      attempt("e1", "a", 2, 280, "00:02"),
+      attempt("e2", "a", 1, 270, "00:03"),
+      attempt("e2", "a", 2, 260, "00:04"),
+    ]);
+    expect(result.longestSub3Streak).toBe(2);
+    expect(result.longestNoDnfStreak).toBe(2);
+  });
+
   it("builds all attempt-number averages without inventing missing valid values", () => {
     const result = calculatePlayerSequenceStatistics([
       attempt("e1", "a", 1, 300, "00:01"),

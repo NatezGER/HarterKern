@@ -14,7 +14,9 @@ import { useSeason } from "@/hooks/useSeason";
 import { useState } from "react";
 import { HistoricalAttemptsDisclosure } from "@/components/history/HistoricalAttemptsDisclosure";
 import { LeagueAttemptNumberChart } from "@/components/stats/OfficialTimePerformance";
-import { MetricDashboardGrid } from "@/components/stats/MetricTopThreeCard";
+import { MetricDashboardGrid } from "@/components/stats/MetricRankingCard";
+import { metricGroupLabels } from "@/constants/statMetricRegistry";
+import type { MetricGroup } from "@/types/statDashboard";
 import { RivalryPairList } from "@/components/stats/RivalryPairList";
 import { useStatisticDashboard } from "@/hooks/useStatisticDashboard";
 import { useManagementMode } from "@/hooks/useManagementMode";
@@ -28,6 +30,7 @@ export function StatsPage() {
   const dashboard = useStatisticDashboard(season, statisticsVersion);
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const { unlocked } = useManagementMode();
+  const dashboardData = dashboard.data;
   return (
     <div className="space-y-10">
       <PageHeader eyebrow={isAllTime ? "League Intelligence" : `League Intelligence · Saison ${season}`} title="Statistiken" description={isAllTime ? appMeta.statsDescription : `Eventbasierte Ligawerte der Saison ${season}.`} action={<SeasonContextBadge />} />
@@ -49,9 +52,16 @@ export function StatsPage() {
             {data.statistics.filter(({ id }) => id === "players" || id === "events")
               .map((statistic) => <StatCard key={statistic.id} statistic={statistic} />)}
           </div>
-          {dashboard.loading && <p className="panel p-5 text-sm text-white/45" role="status">Top-3-Statistiken werden geladen …</p>}
-          {dashboard.error && <p className="panel p-5 text-sm text-amber-200/80" role="alert">Top-3-Statistiken konnten nicht geladen werden.</p>}
-          {dashboard.data && <div className="space-y-3"><MetricDashboardGrid metrics={dashboard.data.metrics} /><RivalryPairList pairs={dashboard.data.rivalryPairs} live={false} /></div>}
+          {dashboard.loading && <p className="panel p-5 text-sm text-white/45" role="status">Ranking-Statistiken werden geladen …</p>}
+          {dashboard.error && <p className="panel p-5 text-sm text-amber-200/80" role="alert">Ranking-Statistiken konnten nicht geladen werden.</p>}
+          {dashboardData && <div className="space-y-8">{(["performance", "consistency", "volume", "event", "bingo", "rivalry", "achievements", "records"] as MetricGroup[]).map((group) => {
+            const metrics = dashboardData.metrics.filter((metric) => metric.group === group);
+            if (metrics.length === 0) return null;
+            return <section key={group} aria-labelledby={`metric-group-${group}`}>
+              <h3 id={`metric-group-${group}`} className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-gold-300/75">{metricGroupLabels[group]}</h3>
+              <MetricDashboardGrid metrics={metrics} />
+            </section>;
+          })}<RivalryPairList pairs={dashboardData.rivalryPairs} live={false} /></div>}
         </section>
         <section className="mt-12">
           <SectionHeading eyebrow={isAllTime ? "Prestige" : "All-Time · Prestige"} title="Badge-Seltenheit" />

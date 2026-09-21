@@ -19,7 +19,7 @@ vi.mock("@/hooks/useDataPlatform", () => ({
 vi.mock("@/hooks/useStatisticDashboard", () => ({ useStatisticDashboard: () => ({ data: {
   metrics: [{
     key: "fastest", title: "Schnellste Zeit", description: "Bestzeiten",
-    format: "time", direction: "asc", minimumSample: 1,
+    format: "time", direction: "asc", minimumSample: 1, group: "performance",
     overallValue: 299, overallCount: null, overallTotal: null,
     overallDetail: null, rankings: [],
   }], rivalryPairs: [],

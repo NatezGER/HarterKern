@@ -14,6 +14,7 @@ import {
 } from "@/components/compare/DeepCompareSections";
 import { StickyCompareIdentity } from "@/components/compare/StickyCompareIdentity";
 import { HeadToHeadSection } from "@/components/compare/HeadToHeadSection";
+import { CompareThemeBlocks } from "@/components/compare/CompareThemeBlocks";
 import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { getRosterPlayers } from "@/data/selectors";
@@ -57,7 +58,7 @@ export function PlayerComparePage() {
   const playerB = rawPlayerBId !== rawPlayerAId
     ? players.find(({ id }) => id === rawPlayerBId) ?? null
     : null;
-  const { core, speed, headToHead } = usePlayerCompare(playerA?.id ?? null, playerB?.id ?? null);
+  const { core, speed, headToHead, metricBundle } = usePlayerCompare(playerA?.id ?? null, playerB?.id ?? null);
   const deep = usePlayerDeepCompare(
     playerA && playerB ? playerA.id : null,
     playerA && playerB ? playerB.id : null,
@@ -209,6 +210,10 @@ export function PlayerComparePage() {
         <div className="panel grid min-h-40 place-items-center"><LoaderCircle className="context-accent-text size-6 animate-spin" aria-label="Vergleich wird geladen" /></div>
       )}
       {core.error && <div className="panel p-5 text-center text-red-200">{core.error}</div>}
+
+      {playerA && playerB && metricBundle.loading && <div className="panel grid min-h-28 place-items-center"><LoaderCircle className="context-accent-text size-5 animate-spin" aria-label="Themenblöcke werden geladen" /></div>}
+      {playerA && playerB && metricBundle.error && <div className="panel p-5 text-center text-sm text-amber-100/70">{metricBundle.error}</div>}
+      {playerA && playerB && metricBundle.data && <CompareThemeBlocks playerA={playerA} playerB={playerB} bundle={metricBundle.data} />}
 
       {playerA && playerB && (
         <HeadToHeadSection

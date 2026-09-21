@@ -95,7 +95,11 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Hooks/Services:** `usePlayerCompare`, `playerCompareService` sowie der davon
   unabhängige Deep-Block `usePlayerDeepCompare` / `playerDeepCompareService`;
   vorhandene gecachte Sections aus `playerProfileService`, Players-Datengruppe.
-- **Finale Reihenfolge:** Hero/Selektoren, Head to Head/Rivalry, gemeinsame
+  `get_player_compare_metric_bundle` liefert die pair-scoped Metric-Rohwerte
+  für die sieben Themenblöcke in einem Request; `playerCompareBlocks` wertet
+  ausschließlich beidseitig qualifizierte, als scoreable markierte Metrics.
+- **Finale Reihenfolge:** Hero/Selektoren, transparenter Gesamt-Blockscore und
+  aufklappbare Themenblöcke, Head to Head/Rivalry, gemeinsame
   PB-Entwicklung, Nach Versuchsnummer, Hauptstatistiken, Speed & Peak,
   Konstanz & Serien, Event- & Leistungswerte, Most Wanted und die finale
   Kategorienbilanz „Wer liegt vorne?“.
@@ -112,6 +116,7 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   am Eventdatum. Er wird ausschließlich für Reihenfolgenwerte verwendet:
   längste Unter-3-Serie, längste DNF-freie Serie, schnellster erster Versuch,
   Versuch-Nummer-Mittel sowie direkte Rivalitätszeit und Führungswechsel.
+  Unter-3-Serien werden dabei an jeder Eventgrenze zurückgesetzt.
 - **PB-Progression:** Je Spieler genau ein bestehender persönlicher Read:
   All-Time `player_pb_history`, saisonal `get_player_season_pb_history`. Es
   werden keine globalen WR-Verläufe für den Vergleich geladen.
@@ -228,11 +233,17 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   `season_qualified_official_times`. Events und die nicht
   mehr verwendete Recent-Attempt-Vorschau werden dort nicht geladen.
 - **Gemeinsames Dashboard:** Ein unabhängiger read-only RPC ergänzt die
-  scope-fähigen Top-Rankings nach dem Kern-Load. Die optionalen Gruppen
+  scope-fähigen Top-5-Rankings nach dem Kern-Load. Migration 057 komponiert den
+  produktiven v56-Stand mit `get_advanced_statistic_player_metrics`; dieselbe
+  serverseitige Rohwertquelle versorgt den pair-scoped Compare-Bundle-RPC.
+  Präsentationsmetadaten und Score-/Kontextzuordnung liegen zentral in
+  `statMetricRegistry`, die Berechnung bleibt in PostgreSQL. Die optionalen Gruppen
   `group-milestones` und `league-time` werden auf `/stats` nicht mehr geladen;
   Most Wanted und Badge-Seltenheit bleiben unabhängig. Der RPC verwendet
-  All-Time-/Saison-Read-Models und liefert pro Kennzahl Rangzeilen, nicht drei
-  fest verdrahtete Plätze. Ein Fehler betrifft nur den Statistikblock.
+  All-Time-/Saison-/Trophy-Read-Models und liefert bis zu zehn Rangzeilen; die
+  UI zeigt standardmäßig fünf samt Avatar. Performance, Konstanz, Volume,
+  Event, BINGO, Rivalry, Achievements sowie Rekorde sind getrennte Bereiche.
+  Ein Fehler betrifft nur den Statistikblock.
 - **Zeitquoten/Versuchsnummern:** Werden ohne weiteren Request aus den bereits
   für Most Wanted geladenen qualifizierten offiziellen Zeiten des gewählten
   Scopes abgeleitet. Historische Zeiten zählen für Quoten, aber nicht für die
