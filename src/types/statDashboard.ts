@@ -1,5 +1,9 @@
 export type StatisticScope = "all-time" | "season" | "special-event";
-export type MetricFormat = "time" | "count" | "percent" | "duration";
+export type MetricFormat = "time" | "count" | "percent" | "duration" | "days";
+export type MetricGroup = "performance" | "consistency" | "volume" | "event" |
+  "bingo" | "rivalry" | "achievements" | "records";
+export type CompareBlockKey = "speed" | "consistency" | "volume" | "clutch" |
+  "rivalry" | "bingo" | "achievements";
 
 export interface MetricRankEntry {
   rank: number;
@@ -20,6 +24,8 @@ export interface RankedMetric {
   overallFormat?: MetricFormat;
   direction: "asc" | "desc";
   minimumSample: number;
+  group: MetricGroup;
+  compact?: boolean;
   overallValue: number | null;
   overallCount: number | null;
   overallTotal: number | null;
@@ -35,6 +41,10 @@ export interface RivalryPairSummary {
   rivalryEvents: number;
   directTakeovers: number;
   levelReached: boolean;
+  commonEvents?: number;
+  intensityPercent?: number | null;
+  spanDays?: number | null;
+  balancePercent?: number | null;
 }
 
 export interface StatisticDashboard {

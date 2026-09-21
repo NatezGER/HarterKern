@@ -23,7 +23,7 @@ const data: TrophyData = {
   dashboard: {
     scope: "special-event", metrics: [{
       key: "fastest", title: "Schnellste Zeit", description: "Event",
-      format: "time", direction: "asc", minimumSample: 1,
+      format: "time", direction: "asc", minimumSample: 1, group: "performance",
       overallValue: 299, overallCount: null, overallTotal: null,
       overallDetail: null, rankings: [],
     }],
@@ -36,7 +36,7 @@ const data: TrophyData = {
 };
 
 describe("Trophy Event shared statistics", () => {
-  it("shows Top 3 and provisional rivalry watch alongside existing special data while live", () => {
+  it("shows event rankings and provisional rivalry watch alongside existing special data while live", () => {
     const markup = renderToStaticMarkup(<TrophyEventSpecialStats data={data} loading={false} error="" live />);
     expect(markup).toContain("data-metric-dashboard");
     expect(markup).toContain("Rivalry Watch");

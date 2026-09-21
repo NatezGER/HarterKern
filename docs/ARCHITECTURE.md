@@ -167,7 +167,10 @@ Examples:
 - All-Time and season scope come from the central season context. Every new
   seasonal metric must name its scope explicitly.
 - Sporting ties remain ties. Competition ranking uses `rank()`; deterministic
-  technical ordering does not change sporting placement. An H2H draw is not a win.
+  technical ordering (sample size, name and id) does not change sporting
+  placement. An H2H draw is not a win. Compare block scores use canonical raw
+  values, never rounded labels, and exclude a metric unless both players meet
+  its minimum sample.
 - Optional analytics have independent loading and error states and must not block
   core profile or compare content.
 - Most-Wanted player metrics are projections of `qualified_official_times` and

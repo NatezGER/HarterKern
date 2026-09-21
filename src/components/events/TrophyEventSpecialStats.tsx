@@ -3,7 +3,7 @@ import { MostWantedMatrix } from "@/components/stats/MostWantedMatrix";
 import { cn } from "@/lib/cn";
 import { buildTrophyEventMilestones } from "@/lib/trophyEventMilestones";
 import type { TrophyEventSpecialStats as TrophyEventSpecialStatsData } from "@/types/trophyEventStats";
-import { MetricDashboardGrid } from "@/components/stats/MetricTopThreeCard";
+import { MetricDashboardGrid } from "@/components/stats/MetricRankingCard";
 import { RivalryPairList } from "@/components/stats/RivalryPairList";
 
 export function TrophyEventSpecialStats({ data, loading, error, className, live = false }: {
@@ -25,7 +25,7 @@ export function TrophyEventSpecialStats({ data, loading, error, className, live 
   }
   const families = buildTrophyEventMilestones(data.metrics);
   return <div className={cn("w-full min-w-0 space-y-6", className)} data-trophy-event-special-stats>
-    {data.dashboard && <section aria-label="Trophy-Event-Top-3-Statistiken" className="space-y-3">
+    {data.dashboard && <section aria-label="Trophy-Event-Ranking-Statistiken" className="space-y-3">
       <MetricDashboardGrid metrics={data.dashboard.metrics} />
       {live && <RivalryPairList pairs={data.dashboard.rivalryPairs} live />}
     </section>}

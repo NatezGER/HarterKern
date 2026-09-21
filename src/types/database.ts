@@ -523,6 +523,10 @@ export interface Database {
         Args: { p_season_year?: number | null; p_event_id?: string | null };
         Returns: Json;
       };
+      get_player_compare_metric_bundle: {
+        Args: { p_player_ids: string[]; p_season_year?: number | null };
+        Returns: Json;
+      };
       get_trophy_event_dashboard: {
         Args: { p_event_id: string };
         Returns: Json;

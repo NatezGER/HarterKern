@@ -8,6 +8,7 @@ import type {
   PlayerTimePerformance,
   HeadToHeadSummary,
 } from "@/types/historyProfiles";
+import type { PlayerCompareMetricBundle } from "@/types/playerCompare";
 
 export interface ComparePlayerCore {
   identity: PlayerProfileCore;
@@ -110,4 +111,49 @@ export async function loadPlayerHeadToHead(
       lastRivalryDate: totals?.last_rivalry_date ?? null,
     },
   };
+}
+
+type JsonObject = Record<string, unknown>;
+const asObject = (value: unknown): JsonObject => value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
+const asArray = (value: unknown): unknown[] => Array.isArray(value) ? value : [];
+const asNumber = (value: unknown): number | null => typeof value === "number" && Number.isFinite(value) ? value : null;
+
+export async function loadPlayerCompareMetricBundle(
+  playerAId: string | null,
+  playerBId: string | null,
+  seasonYear?: number,
+): Promise<PlayerCompareMetricBundle | null> {
+  if (!playerAId || !playerBId || playerAId === playerBId) return null;
+  const { data, error } = await getSupabase().rpc("get_player_compare_metric_bundle", {
+    p_player_ids: [playerAId, playerBId],
+    p_season_year: seasonYear ?? null,
+  });
+  if (error) throw error;
+  const root = asObject(data);
+  const players = asArray(root.players).map((value) => {
+    const player = asObject(value);
+    return {
+      playerId: typeof player.playerId === "string" ? player.playerId : "",
+      metrics: asArray(player.metrics).map((metricValue) => {
+        const metric = asObject(metricValue);
+        return {
+          key: typeof metric.key === "string" ? metric.key : "",
+          value: asNumber(metric.value), count: asNumber(metric.count), total: asNumber(metric.total),
+          detail: typeof metric.detail === "string" ? metric.detail : null,
+          qualified: metric.qualified === true,
+        };
+      }),
+    };
+  });
+  const pair = asObject(root.pair);
+  const n = (key: string) => asNumber(pair[key]) ?? 0;
+  return { players, pair: {
+    commonEvents: n("commonEvents"), decidedEvents: n("decidedEvents"),
+    playerAWins: n("playerAWins"), playerBWins: n("playerBWins"), ties: n("ties"),
+    directTakeovers: n("directTakeovers"), playerATakeovers: n("playerATakeovers"), playerBTakeovers: n("playerBTakeovers"),
+    rivalryEvents: n("rivalryEvents"), rivalrySpanDays: asNumber(pair.rivalrySpanDays),
+    intensityPercent: asNumber(pair.intensityPercent), balancePercent: asNumber(pair.balancePercent),
+    playerANemesisLosses: n("playerANemesisLosses"), playerBNemesisLosses: n("playerBNemesisLosses"),
+    playerAFavoriteWins: n("playerAFavoriteWins"), playerBFavoriteWins: n("playerBFavoriteWins"),
+  } };
 }

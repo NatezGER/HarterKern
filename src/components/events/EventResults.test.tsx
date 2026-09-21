@@ -241,7 +241,7 @@ describe("EventResults polish", () => {
           dashboard: {
             scope: "special-event", rivalryPairs: [], metrics: [{
               key: "fastest", title: "Schnellste Zeit", description: "Event",
-              format: "time", direction: "asc", minimumSample: 1,
+              format: "time", direction: "asc", minimumSample: 1, group: "performance",
               overallValue: 342, overallCount: null, overallTotal: null,
               overallDetail: null, rankings: [],
             }],
