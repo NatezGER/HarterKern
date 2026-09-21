@@ -49,7 +49,32 @@ const emptyHeadToHead = {
   playerAWins: 0, playerBWins: 0, ties: 0, totalDuels: 0, events: [],
   closestDuel: null, biggestWin: null, currentStreak: null, longestStreak: null,
 };
-const emptyMetricBundle = { data: null, loading: false, error: "" };
+const metricBundleData = {
+  players: [
+    { playerId: "a", metrics: [
+      bundleMetric("fastest", 250, 10), bundleMetric("average", 300, 9),
+      bundleMetric("median", 290, 9), bundleMetric("valid", 9, 9),
+      bundleMetric("dnf", 10, 10, 1), bundleMetric("sub5", 90, 10, 9),
+      bundleMetric("sub4", 70, 10, 7), bundleMetric("sub3", 20, 10, 2),
+      bundleMetric("sub25", 10, 10, 1), bundleMetric("sub2", 0, 10, 0),
+      bundleMetric("fastest-five", 280, 5), bundleMetric("consistency", 4, 9),
+      bundleMetric("fastest-three", 270, 3),
+      bundleMetric("event-max", 7, 7), bundleMetric("fastest-first", 280, 2),
+    ] },
+    { playerId: "b", metrics: [
+      bundleMetric("fastest", 270, 10), bundleMetric("average", 320, 8),
+      bundleMetric("median", 310, 8), bundleMetric("valid", 8, 8),
+      bundleMetric("dnf", 20, 10, 2), bundleMetric("sub5", 80, 10, 8),
+      bundleMetric("sub4", 60, 10, 6), bundleMetric("sub3", 10, 10, 1),
+      bundleMetric("sub25", 0, 10, 0), bundleMetric("sub2", 0, 10, 0),
+      bundleMetric("fastest-five", 300, 5), bundleMetric("consistency", 6, 8),
+      bundleMetric("fastest-three", 290, 3),
+      bundleMetric("event-max", 6, 6), bundleMetric("fastest-first", 290, 2),
+    ] },
+  ],
+  pair: { commonEvents: 0, decidedEvents: 0, playerAWins: 0, playerBWins: 0, ties: 0, directTakeovers: 0, playerATakeovers: 0, playerBTakeovers: 0, rivalryEvents: 0, rivalrySpanDays: null, intensityPercent: null, balancePercent: null, playerANemesisLosses: 0, playerBNemesisLosses: 0, playerAFavoriteWins: 0, playerBFavoriteWins: 0 },
+};
+const metricBundleState = { data: metricBundleData, loading: false, error: "" };
 
 describe("PlayerComparePage", () => {
   beforeEach(() => {
@@ -59,7 +84,7 @@ describe("PlayerComparePage", () => {
       core: { data: { playerA: coreA, playerB: coreB }, loading: false, error: "" },
       speed: { data: { playerA: performance(90, 250), playerB: performance(80, 290) }, loading: false, error: "" },
       headToHead: { data: emptyHeadToHead, loading: false, error: "" },
-      metricBundle: emptyMetricBundle,
+      metricBundle: metricBundleState,
     };
     state.deep = {
       sequence: { data: sequence(), loading: false, error: "" },
@@ -74,11 +99,11 @@ describe("PlayerComparePage", () => {
     expect(markup).toContain("DNF-Quote");
     expect(markup).toContain("10 %");
     expect(markup).toContain("20 %");
-    expect(markup).toContain("Unter 5 s");
-    expect(markup).toContain("Unter 2,5 s");
+    expect(markup).toContain("Unter 5 Sekunden");
+    expect(markup).toContain("Unter 2,5 Sekunden");
     expect(markup).toContain("Ø der 3 schnellsten");
     expect(markup).toContain("Median");
-    expect(markup).toContain('data-compare-metric="Personal Best"');
+    expect(markup).toContain('data-compare-metric="Schnellste Zeit"');
     expect(markup).not.toContain('data-compare-metric="Rang"');
     expect(markup).toContain("90 %");
     expect(markup).toContain("80 %");
@@ -105,11 +130,11 @@ describe("PlayerComparePage", () => {
       core: { data: { playerA: { ...coreA, statistics: { ...coreA.statistics, rank: 1, personalBestHundredths: 280 } }, playerB: { ...coreB, statistics: { ...coreB.statistics, rank: null, personalBestHundredths: null, averageHundredths: null, validAttempts: 0, dnfCount: 0 } } }, loading: false, error: "" },
       speed: { data: { playerA: performance(100, 280), playerB: performance(0, null, 0) }, loading: false, error: "" },
       headToHead: { data: emptyHeadToHead, loading: false, error: "" },
-      metricBundle: emptyMetricBundle,
+      metricBundle: metricBundleState,
     };
     const markup = renderCompare("/compare?playerA=a&playerB=b");
     expect(markup).toContain("Saison 2026");
-    expect(markup).toContain("Saison-PB");
+    expect(markup).toContain("Schnellste Zeit");
     expect(markup).toContain("2,80 s");
     expect(markup).not.toContain("0,00 l");
   });
@@ -119,11 +144,11 @@ describe("PlayerComparePage", () => {
       core: { data: { playerA: coreA, playerB: coreB }, loading: false, error: "" },
       speed: { data: null, loading: false, error: "Die Speed-Werte konnten nicht geladen werden." },
       headToHead: { data: emptyHeadToHead, loading: false, error: "" },
-      metricBundle: emptyMetricBundle,
+      metricBundle: metricBundleState,
     };
     const markup = renderCompare("/compare?playerA=a&playerB=b");
     expect(markup).toContain("Hauptstatistiken");
-    expect(markup).toContain("Die Speed-Werte konnten nicht geladen werden.");
+    expect(markup).not.toContain("Die Speed-Werte konnten nicht geladen werden.");
   });
 
   it("renders the H2H score, five latest duels and existing event links", () => {
@@ -145,7 +170,7 @@ describe("PlayerComparePage", () => {
         currentStreak: { winners: ["a"], length: 1 },
         longestStreak: { winners: ["a"], length: 4 },
       }, loading: false, error: "" },
-      metricBundle: emptyMetricBundle,
+      metricBundle: metricBundleState,
     };
     const markup = renderCompare("/compare?playerA=a&playerB=b");
     expect(markup).toContain("Head to Head");
@@ -164,7 +189,7 @@ describe("PlayerComparePage", () => {
       core: { data: { playerA: coreA, playerB: coreB }, loading: false, error: "" },
       speed: { data: null, loading: false, error: "" },
       headToHead: { data: null, loading: false, error: "Head to Head konnte nicht geladen werden." },
-      metricBundle: emptyMetricBundle,
+      metricBundle: metricBundleState,
     };
     const markup = renderCompare("/compare?playerA=a&playerB=b");
     expect(markup).toContain("Hauptstatistiken");
@@ -173,16 +198,22 @@ describe("PlayerComparePage", () => {
 
   it("uses the exact final section order", () => {
     const markup = renderCompare("/compare?playerA=a&playerB=b");
-    const labels = ["Head to Head", "PB-Entwicklung", "Nach Versuchsnummer", "Hauptstatistiken", "Speed &amp; Peak Performance", "Konstanz &amp; Serien", "Event- &amp; Leistungswerte", "Most Wanted", "Wer liegt vorne?"];
+    const labels = ["Head to Head", "PB-Entwicklung", "Nach Versuchsnummer", "Hauptstatistiken", "Speed", "Consistency", "Volume", "Clutch &amp; Event", "BINGO / Most Wanted", "Achievements", "Wer liegt vorne?"];
     expect(labels.map((label) => markup.indexOf(label))).toEqual([...labels.map((label) => markup.indexOf(label))].sort((a, b) => a - b));
+    expect(markup).not.toContain("Speed &amp; Peak Performance");
+    expect(markup).not.toContain("Konstanz &amp; Serien");
+    expect(markup.match(/data-compare-block=/g)).toHaveLength(6);
+    expect(markup).not.toContain("Head-to-Head / Rivalry");
+    expect(markup).not.toMatch(/nicht wertbar|Kontext ·|Stichprobe|qualifiziert/i);
+    expect(markup.indexOf("Gesamtwertung")).toBeGreaterThan(markup.indexOf("Achievements"));
   });
 
   it("shows canonical Most Wanted values and season first hits only in season mode", () => {
     expect(renderCompare("/compare?playerA=a&playerB=b")).toContain("Most-Wanted Treffer");
-    expect(renderCompare("/compare?playerA=a&playerB=b")).not.toContain("Saison-Ersttreffer 2026");
+    expect(renderCompare("/compare?playerA=a&playerB=b")).not.toContain("Saison-Ersttreffer");
     state.season = 2026;
     state.isAllTime = false;
-    expect(renderCompare("/compare?playerA=a&playerB=b")).toContain("Saison-Ersttreffer 2026");
+    expect(renderCompare("/compare?playerA=a&playerB=b")).toContain("Saison-Ersttreffer");
   });
 
   it("keeps progression and P11A/P11B visible when sequence data fails", () => {
@@ -244,4 +275,8 @@ function sequence() {
     playerB: { longestSub3Streak: 1, longestNoDnfStreak: 3, fastestFirstAttemptHundredths: 290, attemptNumbers: points },
     rivalry: { playerALeadSeconds: 60, playerBLeadSeconds: 30, playerALeadTakes: 1, playerBLeadTakes: 0, qualifyingEventCount: 1 },
   };
+}
+
+function bundleMetric(key: string, value: number, total: number, count: number | null = null) {
+  return { key, value, count, total, detail: null, qualified: true };
 }

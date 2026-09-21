@@ -2,13 +2,11 @@ import { useEffect, useState } from "react";
 import { useSeason } from "@/hooks/useSeason";
 import {
   loadPlayerCompareCore,
-  loadPlayerCompareSpeed,
   loadPlayerHeadToHead,
   loadPlayerCompareMetricBundle,
 } from "@/services/playerCompareService";
 import type {
   PlayerCompareCore,
-  PlayerCompareSpeed,
 } from "@/services/playerCompareService";
 import type { HeadToHeadSummary } from "@/types/historyProfiles";
 import type { PlayerCompareMetricBundle } from "@/types/playerCompare";
@@ -30,14 +28,12 @@ export function usePlayerCompare(playerAId: string | null, playerBId: string | n
   const seasonYear = typeof season === "number" ? season : undefined;
   const requestKey = `${playerAId ?? "-"}:${playerBId ?? "-"}:${seasonYear ?? "all-time"}`;
   const [core, setCore] = useState<CompareState<PlayerCompareCore>>(initialState);
-  const [speed, setSpeed] = useState<CompareState<PlayerCompareSpeed>>(initialState);
   const [headToHead, setHeadToHead] = useState<CompareState<HeadToHeadSummary>>(initialState);
   const [metricBundle, setMetricBundle] = useState<CompareState<PlayerCompareMetricBundle | null>>(initialState);
 
   useEffect(() => {
     let active = true;
     setCore(initialState());
-    setSpeed(initialState());
     setHeadToHead(initialState());
     setMetricBundle(initialState());
     void loadPlayerCompareCore(playerAId, playerBId, seasonYear)
@@ -46,13 +42,6 @@ export function usePlayerCompare(playerAId: string | null, playerBId: string | n
         data: null,
         loading: false,
         error: "Der Vergleich konnte nicht geladen werden.",
-      }));
-    void loadPlayerCompareSpeed(playerAId, playerBId, seasonYear)
-      .then((data) => active && setSpeed({ data, loading: false, error: "" }))
-      .catch(() => active && setSpeed({
-        data: null,
-        loading: false,
-        error: "Die Speed-Werte konnten nicht geladen werden.",
       }));
     void loadPlayerHeadToHead(playerAId, playerBId, seasonYear)
       .then((data) => active && setHeadToHead({ data, loading: false, error: "" }))
@@ -69,5 +58,5 @@ export function usePlayerCompare(playerAId: string | null, playerBId: string | n
     };
   }, [playerAId, playerBId, requestKey, seasonYear]);
 
-  return { core, speed, headToHead, metricBundle };
+  return { core, headToHead, metricBundle };
 }

@@ -6,6 +6,7 @@ import type { StatisticDashboard } from "@/types/statDashboard";
 
 /** Independent read: never blocks the route or attempt persistence. */
 export function useStatisticDashboard(season: SeasonSelection, refreshVersion: number) {
+  const [retryVersion, setRetryVersion] = useState(0);
   const [state, setState] = useState<{
     data: StatisticDashboard | null;
     loading: boolean;
@@ -22,7 +23,7 @@ export function useStatisticDashboard(season: SeasonSelection, refreshVersion: n
       if (active) setState({ data: null, loading: false, error: getErrorMessage(error) });
     });
     return () => { active = false; };
-  }, [season, refreshVersion]);
+  }, [season, refreshVersion, retryVersion]);
 
-  return state;
+  return { ...state, retry: () => setRetryVersion((version) => version + 1) };
 }

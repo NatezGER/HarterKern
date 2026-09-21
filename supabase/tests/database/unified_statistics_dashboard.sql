@@ -18,6 +18,9 @@ insert into public.players (id, display_name, is_ak) values
   ('96000000-0000-0000-0000-000000000007', 'Stats Invalid First', false),
   ('96000000-0000-0000-0000-000000000008', 'Stats One Shot', false);
 
+insert into public.players (id, display_name, is_ak, is_archived) values
+  ('96000000-0000-0000-0000-000000000010', 'Stats Archived', false, true);
+
 insert into public.events (id, name, start_date, started_at, ends_at, status, closed_at, awards_trophies) values
   ('96000000-0000-0000-0000-000000000100', 'Old', '2025-09-01', '2025-09-01 09:00+00', '2025-09-01 20:00+00', 'closed', '2025-09-01 20:00+00', false),
   ('96000000-0000-0000-0000-000000000101', 'Trophy Live', '2026-09-01', '2026-09-01 09:00+00', '2026-09-01 20:00+00', 'active', null, true),
@@ -62,7 +65,7 @@ from (values
   (8, 'C', 420), (9, 'A', 400), (10, 'A', 300), (11, 'B', 300),
   (12, 'A', 299), (13, 'A', 250), (14, 'A', 200), (15, 'A', 199),
   (16, 'A', null), (17, 'B', 198), (18, 'B', 197),
-  (19, 'C', 410), (20, 'C', 405), (21, 'D', 600), (22, 'D', 590)
+  (19, 'C', 410), (20, 'C', 410), (21, 'D', 600), (22, 'D', 590)
 ) v(sequence, player, time_hundredths);
 
 insert into public.attempts (
@@ -121,7 +124,16 @@ insert into public.attempts (
    '2026-09-01 12:00+00'),
   ('96000000-0000-0000-0000-000000000005',
    '96000000-0000-0000-0000-000000000101',
-   'approved', 40, false, false, '2026-09-01 11:01+00', 'admin', null);
+   'approved', 40, false, false, '2026-09-01 11:01+00', 'admin', null),
+  ('96000000-0000-0000-0000-000000000005',
+   '96000000-0000-0000-0000-000000000101',
+   'approved', 41, false, false, '2026-09-01 11:02+00', 'admin', null),
+  ('96000000-0000-0000-0000-000000000010',
+   '96000000-0000-0000-0000-000000000101',
+   'approved', 42, false, false, '2026-09-01 12:00+00', 'admin', null),
+  ('96000000-0000-0000-0000-000000000010',
+   '96000000-0000-0000-0000-000000000101',
+   'approved', 43, false, false, '2026-09-01 12:01+00', 'admin', null);
 
 insert into public.historical_attempts (
   player_id, display_name, attempt_date, time_hundredths, sort_order
@@ -286,6 +298,17 @@ select ok(not exists (select 1 from public.rivalry_pair_events where event_id =
 select ok(public.get_trophy_event_dashboard(
   '96000000-0000-0000-0000-000000000101') ?& array['special', 'dashboard'],
   'Trophy event returns existing special stats and ranked stats in one response');
+select ok(not exists (
+  select 1
+  from jsonb_array_elements(public.get_unified_statistics_dashboard(null,
+    '96000000-0000-0000-0000-000000000101')->'metrics') metric
+  where metric->>'key' like 'badge-%'
+    or metric->>'key' like 'wr-%'
+    or metric->>'key' like 'rivalry-%'
+    or metric->>'key' in (
+      'pb-jump', 'rare-hunter', 'nemesis', 'favorite-opponent'
+    )
+), 'Trophy dashboard excludes career and historical rivalry metrics');
 
 select is((select value from public.get_advanced_statistic_player_metrics(
   array['96000000-0000-0000-0000-000000000001'::uuid], null,
@@ -453,6 +476,83 @@ select ok(exists (
   select 1 from jsonb_array_elements(public.get_unified_statistics_dashboard(2026, null)->'metrics') metric
   where metric->>'key' = 'pb-jump'
 ), 'season dashboards retain the PB jump metric');
+
+select is((select value from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000003'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'matrix-glitch'),
+  1::numeric, 'matrix glitch counts an exact valid adjacent repeat in one event');
+select ok(not exists (select 1 from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000007'::uuid], null,
+  '96000000-0000-0000-0000-000000000105')
+  where metric_key = 'matrix-glitch' and value > 0),
+  'DNF prevents an invalid adjacency from becoming a matrix glitch');
+select ok(not exists (select 1 from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000006'::uuid], 2026, null)
+  where metric_key = 'matrix-glitch' and value > 0),
+  'matrix glitch never crosses an event boundary');
+select ok(exists (select 1 from public.get_advanced_statistic_player_metrics(
+  array['96000000-0000-0000-0000-000000000008'::uuid], null, null)
+  where metric_key = 'one-shot' and sample_count = 1),
+  'one qualified event is visible in all-time event-pattern rankings');
+select is((select value from public.get_qualified_leadership_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101') where metric_key = 'takeovers'),
+  1::numeric, 'leadership takeovers start only after the third regular player qualifies');
+select ok(not exists (select 1 from public.rivalry_pair_events where event_id =
+  '96000000-0000-0000-0000-000000000101'),
+  'new leadership metrics do not alter closed-event rivalry history');
+
+select is((select value from public.get_statistics_sequence_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101')
+  where metric_key = 'two-in-sixty-total'), 9::numeric,
+  '2-in-60 counts overlapping adjacent valid pairs inside 180 seconds');
+select is((select value from public.get_statistics_sequence_metrics(
+  array['96000000-0000-0000-0000-000000000002'::uuid], null,
+  '96000000-0000-0000-0000-000000000101')
+  where metric_key = 'two-in-sixty-total'), 4::numeric,
+  '2-in-60 excludes adjacent valid attempts outside the 180-second window');
+select is((select value from public.get_statistics_sequence_metrics(
+  array['96000000-0000-0000-0000-000000000007'::uuid], null,
+  '96000000-0000-0000-0000-000000000105')
+  where metric_key = 'two-in-sixty-total'), 3::numeric,
+  'DNF is not a 2-in-60 pair member and valid adjacency remains canonical');
+select ok(not exists (select 1 from public.get_statistics_sequence_metrics(
+  array['96000000-0000-0000-0000-000000000005'::uuid,
+    '96000000-0000-0000-0000-000000000010'::uuid], null,
+  '96000000-0000-0000-0000-000000000101')
+  where metric_key like 'two-in-sixty-%'),
+  'AK and archived players never produce 2-in-60 metrics');
+select is((select value from public.get_statistics_sequence_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], 2026, null)
+  where metric_key = 'two-in-sixty-total'), 9::numeric,
+  '2-in-60 respects season scope');
+select ok(not exists (select 1 from public.get_statistics_sequence_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], 2025, null)
+  where metric_key like 'two-in-sixty-%'),
+  '2-in-60 does not leak pairs into another season');
+select is((select value from public.get_statistics_sequence_metrics(
+  array['96000000-0000-0000-0000-000000000001'::uuid], null,
+  '96000000-0000-0000-0000-000000000101')
+  where metric_key = 'two-in-sixty-best'), 399::numeric,
+  'fastest 2-in-60 is the minimum qualifying adjacent pair sum');
+select ok(exists (
+  select 1
+  from jsonb_array_elements(public.get_unified_statistics_dashboard(null,
+    '96000000-0000-0000-0000-000000000101')->'metrics') metric,
+    jsonb_array_elements(metric->'rankings') ranking
+  where metric->>'key' = 'two-in-sixty-best'
+    and ranking->>'playerId' = '96000000-0000-0000-0000-000000000004'
+    and (ranking->>'total')::numeric = 1
+), 'one qualifying 2-in-60 pair is sufficient for the fastest-pair ranking');
+select ok(not exists (select 1 from public.get_statistics_sequence_metrics(
+  null, null, null) where metric_key = 'two-in-sixty-best-five'),
+  'the retired best-five 2-in-60 metric is absent');
+select is((select count(*)
+  from jsonb_array_elements(public.get_unified_statistics_dashboard(null,
+    '96000000-0000-0000-0000-000000000101')->'metrics') metric
+  where metric->>'key' in ('two-in-sixty-total', 'two-in-sixty-best')),
+  2::bigint, 'each 2-in-60 metric occurs exactly once in the dashboard');
 
 select * from finish();
 rollback;

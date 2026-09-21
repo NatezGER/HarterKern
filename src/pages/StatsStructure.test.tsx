@@ -2,6 +2,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+const state = vi.hoisted(() => ({ dashboardError: false }));
+
 vi.mock("@/hooks/useSeason", () => ({ useSeason: () => ({ season: "all-time", isAllTime: true }) }));
 vi.mock("@/hooks/useEffectivePublicData", () => ({ useEffectivePublicData: () => ({ data: {
   statistics: [
@@ -16,14 +18,14 @@ vi.mock("@/hooks/useDataPlatform", () => ({
   useDataPlatform: () => ({ snapshot: { liveState: { historicalAttempts: [] } } }),
   useDataGroup: () => ({ version: 1 }),
 }));
-vi.mock("@/hooks/useStatisticDashboard", () => ({ useStatisticDashboard: () => ({ data: {
+vi.mock("@/hooks/useStatisticDashboard", () => ({ useStatisticDashboard: () => ({ data: state.dashboardError ? null : {
   metrics: [{
     key: "fastest", title: "Schnellste Zeit", description: "Bestzeiten",
     format: "time", direction: "asc", minimumSample: 1, group: "performance",
     overallValue: 299, overallCount: null, overallTotal: null,
     overallDetail: null, rankings: [],
   }], rivalryPairs: [],
-}, loading: false, error: "" }) }));
+}, loading: false, error: state.dashboardError ? "timeout" : "", retry: vi.fn() }) }));
 vi.mock("@/hooks/useManagementMode", () => ({ useManagementMode: () => ({ unlocked: false }) }));
 vi.mock("@/components/common/DataState", () => ({ DataState: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/common/OptionalDataState", () => ({ OptionalDataState: ({ children }: { children: ReactNode }) => children }));
@@ -42,6 +44,7 @@ import { StatsPage } from "@/pages/StatsPage";
 
 describe("StatsPage structure", () => {
   it("moves the six base cards into the shared block and removes league milestones", () => {
+    state.dashboardError = false;
     const markup = renderToStaticMarkup(<StatsPage />);
     expect(markup.indexOf("Record Progression")).toBeLessThan(markup.indexOf("Most Wanted Matrix"));
     expect(markup).toContain("Versuchnummern-Chart");
@@ -54,5 +57,13 @@ describe("StatsPage structure", () => {
     expect(markup).toContain("Badge-Seltenheit");
     expect(markup).not.toContain("Vergangene Events");
     expect(markup).not.toContain("Eventarchiv");
+    expect(markup).toContain("text-xl");
+  });
+
+  it("offers a focused dashboard retry after an error", () => {
+    state.dashboardError = true;
+    const markup = renderToStaticMarkup(<StatsPage />);
+    expect(markup).toContain("Ranking-Statistiken konnten nicht geladen werden.");
+    expect(markup).toContain("Bereich neu laden");
   });
 });

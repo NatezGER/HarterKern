@@ -1,49 +1,29 @@
 import { AlertTriangle, LoaderCircle, Swords } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CompareMetricRow } from "@/components/compare/CompareMetricRow";
 import { ComparePlayerHeader } from "@/components/compare/ComparePlayerHeader";
 import {
   CompareAttemptNumbersSection,
-  CompareBadgePrestigeSection,
-  CompareConsistencySection,
-  CompareEventPerformanceSection,
-  CompareMostWantedSection,
   CompareProgressionSection,
-  CompareSummarySection,
 } from "@/components/compare/DeepCompareSections";
 import { StickyCompareIdentity } from "@/components/compare/StickyCompareIdentity";
 import { HeadToHeadSection } from "@/components/compare/HeadToHeadSection";
 import { CompareThemeBlocks } from "@/components/compare/CompareThemeBlocks";
 import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
-import { SectionHeading } from "@/components/common/SectionHeading";
 import { getRosterPlayers } from "@/data/selectors";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { usePlayerCompare } from "@/hooks/usePlayerCompare";
 import { usePlayerDeepCompare } from "@/hooks/usePlayerDeepCompare";
 import { usePlayerMostWantedStatistics } from "@/hooks/usePlayerMostWantedStatistics";
-import { usePlayerBadgePrestige } from "@/hooks/usePlayerBadgePrestige";
 import { useSeason } from "@/hooks/useSeason";
-import { DRINK_MILLILITERS_PER_VALID_ATTEMPT } from "@/constants/game";
-import { formatDrinkVolume } from "@/lib/media";
-import { dnfPercentage } from "@/lib/officialTimePerformance";
 import {
   getComparePlayerOptions,
   replaceComparePlayer,
-  type CompareDirection,
 } from "@/lib/playerCompare";
-import { createCompareCategoryBalance } from "@/lib/playerCompareDeep";
 import type { PlayerProfileCore, PlayerSeasonProfile } from "@/types/historyProfiles";
-import { formatTime } from "@/utils/format";
+import type { CompareBundleMetric, ComparePairContext, PlayerCompareMetricBundle } from "@/types/playerCompare";
 
 type ActiveStatistics = PlayerProfileCore | PlayerSeasonProfile | null;
-
-interface Metric {
-  label: string;
-  direction: CompareDirection;
-  left: { raw: number | null; display: string };
-  right: { raw: number | null; display: string };
-}
 
 export function PlayerComparePage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -58,14 +38,13 @@ export function PlayerComparePage() {
   const playerB = rawPlayerBId !== rawPlayerAId
     ? players.find(({ id }) => id === rawPlayerBId) ?? null
     : null;
-  const { core, speed, headToHead, metricBundle } = usePlayerCompare(playerA?.id ?? null, playerB?.id ?? null);
+  const { core, headToHead, metricBundle } = usePlayerCompare(playerA?.id ?? null, playerB?.id ?? null);
   const deep = usePlayerDeepCompare(
     playerA && playerB ? playerA.id : null,
     playerA && playerB ? playerB.id : null,
   );
   const seasonYear = typeof season === "number" ? season : undefined;
   const mostWanted = usePlayerMostWantedStatistics([playerA?.id ?? null, playerB?.id ?? null], seasonYear);
-  const badgePrestige = usePlayerBadgePrestige([playerA?.id ?? null, playerB?.id ?? null]);
   const detailA = core.data?.playerA ?? null;
   const detailB = core.data?.playerB ?? null;
   const hasInvalidSelection = Boolean(
@@ -90,67 +69,16 @@ export function PlayerComparePage() {
     setSearchParams(replaceComparePlayer(searchParams, side, playerId, otherId ?? null));
   };
 
-  const mainMetrics = createMainMetrics(
+  const integratedBundle = playerA && playerB ? integrateCompareBundle(
+    metricBundle.data,
+    playerA.id,
+    playerB.id,
     detailA?.statistics ?? null,
     detailB?.statistics ?? null,
-    isAllTime,
-    speed.data?.playerA?.medianHundredths ?? null,
-    speed.data?.playerB?.medianHundredths ?? null,
-  );
-  const speedMetrics: Metric[] = [5, 4, 3].map((seconds) => {
-    const left = speed.data?.playerA?.thresholds.find((item) => item.seconds === seconds);
-    const right = speed.data?.playerB?.thresholds.find((item) => item.seconds === seconds);
-    return {
-      label: `Unter ${seconds} s`,
-      direction: "higher" as const,
-      left: percentMetric(left?.total ? left.percent : null),
-      right: percentMetric(right?.total ? right.percent : null),
-    };
-  });
-  for (const seconds of [2.5, 2] as const) {
-    const left = speed.data?.playerA?.extremeThresholds.find((item) => item.seconds === seconds);
-    const right = speed.data?.playerB?.extremeThresholds.find((item) => item.seconds === seconds);
-    speedMetrics.push({
-      label: `Unter ${String(seconds).replace(".", ",")} s`,
-      direction: "higher",
-      left: percentMetric(left?.total ? left.percent : null),
-      right: percentMetric(right?.total ? right.percent : null),
-    });
-  }
-  speedMetrics.push(
-    metric("Ø der 3 schnellsten", speed.data?.playerA?.fastestThreeAverageHundredths ?? null, speed.data?.playerB?.fastestThreeAverageHundredths ?? null, "lower", timeMetric),
-    metric("Ø der 5 schnellsten", speed.data?.playerA?.fastestFiveAverageHundredths ?? null, speed.data?.playerB?.fastestFiveAverageHundredths ?? null, "lower", timeMetric),
-    metric("PB-Abstand zum Ø", speed.data?.playerA?.pbToAverageHundredths ?? null, speed.data?.playerB?.pbToAverageHundredths ?? null, "lower", timeMetric),
-    metric("PB-Abstand zum Median", speed.data?.playerA?.pbToMedianHundredths ?? null, speed.data?.playerB?.pbToMedianHundredths ?? null, "lower", timeMetric),
-  );
-  const sub3A = speed.data?.playerA?.thresholds.find(({ seconds }) => seconds === 3);
-  const sub3B = speed.data?.playerB?.thresholds.find(({ seconds }) => seconds === 3);
-  const categories = createCompareCategoryBalance({
-    "personal-best": pair(detailA?.statistics?.personalBestHundredths, detailB?.statistics?.personalBestHundredths),
-    average: pair(detailA?.statistics?.averageHundredths, detailB?.statistics?.averageHundredths),
-    median: pair(speed.data?.playerA?.medianHundredths, speed.data?.playerB?.medianHundredths),
-    "valid-attempts": pair(detailA?.statistics?.validAttempts, detailB?.statistics?.validAttempts),
-    "event-participations": pair(detailA?.statistics?.eventParticipations, detailB?.statistics?.eventParticipations),
-    wins: pair(detailA?.statistics?.wins, detailB?.statistics?.wins),
-    podiums: pair(podiums(detailA?.statistics ?? null), podiums(detailB?.statistics ?? null)),
-    "dnf-rate": pair(dnfRate(detailA?.statistics ?? null), dnfRate(detailB?.statistics ?? null)),
-    "head-to-head-wins": pair(headToHead.data?.playerAWins, headToHead.data?.playerBWins),
-    "sub-3": pair(sub3A?.total ? sub3A.percent : null, sub3B?.total ? sub3B.percent : null),
-    "fastest-three": pair(speed.data?.playerA?.fastestThreeAverageHundredths, speed.data?.playerB?.fastestThreeAverageHundredths),
-    "standard-deviation": pair(speed.data?.playerA?.standardDeviationHundredths, speed.data?.playerB?.standardDeviationHundredths),
-    "sub-3-streak": pair(deep.sequence.data?.playerA.longestSub3Streak, deep.sequence.data?.playerB.longestSub3Streak),
-    "no-dnf-streak": pair(deep.sequence.data?.playerA.longestNoDnfStreak, deep.sequence.data?.playerB.longestNoDnfStreak),
-    "event-lead": pair(detailA?.statistics?.eventLeadSeconds, detailB?.statistics?.eventLeadSeconds),
-    "event-best-breaks": pair(detailA?.statistics?.eventBestBreaks, detailB?.statistics?.eventBestBreaks),
-    "fastest-first": pair(deep.sequence.data?.playerA.fastestFirstAttemptHundredths, deep.sequence.data?.playerB.fastestFirstAttemptHundredths),
-    "most-wanted-all-time": pair(playerA ? mostWanted.data?.[playerA.id]?.allTimeHits : null, playerB ? mostWanted.data?.[playerB.id]?.allTimeHits : null),
-    "most-wanted-season-first": pair(playerA ? mostWanted.data?.[playerA.id]?.seasonFirstHits : null, playerB ? mostWanted.data?.[playerB.id]?.seasonFirstHits : null),
-    "badge-bronze": pair(playerA ? badgePrestige.data?.[playerA.id]?.atLeastBronze : null, playerB ? badgePrestige.data?.[playerB.id]?.atLeastBronze : null),
-    "badge-silver": pair(playerA ? badgePrestige.data?.[playerA.id]?.atLeastSilver : null, playerB ? badgePrestige.data?.[playerB.id]?.atLeastSilver : null),
-    "badge-gold": pair(playerA ? badgePrestige.data?.[playerA.id]?.atLeastGold : null, playerB ? badgePrestige.data?.[playerB.id]?.atLeastGold : null),
-    "badge-diamond": pair(playerA ? badgePrestige.data?.[playerA.id]?.atLeastDiamond : null, playerB ? badgePrestige.data?.[playerB.id]?.atLeastDiamond : null),
-    "badge-emerald": pair(playerA ? badgePrestige.data?.[playerA.id]?.emerald : null, playerB ? badgePrestige.data?.[playerB.id]?.emerald : null),
-  }, !isAllTime);
+    deep.sequence.data,
+    mostWanted.data,
+    seasonYear,
+  ) : null;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 sm:space-y-8">
@@ -211,10 +139,6 @@ export function PlayerComparePage() {
       )}
       {core.error && <div className="panel p-5 text-center text-red-200">{core.error}</div>}
 
-      {playerA && playerB && metricBundle.loading && <div className="panel grid min-h-28 place-items-center"><LoaderCircle className="context-accent-text size-5 animate-spin" aria-label="Themenblöcke werden geladen" /></div>}
-      {playerA && playerB && metricBundle.error && <div className="panel p-5 text-center text-sm text-amber-100/70">{metricBundle.error}</div>}
-      {playerA && playerB && metricBundle.data && <CompareThemeBlocks playerA={playerA} playerB={playerB} bundle={metricBundle.data} />}
-
       {playerA && playerB && (
         <HeadToHeadSection
           playerAName={playerA.name}
@@ -230,107 +154,55 @@ export function PlayerComparePage() {
 
       {playerA && playerB && <CompareAttemptNumbersSection playerA={playerA} playerB={playerB} state={deep.sequence} />}
 
-      {!core.loading && !core.error && (playerA || playerB) && (
-        <section className="panel overflow-hidden">
-          <div className="p-5 pb-3 sm:p-7 sm:pb-4"><SectionHeading eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Hauptstatistiken" /></div>
-          <div>{mainMetrics.map((metric) => <CompareMetricRow key={metric.label} {...metric} />)}</div>
-        </section>
-      )}
-
-      {!core.loading && !core.error && playerA && playerB && (
-        <section className="panel overflow-hidden">
-          <div className="p-5 pb-3 sm:p-7 sm:pb-4"><SectionHeading eyebrow="Anteil aller qualifizierten gültigen Zeiten" title="Speed & Peak Performance" /></div>
-          {speed.loading ? (
-            <div className="grid min-h-28 place-items-center"><LoaderCircle className="context-accent-text size-5 animate-spin" aria-label="Speed-Werte werden geladen" /></div>
-          ) : speed.error ? (
-            <div className="border-t border-white/[0.06] p-5 text-center text-sm text-amber-100/70">{speed.error}</div>
-          ) : (
-            <div>{speedMetrics.map((metric) => <CompareMetricRow key={metric.label} {...metric} />)}</div>
-          )}
-        </section>
-      )}
-
-      {playerA && playerB && (
-        <CompareConsistencySection sequence={deep.sequence} performanceA={speed.data?.playerA ?? null} performanceB={speed.data?.playerB ?? null} />
-      )}
-
-      {playerA && playerB && (
-        <CompareEventPerformanceSection statsA={detailA?.statistics ?? null} statsB={detailB?.statistics ?? null} sequence={deep.sequence} />
-      )}
-
-      {playerA && playerB && <CompareMostWantedSection playerA={playerA} playerB={playerB} {...mostWanted} seasonYear={seasonYear} />}
-
-      {playerA && playerB && <CompareBadgePrestigeSection playerA={playerA} playerB={playerB} {...badgePrestige} />}
-
-      {playerA && playerB && (
-        <CompareSummarySection playerA={playerA} playerB={playerB} categories={categories} />
-      )}
+      {playerA && playerB && metricBundle.loading && <div className="panel grid min-h-28 place-items-center"><LoaderCircle className="context-accent-text size-5 animate-spin" aria-label="Hauptstatistiken werden geladen" /></div>}
+      {playerA && playerB && metricBundle.error && <div className="panel p-5 text-center text-sm text-amber-100/70">{metricBundle.error} Bereits geladene Vergleichswerte bleiben sichtbar.</div>}
+      {playerA && playerB && integratedBundle && <CompareThemeBlocks playerA={playerA} playerB={playerB} bundle={integratedBundle} />}
     </div>
   );
-}
-
-function createMainMetrics(
-  left: ActiveStatistics,
-  right: ActiveStatistics,
-  isAllTime: boolean,
-  leftMedian: number | null,
-  rightMedian: number | null,
-): Metric[] {
-  const seasonHasLeftTime = isAllTime || left?.personalBestHundredths != null;
-  const seasonHasRightTime = isAllTime || right?.personalBestHundredths != null;
-  return [
-    metric(isAllTime ? "Personal Best" : "Saison-PB", left?.personalBestHundredths ?? null, right?.personalBestHundredths ?? null, "lower", timeMetric),
-    metric(isAllTime ? "Durchschnitt" : "Saison-Durchschnitt", left?.averageHundredths ?? null, right?.averageHundredths ?? null, "lower", timeMetric),
-    metric(isAllTime ? "Median" : "Saison-Median", leftMedian, rightMedian, "lower", timeMetric),
-    metric("Getrunken", seasonHasLeftTime ? left?.validAttempts ?? null : null, seasonHasRightTime ? right?.validAttempts ?? null : null, "higher", drinkMetric),
-    metric("Eventteilnahmen", left?.eventParticipations ?? null, right?.eventParticipations ?? null, "higher", integerMetric),
-    metric("Siege", left?.wins ?? null, right?.wins ?? null, "higher", integerMetric),
-    metric("Podiumsplätze", podiums(left), podiums(right), "higher", integerMetric),
-    metric("DNF-Quote", dnfRate(left), dnfRate(right), "lower", percentMetric),
-  ];
-}
-
-function metric(
-  label: string,
-  left: number | null,
-  right: number | null,
-  direction: CompareDirection,
-  format: (value: number | null) => { raw: number | null; display: string },
-): Metric {
-  return { label, direction, left: format(left), right: format(right) };
-}
-
-function integerMetric(value: number | null) {
-  return { raw: value, display: value == null ? "—" : value.toLocaleString("de-DE") };
-}
-
-function timeMetric(value: number | null) {
-  return { raw: value, display: value == null ? "—" : formatTime(value / 100) };
-}
-
-function drinkMetric(value: number | null) {
-  return {
-    raw: value,
-    display: value == null ? "—" : formatDrinkVolume(value, DRINK_MILLILITERS_PER_VALID_ATTEMPT),
-  };
-}
-
-function percentMetric(value: number | null) {
-  return {
-    raw: value,
-    display: value == null ? "—" : `${value.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`,
-  };
 }
 
 function podiums(stats: ActiveStatistics) {
   return stats == null ? null : stats.wins + stats.secondPlaces + stats.thirdPlaces;
 }
 
-function dnfRate(stats: ActiveStatistics) {
-  if (!stats || stats.validAttempts + stats.dnfCount === 0) return null;
-  return dnfPercentage(stats.validAttempts, stats.dnfCount);
+function integrateCompareBundle(
+  bundle: PlayerCompareMetricBundle | null,
+  playerAId: string,
+  playerBId: string,
+  statsA: ActiveStatistics,
+  statsB: ActiveStatistics,
+  sequence: import("@/types/playerCompare").PlayerCompareSequencePair | null,
+  mostWanted: Record<string, import("@/types/playerCompare").PlayerMostWantedStatistics> | null,
+  seasonYear?: number,
+): PlayerCompareMetricBundle {
+  const basePair = bundle?.pair ?? emptyPairContext();
+  const players = [
+    { id: playerAId, stats: statsA, sequence: sequence?.playerA },
+    { id: playerBId, stats: statsB, sequence: sequence?.playerB },
+  ].map(({ id, stats, sequence: playerSequence }) => {
+    const metrics = new Map(bundle?.players.find(({ playerId }) => playerId === id)?.metrics.map((metric) => [metric.key, metric]) ?? []);
+    const add = (key: string, value: number | null | undefined, total = 1) => metrics.set(key, compareMetric(key, value, total));
+    add("wins", stats?.wins);
+    add("podiums", podiums(stats));
+    add("no-dnf-streak", playerSequence?.longestNoDnfStreak);
+    add("lead-time", stats?.eventLeadSeconds);
+    add("most-wanted", mostWanted?.[id]?.allTimeHits);
+    if (seasonYear != null) add("season-most-wanted", mostWanted?.[id]?.seasonFirstHits);
+    return { playerId: id, metrics: [...metrics.values()] };
+  });
+  return { players, pair: basePair };
 }
 
-function pair(left: number | null | undefined, right: number | null | undefined) {
-  return { left: left ?? null, right: right ?? null };
+function compareMetric(key: string, value: number | null | undefined, total: number): CompareBundleMetric {
+  return { key, value: value ?? null, count: null, total, detail: null, qualified: value != null };
+}
+
+function emptyPairContext(): ComparePairContext {
+  return {
+    commonEvents: 0, decidedEvents: 0, playerAWins: 0, playerBWins: 0,
+    ties: 0, directTakeovers: 0, playerATakeovers: 0, playerBTakeovers: 0,
+    rivalryEvents: 0, rivalrySpanDays: null, intensityPercent: null,
+    balancePercent: null, playerANemesisLosses: 0, playerBNemesisLosses: 0,
+    playerAFavoriteWins: 0, playerBFavoriteWins: 0,
+  };
 }

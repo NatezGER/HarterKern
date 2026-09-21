@@ -164,13 +164,20 @@ Examples:
 - Raw attempts are reserved for sequence-dependent facts such as streaks,
   takeovers and rolling windows. Ordinary totals and rates use aggregate read
   models.
+- Matrix-Glitch, Eventmuster und statistische Leadership-Wechsel reuse one
+  scope-first ordered attempt population. Statistical leadership starts only
+  after the third distinct regular player has a valid time; persisted rivalry
+  views and awards keep their independent closed-event semantics.
+- `2 in 60` reuses the canonical Secret-Hall-of-Fame rule: adjacent valid
+  attempts of one regular player in one event, at most 180 timestamp seconds
+  apart. Overlapping adjacent pairs count independently.
 - All-Time and season scope come from the central season context. Every new
   seasonal metric must name its scope explicitly.
 - Sporting ties remain ties. Competition ranking uses `rank()`; deterministic
   technical ordering (sample size, name and id) does not change sporting
   placement. An H2H draw is not a win. Compare block scores use canonical raw
-  values, never rounded labels, and exclude a metric unless both players meet
-  its minimum sample.
+  values, never rounded labels. Every displayed metric contributes: an existing
+  value beats missing data, equal or mutually missing values split the point.
 - Optional analytics have independent loading and error states and must not block
   core profile or compare content.
 - Most-Wanted player metrics are projections of `qualified_official_times` and

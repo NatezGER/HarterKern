@@ -3,7 +3,7 @@ export type MetricFormat = "time" | "count" | "percent" | "duration" | "days";
 export type MetricGroup = "performance" | "consistency" | "volume" | "event" |
   "bingo" | "rivalry" | "achievements" | "records";
 export type CompareBlockKey = "speed" | "consistency" | "volume" | "clutch" |
-  "rivalry" | "bingo" | "achievements";
+  "bingo" | "achievements";
 
 export interface MetricRankEntry {
   rank: number;
@@ -20,6 +20,7 @@ export interface RankedMetric {
   key: string;
   title: string;
   description: string;
+  info?: string;
   format: MetricFormat;
   overallFormat?: MetricFormat;
   direction: "asc" | "desc";
