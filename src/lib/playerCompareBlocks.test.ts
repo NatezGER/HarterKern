@@ -61,4 +61,33 @@ describe("compare block scoring", () => {
     expect(speed).toMatchObject({ playerAPoints: 0.5, playerBPoints: 0.5, winner: "tie" });
     expect(calculateCompareBlockScore(blocks)).toMatchObject({ playerA: 0.5, playerB: 0.5 });
   });
+
+  it("shows one-event clutch metrics but scores them only from three events", () => {
+    const bundle: PlayerCompareMetricBundle = {
+      players: [
+        { playerId: "a", metrics: [{ ...metric("clutch", 100), count: 1, total: 1 }] },
+        { playerId: "b", metrics: [{ ...metric("clutch", 0), count: 0, total: 1 }] },
+      ],
+      pair: { commonEvents: 0, decidedEvents: 0, playerAWins: 0, playerBWins: 0, ties: 0, directTakeovers: 0, playerATakeovers: 0, playerBTakeovers: 0, rivalryEvents: 0, rivalrySpanDays: null, intensityPercent: null, balancePercent: null, playerANemesisLosses: 0, playerBNemesisLosses: 0, playerAFavoriteWins: 0, playerBFavoriteWins: 0 },
+    };
+    const clutch = createCompareBlocks(bundle, "a", "b").find(({ key }) => key === "clutch")!;
+    expect(clutch.metrics.find(({ key }) => key === "clutch")).toMatchObject({
+      left: { value: 100 }, right: { value: 0 }, comparable: false, winner: null,
+    });
+    expect(clutch).toMatchObject({ comparable: false, playerAPoints: 0, playerBPoints: 0 });
+  });
+
+  it("shows 2-in-60 best-five early but scores it only with five runs per player", () => {
+    const bundle: PlayerCompareMetricBundle = {
+      players: [
+        { playerId: "a", metrics: [{ ...metric("two-in-sixty-best-five", 540), total: 4 }] },
+        { playerId: "b", metrics: [{ ...metric("two-in-sixty-best-five", 560), total: 5 }] },
+      ],
+      pair: { commonEvents: 0, decidedEvents: 0, playerAWins: 0, playerBWins: 0, ties: 0, directTakeovers: 0, playerATakeovers: 0, playerBTakeovers: 0, rivalryEvents: 0, rivalrySpanDays: null, intensityPercent: null, balancePercent: null, playerANemesisLosses: 0, playerBNemesisLosses: 0, playerAFavoriteWins: 0, playerBFavoriteWins: 0 },
+    };
+    const metricResult = createCompareBlocks(bundle, "a", "b")
+      .find(({ key }) => key === "volume")!.metrics
+      .find(({ key }) => key === "two-in-sixty-best-five");
+    expect(metricResult).toMatchObject({ left: { value: 540 }, right: { value: 560 }, comparable: false, winner: null });
+  });
 });

@@ -20,6 +20,7 @@ export interface RankedMetric {
   key: string;
   title: string;
   description: string;
+  info?: string;
   format: MetricFormat;
   overallFormat?: MetricFormat;
   direction: "asc" | "desc";

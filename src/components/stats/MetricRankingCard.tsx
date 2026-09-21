@@ -6,6 +6,10 @@ export function MetricRankingCard({ metric, limit = 5 }: { metric: RankedMetric;
   return <article className={`panel min-w-0 ${metric.compact ? "p-3 sm:p-4" : "p-4 sm:p-5"}`} data-metric-key={metric.key}>
     <h3 className={`font-display font-black ${metric.compact ? "text-base" : "text-lg sm:text-xl"}`}>{metric.title}</h3>
     <p className="mt-1 text-xs text-white/45">{metric.description}</p>
+    {metric.info && <details className="mt-2 text-xs text-white/45">
+      <summary className="cursor-pointer font-bold text-gold-200/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300/60">Wie wird das berechnet?</summary>
+      <p className="mt-1 leading-5">{metric.info}</p>
+    </details>}
     <div className={`mt-3 rounded-xl border border-gold-400/10 bg-gold-400/[0.04] ${metric.compact ? "p-2.5" : "p-3"}`}>
       <p className="text-[10px] font-bold uppercase tracking-wider text-gold-300/65">Gesamt</p>
       <strong className={`mt-1 block font-display font-black tabular-nums text-gold-200 ${metric.compact ? "text-xl" : "text-2xl"}`}>{formatMetricValue(metric.overallValue, metric.overallFormat ?? metric.format)}</strong>

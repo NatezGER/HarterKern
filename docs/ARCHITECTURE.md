@@ -164,6 +164,13 @@ Examples:
 - Raw attempts are reserved for sequence-dependent facts such as streaks,
   takeovers and rolling windows. Ordinary totals and rates use aggregate read
   models.
+- Matrix-Glitch, Eventmuster und statistische Leadership-Wechsel reuse one
+  scope-first ordered attempt population. Statistical leadership starts only
+  after the third distinct regular player has a valid time; persisted rivalry
+  views and awards keep their independent closed-event semantics.
+- `2 in 60` reuses the canonical Secret-Hall-of-Fame rule: adjacent valid
+  attempts of one regular player in one event, at most 180 timestamp seconds
+  apart. Overlapping adjacent pairs count independently.
 - All-Time and season scope come from the central season context. Every new
   seasonal metric must name its scope explicitly.
 - Sporting ties remain ties. Competition ranking uses `rank()`; deterministic

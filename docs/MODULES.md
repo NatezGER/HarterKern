@@ -98,11 +98,11 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   `get_player_compare_metric_bundle` liefert die pair-scoped Metric-Rohwerte
   für die sieben Themenblöcke in einem Request; `playerCompareBlocks` wertet
   ausschließlich beidseitig qualifizierte, als scoreable markierte Metrics.
-- **Finale Reihenfolge:** Hero/Selektoren, transparenter Gesamt-Blockscore und
-  aufklappbare Themenblöcke, Head to Head/Rivalry, gemeinsame
-  PB-Entwicklung, Nach Versuchsnummer, Hauptstatistiken, Speed & Peak,
-  Konstanz & Serien, Event- & Leistungswerte, Most Wanted und die finale
-  Kategorienbilanz „Wer liegt vorne?“.
+- **Finale Reihenfolge:** Hero/Selektoren, Head to Head/Rivalry, gemeinsame
+  PB-Entwicklung, Nach Versuchsnummer, ein
+  einziger nach Themen gegliederter Hauptstatistikvergleich und erst danach
+  die Block-Gesamtwertung „Wer liegt vorne?“. Die Themenblöcke verwenden das
+  bestehende Links-rechts-Design der `CompareMetricRow`.
 - **Views/RPCs und Aggregate:** Pro ausgewähltem Spieler werden vorhandener
   Profil-Core, optionales Saisonprofil und die bereits von P11A verwendeten
   `qualified_official_times` beziehungsweise `season_qualified_official_times`
@@ -120,15 +120,18 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **PB-Progression:** Je Spieler genau ein bestehender persönlicher Read:
   All-Time `player_pb_history`, saisonal `get_player_season_pb_history`. Es
   werden keine globalen WR-Verläufe für den Vergleich geladen.
-- **Route Load:** Die P11A/P11B-Basis liegt bei maximal 15 All-Time- und 19
-  Saison-Requests. P11C ergänzt einen gemeinsamen Sequenz-Read und zwei
-  persönliche Progressions-Reads. Damit liegen die Maxima bei 18 (All-Time)
-  beziehungsweise 22 (Saison), ohne N+1 sowie ohne Badge- oder Prestige-Reads.
-  Most Wanted ergänzt genau einen paarweisen, aggregierten und optionalen RPC.
-- **Fehlerisolation:** P11A-Core/Speed und P11B-H2H laden unabhängig von P11C.
+- **Route Load:** Gegenüber PR 60 entfallen zwei persönliche Performance-Reads
+  und der separate Badge-Prestige-Read. Der pair-scoped Metric-Bundle-RPC sowie
+  der paarweise Most-Wanted-RPC bleiben gebündelt; es entsteht kein N+1.
+- **Fehlerisolation:** Core/Metric-Bundle und H2H laden unabhängig von P11C.
   Innerhalb von P11C haben Sequenzdaten und Progression eigene Lade- und
   Fehlerzustände; die beiden Progressions-Reads werden tolerant zusammengeführt,
   sodass eine vorhandene Spielerserie trotz Ausfall der anderen sichtbar bleibt.
+- **Konsolidierter Compare-Read:** Der Metric-Bundle-Read ersetzt den separaten
+  Performance-Read und die zusätzliche Badge-Prestige-Abfrage. Bereits geladene
+  Core-, Sequenz- und Most-Wanted-Werte werden ohne weitere Requests in dieselbe
+  Registry-basierte Blockdarstellung eingespeist. Eventteilnahmen sind dort
+  keine zentrale Vergleichsmetric mehr.
 - **Most-Wanted-Projektion:** `get_player_most_wanted_statistics` zählt pro
   angefragtem Spieler unterschiedliche Endungen aus `qualified_official_times`
   und saisonale Ersttreffer direkt aus `season_most_wanted_endings`. Der RPC
@@ -244,6 +247,16 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   UI zeigt standardmäßig fünf samt Avatar. Performance, Konstanz, Volume,
   Event, BINGO, Rivalry, Achievements sowie Rekorde sind getrennte Bereiche.
   Ein Fehler betrifft nur den Statistikblock.
+- **PR-61-Komposition:** Migration 058 ersetzt keine produktive Migration,
+  sondern versioniert die v57-Funktionen und komponiert ihre öffentlichen
+  Signaturen neu. Eventmuster und Matrix-Glitch teilen einen scope-frühen
+  Attempt-Sequenzscan; qualifizierte Leadership-Wechsel laufen getrennt von
+  der unveränderten Rivalry-Historie. Das Ranking-Modul besitzt einen eigenen
+  Retry und lädt keine anderen Statistikbereiche neu.
+- **2 in 60:** Gesamtzahl und Durchschnitt der fünf schnellsten Paarzeiten
+  werden im selben Sequenzscan berechnet. Es gilt die bestehende kanonische
+  180-Sekunden-Regel mit überlappenden direkten Nachbarpaaren; die Beste-5-
+  Wertung benötigt fünf qualifizierende Paare.
 - **Zeitquoten/Versuchsnummern:** Werden ohne weiteren Request aus den bereits
   für Most Wanted geladenen qualifizierten offiziellen Zeiten des gewählten
   Scopes abgeleitet. Historische Zeiten zählen für Quoten, aber nicht für die

@@ -21,6 +21,7 @@ import { RivalryPairList } from "@/components/stats/RivalryPairList";
 import { useStatisticDashboard } from "@/hooks/useStatisticDashboard";
 import { useManagementMode } from "@/hooks/useManagementMode";
 import { AdminBadgeCatalogSlot } from "@/components/stats/AdminBadgeCatalogSlot";
+import { Button } from "@/components/ui/button";
 
 export function StatsPage() {
   const { data } = useEffectivePublicData();
@@ -53,12 +54,12 @@ export function StatsPage() {
               .map((statistic) => <StatCard key={statistic.id} statistic={statistic} />)}
           </div>
           {dashboard.loading && <p className="panel p-5 text-sm text-white/45" role="status">Ranking-Statistiken werden geladen …</p>}
-          {dashboard.error && <p className="panel p-5 text-sm text-amber-200/80" role="alert">Ranking-Statistiken konnten nicht geladen werden.</p>}
+          {dashboard.error && <div className="panel flex flex-col items-start gap-3 p-5 text-sm text-amber-200/80" role="alert"><p>Ranking-Statistiken konnten nicht geladen werden.</p><Button type="button" variant="outline" onClick={dashboard.retry}>Bereich neu laden</Button></div>}
           {dashboardData && <div className="space-y-8">{(["performance", "consistency", "volume", "event", "bingo", "rivalry", "achievements", "records"] as MetricGroup[]).map((group) => {
             const metrics = dashboardData.metrics.filter((metric) => metric.group === group);
             if (metrics.length === 0) return null;
             return <section key={group} aria-labelledby={`metric-group-${group}`}>
-              <h3 id={`metric-group-${group}`} className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-gold-300/75">{metricGroupLabels[group]}</h3>
+              <h3 id={`metric-group-${group}`} className="mb-4 border-b border-gold-300/15 pb-2 font-display text-xl font-black uppercase tracking-[0.12em] text-gold-200 sm:text-2xl">{metricGroupLabels[group]}</h3>
               <MetricDashboardGrid metrics={metrics} />
             </section>;
           })}<RivalryPairList pairs={dashboardData.rivalryPairs} live={false} /></div>}

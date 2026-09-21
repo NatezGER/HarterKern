@@ -29,18 +29,22 @@ export function mapStatisticDashboard(value: unknown, scope: StatisticScope): St
         overallValue: number(row.overallValue),
         overallCount: number(row.overallCount),
         overallTotal: number(row.overallTotal),
-        overallDetail: string(row.overallDetail),
+        overallDetail: string(row.overallDetail) === "Ø der qualifizierten Spieler" ? null : string(row.overallDetail),
         rankings: array(row.rankings).map((item) => {
           const entry = object(item);
+          const value = number(entry.value) ?? 0;
+          const count = number(entry.count);
           return {
             rank: number(entry.rank) ?? 0,
             playerId: string(entry.playerId) ?? "",
             name: string(entry.name) ?? "Unbekannt",
             avatarUrl: avatarUrl(string(entry.avatarPath), string(entry.avatarUrl)),
-            value: number(entry.value) ?? 0,
-            count: number(entry.count),
+            value,
+            count,
             total: number(entry.total),
-            detail: string(entry.detail),
+            detail: definition.key === "consistency" && count != null && value > 0
+              ? `Streuung ${(count / 100).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} s · Durchschnitt ${(count / value).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} s`
+              : string(entry.detail),
           };
         }),
       };

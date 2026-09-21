@@ -35,4 +35,34 @@ describe("scope-aware statistic dashboard service", () => {
       .toEqual([1, 1, 3]);
     expect(dashboard?.metrics.find(({ key }) => key === "average")?.minimumSample).toBe(3);
   });
+
+  it("removes generic overall detail and formats consistency in seconds", () => {
+    const dashboard = mapStatisticDashboard({ metrics: [
+      { key: "median", overallValue: 300, overallDetail: "Ø der qualifizierten Spieler", rankings: [] },
+      { key: "consistency", overallValue: 8, rankings: [
+        { rank: 1, playerId: "a", name: "A", value: 8, count: 24, total: 5 },
+      ] },
+    ], rivalryPairs: [] }, "all-time");
+    expect(dashboard?.metrics.find(({ key }) => key === "median")?.overallDetail).toBeNull();
+    expect(dashboard?.metrics.find(({ key }) => key === "consistency")?.rankings[0]?.detail)
+      .toBe("Streuung 0,24 s · Durchschnitt 3,00 s");
+  });
+
+  it("does not map event participation into ranking cards", () => {
+    const dashboard = mapStatisticDashboard({ metrics: [
+      { key: "event-participations", overallValue: 12, rankings: [] },
+    ], rivalryPairs: [] }, "all-time");
+    expect(dashboard?.metrics.some(({ key }) => key === "event-participations")).toBe(false);
+  });
+
+  it("maps both 2-in-60 metrics into volume without duplicate keys", () => {
+    const dashboard = mapStatisticDashboard({ metrics: [
+      { key: "two-in-sixty-total", overallValue: 12, rankings: [] },
+      { key: "two-in-sixty-best-five", overallValue: 540, rankings: [] },
+    ], rivalryPairs: [] }, "all-time");
+    const metrics = dashboard?.metrics.filter(({ key }) => key.startsWith("two-in-sixty-")) ?? [];
+    expect(metrics.map(({ key }) => key)).toEqual(["two-in-sixty-total", "two-in-sixty-best-five"]);
+    expect(metrics.every(({ group }) => group === "volume")).toBe(true);
+    expect(metrics.find(({ key }) => key === "two-in-sixty-best-five")?.minimumSample).toBe(5);
+  });
 });

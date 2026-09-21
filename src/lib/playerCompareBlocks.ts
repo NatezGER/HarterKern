@@ -4,7 +4,7 @@ import type { CompareBlockResult, CompareBlockScore, PlayerCompareMetricBundle }
 
 const blockOrder: CompareBlockKey[] = ["speed", "consistency", "volume", "clutch", "rivalry", "bingo", "achievements"];
 const blockTitles: Record<CompareBlockKey, string> = {
-  speed: "Speed", consistency: "Consistency", volume: "Volume", clutch: "Clutch",
+  speed: "Speed", consistency: "Consistency", volume: "Volume", clutch: "Clutch & Event",
   rivalry: "Head-to-Head / Rivalry", bingo: "BINGO / Most Wanted", achievements: "Achievements",
 };
 
@@ -16,7 +16,12 @@ export function createCompareBlocks(bundle: PlayerCompareMetricBundle, playerAId
       const leftMetric = left.get(definition.key) ?? null;
       const rightMetric = right.get(definition.key) ?? null;
       const scoreable = definition.scoreable === true;
-      const comparable = scoreable && leftMetric?.qualified === true && rightMetric?.qualified === true && leftMetric.value != null && rightMetric.value != null;
+      const compareMinimum = definition.compareMinimumSample;
+      const leftSample = leftMetric?.total ?? leftMetric?.count ?? 0;
+      const rightSample = rightMetric?.total ?? rightMetric?.count ?? 0;
+      const comparable = scoreable && leftMetric?.qualified === true && rightMetric?.qualified === true
+        && leftMetric.value != null && rightMetric.value != null
+        && (compareMinimum == null || (leftSample >= compareMinimum && rightSample >= compareMinimum));
       let winner: "a" | "b" | "tie" | null = null;
       if (comparable) {
         if (leftMetric!.value === rightMetric!.value) winner = "tie";
