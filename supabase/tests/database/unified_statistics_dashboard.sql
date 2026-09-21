@@ -534,20 +534,24 @@ select ok(not exists (select 1 from public.get_statistics_sequence_metrics(
 select is((select value from public.get_statistics_sequence_metrics(
   array['96000000-0000-0000-0000-000000000001'::uuid], null,
   '96000000-0000-0000-0000-000000000101')
-  where metric_key = 'two-in-sixty-best-five'), 539.40::numeric,
-  '2-in-60 best-five averages exactly the five lowest pair sums');
-select ok(not exists (
+  where metric_key = 'two-in-sixty-best'), 399::numeric,
+  'fastest 2-in-60 is the minimum qualifying adjacent pair sum');
+select ok(exists (
   select 1
   from jsonb_array_elements(public.get_unified_statistics_dashboard(null,
     '96000000-0000-0000-0000-000000000101')->'metrics') metric,
     jsonb_array_elements(metric->'rankings') ranking
-  where metric->>'key' = 'two-in-sixty-best-five'
-    and ranking->>'playerId' = '96000000-0000-0000-0000-000000000002'
-), '2-in-60 best-five excludes players with fewer than five pairs from rankings');
+  where metric->>'key' = 'two-in-sixty-best'
+    and ranking->>'playerId' = '96000000-0000-0000-0000-000000000004'
+    and (ranking->>'total')::numeric = 1
+), 'one qualifying 2-in-60 pair is sufficient for the fastest-pair ranking');
+select ok(not exists (select 1 from public.get_statistics_sequence_metrics(
+  null, null, null) where metric_key = 'two-in-sixty-best-five'),
+  'the retired best-five 2-in-60 metric is absent');
 select is((select count(*)
   from jsonb_array_elements(public.get_unified_statistics_dashboard(null,
     '96000000-0000-0000-0000-000000000101')->'metrics') metric
-  where metric->>'key' in ('two-in-sixty-total', 'two-in-sixty-best-five')),
+  where metric->>'key' in ('two-in-sixty-total', 'two-in-sixty-best')),
   2::bigint, 'each 2-in-60 metric occurs exactly once in the dashboard');
 
 select * from finish();

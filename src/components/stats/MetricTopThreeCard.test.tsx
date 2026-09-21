@@ -13,6 +13,7 @@ const metric: RankedMetric = {
     { rank: 3, playerId: "c", name: "Fipsi", avatarUrl: null, value: 41.2, count: 14, total: 34, detail: null },
     { rank: 4, playerId: "d", name: "Mia", avatarUrl: "https://cdn.test/d.png", value: 39, count: 13, total: 33, detail: null },
     { rank: 5, playerId: "e", name: "Nate", avatarUrl: "https://cdn.test/e.png", value: 38, count: 12, total: 32, detail: null },
+    { rank: 6, playerId: "f", name: "Nicht Top 5", avatarUrl: null, value: 37, count: 11, total: 31, detail: null },
   ],
 };
 
@@ -27,6 +28,7 @@ describe("shared metric ranking card", () => {
     expect(markup).toMatch(/3\.<\/span>.*Fipsi/);
     expect(markup).toContain("https://cdn.test/d.png");
     expect(markup).toContain("https://cdn.test/e.png");
+    expect(markup).not.toContain("Nicht Top 5");
     expect(markup.match(/aria-label="Profilbild von /g)).toHaveLength(5);
     expect(markup.match(/border-gold-400\/20/g)).toHaveLength(1);
     expect(markup).toMatch(/border-gold-400\/20[^>]*>.*Profilbild von Lars/);

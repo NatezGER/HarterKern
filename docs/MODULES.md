@@ -96,8 +96,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   unabhängige Deep-Block `usePlayerDeepCompare` / `playerDeepCompareService`;
   vorhandene gecachte Sections aus `playerProfileService`, Players-Datengruppe.
   `get_player_compare_metric_bundle` liefert die pair-scoped Metric-Rohwerte
-  für die sieben Themenblöcke in einem Request; `playerCompareBlocks` wertet
-  ausschließlich beidseitig qualifizierte, als scoreable markierte Metrics.
+  für sechs Themenblöcke in einem Request; `playerCompareBlocks` vergleicht
+  jeden sichtbaren Wert ohne zusätzliche Mindeststichprobe. Die direkte
+  Rivalry bleibt ausschließlich im eigenständigen Head-to-Head-Bereich.
 - **Finale Reihenfolge:** Hero/Selektoren, Head to Head/Rivalry, gemeinsame
   PB-Entwicklung, Nach Versuchsnummer, ein
   einziger nach Themen gegliederter Hauptstatistikvergleich und erst danach
@@ -247,16 +248,18 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   UI zeigt standardmäßig fünf samt Avatar. Performance, Konstanz, Volume,
   Event, BINGO, Rivalry, Achievements sowie Rekorde sind getrennte Bereiche.
   Ein Fehler betrifft nur den Statistikblock.
-- **PR-61-Komposition:** Migration 058 ersetzt keine produktive Migration,
-  sondern versioniert die v57-Funktionen und komponiert ihre öffentlichen
-  Signaturen neu. Eventmuster und Matrix-Glitch teilen einen scope-frühen
-  Attempt-Sequenzscan; qualifizierte Leadership-Wechsel laufen getrennt von
-  der unveränderten Rivalry-Historie. Das Ranking-Modul besitzt einen eigenen
-  Retry und lädt keine anderen Statistikbereiche neu.
-- **2 in 60:** Gesamtzahl und Durchschnitt der fünf schnellsten Paarzeiten
-  werden im selben Sequenzscan berechnet. Es gilt die bestehende kanonische
-  180-Sekunden-Regel mit überlappenden direkten Nachbarpaaren; die Beste-5-
-  Wertung benötigt fünf qualifizierende Paare.
+- **PR-61-Komposition:** Die produktive Migration 058 versioniert die
+  v57-Funktionen und komponiert ihre öffentlichen Signaturen neu. Die additive
+  Migration 059 ersetzt ausschließlich Sequenzmetriken und Advanced-Dashboard,
+  um den 2-in-60-Bestwert zu korrigieren. Eventmuster und Matrix-Glitch teilen
+  weiterhin einen scope-frühen Attempt-Sequenzscan; qualifizierte
+  Leadership-Wechsel laufen getrennt von der unveränderten Rivalry-Historie.
+  Das Ranking-Modul besitzt einen eigenen Retry und lädt keine anderen
+  Statistikbereiche neu.
+- **2 in 60:** Gesamtzahl und schnellste addierte Paarzeit je Spieler werden im
+  selben Sequenzscan berechnet. Es gilt die bestehende kanonische
+  180-Sekunden-Regel mit überlappenden direkten Nachbarpaaren; ein einziges
+  qualifizierendes Paar reicht für den Bestwert.
 - **Zeitquoten/Versuchsnummern:** Werden ohne weiteren Request aus den bereits
   für Most Wanted geladenen qualifizierten offiziellen Zeiten des gewählten
   Scopes abgeleitet. Historische Zeiten zählen für Quoten, aber nicht für die

@@ -15,7 +15,10 @@ export function evaluateCompareWinner(
   right: number | null,
   direction: CompareDirection,
 ): CompareWinner {
-  if (left == null || right == null || left === right) return null;
+  if ((left == null && right == null) || left === right) return null;
+  if (left != null && right == null) return "a";
+  if (left == null) return "b";
+  if (right == null) return "a";
   if (direction === "higher") return left > right ? "a" : "b";
   return left < right ? "a" : "b";
 }

@@ -1,16 +1,25 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const sql = readFileSync(new URL(
+const migration058 = readFileSync(new URL(
   "../migrations/202609210058_statistics_performance_compare_polish.sql",
   import.meta.url,
 ), "utf8");
+const migration059 = readFileSync(new URL(
+  "../migrations/202609210059_compare_scoring_two_in_sixty_fix.sql",
+  import.meta.url,
+), "utf8");
+const sql = `${migration058}\n${migration059}`;
 
 describe("PR #61 statistics performance and semantics", () => {
   it("keeps productive migrations immutable and versions the replaced functions", () => {
-    expect(sql).toContain("rename to get_advanced_statistic_player_metrics_v57");
-    expect(sql).toContain("rename to get_player_compare_metric_bundle_v57");
-    expect(sql).not.toMatch(/alter\s+function\s+public\.get_unified_statistics_dashboard_v56/i);
+    expect(migration058).toContain("rename to get_advanced_statistic_player_metrics_v57");
+    expect(migration058).toContain("rename to get_player_compare_metric_bundle_v57");
+    expect(migration058).toContain("two-in-sixty-best-five");
+    expect(migration058).toContain("pair_position <= 5");
+    expect(migration058).not.toMatch(/alter\s+function\s+public\.get_unified_statistics_dashboard_v56/i);
+    expect(migration059).toMatch(/create or replace function public\.get_statistics_sequence_metrics/);
+    expect(migration059).toMatch(/create or replace function public\.get_advanced_statistics_dashboard/);
   });
 
   it("uses one scope-first sequence source for event patterns and exact glitches", () => {
@@ -33,8 +42,11 @@ describe("PR #61 statistics performance and semantics", () => {
     expect(sql).toContain("submitted_at - previous_submitted_at <= interval '180 seconds'");
     expect(sql).toContain("where not is_dnf and time_hundredths is not null");
     expect(sql).toContain("select 'two-in-sixty-total'::text");
-    expect(sql).toContain("select 'two-in-sixty-best-five'::text");
-    expect(sql).toContain("where pair_position <= 5");
+    expect(migration059).toContain("select 'two-in-sixty-best'::text");
+    expect(migration059).toContain("min(pair_time)::numeric best_pair_time");
+    expect(migration059).not.toContain("two-in-sixty-best-five");
+    expect(migration059).not.toContain("pair_position <= 5");
+    expect(migration059).not.toContain("sample_count >= 5");
   });
 
   it("starts leadership changes after the third regular player without changing rivalry views", () => {
@@ -59,7 +71,9 @@ describe("PR #61 statistics performance and semantics", () => {
     expect(sql).toContain("metric->>'key' not like 'badge-%'");
     expect(sql).toContain("metric->>'key' not like 'wr-%'");
     expect(sql).toContain("metric->>'key' not like 'rivalry-%'");
-    expect(sql.match(/'pb-jump', 'rare-hunter', 'nemesis', 'favorite-opponent'/g))
+    expect(migration058.match(/'pb-jump', 'rare-hunter', 'nemesis', 'favorite-opponent'/g))
       .toHaveLength(2);
+    expect(migration059.match(/'pb-jump', 'rare-hunter', 'nemesis', 'favorite-opponent'/g))
+      .toHaveLength(1);
   });
 });

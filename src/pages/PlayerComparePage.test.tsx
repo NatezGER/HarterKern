@@ -202,6 +202,9 @@ describe("PlayerComparePage", () => {
     expect(labels.map((label) => markup.indexOf(label))).toEqual([...labels.map((label) => markup.indexOf(label))].sort((a, b) => a - b));
     expect(markup).not.toContain("Speed &amp; Peak Performance");
     expect(markup).not.toContain("Konstanz &amp; Serien");
+    expect(markup.match(/data-compare-block=/g)).toHaveLength(6);
+    expect(markup).not.toContain("Head-to-Head / Rivalry");
+    expect(markup).not.toMatch(/nicht wertbar|Kontext ·|Stichprobe|qualifiziert/i);
     expect(markup.indexOf("Gesamtwertung")).toBeGreaterThan(markup.indexOf("Achievements"));
   });
 

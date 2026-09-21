@@ -44,9 +44,7 @@ export interface CompareBlockMetricResult {
   label: string;
   left: CompareBundleMetric | null;
   right: CompareBundleMetric | null;
-  scoreable: boolean;
-  comparable: boolean;
-  winner: "a" | "b" | "tie" | null;
+  winner: "a" | "b" | "tie";
 }
 
 export interface CompareBlockResult {
@@ -55,14 +53,12 @@ export interface CompareBlockResult {
   metrics: CompareBlockMetricResult[];
   playerAPoints: number;
   playerBPoints: number;
-  winner: "a" | "b" | "tie" | null;
-  comparable: boolean;
+  winner: "a" | "b" | "tie";
 }
 
 export interface CompareBlockScore {
   playerA: number;
   playerB: number;
-  comparableBlocks: number;
   totalBlocks: number;
 }
 

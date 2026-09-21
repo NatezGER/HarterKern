@@ -16,10 +16,12 @@ describe("player compare rules", () => {
     expect(evaluateCompareWinner(8, 9, "higher")).toBe("b");
   });
 
-  it("does not invent a winner for ties or missing values", () => {
+  it("keeps ties neutral and lets an existing value beat missing data", () => {
     expect(evaluateCompareWinner(4, 4, "lower")).toBeNull();
-    expect(evaluateCompareWinner(null, 4, "lower")).toBeNull();
-    expect(evaluateCompareWinner(4, null, "higher")).toBeNull();
+    expect(evaluateCompareWinner(null, null, "lower")).toBeNull();
+    expect(evaluateCompareWinner(null, 4, "lower")).toBe("b");
+    expect(evaluateCompareWinner(4, null, "higher")).toBe("a");
+    expect(evaluateCompareWinner(0, null, "higher")).toBe("a");
   });
 
   it("builds a reload-safe profile compare target without duplicate players", () => {

@@ -58,11 +58,11 @@ describe("scope-aware statistic dashboard service", () => {
   it("maps both 2-in-60 metrics into volume without duplicate keys", () => {
     const dashboard = mapStatisticDashboard({ metrics: [
       { key: "two-in-sixty-total", overallValue: 12, rankings: [] },
-      { key: "two-in-sixty-best-five", overallValue: 540, rankings: [] },
+      { key: "two-in-sixty-best", overallValue: 540, rankings: [] },
     ], rivalryPairs: [] }, "all-time");
     const metrics = dashboard?.metrics.filter(({ key }) => key.startsWith("two-in-sixty-")) ?? [];
-    expect(metrics.map(({ key }) => key)).toEqual(["two-in-sixty-total", "two-in-sixty-best-five"]);
+    expect(metrics.map(({ key }) => key)).toEqual(["two-in-sixty-total", "two-in-sixty-best"]);
     expect(metrics.every(({ group }) => group === "volume")).toBe(true);
-    expect(metrics.find(({ key }) => key === "two-in-sixty-best-five")?.minimumSample).toBe(5);
+    expect(metrics.find(({ key }) => key === "two-in-sixty-best")?.minimumSample).toBe(1);
   });
 });

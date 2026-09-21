@@ -1,15 +1,11 @@
 BEGIN;
 
--- Embedded verbatim from supabase/migrations/202609210058_statistics_performance_compare_polish.sql
+-- Embedded verbatim from supabase/migrations/202609210059_compare_scoring_two_in_sixty_fix.sql
 
--- PR #61: scope-first sequence metrics and qualified leadership statistics.
--- Migrations 056 and 057 remain immutable. The v57 functions are preserved
--- behind versioned names and their public signatures are composed here.
+-- PR #61 follow-up: replace the productive best-five interpretation of
+-- 2 in 60 with each player's fastest qualifying adjacent pair.
 
-alter function public.get_advanced_statistic_player_metrics(uuid[], integer, uuid)
-  rename to get_advanced_statistic_player_metrics_v57;
-
-create function public.get_statistics_sequence_metrics(
+create or replace function public.get_statistics_sequence_metrics(
   p_player_ids uuid[] default null,
   p_season_year integer default null,
   p_event_id uuid default null
@@ -118,17 +114,10 @@ with scoped_attempts as materialized (
   from two_in_sixty_ordered
   where previous_id is not null
     and submitted_at - previous_submitted_at <= interval '180 seconds'
-), two_in_sixty_ranked as (
-  select pairs.*,
-    row_number() over (
-      partition by player_id order by pair_time, submitted_at, second_id
-    ) pair_position
-  from two_in_sixty_pairs pairs
 ), two_in_sixty_player as (
   select player_id, count(*)::numeric run_count,
-    round(avg(pair_time) filter (where pair_position <= 5), 2)::numeric best_five,
-    count(*) filter (where pair_position <= 5)::numeric best_five_count
-  from two_in_sixty_ranked
+    min(pair_time)::numeric best_pair_time
+  from two_in_sixty_pairs
   group by player_id
 )
 select 'fast-starter'::text, player_id::uuid, fast_starter::numeric,
@@ -158,141 +147,10 @@ select 'two-in-sixty-total'::text, player_id::uuid, run_count::numeric,
   null::numeric, run_count::numeric, null::text
 from two_in_sixty_player where run_count > 0
 union all
-select 'two-in-sixty-best-five'::text, player_id::uuid, best_five::numeric,
+select 'two-in-sixty-best'::text, player_id::uuid, best_pair_time::numeric,
   null::numeric, run_count::numeric, null::text
 from two_in_sixty_player where run_count > 0;
 $$;
-
-revoke all on function public.get_statistics_sequence_metrics(uuid[], integer, uuid) from public;
-grant execute on function public.get_statistics_sequence_metrics(uuid[], integer, uuid)
-  to anon, authenticated;
-
-create function public.get_qualified_leadership_metrics(
-  p_player_ids uuid[] default null,
-  p_season_year integer default null,
-  p_event_id uuid default null
-) returns table (
-  metric_key text, player_id uuid, value numeric,
-  hit_count numeric, sample_count numeric, detail text
-)
-language sql stable security invoker set search_path = public as $$
-with eligible as materialized (
-  select a.id, a.event_id, a.player_id, a.submitted_at, a.time_hundredths
-  from public.attempts a
-  join public.events e on e.id = a.event_id and e.deleted_at is null
-  join public.players p on p.id = a.player_id
-    and not p.is_ak and not p.is_archived
-  where a.status = 'approved' and a.deleted_at is null
-    and not a.is_dnf and not a.is_ak and a.time_hundredths is not null
-    and (p_event_id is null and e.status = 'closed'
-      or p_event_id is not null and e.id = p_event_id and e.awards_trophies)
-    and (p_event_id is not null or p_season_year is null
-      or extract(year from e.start_date)::integer = p_season_year)
-), first_valid as (
-  select distinct on (event_id, player_id)
-    event_id, player_id, submitted_at, id
-  from eligible
-  order by event_id, player_id, submitted_at, id
-), qualification_ranked as (
-  select first_valid.*,
-    row_number() over (
-      partition by event_id order by submitted_at, id, player_id
-    ) qualification_rank
-  from first_valid
-), qualification as (
-  select event_id, submitted_at qualification_at, id qualification_id
-  from qualification_ranked
-  where qualification_rank = 3
-), contextual as (
-  select a.*,
-    min(a.time_hundredths) over (
-      partition by a.event_id order by a.submitted_at, a.id
-      rows between unbounded preceding and 1 preceding
-    ) prior_best
-  from eligible a
-), changes as (
-  select a.*,
-    (select case when count(distinct prior.player_id) = 1
-      then (array_agg(prior.player_id order by prior.submitted_at, prior.id))[1]
-      end
-    from eligible prior
-    where prior.event_id = a.event_id
-      and (prior.submitted_at, prior.id) < (a.submitted_at, a.id)
-      and prior.time_hundredths = a.prior_best) previous_player_id
-  from contextual a
-  join qualification q on q.event_id = a.event_id
-  where (a.submitted_at, a.id) > (q.qualification_at, q.qualification_id)
-    and a.prior_best is not null and a.time_hundredths < a.prior_best
-), break_counts as (
-  select player_id, count(*)::numeric breaks
-  from changes
-  where p_player_ids is null or player_id = any(p_player_ids)
-  group by player_id
-), takeover_counts as (
-  select player_id, count(*)::numeric takeovers
-  from changes
-  where previous_player_id is not null and previous_player_id <> player_id
-    and (p_player_ids is null or player_id = any(p_player_ids))
-  group by player_id
-), chaos as (
-  select participant player_id, count(*)::numeric changes
-  from (
-    select previous_player_id participant from changes
-    where previous_player_id is not null and previous_player_id <> player_id
-    union all
-    select player_id from changes
-    where previous_player_id is not null and previous_player_id <> player_id
-  ) involved
-  where p_player_ids is null or participant = any(p_player_ids)
-  group by participant
-)
-select 'event-breaks'::text, player_id::uuid, breaks::numeric,
-  null::numeric, null::numeric, null::text
-from break_counts where breaks > 0
-union all
-select 'takeovers'::text, player_id::uuid, takeovers::numeric,
-  null::numeric, null::numeric, null::text
-from takeover_counts where takeovers > 0
-union all
-select 'chaos-magnet'::text, player_id::uuid, changes::numeric,
-  null::numeric, null::numeric, null::text
-from chaos where changes > 0;
-$$;
-
-revoke all on function public.get_qualified_leadership_metrics(uuid[], integer, uuid) from public;
-grant execute on function public.get_qualified_leadership_metrics(uuid[], integer, uuid)
-  to anon, authenticated;
-
-create function public.get_advanced_statistic_player_metrics(
-  p_player_ids uuid[] default null,
-  p_season_year integer default null,
-  p_event_id uuid default null
-) returns table (
-  metric_key text, player_id uuid, value numeric,
-  hit_count numeric, sample_count numeric, detail text
-)
-language sql stable security invoker set search_path = public as $$
-  select *
-  from public.get_advanced_statistic_player_metrics_v57(
-    p_player_ids, p_season_year, p_event_id
-  )
-  where metric_key not in (
-    'event-participations', 'fast-starter', 'late-bloomer', 'clutch',
-    'one-shot', 'chaos-magnet'
-  )
-  union all
-  select * from public.get_statistics_sequence_metrics(
-    p_player_ids, p_season_year, p_event_id
-  )
-  union all
-  select * from public.get_qualified_leadership_metrics(
-    p_player_ids, p_season_year, p_event_id
-  );
-$$;
-
-revoke all on function public.get_advanced_statistic_player_metrics(uuid[], integer, uuid) from public;
-grant execute on function public.get_advanced_statistic_player_metrics(uuid[], integer, uuid)
-  to anon, authenticated;
 
 create or replace function public.get_advanced_statistics_dashboard(
   p_season_year integer default null,
@@ -306,7 +164,7 @@ with metrics as materialized (
     'median', 'fastest-five', 'best-five-window', 'consistency',
     'fastest-first', 'fast-starter', 'late-bloomer', 'clutch', 'one-shot',
     'near-repeat', 'matrix-glitch', 'two-in-sixty-total',
-    'two-in-sixty-best-five', 'bingo-fields', 'rare-hunter', 'pb-jump',
+    'two-in-sixty-best', 'bingo-fields', 'rare-hunter', 'pb-jump',
     'badge-total', 'badge-bronze', 'badge-silver', 'badge-gold',
     'badge-diamond', 'badge-positive', 'badge-consolation', 'wr-reign',
     'wr-improvements', 'wr-jump', 'event-breaks', 'takeovers', 'chaos-magnet'
@@ -324,24 +182,22 @@ with metrics as materialized (
     rank() over (partition by metric_key order by
       case when metric_key in (
         'median', 'fastest-five', 'best-five-window', 'consistency',
-        'fastest-first', 'fast-starter', 'two-in-sixty-best-five'
+        'fastest-first', 'fast-starter', 'two-in-sixty-best'
       ) then -value else value end desc) placement,
     row_number() over (partition by metric_key order by
       case when metric_key in (
         'median', 'fastest-five', 'best-five-window', 'consistency',
-        'fastest-first', 'fast-starter', 'two-in-sixty-best-five'
+        'fastest-first', 'fast-starter', 'two-in-sixty-best'
       ) then -value else value end desc,
       sample_count desc nulls last, p.display_name, player_id) display_position
   from metrics m
   join public.players p on p.id = m.player_id
-  where m.metric_key <> 'two-in-sixty-best-five' or m.sample_count >= 5
 ), summary as (
   select metric_key,
     (case when metric_key = 'two-in-sixty-total' then sum(value)
       else round(avg(value), 2) end)::numeric value,
     sum(hit_count)::numeric hit_count, sum(sample_count)::numeric sample_count
   from metrics
-  where metric_key <> 'two-in-sixty-best-five' or sample_count >= 5
   group by metric_key
 )
 select jsonb_build_object(
@@ -362,156 +218,6 @@ select jsonb_build_object(
   ) order by s.metric_key) from summary s), '[]'::jsonb)
 );
 $$;
-
-create or replace function public.get_unified_statistics_dashboard(
-  p_season_year integer default null,
-  p_event_id uuid default null
-) returns jsonb
-language sql stable security invoker set search_path = public as $$
-with baseline as materialized (
-  select public.get_unified_statistics_dashboard_v56(p_season_year, p_event_id) payload
-), advanced as materialized (
-  select public.get_advanced_statistics_dashboard(p_season_year, p_event_id) payload
-), normalized_baseline_metrics as (
-  select jsonb_set(metric, '{rankings}', coalesce((select jsonb_agg(entry order by
-      case when metric->>'key' in ('fastest', 'average', 'dnf')
-        then (entry->>'value')::numeric end asc,
-      case when metric->>'key' not in ('fastest', 'average', 'dnf')
-        then (entry->>'value')::numeric end desc,
-      (entry->>'total')::numeric desc nulls last,
-      entry->>'name', entry->>'playerId')
-    from jsonb_array_elements(metric->'rankings') entry
-    where metric->>'key' not in ('sub5', 'sub4', 'sub3', 'sub25', 'sub2')
-      or coalesce((entry->>'count')::numeric, 0) > 0), '[]'::jsonb)) metric
-  from baseline,
-    jsonb_array_elements(coalesce(payload->'metrics', '[]'::jsonb)) metric
-  where metric->>'key' not in ('event-breaks', 'takeovers')
-    and (p_event_id is null or (
-      metric->>'key' not like 'badge-%'
-      and metric->>'key' not like 'wr-%'
-      and metric->>'key' not like 'rivalry-%'
-      and metric->>'key' not in (
-        'pb-jump', 'rare-hunter', 'nemesis', 'favorite-opponent'
-      )
-    ))
-)
-select case when baseline.payload is null then null else jsonb_build_object(
-  'metrics', coalesce((select jsonb_agg(metric) from normalized_baseline_metrics), '[]'::jsonb)
-    || coalesce(advanced.payload->'metrics', '[]'::jsonb),
-  'rivalryPairs', case when p_event_id is not null
-    then coalesce(baseline.payload->'rivalryPairs', '[]'::jsonb)
-    else public.get_advanced_rivalry_pair_rankings(p_season_year) end
-) end
-from baseline cross join advanced;
-$$;
-
-alter function public.get_player_compare_metric_bundle(uuid[], integer)
-  rename to get_player_compare_metric_bundle_v57;
-
-create function public.get_player_compare_metric_bundle(
-  p_player_ids uuid[],
-  p_season_year integer default null
-) returns jsonb
-language plpgsql stable security invoker set search_path = public as $$
-declare
-  normalized_player_ids uuid[];
-begin
-  select array_agg(player_id order by request_order)
-  into normalized_player_ids
-  from (
-    select player_id, min(request_order)::bigint request_order
-    from unnest(coalesce(p_player_ids, array[]::uuid[])) with ordinality
-      requested_input(player_id, request_order)
-    where player_id is not null
-    group by player_id
-    order by min(request_order)
-    limit 2
-  ) normalized;
-
-  if coalesce(cardinality(normalized_player_ids), 0) = 0 then
-    return jsonb_build_object('players', '[]'::jsonb, 'pair', '{}'::jsonb);
-  end if;
-
-  return (
-    with baseline as materialized (
-      select public.get_player_compare_metric_bundle_v57(
-        normalized_player_ids, p_season_year
-      ) payload
-    ), compare_official as materialized (
-      select q.source_id, q.player_id, q.time_hundredths, q.occurred_at
-      from public.qualified_official_times q
-      where p_season_year is null and q.player_id = any(normalized_player_ids)
-        and q.player_id is not null and not q.is_guest
-      union all
-      select q.source_id, q.player_id, q.time_hundredths, q.occurred_at
-      from public.season_qualified_official_times q
-      where p_season_year is not null and q.season_year = p_season_year
-        and q.player_id = any(normalized_player_ids)
-        and q.player_id is not null and not q.is_guest
-    ), compare_ranked as (
-      select source.*,
-        row_number() over (
-          partition by player_id order by time_hundredths, occurred_at, source_id
-        ) fastest_position
-      from compare_official source
-    ), fastest_three as (
-      select 'fastest-three'::text metric_key, player_id::uuid,
-        round(avg(time_hundredths))::numeric value,
-        null::numeric hit_count, 3::numeric sample_count, null::text detail
-      from compare_ranked
-      where fastest_position <= 3
-      group by player_id
-      having count(*) = 3
-    ), replacements as materialized (
-      select * from public.get_statistics_sequence_metrics(
-        normalized_player_ids, p_season_year, null
-      )
-      union all
-      select * from public.get_qualified_leadership_metrics(
-        normalized_player_ids, p_season_year, null
-      )
-      union all
-      select * from fastest_three
-    ), players as (
-      select jsonb_build_object(
-        'playerId', player->>'playerId',
-        'metrics', coalesce((select jsonb_agg(metric order by metric->>'key')
-          from jsonb_array_elements(coalesce(player->'metrics', '[]'::jsonb)) metric
-          where metric->>'key' not in (
-            'event-participations', 'fast-starter', 'late-bloomer', 'clutch',
-            'one-shot', 'chaos-magnet', 'event-breaks', 'takeovers'
-          )), '[]'::jsonb) || coalesce((select jsonb_agg(jsonb_build_object(
-            'key', replacement.metric_key, 'value', replacement.value,
-            'count', replacement.hit_count, 'total', replacement.sample_count,
-            'detail', replacement.detail, 'qualified', true
-          ) order by replacement.metric_key)
-          from replacements replacement
-          where replacement.player_id = (player->>'playerId')::uuid), '[]'::jsonb)
-      ) player, position
-      from baseline,
-        jsonb_array_elements(coalesce(payload->'players', '[]'::jsonb))
-          with ordinality source(player, position)
-    )
-    select jsonb_build_object(
-      'players', coalesce((select jsonb_agg(player order by position)
-        from players), '[]'::jsonb),
-      'pair', coalesce(baseline.payload->'pair', '{}'::jsonb)
-    )
-    from baseline
-  );
-end;
-$$;
-
-revoke all on function public.get_player_compare_metric_bundle(uuid[], integer) from public;
-grant execute on function public.get_player_compare_metric_bundle(uuid[], integer)
-  to anon, authenticated;
-
-revoke all on function public.get_advanced_statistics_dashboard(integer, uuid) from public;
-grant execute on function public.get_advanced_statistics_dashboard(integer, uuid)
-  to anon, authenticated;
-revoke all on function public.get_unified_statistics_dashboard(integer, uuid) from public;
-grant execute on function public.get_unified_statistics_dashboard(integer, uuid)
-  to anon, authenticated;
 
 -- Read-only runtime smoke tests. Every row is OK, SKIP or FAIL.
 with parameters as (
@@ -563,6 +269,31 @@ with parameters as (
     case when jsonb_typeof(compare_bundle->'players') = 'array'
       then compare_bundle->'players' else '[]'::jsonb end compare_players
   from payloads
+), two_in_sixty_ordered as materialized (
+  select a.player_id, a.event_id, a.id, a.submitted_at, a.time_hundredths,
+    lag(a.submitted_at) over (
+      partition by a.player_id, a.event_id order by a.submitted_at, a.id
+    ) previous_submitted_at,
+    lag(a.time_hundredths) over (
+      partition by a.player_id, a.event_id order by a.submitted_at, a.id
+    ) previous_time
+  from public.attempts a
+  join public.events e on e.id = a.event_id and e.deleted_at is null
+  join public.players p on p.id = a.player_id
+    and not p.is_ak and not p.is_archived
+  where a.status = 'approved' and a.deleted_at is null
+    and not a.is_ak and not a.is_dnf and a.time_hundredths is not null
+), two_in_sixty_expected as materialized (
+  select player_id, min(previous_time + time_hundredths)::numeric expected_best,
+    count(*)::numeric expected_runs
+  from two_in_sixty_ordered
+  where previous_submitted_at is not null
+    and submitted_at - previous_submitted_at <= interval '180 seconds'
+  group by player_id
+), two_in_sixty_actual as materialized (
+  select player_id, value actual_best, sample_count actual_runs
+  from public.get_statistics_sequence_metrics(null, null, null)
+  where metric_key = 'two-in-sixty-best'
 ), checks as (
   select 1 ordinal, 'all_time_root_and_metrics'::text check_name,
     case when jsonb_typeof(all_time) = 'object'
@@ -651,31 +382,41 @@ with parameters as (
   from normalized
 
   union all
-  select 8, 'two_in_sixty_best_five_qualification',
-    case when not exists (select 1
-      from jsonb_array_elements(all_metrics) metric
-      where metric->>'key' = 'two-in-sixty-best-five') then 'SKIP'
-    when exists (select 1 from jsonb_array_elements(all_metrics) metric
-      where metric->>'key' = 'two-in-sixty-best-five'
-        and jsonb_typeof(metric->'rankings') = 'array')
-      and not exists (select 1
-      from jsonb_array_elements(all_metrics) metric,
-        jsonb_array_elements(case when jsonb_typeof(metric->'rankings') = 'array'
-          then metric->'rankings' else '[]'::jsonb end) ranking
-      where metric->>'key' = 'two-in-sixty-best-five'
-        and (jsonb_typeof(ranking->'total') is distinct from 'number'
-          or case when jsonb_typeof(ranking->'total') = 'number'
-            then (ranking->>'total')::numeric < 5 else false end)) then 'OK' else 'FAIL' end,
-    'Jede Rankingzeile benötigt mindestens fünf qualifizierende Doppelschläge.'
+  select 8, 'two_in_sixty_best_is_exact_minimum',
+    case when not exists (select 1 from two_in_sixty_expected) then 'SKIP'
+      when not exists (
+        select 1
+        from two_in_sixty_expected expected
+        full join two_in_sixty_actual actual using (player_id)
+        where expected.player_id is null or actual.player_id is null
+          or actual.actual_best is distinct from expected.expected_best
+          or actual.actual_runs is distinct from expected.expected_runs
+      ) then 'OK' else 'FAIL' end,
+    concat('players=', (select count(*) from two_in_sixty_expected),
+      ', smallest_run_count=', coalesce((select min(expected_runs)
+        from two_in_sixty_expected)::text, 'none'),
+      ', mismatches=', (select count(*) from two_in_sixty_expected expected
+        full join two_in_sixty_actual actual using (player_id)
+        where expected.player_id is null or actual.player_id is null
+          or actual.actual_best is distinct from expected.expected_best
+          or actual.actual_runs is distinct from expected.expected_runs))
   from normalized
 
   union all
-  select 9, 'two_in_sixty_metric_keys_unique',
-    case when not exists (select 1
+  select 9, 'two_in_sixty_public_keys',
+    case when exists (select 1
       from jsonb_array_elements(all_metrics) metric
-      where metric->>'key' in ('two-in-sixty-total','two-in-sixty-best-five')
+      where metric->>'key' = 'two-in-sixty-best-five') then 'FAIL'
+    when not exists (select 1 from two_in_sixty_expected) then 'SKIP'
+    when (select count(*) from jsonb_array_elements(all_metrics) metric
+      where metric->>'key' = 'two-in-sixty-total') = 1
+      and (select count(*) from jsonb_array_elements(all_metrics) metric
+      where metric->>'key' = 'two-in-sixty-best') = 1
+      and not exists (select 1
+      from jsonb_array_elements(all_metrics) metric
+      where metric->>'key' in ('two-in-sixty-total','two-in-sixty-best')
       group by metric->>'key' having count(*) > 1) then 'OK' else 'FAIL' end,
-    'Keine 2-in-60-Metric darf doppelt im finalen Dashboard vorkommen.'
+    'Erwartet total und best jeweils einmal; best-five darf nicht öffentlich erscheinen.'
   from normalized
 
   union all
@@ -793,6 +534,74 @@ with parameters as (
     case when pg_get_viewdef('public.rivalry_pair_events'::regclass, true)
       ilike '%status%closed%' then 'OK' else 'FAIL' end,
     'Die bestehende Rivalry-View muss weiterhin ausschließlich geschlossene Events verwenden.'
+  from normalized
+
+  union all
+  select 21, 'migration_059_function_definitions',
+    case when position('min(pair_time)::numeric best_pair_time' in pg_get_functiondef(
+        'public.get_statistics_sequence_metrics(uuid[],integer,uuid)'::regprocedure)) > 0
+      and position('two-in-sixty-best-five' in pg_get_functiondef(
+        'public.get_statistics_sequence_metrics(uuid[],integer,uuid)'::regprocedure)) = 0
+      and position('two-in-sixty-best' in pg_get_functiondef(
+        'public.get_advanced_statistics_dashboard(integer,uuid)'::regprocedure)) > 0
+      then 'OK' else 'FAIL' end,
+    '059 muss beide öffentlichen Funktionen mit der neuen Bestwert-Semantik ersetzt haben.'
+  from normalized
+
+  union all
+  select 22, 'two_in_sixty_single_pair_qualifies',
+    case when not exists (select 1 from two_in_sixty_expected where expected_runs = 1)
+      then 'SKIP'
+      when not exists (
+        select 1 from two_in_sixty_expected expected
+        left join two_in_sixty_actual actual using (player_id)
+        where expected.expected_runs = 1
+          and (actual.player_id is null
+            or actual.actual_best is distinct from expected.expected_best
+            or actual.actual_runs is distinct from 1)
+      ) then 'OK' else 'FAIL' end,
+    concat('single_pair_players=', (select count(*) from two_in_sixty_expected
+      where expected_runs = 1))
+  from normalized
+
+  union all
+  select 23, 'old_two_in_sixty_key_absent_from_public_payloads',
+    case when not exists (select 1 from jsonb_array_elements(all_metrics) metric
+        where metric->>'key' = 'two-in-sixty-best-five')
+      and not exists (select 1 from jsonb_array_elements(season_metrics) metric
+        where metric->>'key' = 'two-in-sixty-best-five')
+      and not exists (select 1 from jsonb_array_elements(active_trophy_metrics) metric
+        where metric->>'key' = 'two-in-sixty-best-five')
+      and not exists (select 1 from jsonb_array_elements(closed_trophy_metrics) metric
+        where metric->>'key' = 'two-in-sixty-best-five')
+      and not exists (select 1
+        from jsonb_array_elements(compare_players) player,
+          jsonb_array_elements(case when jsonb_typeof(player->'metrics') = 'array'
+            then player->'metrics' else '[]'::jsonb end) metric
+        where metric->>'key' = 'two-in-sixty-best-five')
+      then 'OK' else 'FAIL' end,
+    'Dashboard-, Saison-, Trophy- und Compare-Payloads dürfen den alten Key nicht liefern.'
+  from normalized
+
+  union all
+  select 24, 'compare_threshold_metrics_are_not_filtered',
+    case when cardinality(player_ids) < 2 then 'SKIP'
+      when not exists (
+        select 1
+        from jsonb_array_elements(coalesce(
+          public.get_player_compare_metric_bundle_v57(player_ids, null)->'players',
+          '[]'::jsonb)) baseline_player,
+          jsonb_array_elements(coalesce(baseline_player->'metrics', '[]'::jsonb)) baseline_metric
+        where baseline_metric->>'key' in ('sub5','sub4','sub3','sub25','sub2')
+          and not exists (
+            select 1
+            from jsonb_array_elements(compare_players) actual_player,
+              jsonb_array_elements(coalesce(actual_player->'metrics', '[]'::jsonb)) actual_metric
+            where actual_player->>'playerId' = baseline_player->>'playerId'
+              and actual_metric->>'key' = baseline_metric->>'key'
+          )
+      ) then 'OK' else 'FAIL' end,
+    'Vorhandene Threshold-Metrics bleiben unabhängig vom qualified-Wert im Compare-Payload.'
   from normalized
 )
 select check_name, status, detail

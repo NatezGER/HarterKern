@@ -21,7 +21,7 @@ export function CompareThemeBlocks({ playerA, playerB, bundle }: {
   return <section className="space-y-4" aria-labelledby="integrated-statistics-title">
     <div className="panel p-5 pb-3 sm:p-7 sm:pb-4">
       <SectionHeading eyebrow="Direkter Wertevergleich" title="Hauptstatistiken" />
-      <p id="integrated-statistics-title" className="text-sm leading-6 text-white/45">Alle Werte sind einmalig nach Themen geordnet. Punkte gibt es nur, wenn beide Spieler die Mindeststichprobe erfüllen.</p>
+      <p id="integrated-statistics-title" className="text-sm leading-6 text-white/45">Alle Werte sind einmalig nach Themen geordnet und werden direkt miteinander verglichen.</p>
     </div>
     {blocks.map((block) => <CompareBlock key={block.key} block={block} playerA={playerA} playerB={playerB} />)}
     <section className="panel flex flex-col items-center gap-3 p-6 text-center sm:p-8" data-compare-final-score>
@@ -30,13 +30,13 @@ export function CompareThemeBlocks({ playerA, playerB, bundle }: {
       <h2 className="display-title text-2xl sm:text-3xl">Wer liegt vorne?</h2>
       <div className="grid w-full max-w-2xl grid-cols-3 gap-2 sm:gap-4">
         <ScoreValue label={playerA.name} value={score.playerA} />
-        <ScoreValue label="Wertbare Blöcke" value={score.comparableBlocks} />
+        <ScoreValue label="Statistikblöcke" value={score.totalBlocks} />
         <ScoreValue label={playerB.name} value={score.playerB} />
       </div>
       <div className="w-full max-w-2xl space-y-1 text-left text-xs text-white/55">
-        {blocks.filter(({ comparable }) => comparable).map((block) => <p key={block.key} className="flex justify-between gap-3"><span>{block.title}</span><strong>{blockWinner(block, playerA, playerB)}</strong></p>)}
+        {blocks.map((block) => <p key={block.key} className="flex justify-between gap-3"><span>{block.title}</span><strong>{blockWinner(block, playerA, playerB)}</strong></p>)}
       </div>
-      <p className="text-xs text-white/35">Ein gewonnener Block zählt einen Punkt, ein Block-Gleichstand je 0,5. Blöcke ohne wertbare Metrics bleiben außen vor.</p>
+      <p className="text-xs text-white/35">Ein gewonnener Block zählt einen Punkt, ein Block-Gleichstand je 0,5.</p>
     </section>
   </section>;
 }
@@ -55,21 +55,13 @@ function CompareBlock({ block, playerA, playerB }: {
     {visibleMetrics.map((metric) => {
       const definition = statisticMetricByKey.get(metric.key);
       const format = definition?.format ?? "count";
-      const direction = metric.comparable
-        ? definition?.direction === "asc" ? "lower" : "higher"
-        : null;
-      return <div key={metric.key}>
-        <CompareMetricRow
+      const direction = definition?.direction === "asc" ? "lower" : "higher";
+      return <CompareMetricRow key={metric.key}
           label={metric.label}
           direction={direction}
           left={{ raw: metric.left?.value ?? null, display: formatMetricValue(metric.left?.value ?? null, format) }}
           right={{ raw: metric.right?.value ?? null, display: formatMetricValue(metric.right?.value ?? null, format) }}
-        />
-        {(metric.left?.total != null || metric.right?.total != null || !metric.scoreable) && <p className="border-t border-white/[0.03] px-4 py-1.5 text-center text-[10px] text-white/35">
-          {!metric.scoreable ? "Kontext · ohne Punkte" : !metric.comparable ? "Noch nicht beidseitig wertbar" : "Wertbar"}
-          {metric.left?.total != null || metric.right?.total != null ? ` · Stichprobe ${metric.left?.count ?? metric.left?.total ?? 0} / ${metric.left?.total ?? "—"} vs. ${metric.right?.count ?? metric.right?.total ?? 0} / ${metric.right?.total ?? "—"}` : ""}
-        </p>}
-      </div>;
+        />;
     })}
     <div className="flex items-center justify-between border-t border-gold-300/15 bg-gold-300/[0.04] px-5 py-3 text-sm">
       <span className="font-bold">{block.title} · {block.playerAPoints.toLocaleString("de-DE")} : {block.playerBPoints.toLocaleString("de-DE")}</span>
@@ -79,7 +71,6 @@ function CompareBlock({ block, playerA, playerB }: {
 }
 
 function blockWinner(block: CompareBlockResult, playerA: Player, playerB: Player) {
-  if (!block.comparable) return "Nicht wertbar";
   if (block.winner === "a") return playerA.name;
   if (block.winner === "b") return playerB.name;
   return "Unentschieden";

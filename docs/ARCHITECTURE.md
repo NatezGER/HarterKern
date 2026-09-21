@@ -176,8 +176,8 @@ Examples:
 - Sporting ties remain ties. Competition ranking uses `rank()`; deterministic
   technical ordering (sample size, name and id) does not change sporting
   placement. An H2H draw is not a win. Compare block scores use canonical raw
-  values, never rounded labels, and exclude a metric unless both players meet
-  its minimum sample.
+  values, never rounded labels. Every displayed metric contributes: an existing
+  value beats missing data, equal or mutually missing values split the point.
 - Optional analytics have independent loading and error states and must not block
   core profile or compare content.
 - Most-Wanted player metrics are projections of `qualified_official_times` and
