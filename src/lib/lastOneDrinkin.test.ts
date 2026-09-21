@@ -8,7 +8,7 @@ import {
   calculateFlunkyPoints,
   calculateGolfPoints,
   calculateImpactPoints,
-  calculateKnifePoints,
+  calculateKnifeBracketPoints,
   calculateMiniGolfPoints,
   calculateOverallStandings,
   calculateRageCagePoints,
@@ -18,30 +18,48 @@ import {
   createInitialLastOneDrinkinState,
   createDisciplineScoreboard,
   createGolfScoreboard,
+  createKnifeBracketState,
   createTimeTrialTableRows,
+  evaluateDisciplines,
   fillEmptyTeamSlots,
   fillEmptyTireSeeds,
   flipFlopMatches,
   LOD_PLAYERS,
+  knifeBracketProgress,
   normalizeGolfEntry,
+  resolveKnifeBracket,
   resolveTireBracket,
   restoreLastOneDrinkinState,
   serializeLastOneDrinkinState,
+  setKnifeMatchWinner,
   timeDeviation,
   validateTeamConfig,
 } from "@/lib/lastOneDrinkin";
 
 const ids = LOD_PLAYERS.map(({ id }) => id);
 
+function completeKnifeBracket(initial = createKnifeBracketState(() => 0.37)) {
+  let state = initial;
+  for (let step = 0; step < 40; step += 1) {
+    const ready = resolveKnifeBracket(state).matches.find((match) => match.ready);
+    if (!ready) return state;
+    state = setKnifeMatchWinner(state, ready.id, ready.playerA);
+  }
+  throw new Error("Knife bracket did not settle within 40 decisions.");
+}
+
 describe("Last One Drinkin persistence", () => {
   it("serializes and restores the complete event state including open values", () => {
     const state = createInitialLastOneDrinkinState();
     state.golf[1][ids[0]].strokes = 2;
+    const knifeMatch = resolveKnifeBracket(state.knife).matches.find((match) => match.ready)!;
+    state.knife = setKnifeMatchWinner(state.knife, knifeMatch.id, knifeMatch.playerA);
     const raw = serializeLastOneDrinkinState(state);
     const restored = restoreLastOneDrinkinState(raw);
     expect(restored.error).toBeNull();
     expect(restored.state?.golf[1][ids[0]].strokes).toBe(2);
     expect(restored.state?.golf[1][ids[1]].strokes).toBeNull();
+    expect(restored.state?.knife).toEqual(state.knife);
     expect(raw).toContain('"strokes":null');
   });
 
@@ -132,9 +150,8 @@ describe("individual disciplines", () => {
     expect([points[ids[0]], points[ids[1]], points[ids[2]]]).toEqual([5, 5, 0]);
   });
 
-  it("uses Bierpong hits as points and clamps manual knife and final points", () => {
+  it("uses Bierpong hits as points and clamps final points", () => {
     expect(calculateBeerPongPoints(7)).toBe(7);
-    expect(calculateKnifePoints(8)).toBe(5);
     expect(calculateFinalPoints(12)).toBe(10);
     expect(calculateFinalPoints(-1)).toBe(0);
   });
@@ -213,6 +230,159 @@ describe("individual disciplines", () => {
     expect(points[ids[0]]).toBe(5);
     expect(points[ids[1]]).toBe(4);
     expect(points[ids[5]]).toBe(0);
+  });
+});
+
+describe("Messers Schneide double elimination", () => {
+  it("draws every player exactly once into 16 seeds with five first-round byes", () => {
+    const state = createKnifeBracketState(() => 0.37);
+    const selected = state.seeds.filter((id): id is string => id !== null);
+    expect(state.seeds).toHaveLength(16);
+    expect(selected).toHaveLength(11);
+    expect(new Set(selected).size).toBe(11);
+    expect(state.seeds.filter((id) => id === null)).toHaveLength(5);
+    for (let index = 0; index < 16; index += 2) {
+      expect(state.seeds[index] ?? state.seeds[index + 1]).not.toBeNull();
+    }
+  });
+
+  it("advances Winner-Bracket byes automatically without persisting a winner", () => {
+    const state = createKnifeBracketState(() => 0.37);
+    const bye = resolveKnifeBracket(state).winnerRounds[0].find((match) => match.automatic)!;
+    expect(bye.winner).toBe(bye.playerA ?? bye.playerB);
+    expect(bye.played).toBe(false);
+    expect(state.winners[bye.id]).toBeUndefined();
+  });
+
+  it("routes a first loss into the Lower Bracket and eliminates on the next loss", () => {
+    let state = createKnifeBracketState(() => 0.37);
+    const opening = resolveKnifeBracket(state).winnerRounds[0].find((match) => match.ready)!;
+    const firstLoser = opening.playerB!;
+    state = setKnifeMatchWinner(state, opening.id, opening.playerA);
+    expect(resolveKnifeBracket(state).lowerRounds.flat().some((match) => (
+      match.playerA === firstLoser || match.playerB === firstLoser
+    ))).toBe(true);
+
+    for (let step = 0; step < 30; step += 1) {
+      const bracket = resolveKnifeBracket(state);
+      const lowerMatch = bracket.lowerRounds.flat().find((match) => match.ready
+        && (match.playerA === firstLoser || match.playerB === firstLoser));
+      if (lowerMatch) {
+        const opponent = lowerMatch.playerA === firstLoser ? lowerMatch.playerB : lowerMatch.playerA;
+        state = setKnifeMatchWinner(state, lowerMatch.id, opponent);
+        const laterRounds = resolveKnifeBracket(state).lowerRounds.slice(lowerMatch.round + 1).flat();
+        expect(laterRounds.every((match) => match.playerA !== firstLoser && match.playerB !== firstLoser)).toBe(true);
+        return;
+      }
+      const ready = bracket.matches.find((match) => match.ready);
+      expect(ready).toBeDefined();
+      state = setKnifeMatchWinner(state, ready!.id, ready!.playerA);
+    }
+    throw new Error("The first loser never reached a playable Lower-Bracket match.");
+  });
+
+  it("keeps every player in at most one active match", () => {
+    let state = createKnifeBracketState(() => 0.37);
+    for (let step = 0; step < 20; step += 1) {
+      const bracket = resolveKnifeBracket(state);
+      const activePlayers = bracket.matches.filter((match) => match.ready)
+        .flatMap((match) => [match.playerA!, match.playerB!]);
+      expect(new Set(activePlayers).size).toBe(activePlayers.length);
+      const ready = bracket.matches.find((match) => match.ready);
+      if (!ready) break;
+      state = setKnifeMatchWinner(state, ready.id, ready.playerA);
+    }
+  });
+
+  it("plays one Grand Final without reset and derives places one through six", () => {
+    const state = completeKnifeBracket();
+    const bracket = resolveKnifeBracket(state);
+    const points = calculateKnifeBracketPoints(state);
+    expect(bracket.matches.filter(({ bracket: type }) => type === "grand-final")).toHaveLength(1);
+    expect(bracket.matches.some(({ id }) => id.includes("reset"))).toBe(false);
+    expect(bracket.grandFinal.played).toBe(true);
+    expect(points[bracket.grandFinal.winner!]).toBe(5);
+    expect(points[bracket.grandFinal.loser!]).toBe(4);
+    expect(points[bracket.lowerRounds[5][0].loser!]).toBe(3);
+    expect(points[bracket.lowerRounds[4][0].loser!]).toBe(2);
+    expect(bracket.lowerRounds[3].map((match) => points[match.loser!])).toEqual([1, 1]);
+    expect(Object.values(points).sort((a, b) => (b ?? -1) - (a ?? -1))).toEqual([5, 4, 3, 2, 1, 1, 0, 0, 0, 0, 0]);
+    expect(knifeBracketProgress(state)).toEqual({ completed: 20, total: 20 });
+  });
+
+  it("settles to exactly twenty played matches across varied bye draws", () => {
+    for (let seed = 1; seed <= 20; seed += 1) {
+      let value = seed;
+      const random = () => {
+        value = (value * 48271) % 2147483647;
+        return value / 2147483647;
+      };
+      const state = completeKnifeBracket(createKnifeBracketState(random));
+      expect(resolveKnifeBracket(state).grandFinal.played).toBe(true);
+      expect(knifeBracketProgress(state)).toEqual({ completed: 20, total: 20 });
+    }
+  });
+
+  it("makes the single Grand-Final winner champion even when the Lower-Bracket player wins", () => {
+    let state = completeKnifeBracket();
+    const firstFinal = resolveKnifeBracket(state).grandFinal;
+    state = setKnifeMatchWinner(state, firstFinal.id, firstFinal.playerB);
+    const final = resolveKnifeBracket(state).grandFinal;
+    expect(final.winner).toBe(firstFinal.playerB);
+    expect(calculateKnifeBracketPoints(state)[firstFinal.playerB!]).toBe(5);
+    expect(resolveKnifeBracket(state).matches.filter(({ bracket }) => bracket === "grand-final")).toHaveLength(1);
+  });
+
+  it("invalidates every dependent result when an early winner changes", () => {
+    let state = completeKnifeBracket();
+    const opening = resolveKnifeBracket(state).winnerRounds[0].find((match) => match.played)!;
+    const changedWinner = opening.winner === opening.playerA ? opening.playerB : opening.playerA;
+    state = setKnifeMatchWinner(state, opening.id, changedWinner);
+    const bracket = resolveKnifeBracket(state);
+    expect(bracket.grandFinal.winner).toBeNull();
+    expect(knifeBracketProgress(state).completed).toBeLessThan(20);
+    expect(Object.keys(state.winners).length).toBeLessThan(20);
+  });
+
+  it("publishes bracket points only after the Grand Final and feeds every scoreboard", () => {
+    const state = createInitialLastOneDrinkinState(() => 0.37);
+    expect(Object.values(calculateKnifeBracketPoints(state.knife)).every((value) => value === null)).toBe(true);
+    state.knife = completeKnifeBracket(state.knife);
+    const points = calculateKnifeBracketPoints(state.knife);
+    const evaluation = evaluateDisciplines(state)[8];
+    expect(evaluation).toMatchObject({ completed: 20, total: 20, points });
+    const disciplineRows = createDisciplineScoreboard(state);
+    const overallRows = calculateOverallStandings(state);
+    ids.forEach((id) => {
+      expect(disciplineRows.find((row) => row.playerId === id)!.cells[7].points).toBe(points[id]);
+      expect(overallRows.find((row) => row.playerId === id)!.disciplines).toBe(points[id]);
+    });
+  });
+
+  it("redraws only the Knife bracket", () => {
+    const state = createInitialLastOneDrinkinState(() => 0.37);
+    state.golf[1][ids[0]].strokes = 2;
+    const oldSeeds = [...state.knife.seeds];
+    state.knife = createKnifeBracketState(() => 0.73);
+    expect(state.golf[1][ids[0]].strokes).toBe(2);
+    expect(state.knife.winners).toEqual({});
+    expect(state.knife.seeds).not.toEqual(oldSeeds);
+  });
+
+  it("migrates a complete v1 save without preserving obsolete manual Knife points", () => {
+    const current = createInitialLastOneDrinkinState(() => 0.37);
+    current.golf[1][ids[0]].strokes = 2;
+    const legacy = {
+      ...current,
+      version: 1,
+      knife: Object.fromEntries(ids.map((id, index) => [id, index % 6])),
+    };
+    const restored = restoreLastOneDrinkinState(JSON.stringify(legacy));
+    expect(restored.error).toBeNull();
+    expect(restored.state?.version).toBe(2);
+    expect(restored.state?.golf[1][ids[0]].strokes).toBe(2);
+    expect(restored.state?.knife.seeds.filter(Boolean)).toHaveLength(11);
+    expect(restored.state?.knife.winners).toEqual({});
   });
 });
 

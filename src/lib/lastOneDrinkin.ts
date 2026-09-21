@@ -1,4 +1,18 @@
 import { DK_CREW, shuffle } from "@/lib/dkTools";
+import {
+  calculateKnifeBracketPoints as calculateKnifeBracketPointsForPlayers,
+  drawKnifeBracket,
+  isValidKnifeBracketState,
+  knifeBracketProgress,
+  type KnifeBracketState,
+} from "@/lib/knifeDoubleElimination";
+
+export {
+  knifeBracketProgress,
+  resolveKnifeBracket,
+  setKnifeMatchWinner,
+} from "@/lib/knifeDoubleElimination";
+export type { KnifeBracketState, ResolvedKnifeMatch } from "@/lib/knifeDoubleElimination";
 
 export const LAST_ONE_DRINKIN_STORAGE_KEY = "harter-kern:last-one-drinkin:2026:v1";
 
@@ -27,7 +41,7 @@ export const HOLES: HoleDefinition[] = [
   { id: 5, title: "Becherjagd", par: 3, discipline: "Bierpong", summary: "Trefferwertung" },
   { id: 6, title: "Auf der Rolle", par: 4, discipline: "Reifenrollen", summary: "16er-K.-o. · 5 Freilose" },
   { id: 7, title: "Im Kreis", par: 4, discipline: "Rage Cage", summary: "4 Runden · 10 Leben" },
-  { id: 8, title: "Messers Schneide", par: 5, discipline: "Obst halbieren", summary: "Punkte manuell" },
+  { id: 8, title: "Messers Schneide", par: 5, discipline: "Obst halbieren", summary: "11 Spieler · Double Elimination" },
   { id: 9, title: "Gegen die Uhr", par: 4, discipline: "Zeit-Dreikampf", summary: "3 Teilwertungen" },
   { id: 10, title: "Der Aufprall", par: 4, discipline: "Fußball – Last Man Standing", summary: "Ausscheidungsrunden" },
   { id: 11, title: "Glatteis", par: 5, discipline: "Mini-Curling / Shuffleboard", summary: "4 Teams · Turnier" },
@@ -55,7 +69,7 @@ export interface TireBracketState {
 }
 
 export interface LastOneDrinkinState {
-  version: 1;
+  version: 2;
   golf: Record<HoleId, Record<LodPlayerId, GolfEntry>>;
   flipFlop: { teams: TeamConfig; winners: Record<string, number | null> };
   coaster: { stages: Record<LodPlayerId, "first" | "second" | "third" | "fourth" | "final" | null>; finalWinner: LodPlayerId | null };
@@ -64,7 +78,7 @@ export interface LastOneDrinkinState {
   beerPong: Record<LodPlayerId, number | null>;
   tire: TireBracketState;
   rageCage: { results: Record<LodPlayerId, { round: number | null; lives: number | null }>; bonusWinner: LodPlayerId | null };
-  knife: Record<LodPlayerId, number | null>;
+  knife: KnifeBracketState;
   timeTrial: {
     values: Record<LodPlayerId, Record<TimeLeg, number | null>>;
     manualLegPoints: Record<TimeLeg, Record<LodPlayerId, number | null>>;
@@ -79,10 +93,14 @@ function playerRecord<T>(create: () => T): Record<LodPlayerId, T> {
   return Object.fromEntries(LOD_PLAYERS.map(({ id }) => [id, create()]));
 }
 
-export function createInitialLastOneDrinkinState(): LastOneDrinkinState {
+export function createKnifeBracketState(random: () => number = Math.random): KnifeBracketState {
+  return drawKnifeBracket(LOD_PLAYERS.map(({ id }) => id), random);
+}
+
+export function createInitialLastOneDrinkinState(random: () => number = Math.random): LastOneDrinkinState {
   const golf = Object.fromEntries(HOLES.map(({ id }) => [id, playerRecord(() => ({ strokes: null, holed: false, failed: false }))])) as LastOneDrinkinState["golf"];
   return {
-    version: 1,
+    version: 2,
     golf,
     flipFlop: { teams: { sizes: [2, 2, 2, 2, 3], slots: Array(11).fill(null) }, winners: {} },
     coaster: { stages: playerRecord(() => null), finalWinner: null },
@@ -91,7 +109,7 @@ export function createInitialLastOneDrinkinState(): LastOneDrinkinState {
     beerPong: playerRecord(() => null),
     tire: { seeds: Array(16).fill(null), winners: {} },
     rageCage: { results: playerRecord(() => ({ round: null, lives: null })), bonusWinner: null },
-    knife: playerRecord(() => null),
+    knife: createKnifeBracketState(random),
     timeTrial: {
       values: playerRecord(() => ({ fast: null, blind: null, visible: null })),
       manualLegPoints: {
@@ -117,9 +135,10 @@ function isCompatibleState(value: unknown): value is LastOneDrinkinState {
     state.tire, state.rageCage, state.knife, state.timeTrial, state.impact, state.curling,
     state.finalPoints,
   ];
-  if (state.version !== 1 || requiredObjects.some((entry) => !entry || typeof entry !== "object")) return false;
+  if (state.version !== 2 || requiredObjects.some((entry) => !entry || typeof entry !== "object")) return false;
   if (!Array.isArray(state.flunky?.rounds) || state.flunky.rounds.length !== 3) return false;
   if (!Array.isArray(state.tire?.seeds) || state.tire.seeds.length !== 16) return false;
+  if (!isValidKnifeBracketState(state.knife, LOD_PLAYERS.map(({ id }) => id))) return false;
   if (!Array.isArray(state.flipFlop?.teams?.slots) || state.flipFlop.teams.slots.length !== 11) return false;
   if (!Array.isArray(state.curling?.teams?.slots) || state.curling.teams.slots.length !== 11) return false;
   return HOLES.every(({ id }) => state.golf?.[id] && LOD_PLAYERS.every(({ id: playerId }) => state.golf?.[id]?.[playerId]))
@@ -128,7 +147,20 @@ function isCompatibleState(value: unknown): value is LastOneDrinkinState {
 
 export function restoreLastOneDrinkinState(raw: string): { state: LastOneDrinkinState | null; error: string | null } {
   try {
-    const parsed: unknown = JSON.parse(raw);
+    let parsed: unknown = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && (parsed as { version?: unknown }).version === 1) {
+      const legacy = parsed as Record<string, unknown>;
+      const legacyKnife = legacy.knife;
+      const validLegacyKnife = Boolean(legacyKnife && typeof legacyKnife === "object" && !Array.isArray(legacyKnife)
+        && LOD_PLAYERS.every(({ id }) => {
+          const value = (legacyKnife as Record<string, unknown>)[id];
+          return value === null || typeof value === "number";
+        }));
+      if (!validLegacyKnife) {
+        return { state: null, error: "Die gespeicherten Eventdaten sind unvollständig oder stammen aus einer inkompatiblen Version." };
+      }
+      parsed = { ...legacy, version: 2, knife: createKnifeBracketState() };
+    }
     if (!isCompatibleState(parsed)) {
       return { state: null, error: "Die gespeicherten Eventdaten sind unvollständig oder stammen aus einer inkompatiblen Version." };
     }
@@ -289,8 +321,8 @@ export function calculateRageCagePoints(state: LastOneDrinkinState["rageCage"]):
   };
 }
 
-export function calculateKnifePoints(value: number | null): number | null {
-  return value === null ? null : Math.min(5, Math.max(0, Math.floor(value)));
+export function calculateKnifeBracketPoints(state: KnifeBracketState): Record<LodPlayerId, number | null> {
+  return calculateKnifeBracketPointsForPlayers(state, LOD_PLAYERS.map(({ id }) => id));
 }
 
 export function calculateFinalPoints(value: number | null): number | null {
@@ -407,6 +439,7 @@ export interface DisciplineEvaluation { points: Record<LodPlayerId, number | nul
 export function evaluateDisciplines(state: LastOneDrinkinState): Record<HoleId, DisciplineEvaluation> {
   const wrap = (points: Record<LodPlayerId, number | null>, completed: number, total: number): DisciplineEvaluation => ({ points, completed, total });
   const tireMatches = resolveTireBracket(state.tire).flat();
+  const knifeProgress = knifeBracketProgress(state.knife);
   const rage = calculateRageCagePoints(state.rageCage);
   const time = calculateTimeTrialPoints(state.timeTrial);
   return {
@@ -417,7 +450,7 @@ export function evaluateDisciplines(state: LastOneDrinkinState): Record<HoleId, 
     5: wrap(Object.fromEntries(LOD_PLAYERS.map(({ id }) => [id, calculateBeerPongPoints(state.beerPong[id])])), Object.values(state.beerPong).filter((value) => value !== null).length, 11),
     6: wrap(calculateTirePoints(state.tire), tireMatches.filter(({ played }) => played).length, 10),
     7: wrap(rage.points, Object.values(state.rageCage.results).filter(({ round }) => round !== null).length, 11),
-    8: wrap(Object.fromEntries(LOD_PLAYERS.map(({ id }) => [id, calculateKnifePoints(state.knife[id])])), Object.values(state.knife).filter((value) => value !== null).length, 11),
+    8: wrap(calculateKnifeBracketPoints(state.knife), knifeProgress.completed, knifeProgress.total),
     9: wrap(time.points, LOD_PLAYERS.filter(({ id }) => Object.values(state.timeTrial.values[id]).every((value) => value !== null) && time.points[id] !== null).length, 11),
     10: wrap(calculateImpactPoints(state.impact), Object.values(state.impact.rounds).filter((value) => value !== null).length + (state.impact.winner ? 1 : 0), 12),
     11: wrap(calculateCurlingPoints(state.curling), Object.values(state.curling.winners).filter((value) => value !== null).length, 4),
