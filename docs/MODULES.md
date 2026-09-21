@@ -361,6 +361,12 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Einstieg:** `src/pages/DkToolsPage.tsx`, Route `/dk`.
 - **Logik:** `src/lib/dkTools.ts`; sämtliche Auslosungen und Ergebnisse bleiben
   im React-Zustand und werden bei einem Reload verworfen.
+- **Last One Drinkin:** `src/lib/lastOneDrinkin.ts` persistiert den lokalen
+  Eventstand im Browser. `src/lib/knifeDoubleElimination.ts` bildet für
+  „Messers Schneide“ ein serialisierbares 16er-Double-Elimination-Bracket mit
+  fünf Freilosen, vier Winner- und sechs Lower-Runden sowie einem Grand Final
+  ohne Reset ab; ältere manuelle Messer-Punkte werden beim Laden gezielt
+  migriert, ohne die übrigen Disziplinen zurückzusetzen.
 - **Views/RPCs:** keine. Die Route erzeugt keine zusätzlichen Backend-Requests.
 - **Championship-Visuals:** `/dk` aktiviert den lokalen
   `DenmarkChampionshipShell` dauerhaft. Live-Event und historisches Eventdetail
@@ -372,6 +378,7 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   Live-Status. Der Theme-Resolver benötigt keinen zusätzlichen Request: Er
   nutzt die bereits geladenen Event-Metadaten.
 - **Tests:** `npm test -- src/lib/dkTools.test.ts
+  src/lib/lastOneDrinkin.test.ts src/components/dk/LastOneDrinkinAdmin.test.tsx
   src/constants/navigation.test.ts`.
 - **Direkte Abhängigkeiten:** App-Shell, Navigation und bestehende UI-Bausteine.
 - **Nicht enthalten:** 2-Fast-2-Drink-Events, Statistiken, Badges, Datenmodelle,

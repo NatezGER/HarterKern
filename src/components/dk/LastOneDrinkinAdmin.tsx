@@ -12,6 +12,7 @@ import {
   calculateTimeTrialPoints,
   createDisciplineScoreboard,
   createGolfScoreboard,
+  createKnifeBracketState,
   createTimeTrialTableRows,
   evaluateDisciplines,
   fillEmptyTeamSlots,
@@ -21,12 +22,15 @@ import {
   HOLES,
   LOD_PLAYERS,
   normalizeGolfEntry,
+  resolveKnifeBracket,
   resolveTireBracket,
+  setKnifeMatchWinner,
   teamSlices,
   validateTeamConfig,
   type HoleDefinition,
   type LastOneDrinkinState,
   type LodPlayerId,
+  type ResolvedKnifeMatch,
   type TeamConfig,
   type TimeLeg,
 } from "@/lib/lastOneDrinkin";
@@ -158,7 +162,37 @@ function RageEditor({ state, update }: EditorProps) {
 }
 
 function KnifeEditor({ state, update }: EditorProps) {
-  return <div><p className="mb-3 text-xs text-white/45">Punkte gemäß Turnierverlauf manuell eintragen.</p>{LOD_PLAYERS.map(({ id }) => <PlayerRow key={id} playerId={id} points={state.knife[id]}><NumberInput value={state.knife[id]} min={0} max={5} label={`${playerName(id)} manuelle Punkte`} onChange={(value) => update((next) => { next.knife[id] = value === null ? null : Math.min(5, Math.max(0, Math.floor(value))); })} /></PlayerRow>)}</div>;
+  const bracket = resolveKnifeBracket(state.knife);
+  const winnerLabels = ["Winner Round 1", "Winner Quarterfinals", "Winner Semifinals", "Winner Final"];
+  const matchCard = (match: ResolvedKnifeMatch) => {
+    const participant = (playerId: LodPlayerId | null) => playerId ? playerName(playerId) : match.settled ? "Freilos" : "Noch offen";
+    return <article key={match.id} className={`rounded-xl border p-3 ${match.bracket === "grand-final" ? "border-gold-300/35 bg-gold-300/[0.07]" : "border-white/[0.08] bg-black/15"}`}>
+      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/35">{match.id}</p>
+      <p className="mt-1 text-sm font-bold"><span>{participant(match.playerA)}</span><span className="px-2 text-white/25">vs.</span><span>{participant(match.playerB)}</span></p>
+      {match.playerA && match.playerB ? <select
+        className={`${inputClass} mt-2`}
+        aria-label={`Sieger ${match.id}`}
+        value={match.winner ?? ""}
+        onChange={(event) => update((next) => { next.knife = setKnifeMatchWinner(next.knife, match.id, event.target.value || null); })}
+      >
+        <option value="">Sieger auswählen</option>
+        <option value={match.playerA}>{playerName(match.playerA)}</option>
+        <option value={match.playerB}>{playerName(match.playerB)}</option>
+      </select> : <p className="mt-2 text-xs text-white/40">
+        {match.automatic && match.winner ? `${playerName(match.winner)} · Freilos` : match.settled ? "Kein Spiel erforderlich" : "Noch offen"}
+      </p>}
+    </article>;
+  };
+
+  return <div className="space-y-7">
+    <div className="flex flex-col gap-3 rounded-2xl border border-white/[0.08] bg-black/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div><p className="font-bold">16er-Bracket · 11 Spieler · 5 Freilose</p><p className="mt-1 text-xs text-white/40">Zwei Niederlagen eliminieren. Das Grand Final wird einmal gespielt.</p></div>
+      <Button type="button" size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => update((next) => { next.knife = createKnifeBracketState(); })}><Dices className="size-4" /> Neu auslosen</Button>
+    </div>
+    <section><h5 className="mb-3 text-xs font-black uppercase tracking-[0.16em] text-gold-400">Winner Bracket</h5><div className="grid gap-4 lg:grid-cols-4">{bracket.winnerRounds.map((matches, round) => <div key={winnerLabels[round]} className="space-y-2"><h6 className="text-xs font-bold text-white/55">{winnerLabels[round]}</h6>{matches.map(matchCard)}</div>)}</div></section>
+    <section><h5 className="mb-3 text-xs font-black uppercase tracking-[0.16em] text-red-300">Lower Bracket</h5><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{bracket.lowerRounds.map((matches, round) => <div key={round} className="space-y-2"><h6 className="text-xs font-bold text-white/55">Lower Round {round + 1}</h6>{matches.map(matchCard)}</div>)}</div></section>
+    <section className="rounded-2xl border border-gold-300/30 bg-gradient-to-br from-gold-300/[0.1] to-transparent p-4"><p className="text-xs font-black uppercase tracking-[0.18em] text-gold-300">Grand Final · kein Reset</p><div className="mt-3">{matchCard(bracket.grandFinal)}</div></section>
+  </div>;
 }
 
 function TimeTrialEditor({ state, update }: EditorProps) {
