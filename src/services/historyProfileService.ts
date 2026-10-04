@@ -230,7 +230,7 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
   const event = eventResult.data;
   if (!event) return null;
   const [statsResult, podiumResult, medalEventResult, attemptsResult, participantResult,
-    leadResult] = await Promise.all([
+    leadResult, rivalryResult, leadSegmentsResult] = await Promise.all([
     client.from("event_statistics").select("*").eq("event_id", eventId).maybeSingle(),
     client.from("event_podium").select("*").eq("event_id", eventId)
       .order("rank").order("best_time_hundredths").order("display_name"),
@@ -240,9 +240,15 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
       ? "event_final_standings"
       : "event_participant_statistics").select("*").eq("event_id", eventId),
     client.from("event_lead_participant_statistics").select("*").eq("event_id", eventId),
+    client.from("rivalry_pair_events").select("player_low_id,player_high_id,direct_takeovers")
+      .eq("event_id", eventId).eq("is_rivalry_event", true)
+      .order("direct_takeovers", { ascending: false })
+      .order("player_low_id").order("player_high_id"),
+    client.from("event_lead_segments").select("*").eq("event_id", eventId)
+      .order("sequence"),
   ]);
   for (const result of [statsResult, podiumResult, medalEventResult, attemptsResult,
-    participantResult, leadResult]) {
+    participantResult, leadResult, rivalryResult, leadSegmentsResult]) {
     if (result.error) throw result.error;
   }
   const podiumRows = medalEventResult.data ? (podiumResult.data ?? []) : [];
@@ -297,6 +303,8 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
     })
     : [];
   const stats = statsResult.data;
+  const participantsById = new Map(participantStats.flatMap((participant) =>
+    participant.playerId ? [[participant.playerId, participant] as const] : []));
   return {
     id: event.id,
     name: event.name?.trim() || "Spieleabend",
@@ -342,6 +350,25 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
       })),
     trophies: [],
     trophySpecialStats: null,
+    rivalries: (rivalryResult.data ?? []).map((row) => ({
+      playerLowId: row.player_low_id,
+      playerHighId: row.player_high_id,
+      playerLowName: participantsById.get(row.player_low_id)?.name ?? "Unbekannt",
+      playerHighName: participantsById.get(row.player_high_id)?.name ?? "Unbekannt",
+      directTakeovers: Number(row.direct_takeovers),
+    })),
+    eventLeadSegments: (leadSegmentsResult.data ?? []).map((row) => ({
+      playerId: row.player_id,
+      playerName: participantsById.get(row.player_id)?.name ?? "Unbekannt",
+      avatarUrl: participantsById.get(row.player_id)?.avatarUrl ?? null,
+      leadingTimeHundredths: row.leading_time_hundredths,
+      leadStartedAt: row.lead_started_at,
+      leadEndedAt: row.lead_ended_at,
+      durationSeconds: Number(row.duration_seconds),
+      qualificationStartedAt: row.qualification_started_at,
+      statisticalEndedAt: row.statistical_ended_at,
+      sequence: row.sequence,
+    })),
     extras: { loading: true, errors: {} },
   };
 }
@@ -460,7 +487,7 @@ export async function getPlayerCompareTimeline(
   seasonYear?: number,
 ): Promise<PlayerCompareTimelineAttempt[]> {
   let query = getSupabase().from("attempts")
-    .select("id,event_id,player_id,time_hundredths,is_dnf,submitted_at,events!inner(name,start_date,closed_at,ends_at,status,deleted_at)")
+    .select("id,event_id,player_id,time_hundredths,is_dnf,submitted_at,events!inner(name,start_date,status,deleted_at)")
     .in("player_id", [playerAId, playerBId])
     .eq("status", "approved").is("deleted_at", null).eq("is_ak", false)
     .eq("events.status", "closed").is("events.deleted_at", null);
@@ -482,7 +509,6 @@ export async function getPlayerCompareTimeline(
       eventId: row.event_id,
       eventName: event.name?.trim() || "Spieleabend",
       eventDate: event.start_date,
-      eventEndAt: event.closed_at ?? event.ends_at,
       playerId: row.player_id,
       timeHundredths: row.time_hundredths,
       isDnf: row.is_dnf,

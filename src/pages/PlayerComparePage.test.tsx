@@ -169,13 +169,19 @@ describe("PlayerComparePage", () => {
         closestDuel: events[0], biggestWin: events[0],
         currentStreak: { winners: ["a"], length: 1 },
         longestStreak: { winners: ["a"], length: 4 },
+        rivalry: {
+          commonEvents: 6, rivalryEvents: 1, directTakeovers: 3,
+          firstRivalryDate: "2026-01-05", lastRivalryDate: "2026-01-05",
+          playerALeadSeconds: 60, playerBLeadSeconds: 30,
+          playerATakeovers: 2, playerBTakeovers: 1,
+        },
       }, loading: false, error: "" },
       metricBundle: metricBundleState,
     };
     const markup = renderCompare("/compare?playerA=a&playerB=b");
     expect(markup).toContain("Head to Head");
     expect(markup).toContain("5 : 0");
-    expect(markup).toContain("1 Unentschieden · 6 gemeinsame Duelle");
+    expect(markup).toContain("1 Unentschieden · 6 Duelle mit gültigen Zeiten");
     expect(markup).toContain('href="/events/event-1"');
     expect(markup).toContain("Rivalry 5");
     expect(markup).not.toContain("Rivalry 6");
@@ -273,7 +279,6 @@ function sequence() {
   return {
     playerA: { longestSub3Streak: 2, longestNoDnfStreak: 4, fastestFirstAttemptHundredths: 280, attemptNumbers: points },
     playerB: { longestSub3Streak: 1, longestNoDnfStreak: 3, fastestFirstAttemptHundredths: 290, attemptNumbers: points },
-    rivalry: { playerALeadSeconds: 60, playerBLeadSeconds: 30, playerALeadTakes: 1, playerBLeadTakes: 0, qualifyingEventCount: 1 },
   };
 }
 

@@ -146,7 +146,6 @@ export function PlayerComparePage() {
           data={headToHead.data}
           loading={headToHead.loading}
           error={headToHead.error}
-          rivalry={{ data: deep.sequence.data?.rivalry ?? null, loading: deep.sequence.loading, error: deep.sequence.error }}
         />
       )}
 

@@ -103,4 +103,17 @@ describe("ProgressionTimeline mobile history disclosure", () => {
     expect(markup).toContain("stroke-gold-400");
     expect(markup).not.toContain("Ohne Daten");
   });
+
+  it("renders touch-safe shared zoom controls without horizontal page overflow", () => {
+    const markup = renderToStaticMarkup(<ProgressionTimeline points={[
+      point,
+      { ...point, id: "pb-2", achievedAt: "2026-04-01T10:00:00.000Z", achievedDate: "2026-04-01", timeHundredths: 240 },
+    ]} overlaySeries={[{ id: "lars", label: "Lars", points: [{ ...point, id: "lars-1", playerName: "Lars" }] }]} />);
+    expect(markup).toContain("data-progression-zoom-controls");
+    expect(markup).toContain('aria-label="Hineinzoomen"');
+    expect(markup).toContain('aria-label="Herauszoomen"');
+    expect(markup).toContain('aria-label="Gesamten Zeitraum anzeigen"');
+    expect(markup).toContain("touch-pan-y");
+    expect(markup).not.toContain("overflow-x-auto");
+  });
 });

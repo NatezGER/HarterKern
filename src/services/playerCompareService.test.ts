@@ -63,14 +63,14 @@ describe("playerCompareService", () => {
         : [event("shared", 320), event("only-b", 280)]);
     });
     getClosedEventIds.mockResolvedValue(["shared"]);
-    rpc.mockResolvedValue({ data: [{ event_id: "shared", direct_takeovers: 3, is_rivalry_event: true, common_events: 1, rivalry_events: 1, total_direct_takeovers: 3, first_rivalry_date: "2026-06-01", last_rivalry_date: "2026-06-01" }], error: null });
+    rpc.mockResolvedValue({ data: [{ event_id: "shared", direct_takeovers: 3, is_rivalry_event: true, common_events: 1, rivalry_events: 1, total_direct_takeovers: 3, first_rivalry_date: "2026-06-01", last_rivalry_date: "2026-06-01", player_a_lead_seconds: 60, player_b_lead_seconds: 30, player_a_takeovers: 2, player_b_takeovers: 1 }], error: null });
 
     const result = await loadPlayerHeadToHead("a", "b", 2026);
 
     expect(loadSection).toHaveBeenCalledWith("events", "a");
     expect(loadSection).toHaveBeenCalledWith("events", "b");
     expect(getClosedEventIds).toHaveBeenCalledWith(["shared"]);
-    expect(result).toMatchObject({ playerAWins: 1, totalDuels: 1, rivalry: { rivalryEvents: 1, directTakeovers: 3 }, events: [{ isRivalryEvent: true, directTakeovers: 3 }] });
+    expect(result).toMatchObject({ playerAWins: 1, totalDuels: 1, rivalry: { rivalryEvents: 1, directTakeovers: 3, playerALeadSeconds: 60, playerBTakeovers: 1 }, events: [{ isRivalryEvent: true, directTakeovers: 3 }] });
   });
 
   it("skips every H2H read until two different players are selected", async () => {

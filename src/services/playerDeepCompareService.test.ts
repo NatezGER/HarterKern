@@ -70,7 +70,7 @@ describe("playerDeepCompareService isolation", () => {
 function attempt(playerId: string, attemptNumber: number, timeHundredths: number, submittedAt: string) {
   return {
     id: `${playerId}-${attemptNumber}`, eventId: "shared", eventName: "Shared",
-    eventDate: "2026-01-01", eventEndAt: "2026-01-01T00:10:00Z", playerId,
+    eventDate: "2026-01-01", playerId,
     timeHundredths, isDnf: false, submittedAt, attemptNumber,
   };
 }

@@ -195,6 +195,12 @@ export interface Database {
         Relationships: [];
       };
       award_assets: AwardAssetsTable;
+      event_statistical_pauses: {
+        Row: { id: string; event_id: string; paused_at: string; resumed_at: string; description: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; event_id: string; paused_at: string; resumed_at: string; description?: string | null };
+        Update: Partial<Database["public"]["Tables"]["event_statistical_pauses"]["Insert"]>;
+        Relationships: [];
+      };
       admin_roles: {
         Row: { user_id: string; created_at: string };
         Insert: { user_id: string };
@@ -432,6 +438,26 @@ export interface Database {
         };
         Relationships: [];
       };
+      rivalry_pair_events: {
+        Row: {
+          event_id: string;
+          player_low_id: string;
+          player_high_id: string;
+          event_date: string;
+          closed_at: string;
+          direct_takeovers: number;
+          is_rivalry_event: boolean;
+          first_takeover_at: string | null;
+          last_takeover_at: string | null;
+          pair_started_at: string;
+          pair_ended_at: string;
+          low_lead_seconds: number;
+          high_lead_seconds: number;
+          low_takeovers: number;
+          high_takeovers: number;
+        };
+        Relationships: [];
+      };
       event_player_best_progression: {
         Row: {
           source_attempt_id: string;
@@ -586,7 +612,7 @@ export interface Database {
       };
       get_pair_rivalry: {
         Args: { p_player_a_id: string; p_player_b_id: string; p_season_year?: number | null };
-        Returns: Array<{ event_id: string | null; direct_takeovers: number; is_rivalry_event: boolean; common_events: number; rivalry_events: number; total_direct_takeovers: number; first_rivalry_date: string | null; last_rivalry_date: string | null }>;
+        Returns: Array<{ event_id: string | null; direct_takeovers: number; is_rivalry_event: boolean; common_events: number; rivalry_events: number; total_direct_takeovers: number; first_rivalry_date: string | null; last_rivalry_date: string | null; player_a_lead_seconds: number; player_b_lead_seconds: number; player_a_takeovers: number; player_b_takeovers: number; pair_started_at: string | null; pair_ended_at: string | null }>;
       };
       get_player_rivalries: {
         Args: { p_player_id: string };

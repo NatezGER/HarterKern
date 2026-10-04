@@ -27,7 +27,6 @@ const sequence: PlayerCompareSequencePair = {
     longestSub3Streak: 3, longestNoDnfStreak: 7, fastestFirstAttemptHundredths: 290,
     attemptNumbers: [{ attemptNumber: 1, samples: 1, validAttempts: 1, dnfCount: 0, averageHundredths: 310 }],
   },
-  rivalry: { playerALeadSeconds: 60, playerBLeadSeconds: 30, playerALeadTakes: 1, playerBLeadTakes: 0, qualifyingEventCount: 1 },
 };
 
 const performance: PlayerTimePerformance = {

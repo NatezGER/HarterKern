@@ -1,7 +1,4 @@
-import {
-  calculateDirectRivalry,
-  calculatePlayerSequenceStatistics,
-} from "@/lib/playerCompareDeep";
+import { calculatePlayerSequenceStatistics } from "@/lib/playerCompareDeep";
 import {
   getPlayerCompareTimeline,
   getPlayerPersonalProgression,
@@ -31,7 +28,6 @@ export async function loadPlayerCompareSequence(
       playerB: calculatePlayerSequenceStatistics(
         attempts.filter(({ playerId }) => playerId === playerBId),
       ),
-      rivalry: calculateDirectRivalry(attempts, playerAId, playerBId),
     }))
     .finally(() => {
       if (sequenceInFlight.get(key) === request) sequenceInFlight.delete(key);

@@ -140,7 +140,7 @@ describe("player profile core repository", () => {
 
     await expect(getPlayerCompareTimeline("player-a", "player-b", 2026)).resolves.toEqual([{
       id: "attempt-1", eventId: "event-1", eventName: "Finale", eventDate: "2026-01-01",
-      eventEndAt: "2026-01-01T13:00:00Z", playerId: "player-a", timeHundredths: 299,
+      playerId: "player-a", timeHundredths: 299,
       isDnf: false, submittedAt: "2026-01-01T12:00:00Z", attemptNumber: 1,
     }]);
     expect(mocks.from).toHaveBeenCalledWith("attempts");

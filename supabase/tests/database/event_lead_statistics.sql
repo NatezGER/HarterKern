@@ -56,8 +56,8 @@ select is((select count(*) from public.event_lead_segments
   0::bigint, 'a later identical best time creates no lead segment');
 select is((select max(lead_ended_at) from public.event_lead_segments
   where event_id = '98000000-0000-0000-0000-000000000100'),
-  '2026-08-01 18:50:00+02'::timestamptz,
-  'the last valid eligible attempt is the statistical event end');
+  '2026-08-01 19:00:00+02'::timestamptz,
+  'the last official DNF is the statistical event end');
 select isnt((select max(lead_ended_at) from public.event_lead_segments
   where event_id = '98000000-0000-0000-0000-000000000100'),
   '2026-08-04 18:00:00+02'::timestamptz,

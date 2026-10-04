@@ -7,7 +7,7 @@ import type { HeadToHeadSummary } from "@/types/historyProfiles";
 const event = (id: string, rivalry: boolean) => ({ eventId: id, eventName: id, eventDate: "2026-08-30", playerATimeHundredths: 242, playerBTimeHundredths: 250, winner: "a" as const, differenceHundredths: 8, isRivalryEvent: rivalry, directTakeovers: rivalry ? 3 : 0 });
 const data: HeadToHeadSummary = { playerAWins: 2, playerBWins: 0, ties: 0, totalDuels: 2,
   events: [event("pair-rivalry", true), event("normal-event", false)], closestDuel: event("pair-rivalry", true), biggestWin: event("normal-event", false), currentStreak: null, longestStreak: null,
-  rivalry: { commonEvents: 2, rivalryEvents: 1, directTakeovers: 3, firstRivalryDate: "2026-08-30", lastRivalryDate: "2026-08-30" } };
+  rivalry: { commonEvents: 2, rivalryEvents: 1, directTakeovers: 3, firstRivalryDate: "2026-08-30", lastRivalryDate: "2026-08-30", playerALeadSeconds: 60, playerBLeadSeconds: 30, playerATakeovers: 2, playerBTakeovers: 1 } };
 
 describe("HeadToHead rivalry presentation", () => {
   it("shows the pair summary and marks only its qualifying event", () => {
@@ -18,5 +18,20 @@ describe("HeadToHead rivalry presentation", () => {
     expect(markup).not.toContain("border-red-400/25");
     expect(markup).not.toContain("bg-red-400/[0.035]");
     expect(markup).not.toContain("shadow-[inset_3px_0_0_rgba(248,113,113,0.45)]");
+    expect(markup).toContain("1 Min.");
+    expect(markup).toContain("Führung direkt abgenommen");
+  });
+
+  it("keeps an official DNF-only pair visible without inventing a valid-time duel", () => {
+    const markup = renderToStaticMarkup(<MemoryRouter><HeadToHeadSection
+      playerAName="Paul" playerBName="Lars" loading={false} error=""
+      data={{ ...data, playerAWins: 0, totalDuels: 0, events: [], closestDuel: null,
+        biggestWin: null, rivalry: { ...data.rivalry!, commonEvents: 1,
+          rivalryEvents: 0, directTakeovers: 0, playerALeadSeconds: 0,
+          playerBLeadSeconds: 0, playerATakeovers: 0, playerBTakeovers: 0 } }}
+    /></MemoryRouter>);
+    expect(markup).toContain("0 Duelle mit gültigen Zeiten");
+    expect(markup).toContain("Gemeinsame Events");
+    expect(markup).not.toContain("Noch keine gemeinsamen Duelle");
   });
 });

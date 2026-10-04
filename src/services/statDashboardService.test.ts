@@ -65,4 +65,17 @@ describe("scope-aware statistic dashboard service", () => {
     expect(metrics.every(({ group }) => group === "volume")).toBe(true);
     expect(metrics.find(({ key }) => key === "two-in-sixty-best")?.minimumSample).toBe(1);
   });
+
+  it("maps separate rivalry-event and all-takeover pair values", () => {
+    const dashboard = mapStatisticDashboard({ metrics: [], rivalryPairs: [{
+      playerLowId: "a", playerHighId: "b", playerLowName: "A", playerHighName: "B",
+      rivalryEvents: 1, directTakeovers: 5, allDirectTakeovers: 7,
+      rivalryDirectTakeovers: 5, commonEvents: 3, spanDays: 10,
+      firstRivalryDate: "2026-01-01", lastRivalryDate: "2026-01-11",
+    }] }, "all-time");
+    expect(dashboard?.rivalryPairs[0]).toMatchObject({
+      allDirectTakeovers: 7, rivalryDirectTakeovers: 5,
+      firstRivalryDate: "2026-01-01", lastRivalryDate: "2026-01-11",
+    });
+  });
 });

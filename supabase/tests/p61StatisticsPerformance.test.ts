@@ -9,6 +9,10 @@ const migration059 = readFileSync(new URL(
   "../migrations/202609210059_compare_scoring_two_in_sixty_fix.sql",
   import.meta.url,
 ), "utf8");
+const migration060 = readFileSync(new URL(
+  "../migrations/202610040060_event_timing_pairwise_rivalries.sql",
+  import.meta.url,
+), "utf8");
 const sql = `${migration058}\n${migration059}`;
 
 describe("PR #61 statistics performance and semantics", () => {
@@ -63,17 +67,17 @@ describe("PR #61 statistics performance and semantics", () => {
   });
 
   it("filters career and historical rivalry metrics at the Trophy payload boundary", () => {
-    expect(sql).toContain("and (p_event_id is null or (\n      metric_key not like 'badge-%'");
-    expect(sql).toContain("and (p_event_id is null or (\n      metric->>'key' not like 'badge-%'");
-    expect(sql).toContain("metric_key not like 'badge-%'");
-    expect(sql).toContain("metric_key not like 'wr-%'");
-    expect(sql).toContain("metric_key not like 'rivalry-%'");
-    expect(sql).toContain("metric->>'key' not like 'badge-%'");
-    expect(sql).toContain("metric->>'key' not like 'wr-%'");
-    expect(sql).toContain("metric->>'key' not like 'rivalry-%'");
+    expect(migration059).toMatch(/and\s+\(p_event_id is null or \([\s\S]*?metric_key not like 'badge-%'/);
+    expect(migration060).toMatch(/and\s+\(p_event_id is null or \([\s\S]*?metric->>'key' not like 'badge-%'/);
+    expect(migration059).toContain("metric_key not like 'wr-%'");
+    expect(migration059).toContain("metric_key not like 'rivalry-%'");
+    expect(migration060).toContain("metric->>'key' not like 'wr-%'");
+    expect(migration060).toContain("metric->>'key' not like 'rivalry-%'");
     expect(migration058.match(/'pb-jump', 'rare-hunter', 'nemesis', 'favorite-opponent'/g))
       .toHaveLength(2);
     expect(migration059.match(/'pb-jump', 'rare-hunter', 'nemesis', 'favorite-opponent'/g))
+      .toHaveLength(1);
+    expect(migration060.match(/'pb-jump', 'rare-hunter', 'nemesis', 'favorite-opponent'/g))
       .toHaveLength(1);
   });
 });

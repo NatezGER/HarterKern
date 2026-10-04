@@ -3,7 +3,6 @@ import {
   calculateCompareLeadSummary,
   createCompareCategoryBalance,
   calculateComparePerformance,
-  calculateDirectRivalry,
   calculatePlayerSequenceStatistics,
   calculateProgressionCrossovers,
   mergePlayerProgressions,
@@ -75,26 +74,6 @@ describe("final player compare statistics", () => {
     expect(visibleAttemptNumbers(result.attemptNumbers, true, 2)).toHaveLength(3);
   });
 
-  it("calculates direct lead time and only true takeovers after comparable state", () => {
-    const attempts = [
-      attempt("shared", "a", 1, 300, "00:01"),
-      attempt("shared", "b", 1, 320, "00:02"),
-      attempt("shared", "b", 2, 290, "00:04"),
-      attempt("shared", "a", 2, 290, "00:06"),
-      attempt("shared", "a", 3, 280, "00:07"),
-      attempt("shared", "b", 3, 270, "00:08"),
-      attempt("shared", "a", 4, 260, "00:09"),
-      attempt("only-a", "a", 1, 250, "00:01"),
-    ];
-    expect(calculateDirectRivalry(attempts, "a", "b")).toEqual({
-      playerALeadSeconds: 240,
-      playerBLeadSeconds: 180,
-      playerALeadTakes: 1,
-      playerBLeadTakes: 2,
-      qualifyingEventCount: 1,
-    });
-  });
-
   it("merges progression dates and identifies actual leader crossovers", () => {
     const playerA = [progression("a1", "2026-01-01", 400), progression("a2", "2026-03-01", 370)];
     const playerB = [progression("b1", "2026-02-01", 380), progression("b2", "2026-04-01", 360)];
@@ -155,7 +134,6 @@ function attempt(
     eventId,
     eventName: eventId,
     eventDate: "2026-01-01",
-    eventEndAt: "2026-01-01T00:10:00Z",
     playerId,
     timeHundredths,
     isDnf,

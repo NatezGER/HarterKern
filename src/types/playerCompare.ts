@@ -67,7 +67,6 @@ export interface PlayerCompareTimelineAttempt {
   eventId: string;
   eventName: string;
   eventDate: string;
-  eventEndAt: string;
   playerId: string;
   timeHundredths: number | null;
   isDnf: boolean;
@@ -90,18 +89,9 @@ export interface PlayerCompareSequenceStatistics {
   attemptNumbers: CompareAttemptNumberPoint[];
 }
 
-export interface DirectRivalrySummary {
-  playerALeadSeconds: number;
-  playerBLeadSeconds: number;
-  playerALeadTakes: number;
-  playerBLeadTakes: number;
-  qualifyingEventCount: number;
-}
-
 export interface PlayerCompareSequencePair {
   playerA: PlayerCompareSequenceStatistics;
   playerB: PlayerCompareSequenceStatistics;
-  rivalry: DirectRivalrySummary;
 }
 
 export interface PlayerCompareProgressionPair {

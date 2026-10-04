@@ -58,10 +58,14 @@ export function mapStatisticDashboard(value: unknown, scope: StatisticScope): St
       playerHighName: string(pair.playerHighName) ?? "Unbekannt",
       rivalryEvents: number(pair.rivalryEvents) ?? 0,
       directTakeovers: number(pair.directTakeovers) ?? 0,
+      allDirectTakeovers: number(pair.allDirectTakeovers) ?? number(pair.directTakeovers) ?? 0,
+      rivalryDirectTakeovers: number(pair.rivalryDirectTakeovers) ?? 0,
       levelReached: pair.levelReached === true,
       commonEvents: number(pair.commonEvents) ?? undefined,
       intensityPercent: number(pair.intensityPercent),
       spanDays: number(pair.spanDays),
+      firstRivalryDate: string(pair.firstRivalryDate),
+      lastRivalryDate: string(pair.lastRivalryDate),
       balancePercent: number(pair.balancePercent),
     };
   });

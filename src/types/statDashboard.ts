@@ -41,10 +41,14 @@ export interface RivalryPairSummary {
   playerHighName: string;
   rivalryEvents: number;
   directTakeovers: number;
+  allDirectTakeovers?: number;
+  rivalryDirectTakeovers?: number;
   levelReached: boolean;
   commonEvents?: number;
   intensityPercent?: number | null;
   spanDays?: number | null;
+  firstRivalryDate?: string | null;
+  lastRivalryDate?: string | null;
   balancePercent?: number | null;
 }
 

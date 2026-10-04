@@ -61,6 +61,12 @@ const detail: EventDetail = {
     attempt("dnf", "2026-08-21T01:00:00Z", null, true),
   ],
   badges: [], photos: [], attemptNumbers: [], trophies: [], trophySpecialStats: null,
+  rivalries: [],
+  eventLeadSegments: [{ playerId: "player-1", playerName: "Paul", avatarUrl: null,
+    leadingTimeHundredths: 400, leadStartedAt: "2026-08-20T18:59:00Z",
+    leadEndedAt: "2026-08-21T01:00:00Z", durationSeconds: 21660,
+    qualificationStartedAt: "2026-08-20T18:59:00Z",
+    statisticalEndedAt: "2026-08-21T01:00:00Z", sequence: 1 }],
   extras: { loading: false, errors: {} },
 };
 
@@ -101,12 +107,12 @@ describe("EventResults polish", () => {
     }]);
   });
 
-  it("uses valid-attempt visual bounds, omits photos and keeps attempts last", () => {
+  it("uses canonical lead-window bounds, omits photos and keeps attempts last", () => {
     const markup = renderToStaticMarkup(
       <MemoryRouter><EventResults detail={detail} /></MemoryRouter>,
     );
     expect(markup).toContain('data-timeline-start="2026-08-20T18:59:00Z"');
-    expect(markup).toContain('data-timeline-end="2026-08-20T23:10:00Z"');
+    expect(markup).toContain('data-timeline-end="2026-08-21T01:00:00Z"');
     expect(markup).not.toContain(detail.closedAt ?? "");
     expect(markup).not.toContain("Eventfotos");
     expect(markup.indexOf("Versuchsnummern-Inhalt"))
@@ -127,6 +133,18 @@ describe("EventResults polish", () => {
     expect(standings.match(/>1\.<\/span>/g)?.length).toBe(2);
     expect(markup).toContain("DNF");
     expect(markup.indexOf("Podium")).toBeLessThan(markup.indexOf("Finale Bestenliste"));
+  });
+
+  it("shows canonical event rivalries and a restrained empty state", () => {
+    const rivalryMarkup = renderToStaticMarkup(<MemoryRouter><EventResults detail={{
+      ...detail,
+      rivalries: [{ playerLowId: "player-1", playerHighId: "player-2", playerLowName: "Paul", playerHighName: "Lars", directTakeovers: 4 }],
+    }} /></MemoryRouter>);
+    expect(rivalryMarkup).toContain("Rivalries dieses Events");
+    expect(rivalryMarkup).toContain("Paul ↔ Lars");
+    expect(rivalryMarkup).toContain("4 direkte Takeovers");
+    const emptyMarkup = renderToStaticMarkup(<MemoryRouter><EventResults detail={detail} /></MemoryRouter>);
+    expect(emptyMarkup).toContain("In diesem Event entstand keine Rivalry.");
   });
 
   it("labels Denmark from structured competition metadata", () => {

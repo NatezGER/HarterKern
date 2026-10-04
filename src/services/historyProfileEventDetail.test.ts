@@ -116,6 +116,8 @@ function arrangeCore(changes: Partial<Record<string, QueryResult>> = {}) {
       event_id: event.id, player_id: "player-1", lead_seconds: 600,
       event_best_breaks: 2,
     }], error: null },
+    rivalry_pair_events: { data: [], error: null },
+    event_lead_segments: { data: [], error: null },
     ...changes,
   };
   mocks.from.mockImplementation((table: string) => query(results[table]));
@@ -141,6 +143,8 @@ describe("event detail loading", () => {
       photos: [],
       trophies: [],
       trophySpecialStats: null,
+      rivalries: [],
+      eventLeadSegments: [],
       extras: { loading: true, errors: {} },
     });
     expect(detail?.attempts.some(({ isGuest }) => isGuest)).toBe(true);

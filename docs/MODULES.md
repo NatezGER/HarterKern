@@ -115,8 +115,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   mit eingebettetem `events` lädt beide Spieler, nur freigegebene reguläre
   Versuche aus abgeschlossenen, nicht gelöschten Events und filtert die Saison
   am Eventdatum. Er wird ausschließlich für Reihenfolgenwerte verwendet:
-  längste Unter-3-Serie, längste DNF-freie Serie, schnellster erster Versuch,
-  Versuch-Nummer-Mittel sowie direkte Rivalitätszeit und Führungswechsel.
+  längste Unter-3-Serie, längste DNF-freie Serie, schnellster erster Versuch
+  sowie Versuch-Nummer-Mittel. Rivalitätszeit und direkte Führungswechsel
+  stammen ausschließlich aus dem pair-scoped SQL-RPC.
   Unter-3-Serien werden dabei an jeder Eventgrenze zurückgesetzt.
 - **PB-Progression:** Je Spieler genau ein bestehender persönlicher Read:
   All-Time `player_pb_history`, saisonal `get_player_season_pb_history`. Es
@@ -145,16 +146,14 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   src/components/progression/ProgressionTimeline.test.tsx src/services/dataGroupService.test.ts`.
 - **Direkte Abhängigkeiten:** Spieler-Stammdaten, Spielerprofil-Core,
   Saisonkontext und Zeitquoten.
-- **H2H-Semantik:** Nur abgeschlossene gemeinsame Events mit je mindestens
-  einer qualifizierten gültigen Eventbestzeit zählen. Ties beenden Serien und
-  werden nicht in den großen A:B-Score eingerechnet. Direkte Führungszeit zählt
-  erst, sobald beide Spieler im jeweiligen Event eine vergleichbare gültige Zeit
-  besitzen, und endet spätestens mit Eventschluss. Eine direkte Führungsübernahme
-  zählt nur beim Wechsel vom bislang führenden Gegner zum Einreicher; erster
-  vergleichbarer Vorsprung und Gleichstände zählen nicht als Übernahme.
-- **Rivalitäts-Events:** `event_direct_lead_takeovers` projiziert strikte
-  Führungsübernahmen aus qualifizierten Versuchen. Drei direkte Wechsel desselben
-  kanonisierten Paars im abgeschlossenen Event bilden ein Rivalitäts-Event.
+- **H2H-Semantik:** Das Paarfenster beginnt mit dem jeweils ersten offiziellen
+  Versuch beider Spieler und endet mit dem letzten Versuch eines der beiden;
+  DNF zählt für diese Grenzen. Gültige persönliche Event-PBs bestimmen die
+  Führung. Pausen werden über die zentrale Active-Seconds-Funktion abgezogen.
+- **Rivalitäts-Events:** `event_direct_lead_takeovers` projiziert ausschließlich
+  paarweise PB-Führungsübernahmen. Drei direkte Wechsel desselben kanonisierten
+  Paars im abgeschlossenen Event bilden ein Rivalitäts-Event; die globale
+  Eventführung ist dafür irrelevant.
   Compare nutzt einen pair-scoped RPC; Profile einen unabhängigen player-scoped
   Summary-RPC. Badge-Proofs fließen durch den bestehenden Ledger-Sync.
 - **Kategorienbilanz:** 18 All-Time- beziehungsweise 19 Saisonkategorien sind
@@ -202,7 +201,8 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   `player_trophies`; historische `sync_*`-RPCs.
 - **Eventdetail:** Eventfotos werden nicht mehr geladen oder gerendert. Ein
   gebündelter Lead-Read ergänzt pro permanentem Spieler Führungssekunden und
-  gebrochene Eventbestzeiten.
+  gebrochene Eventbestzeiten. Abgeschlossene Events lesen zusätzlich ihre
+  qualifizierten Paare aus `rivalry_pair_events` für „Rivalries dieses Events“.
 - **Trophy-Statistiken:** Live und geschlossenes Trophy-Event nutzen denselben
   `get_trophy_event_dashboard`-Read (eine Client-Anfrage pro Refresh). Er bündelt
   die vorhandenen Most-Wanted-/BINGO-Daten mit event-gefilterten Top-Rankings;
@@ -267,6 +267,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Eventführung:** Die vorhandene saisonfilterbare Abfrage liefert zusätzlich
   strikt gebrochene Eventbestzeiten und wird kompakt innerhalb der
   Ligastatistiken dargestellt.
+- **Rivalry-Auswertungen:** Paar-Rankings trennen Rivalry-Events, deren
+  zeitliche Spanne und Takeovers innerhalb qualifizierter Rivalry-Events von
+  sämtlichen direkten Paar-Takeovers unterhalb oder oberhalb der Schwelle.
 
 ## 9. Prestige, Badges, Trophäen und Liga-Momente
 

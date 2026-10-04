@@ -1,4 +1,4 @@
-import { CalendarDays, CircleX, Star, Target, Timer, Trophy, Users } from "lucide-react";
+import { CalendarDays, CircleX, Star, Swords, Target, Timer, Trophy, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EventAttemptList } from "@/components/events/EventAttemptList";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
@@ -8,7 +8,6 @@ import { formatDate, formatTime } from "@/utils/format";
 import type { EventDetail } from "@/types/historyProfiles";
 import { ProgressionTimeline } from "@/components/progression/ProgressionTimeline";
 import { PlayerOverlaySelector } from "@/components/progression/PlayerOverlaySelector";
-import { buildEventLeadProgression } from "@/lib/eventLeadProgression";
 import { PodiumMedal } from "@/components/common/PodiumMedal";
 import { cn } from "@/lib/cn";
 import { TrophyCabinet } from "@/components/common/TrophyCabinet";
@@ -25,13 +24,25 @@ const displayTime = (value: number | null) => value == null ? "—" : formatTime
 export function EventResults({ detail }: { detail: EventDetail }) {
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const podium = detail.podium.filter(({ rank }) => rank != null && rank <= 3);
-  const validAttempts = detail.attempts.filter((attempt) => !attempt.isDnf
-    && !attempt.isAk && attempt.timeHundredths != null)
-    .sort((left, right) => left.submittedAt.localeCompare(right.submittedAt)
-      || left.id.localeCompare(right.id));
-  const visualStartAt = validAttempts[0]?.submittedAt;
-  const visualEndAt = validAttempts.at(-1)?.submittedAt;
-  const eventProgression = buildEventLeadProgression(detail.attempts, visualEndAt ?? null).map((point) => ({ id: point.id, playerId: point.playerId ?? point.guestId ?? undefined, playerName: point.name, avatarUrl: point.avatarUrl, timeHundredths: point.timeHundredths, achievedAt: point.submittedAt, achievedDate: point.submittedAt.slice(0, 10), periodEndAt: point.periodEndAt, eventId: detail.id, sourceLabel: detail.name, improvementHundredths: point.improvementHundredths, durationDays: 0, durationLabel: point.durationLabel, attemptNumber: point.attemptNumber, hasExactTime: true, isCurrent: false }));
+  const visualStartAt = detail.eventLeadSegments[0]?.qualificationStartedAt;
+  const visualEndAt = detail.eventLeadSegments.at(-1)?.statisticalEndedAt;
+  const eventProgression = detail.eventLeadSegments.map((segment, index) => ({
+    id: `${detail.id}:lead:${segment.sequence}`,
+    playerId: segment.playerId,
+    playerName: segment.playerName,
+    avatarUrl: segment.avatarUrl,
+    timeHundredths: segment.leadingTimeHundredths,
+    achievedAt: segment.leadStartedAt,
+    achievedDate: segment.leadStartedAt.slice(0, 10),
+    periodEndAt: segment.leadEndedAt,
+    eventId: detail.id,
+    sourceLabel: detail.name,
+    improvementHundredths: index === 0 ? null : detail.eventLeadSegments[index - 1].leadingTimeHundredths - segment.leadingTimeHundredths,
+    durationDays: 0,
+    durationLabel: formatLeadDuration(segment.durationSeconds),
+    hasExactTime: true,
+    isCurrent: false,
+  }));
   const eventOptions = useMemo(
     () => eventParticipantOptions(detail.participantStats),
     [detail.participantStats],
@@ -93,6 +104,18 @@ export function EventResults({ detail }: { detail: EventDetail }) {
             const className = "flex min-h-16 items-center gap-3 px-3 py-3 sm:min-h-20 sm:gap-4 sm:px-6";
             return entry.playerId ? <Link key={entry.playerId} to={`/player/${entry.playerId}`} data-rank={entry.rank ?? undefined} className={`${className} transition hover:bg-white/[0.03]`}>{row}</Link> : <div key={entry.guestId ?? entry.name} data-rank={entry.rank ?? undefined} className={className}>{row}</div>;
           })}
+        </div>
+      </section>}
+
+      {detail.status === "closed" && <section className="order-4">
+        <h2 className="display-title mb-3 text-2xl sm:mb-5 sm:text-3xl">Rivalries dieses Events</h2>
+        <div className="panel overflow-hidden">
+          {detail.rivalries.length ? <ol className="divide-y divide-white/[0.06]">{detail.rivalries.map((rivalry) => <li key={`${rivalry.playerLowId}:${rivalry.playerHighId}`} className="flex flex-wrap items-center gap-3 p-4 sm:flex-nowrap sm:p-5">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full border border-red-300/20 bg-red-400/10 text-red-100"><Swords className="size-4" /></span>
+            <strong className="min-w-0 flex-1 font-display text-lg uppercase sm:text-xl">{rivalry.playerLowName} ↔ {rivalry.playerHighName}</strong>
+            <span className="rounded-full border border-red-300/20 bg-red-400/10 px-3 py-1 text-xs font-black uppercase tracking-wide text-red-100/80">Rivalry-Event</span>
+            <span className="w-full text-sm tabular-nums text-gold-200 sm:w-auto">{rivalry.directTakeovers} direkte Takeovers</span>
+          </li>)}</ol> : <p className="p-8 text-center text-sm text-white/40">In diesem Event entstand keine Rivalry.</p>}
         </div>
       </section>}
 

@@ -164,10 +164,12 @@ Examples:
 - Raw attempts are reserved for sequence-dependent facts such as streaks,
   takeovers and rolling windows. Ordinary totals and rates use aggregate read
   models.
-- Matrix-Glitch, Eventmuster und statistische Leadership-Wechsel reuse one
-  scope-first ordered attempt population. Statistical leadership starts only
-  after the third distinct regular player has a valid time; persisted rivalry
-  views and awards keep their independent closed-event semantics.
+- Matrix-Glitch und Eventmuster reuse ihre scope-first ordered attempt
+  population. Statistische Eventführung beginnt mit dem offiziellen Versuch
+  des dritten regulären Spielers; DNF zählt für Qualifikation und Zeitgrenzen.
+  Paarweise Rivalries verwenden unabhängig von der globalen Eventführung die
+  chronologischen persönlichen Event-PBs. Explizite Eventpausen werden zentral
+  und ohne doppelte Überschneidungszeit abgezogen.
 - `2 in 60` reuses the canonical Secret-Hall-of-Fame rule: adjacent valid
   attempts of one regular player in one event, at most 180 timestamp seconds
   apart. Overlapping adjacent pairs count independently.

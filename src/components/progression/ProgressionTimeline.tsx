@@ -1,10 +1,10 @@
-import { Crown, History, TrendingDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Crown, History, RotateCcw, TrendingDown, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
-import { buildProgressionCoordinates, buildStepPath, formatCurrentRecordDuration, formatRecordDuration, formatTimelineMoment } from "@/lib/progression";
+import { buildProgressionCoordinates, buildStepPath, createTimeViewport, formatCurrentRecordDuration, formatRecordDuration, formatTimelineMoment, panTimeViewport, selectViewportPoints, zoomTimeViewport } from "@/lib/progression";
 import { formatDate, formatTime } from "@/utils/format";
 
 export interface TimelinePoint {
@@ -38,7 +38,7 @@ const overlayStyles = [
   { path: "stroke-sky-300", legend: "bg-sky-300" },
 ];
 
-export function ProgressionTimeline({ points, comparisonPoints = [], overlaySeries = [], domainStartAt, domainEndAt, emptyLabel = "Noch keine Progression vorhanden.", primaryLabel = "PB", comparisonLabel = "Weltrekord", primaryToggleable = false, primaryInitiallyVisible = true, comparisonInitiallyVisible = false, compact = false, showHistory = true, primaryCrossoverIds = [], comparisonCrossoverIds = [], historyDisclosure }: {
+export function ProgressionTimeline({ points, comparisonPoints = [], overlaySeries = [], domainStartAt, domainEndAt, emptyLabel = "Noch keine Progression vorhanden.", primaryLabel = "PB", comparisonLabel = "Weltrekord", primaryToggleable = false, primaryInitiallyVisible = true, comparisonInitiallyVisible = false, showHistory = true, primaryCrossoverIds = [], comparisonCrossoverIds = [], historyDisclosure }: {
   points: TimelinePoint[];
   comparisonPoints?: TimelinePoint[];
   overlaySeries?: TimelineOverlaySeries[];
@@ -61,14 +61,22 @@ export function ProgressionTimeline({ points, comparisonPoints = [], overlaySeri
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const fullViewport = useMemo(() => createTimeViewport([
+    ...points, ...comparisonPoints, ...overlaySeries.flatMap(({ points }) => points),
+  ].flatMap((point) => [point.axisAt ?? point.achievedAt, point.periodEndAt].filter((value): value is string => Boolean(value))), domainStartAt, domainEndAt), [comparisonPoints, domainEndAt, domainStartAt, overlaySeries, points]);
+  const [viewport, setViewport] = useState(fullViewport);
+  useEffect(() => { setViewport(fullViewport); setPinnedId(null); setHoveredId(null); }, [fullViewport]);
+  const activeViewport = viewport ?? fullViewport;
+  const zoomed = Boolean(fullViewport && activeViewport && (activeViewport.startMs > fullViewport.startMs || activeViewport.endMs < fullViewport.endMs));
   const plotted = useMemo(() => {
+    const visible = <T extends TimelinePoint>(series: T[]) => activeViewport ? selectViewportPoints(series, activeViewport) : series;
     const combined = [
-      ...(showPrimary ? points.map((point) => ({ ...point, id: `primary:${point.id}`, originalId: point.id, series: "primary" as const })) : []),
-      ...(showComparison ? comparisonPoints.map((point) => ({ ...point, id: `comparison:${point.id}`, originalId: point.id, series: "comparison" as const })) : []),
-      ...overlaySeries.flatMap((series) => series.points.map((point) => ({ ...point, id: `overlay:${series.id}:${point.id}`, originalId: point.id, series: `overlay:${series.id}`, seriesLabel: series.label }))),
+      ...(showPrimary ? visible(points).map((point) => ({ ...point, id: `primary:${point.id}`, originalId: point.id, series: "primary" as const })) : []),
+      ...(showComparison ? visible(comparisonPoints).map((point) => ({ ...point, id: `comparison:${point.id}`, originalId: point.id, series: "comparison" as const })) : []),
+      ...overlaySeries.flatMap((series) => visible(series.points).map((point) => ({ ...point, id: `overlay:${series.id}:${point.id}`, originalId: point.id, series: `overlay:${series.id}`, seriesLabel: series.label }))),
     ];
-    return buildProgressionCoordinates(combined, { startAt: domainStartAt, endAt: domainEndAt }).map(({ originalId, ...point }) => ({ ...point, id: originalId })) as PlottedPoint[];
-  }, [comparisonPoints, domainEndAt, domainStartAt, overlaySeries, points, showComparison, showPrimary]);
+    return buildProgressionCoordinates(combined, activeViewport ? { startAt: new Date(activeViewport.startMs).toISOString(), endAt: new Date(activeViewport.endMs).toISOString() } : { startAt: domainStartAt, endAt: domainEndAt }).map(({ originalId, ...point }) => ({ ...point, id: originalId })) as PlottedPoint[];
+  }, [activeViewport, comparisonPoints, domainEndAt, domainStartAt, overlaySeries, points, showComparison, showPrimary]);
   useEffect(() => {
     const close = (event: PointerEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) setPinnedId(null);
@@ -97,8 +105,15 @@ export function ProgressionTimeline({ points, comparisonPoints = [], overlaySeri
         <Button type="button" variant={showComparison ? "default" : "outline"} size="sm" onClick={() => { setShowComparison((value) => !value); setPinnedId(null); }}>{showComparison ? `Nur ${primaryLabel}` : `Mit ${comparisonLabel} vergleichen`}</Button>
       </div>}
       {overlaySeries.some(({ points }) => points.length > 0) && <div className="flex flex-wrap gap-3 text-[10px] font-bold uppercase tracking-[0.12em] text-white/55">{overlaySeries.map((series, index) => series.points.length > 0 ? <span key={series.id} className="flex items-center gap-2"><i className={cn("h-0.5 w-6", overlayStyles[index % overlayStyles.length].legend)} />{series.label}</span> : null)}</div>}
-      <div data-progression-chart className={cn("pb-2", compact ? "overflow-hidden" : "overflow-x-auto")}>
-        <div className={cn("relative h-64 overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20 sm:h-72", compact ? "min-w-0" : "min-w-[42rem] sm:min-w-[52rem]")}>
+      {fullViewport && fullViewport.endMs > fullViewport.startMs && <div data-progression-zoom-controls className="flex flex-wrap items-center justify-end gap-2">
+        <Button type="button" variant="outline" size="sm" aria-label="Zeitraum zurück" disabled={!zoomed || activeViewport?.startMs === fullViewport.startMs} onClick={() => activeViewport && setViewport(panTimeViewport(activeViewport, fullViewport, -1))}><ChevronLeft className="size-4" /></Button>
+        <Button type="button" variant="outline" size="sm" aria-label="Hineinzoomen" onClick={() => activeViewport && setViewport(zoomTimeViewport(activeViewport, fullViewport, 0.5))}><ZoomIn className="size-4" /></Button>
+        <Button type="button" variant="outline" size="sm" aria-label="Herauszoomen" disabled={!zoomed} onClick={() => activeViewport && setViewport(zoomTimeViewport(activeViewport, fullViewport, 2))}><ZoomOut className="size-4" /></Button>
+        <Button type="button" variant="outline" size="sm" aria-label="Gesamten Zeitraum anzeigen" disabled={!zoomed} onClick={() => setViewport(fullViewport)}><RotateCcw className="size-4" /><span className="ml-1">Gesamt</span></Button>
+        <Button type="button" variant="outline" size="sm" aria-label="Zeitraum vor" disabled={!zoomed || activeViewport?.endMs === fullViewport.endMs} onClick={() => activeViewport && setViewport(panTimeViewport(activeViewport, fullViewport, 1))}><ChevronRight className="size-4" /></Button>
+      </div>}
+      <div data-progression-chart className="overflow-hidden pb-2 touch-pan-y">
+        <div className="relative h-64 min-w-0 overflow-hidden rounded-2xl border border-white/[0.06] bg-black/20 sm:h-72">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:12.5%_25%]" />
           <TimelinePath points={comparison} className="stroke-cyan-300/70" dashed wide />
           {overlays.map((series, index) => <TimelinePath key={series.id} points={series.plotted} className={overlayStyles[index % overlayStyles.length].path} dashed />)}
@@ -123,8 +138,8 @@ export function ProgressionTimeline({ points, comparisonPoints = [], overlaySeri
           })}
           <span className="absolute left-3 top-3 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-bold text-white/30">{formatTime(slowestTime / 100)}</span>
           <span className="absolute bottom-8 left-3 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-bold text-white/30">{formatTime(fastestTime / 100)}</span>
-          <span className="absolute bottom-2 left-3 text-[8px] font-bold uppercase tracking-[0.14em] text-white/25">{formatDate(orderedDates[0].achievedDate)}</span>
-          <span className="absolute bottom-2 right-3 text-[8px] font-bold uppercase tracking-[0.14em] text-white/25">{formatDate(orderedDates.at(-1)?.achievedDate ?? orderedDates[0].achievedDate)}</span>
+          <span className="absolute bottom-2 left-3 text-[8px] font-bold uppercase tracking-[0.14em] text-white/25">{formatDate(activeViewport ? new Date(activeViewport.startMs).toISOString().slice(0, 10) : orderedDates[0].achievedDate)}</span>
+          <span className="absolute bottom-2 right-3 text-[8px] font-bold uppercase tracking-[0.14em] text-white/25">{formatDate(activeViewport ? new Date(activeViewport.endMs).toISOString().slice(0, 10) : orderedDates.at(-1)?.achievedDate ?? orderedDates[0].achievedDate)}</span>
           <TrendingDown className="absolute right-4 top-4 size-5 text-gold-400/40" />
         </div>
       </div>

@@ -10,7 +10,6 @@ import type {
   HeadToHeadStreak,
   HeadToHeadSummary,
 } from "@/types/historyProfiles";
-import type { DirectRivalrySummary } from "@/types/playerCompare";
 import { formatDate, formatTime } from "@/utils/format";
 
 interface HeadToHeadSectionProps {
@@ -19,7 +18,6 @@ interface HeadToHeadSectionProps {
   data: HeadToHeadSummary | null;
   loading: boolean;
   error: string;
-  rivalry?: { data: DirectRivalrySummary | null; loading: boolean; error: string };
 }
 
 export function HeadToHeadSection({
@@ -28,7 +26,6 @@ export function HeadToHeadSection({
   data,
   loading,
   error,
-  rivalry,
 }: HeadToHeadSectionProps) {
   const [expanded, setExpanded] = useState(false);
   if (loading) {
@@ -37,7 +34,7 @@ export function HeadToHeadSection({
   if (error) {
     return <section data-compare-h2h className="panel border-gold-400/15 p-5 text-center text-sm text-amber-100/70">{error}</section>;
   }
-  if (!data || data.totalDuels === 0) {
+  if (!data || (data.totalDuels === 0 && !data.rivalry?.commonEvents)) {
     return (
       <section data-compare-h2h className="panel border-gold-400/15 p-5 sm:p-7">
         <SectionHeading eyebrow="Das direkte Duell" title="Head to Head" />
@@ -61,11 +58,11 @@ export function HeadToHeadSection({
             <ScoreName name={playerBName} />
           </div>
           <p className="mt-3 text-xs font-semibold text-white/40 sm:text-sm">
-            {data.ties} {data.ties === 1 ? "Unentschieden" : "Unentschieden"} · {data.totalDuels} gemeinsame {data.totalDuels === 1 ? "Duell" : "Duelle"}
+            {data.ties} {data.ties === 1 ? "Unentschieden" : "Unentschieden"} · {data.totalDuels} Duelle mit gültigen Zeiten
           </p>
         </div>
 
-        {rivalry && <DirectRivalryMetrics {...rivalry} playerAName={playerAName} playerBName={playerBName} />}
+        {data.rivalry && <DirectRivalryMetrics data={data.rivalry} playerAName={playerAName} playerBName={playerBName} />}
 
         {data.rivalry && <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-3">
           <RivalryStat label="Gemeinsame Events" value={data.rivalry.commonEvents} />
@@ -133,23 +130,17 @@ export function HeadToHeadSection({
 
 function DirectRivalryMetrics({
   data,
-  loading,
-  error,
   playerAName,
   playerBName,
 }: {
-  data: DirectRivalrySummary | null;
-  loading: boolean;
-  error: string;
+  data: NonNullable<HeadToHeadSummary["rivalry"]>;
   playerAName: string;
   playerBName: string;
 }) {
-  if (loading) return <p className="mt-4 text-center text-xs text-white/35">Direkte Rivalry-Zeit wird geladen …</p>;
-  if (error || !data) return <p className="mt-4 text-center text-xs text-amber-100/55">{error || "Direkte Rivalry-Werte sind nicht verfügbar."}</p>;
   return (
     <div className="mt-4 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] sm:mt-5">
       <RivalryRow label="Direkte Führungszeit" left={formatLeadDuration(data.playerALeadSeconds)} right={formatLeadDuration(data.playerBLeadSeconds)} playerAName={playerAName} playerBName={playerBName} />
-      <RivalryRow label="Führung direkt abgenommen" left={String(data.playerALeadTakes)} right={String(data.playerBLeadTakes)} playerAName={playerAName} playerBName={playerBName} />
+      <RivalryRow label="Führung direkt abgenommen" left={String(data.playerATakeovers)} right={String(data.playerBTakeovers)} playerAName={playerAName} playerBName={playerBName} />
     </div>
   );
 }

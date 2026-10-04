@@ -113,6 +113,27 @@ export interface EventAttemptNumberPoint {
   slowestHundredths: number;
 }
 
+export interface EventRivalrySummary {
+  playerLowId: string;
+  playerHighId: string;
+  playerLowName: string;
+  playerHighName: string;
+  directTakeovers: number;
+}
+
+export interface EventLeadSegmentDetail {
+  playerId: string;
+  playerName: string;
+  avatarUrl: string | null;
+  leadingTimeHundredths: number;
+  leadStartedAt: string;
+  leadEndedAt: string;
+  durationSeconds: number;
+  qualificationStartedAt: string;
+  statisticalEndedAt: string;
+  sequence: number;
+}
+
 export interface EventDetail {
   id: string;
   name: string;
@@ -139,6 +160,8 @@ export interface EventDetail {
   attemptNumbers: EventAttemptNumberPoint[];
   trophies: TrophyAward[];
   trophySpecialStats: TrophyEventSpecialStats | null;
+  rivalries: EventRivalrySummary[];
+  eventLeadSegments: EventLeadSegmentDetail[];
   extras?: {
     loading: boolean;
     errors: Partial<Record<"badges" | "trophies" | "trophySpecialStats", string>>;
@@ -176,6 +199,10 @@ export interface PairRivalrySummary {
   directTakeovers: number;
   firstRivalryDate: string | null;
   lastRivalryDate: string | null;
+  playerALeadSeconds: number;
+  playerBLeadSeconds: number;
+  playerATakeovers: number;
+  playerBTakeovers: number;
 }
 
 export interface HeadToHeadStreak {

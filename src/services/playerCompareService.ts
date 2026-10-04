@@ -109,6 +109,10 @@ export async function loadPlayerHeadToHead(
       directTakeovers: Number(totals?.total_direct_takeovers ?? 0),
       firstRivalryDate: totals?.first_rivalry_date ?? null,
       lastRivalryDate: totals?.last_rivalry_date ?? null,
+      playerALeadSeconds: Number(totals?.player_a_lead_seconds ?? 0),
+      playerBLeadSeconds: Number(totals?.player_b_lead_seconds ?? 0),
+      playerATakeovers: Number(totals?.player_a_takeovers ?? 0),
+      playerBTakeovers: Number(totals?.player_b_takeovers ?? 0),
     },
   };
 }

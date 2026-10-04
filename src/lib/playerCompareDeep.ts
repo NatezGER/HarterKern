@@ -4,7 +4,6 @@ import type {
   CompareCategoryValue,
   CompareAttemptNumberPoint,
   CompareLeadSummary,
-  DirectRivalrySummary,
   PlayerCompareSequenceStatistics,
   PlayerCompareTimelineAttempt,
   ProgressionCrossover,
@@ -108,50 +107,6 @@ export function calculateAttemptNumberStatistics(
         averageHundredths: roundedMean(times),
       };
     });
-}
-
-export function calculateDirectRivalry(
-  attempts: PlayerCompareTimelineAttempt[],
-  playerAId: string,
-  playerBId: string,
-): DirectRivalrySummary {
-  const summary: DirectRivalrySummary = {
-    playerALeadSeconds: 0,
-    playerBLeadSeconds: 0,
-    playerALeadTakes: 0,
-    playerBLeadTakes: 0,
-    qualifyingEventCount: 0,
-  };
-  const byEvent = groupBy(attempts, ({ eventId }) => eventId);
-  for (const eventAttempts of byEvent.values()) {
-    const hasValidA = eventAttempts.some((attempt) => attempt.playerId === playerAId && isValidAttempt(attempt));
-    const hasValidB = eventAttempts.some((attempt) => attempt.playerId === playerBId && isValidAttempt(attempt));
-    if (!hasValidA || !hasValidB) continue;
-    summary.qualifyingEventCount += 1;
-    let bestA: number | null = null;
-    let bestB: number | null = null;
-    let leader: "a" | "b" | null = null;
-    let lastAt: string | null = null;
-    const ordered = orderAttempts(eventAttempts);
-    for (const attempt of ordered) {
-      if (lastAt) addLeadDuration(summary, leader, lastAt, attempt.submittedAt);
-      const previousLeader = leader;
-      if (isValidAttempt(attempt)) {
-        if (attempt.playerId === playerAId) bestA = minimumValue(bestA, attempt.timeHundredths!);
-        if (attempt.playerId === playerBId) bestB = minimumValue(bestB, attempt.timeHundredths!);
-      }
-      leader = directLeader(bestA, bestB);
-      if (previousLeader === "b" && leader === "a" && attempt.playerId === playerAId) {
-        summary.playerALeadTakes += 1;
-      }
-      if (previousLeader === "a" && leader === "b" && attempt.playerId === playerBId) {
-        summary.playerBLeadTakes += 1;
-      }
-      lastAt = attempt.submittedAt;
-    }
-    if (lastAt) addLeadDuration(summary, leader, lastAt, ordered[0].eventEndAt);
-  }
-  return summary;
 }
 
 export function visibleAttemptNumbers<T>(points: T[], expanded: boolean, limit = 5) {
@@ -288,32 +243,7 @@ function minimum(values: number[]) {
   return values.length === 0 ? null : Math.min(...values);
 }
 
-function minimumValue(current: number | null, candidate: number) {
-  return current == null ? candidate : Math.min(current, candidate);
-}
-
 function directLeader(bestA: number | null, bestB: number | null): "a" | "b" | null {
   if (bestA == null || bestB == null || bestA === bestB) return null;
   return bestA < bestB ? "a" : "b";
-}
-
-function addLeadDuration(
-  summary: DirectRivalrySummary,
-  leader: "a" | "b" | null,
-  startAt: string,
-  endAt: string,
-) {
-  if (!leader) return;
-  const seconds = Math.max(0, Math.floor((Date.parse(endAt) - Date.parse(startAt)) / 1_000));
-  if (leader === "a") summary.playerALeadSeconds += seconds;
-  else summary.playerBLeadSeconds += seconds;
-}
-
-function groupBy<T, Key>(values: T[], keyOf: (value: T) => Key) {
-  const grouped = new Map<Key, T[]>();
-  for (const value of values) {
-    const key = keyOf(value);
-    grouped.set(key, [...(grouped.get(key) ?? []), value]);
-  }
-  return grouped;
 }
