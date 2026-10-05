@@ -68,7 +68,7 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
   "profile-events": 0,
   "event-detail": 0,
   live: 8,
-  dashboard: 12,
+  dashboard: 13,
   statistics: 5,
   "prestige-activities": 2,
   "group-milestones": 1,
@@ -109,10 +109,17 @@ export function getRouteDataPlan(pathname: string): RouteDataPlan {
   if (pathname === "/events") return { required: ["events"], optional: [] };
   if (pathname === "/stats") {
     return {
-      required: ["statistics", "historical"],
-      optional: ["most-wanted", "badge-rarity"],
+      required: ["statistics"],
+      optional: [],
     };
   }
+  if (pathname === "/stats/performance") return {
+    required: ["statistics", "historical"], optional: ["most-wanted"],
+  };
+  if (pathname === "/stats/rivalries") return { required: ["navigation"], optional: [] };
+  if (pathname === "/stats/badges") return {
+    required: ["statistics"], optional: ["most-wanted", "badge-rarity"],
+  };
   if (pathname === "/events/live" || pathname === "/settings") {
     return { required: ["live"], optional: [] };
   }
@@ -161,13 +168,14 @@ async function loadUncached(group: DataGroup, season: SeasonSelection): Promise<
       };
     }
     case "dashboard": {
-      const [players, leaderboard, dailyWinners, worldRecordHistory, events] =
+      const [players, leaderboard, dailyWinners, worldRecordHistory, events, statistics] =
         await Promise.all([
           getPlayers(season),
           getLeaderboard(season),
           getDailyWinners(season),
           getWorldRecordHistory(season),
           getEvents(season, false),
+          getGlobalStatistics(ALL_TIME_SEASON),
         ]);
       const leader = leaderboard[0];
       const leaderPlayer = leader && players.find(({ id }) => id === leader.playerId);
@@ -185,7 +193,7 @@ async function loadUncached(group: DataGroup, season: SeasonSelection): Promise<
         durationDays: 0,
         isCurrent: true,
       } : null;
-      return { publicData: { players, leaderboard, dailyWinners, worldRecordHistory, seasonRecord, events } };
+      return { publicData: { players, leaderboard, dailyWinners, worldRecordHistory, seasonRecord, events, statistics } };
     }
     case "statistics": {
       const [players, worldRecordHistory, statistics] =

@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   getEvents: vi.fn(),
   getMostWantedSnapshot: vi.fn(),
   getEventLeadPlayerStatistics: vi.fn(),
+  getGlobalStatistics: vi.fn(),
 }));
 
 vi.mock("@/services/playerService", () => ({ getPlayers: mocks.getPlayers }));
@@ -15,7 +16,7 @@ vi.mock("@/services/statsService", () => ({
   getLeaderboard: mocks.getLeaderboard,
   getBadgeRarity: vi.fn(),
   getDailyWinners: mocks.getDailyWinners,
-  getGlobalStatistics: vi.fn(),
+  getGlobalStatistics: mocks.getGlobalStatistics,
   getEventLeadPlayerStatistics: mocks.getEventLeadPlayerStatistics,
   getGroupMilestones: vi.fn(),
   getLeagueTimeStatistics: vi.fn(),
@@ -45,10 +46,15 @@ describe("route data groups", () => {
     expect(dataGroupRequestCounts.leaderboard).toBe(3);
   });
 
-  it("keeps expensive statistics and prestige models optional", () => {
-    const stats = getRouteDataPlan("/stats");
-    expect(stats.required).toEqual(["statistics", "historical"]);
-    expect(stats.optional).toEqual(["most-wanted", "badge-rarity"]);
+  it("loads each statistics subroute independently", () => {
+    expect(getRouteDataPlan("/stats")).toEqual({ required: ["statistics"], optional: [] });
+    expect(getRouteDataPlan("/stats/performance")).toEqual({
+      required: ["statistics", "historical"], optional: ["most-wanted"],
+    });
+    expect(getRouteDataPlan("/stats/rivalries")).toEqual({ required: ["navigation"], optional: [] });
+    expect(getRouteDataPlan("/stats/badges")).toEqual({
+      required: ["statistics"], optional: ["most-wanted", "badge-rarity"],
+    });
     expect(getRouteDataPlan("/").optional).toEqual(["prestige-activities"]);
     expect(dataGroupRequestCounts.statistics).toBe(5);
     expect(dataGroupRequestCounts["badge-rarity"]).toBe(1);
@@ -86,6 +92,7 @@ describe("route data groups", () => {
   it("loads the event archive as its own season-aware route group", async () => {
     expect(getRouteDataPlan("/events")).toEqual({ required: ["events"], optional: [] });
     mocks.getEvents.mockResolvedValue([]);
+    mocks.getGlobalStatistics.mockResolvedValue([]);
     await loadDataGroup("events", 2026);
     expect(mocks.getEvents).toHaveBeenCalledWith(2026);
   });
@@ -131,6 +138,8 @@ describe("route data groups", () => {
     expect(mocks.getWorldRecordHistory).toHaveBeenNthCalledWith(2, 2026);
     expect(mocks.getEvents).toHaveBeenNthCalledWith(1, "all-time", false);
     expect(mocks.getEvents).toHaveBeenNthCalledWith(2, 2026, false);
+    expect(mocks.getGlobalStatistics).toHaveBeenCalledTimes(2);
+    expect(mocks.getGlobalStatistics).toHaveBeenNthCalledWith(1, "all-time");
   });
 
   it("loads Most Wanted for the globally selected season", async () => {

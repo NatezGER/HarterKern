@@ -7,6 +7,9 @@ import { PlayerProfilePage } from "@/pages/PlayerProfilePage";
 import { PlayersPage } from "@/pages/PlayersPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { StatsPage } from "@/pages/StatsPage";
+import { StatsOverviewPage } from "@/pages/StatsOverviewPage";
+import { StatsRivalriesPage } from "@/pages/StatsRivalriesPage";
+import { StatsBadgesPage } from "@/pages/StatsBadgesPage";
 import { LiveEventPage } from "@/pages/LiveEventPage";
 import { EventResultsPage } from "@/pages/EventResultsPage";
 import { EventsPage } from "@/pages/EventsPage";
@@ -23,7 +26,10 @@ export const router = createBrowserRouter([
       { path: "players", element: <PlayersPage /> },
       { path: "player/:id", element: <PlayerProfilePage /> },
       { path: "compare", element: <PlayerComparePage /> },
-      { path: "stats", element: <StatsPage /> },
+      { path: "stats", element: <StatsOverviewPage /> },
+      { path: "stats/performance", element: <StatsPage /> },
+      { path: "stats/rivalries", element: <StatsRivalriesPage /> },
+      { path: "stats/badges", element: <StatsBadgesPage /> },
       { path: "settings", element: <SettingsPage /> },
       { path: "events/live", element: <LiveEventPage /> },
       { path: "events", element: <EventsPage /> },

@@ -18,6 +18,8 @@ import { trophyCompetitionName } from "@/lib/trophyCompetitions";
 import { TrophyEventSpecialStats } from "@/components/events/TrophyEventSpecialStats";
 import { DenmarkChampionshipShell, DenmarkSectionHeading } from "@/components/denmark/DenmarkChampionship";
 import { resolveEventTheme } from "@/lib/eventTheme";
+import { BeerVolumeCard } from "@/components/stats/BeerVolumeCard";
+import { countBeerEligibleEventAttempts } from "@/lib/beerVolume";
 
 const displayTime = (value: number | null) => value == null ? "—" : formatTime(value / 100);
 
@@ -51,6 +53,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
   const competitionName = trophyCompetitionName(detail.trophyCompetitionKey, detail.trophyCompetitionYear);
   const isClosedTrophyEvent = detail.status === "closed" && detail.awardsTrophies;
   const denmark = resolveEventTheme(detail) === "denmark";
+  const regularValidAttempts = countBeerEligibleEventAttempts(detail.attempts);
   return (
     <DenmarkChampionshipShell context="history" active={denmark} className="flex flex-col gap-6 sm:gap-8 lg:gap-10">
       <section className={cn("panel relative order-1 overflow-hidden p-5 sm:p-10", denmark && "dk-results-hero")}>
@@ -112,11 +115,12 @@ export function EventResults({ detail }: { detail: EventDetail }) {
         <div className="panel overflow-hidden">
           {detail.rivalries.length ? <ol className="divide-y divide-white/[0.06]">{detail.rivalries.map((rivalry) => <li key={`${rivalry.playerLowId}:${rivalry.playerHighId}`} className="flex flex-wrap items-center gap-3 p-4 sm:flex-nowrap sm:p-5">
             <span className="grid size-10 shrink-0 place-items-center rounded-full border border-red-300/20 bg-red-400/10 text-red-100"><Swords className="size-4" /></span>
-            <strong className="min-w-0 flex-1 font-display text-lg uppercase sm:text-xl">{rivalry.playerLowName} ↔ {rivalry.playerHighName}</strong>
+            <Link to={`/compare?playerA=${rivalry.playerLowId}&playerB=${rivalry.playerHighId}`} className="min-w-0 flex-1 font-display text-lg uppercase transition hover:text-gold-200 sm:text-xl">{rivalry.playerLowName} ↔ {rivalry.playerHighName}</Link>
             <span className="rounded-full border border-red-300/20 bg-red-400/10 px-3 py-1 text-xs font-black uppercase tracking-wide text-red-100/80">Rivalry-Event</span>
             <span className="w-full text-sm tabular-nums text-gold-200 sm:w-auto">{rivalry.directTakeovers} direkte Takeovers</span>
           </li>)}</ol> : <p className="p-8 text-center text-sm text-white/40">In diesem Event entstand keine Rivalry.</p>}
         </div>
+        {detail.rivalries.length > 0 && <Link to="/stats/rivalries" className="mt-3 inline-flex min-h-10 items-center text-xs font-bold uppercase tracking-wide text-gold-200">Alle Rivalries ansehen →</Link>}
       </section>}
 
       {isClosedTrophyEvent && <TrophyEventSpecialStats
@@ -150,6 +154,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
       </section>
 
       <section className="panel order-6 p-5 sm:p-8"><h2 className="display-title text-2xl sm:text-3xl">Nach Versuchsnummer</h2><p className="mt-2 text-sm text-white/40">Durchschnitt aller gültigen regulären Spieler- und Gastzeiten dieses Events.</p><div className="mt-5 sm:mt-6"><EventAttemptNumberChart points={detail.attemptNumbers} /></div></section>
+      {detail.status === "closed" && <BeerVolumeCard validAttempts={regularValidAttempts} contextLabel={`${detail.name} · gemeinsam`} compact className="order-6" />}
       <div className="order-7"><EventAttemptList attempts={detail.attempts} /></div>
     </DenmarkChampionshipShell>
   );
