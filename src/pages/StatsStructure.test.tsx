@@ -39,11 +39,12 @@ vi.mock("@/components/stats/OfficialTimePerformance", () => ({
   LeagueAttemptNumberChart: () => <div>Versuchnummern-Chart</div>,
 }));
 vi.mock("@/components/history/HistoricalAttemptsDisclosure", () => ({ HistoricalAttemptsDisclosure: () => <div>History collapsed</div> }));
+vi.mock("@/components/stats/StatsNavigation", () => ({ StatsNavigation: () => <nav>Stats Subnavigation</nav> }));
 
 import { StatsPage } from "@/pages/StatsPage";
 
 describe("StatsPage structure", () => {
-  it("moves the six base cards into the shared block and removes league milestones", () => {
+  it("keeps only performance-related statistics on the performance page", () => {
     state.dashboardError = false;
     const markup = renderToStaticMarkup(<StatsPage />);
     expect(markup.indexOf("Record Progression")).toBeLessThan(markup.indexOf("Most Wanted Matrix"));
@@ -54,7 +55,9 @@ describe("StatsPage structure", () => {
     expect(markup).not.toContain("Gültige Eventversuche");
     expect(markup).not.toContain("Liga-Meilensteine");
     expect(markup).toContain("data-metric-dashboard");
-    expect(markup).toContain("Badge-Seltenheit");
+    expect(markup).not.toContain("Badge-Seltenheit");
+    expect(markup).not.toContain("Rivalry-Paarstatistiken");
+    expect(markup).toContain("Stats Subnavigation");
     expect(markup).not.toContain("Vergangene Events");
     expect(markup).not.toContain("Eventarchiv");
     expect(markup).toContain("text-xl");

@@ -6,7 +6,6 @@ import { appMeta } from "@/constants/content";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { useDataGroup, useDataPlatform } from "@/hooks/useDataPlatform";
 import { WRProgression } from "@/components/dashboard/WRProgression";
-import { BadgeRarityGrid } from "@/components/stats/BadgeRarityGrid";
 import { MostWantedMatrix } from "@/components/stats/MostWantedMatrix";
 import { OptionalDataState } from "@/components/common/OptionalDataState";
 import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
@@ -17,11 +16,9 @@ import { LeagueAttemptNumberChart } from "@/components/stats/OfficialTimePerform
 import { MetricDashboardGrid } from "@/components/stats/MetricRankingCard";
 import { metricGroupLabels } from "@/constants/statMetricRegistry";
 import type { MetricGroup } from "@/types/statDashboard";
-import { RivalryPairList } from "@/components/stats/RivalryPairList";
 import { useStatisticDashboard } from "@/hooks/useStatisticDashboard";
-import { useManagementMode } from "@/hooks/useManagementMode";
-import { AdminBadgeCatalogSlot } from "@/components/stats/AdminBadgeCatalogSlot";
 import { Button } from "@/components/ui/button";
+import { StatsNavigation } from "@/components/stats/StatsNavigation";
 
 export function StatsPage() {
   const { data } = useEffectivePublicData();
@@ -30,11 +27,11 @@ export function StatsPage() {
   const { version: statisticsVersion } = useDataGroup("statistics");
   const dashboard = useStatisticDashboard(season, statisticsVersion);
   const [historyExpanded, setHistoryExpanded] = useState(false);
-  const { unlocked } = useManagementMode();
   const dashboardData = dashboard.data;
   return (
     <div className="space-y-10">
-      <PageHeader eyebrow={isAllTime ? "League Intelligence" : `League Intelligence · Saison ${season}`} title="Statistiken" description={isAllTime ? appMeta.statsDescription : `Eventbasierte Ligawerte der Saison ${season}.`} action={<SeasonContextBadge />} />
+      <PageHeader eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Performance" description={isAllTime ? appMeta.statsDescription : `Eventbasierte Ligawerte der Saison ${season}.`} action={<SeasonContextBadge />} />
+      <StatsNavigation />
       <DataState>
         <section>
           <WRProgression collapsibleHistory />
@@ -55,21 +52,14 @@ export function StatsPage() {
           </div>
           {dashboard.loading && <p className="panel p-5 text-sm text-white/45" role="status">Ranking-Statistiken werden geladen …</p>}
           {dashboard.error && <div className="panel flex flex-col items-start gap-3 p-5 text-sm text-amber-200/80" role="alert"><p>Ranking-Statistiken konnten nicht geladen werden.</p><Button type="button" variant="outline" onClick={dashboard.retry}>Bereich neu laden</Button></div>}
-          {dashboardData && <div className="space-y-8">{(["performance", "consistency", "volume", "event", "bingo", "rivalry", "achievements", "records"] as MetricGroup[]).map((group) => {
+          {dashboardData && <div className="space-y-8">{(["performance", "consistency", "volume", "event", "records"] as MetricGroup[]).map((group) => {
             const metrics = dashboardData.metrics.filter((metric) => metric.group === group);
             if (metrics.length === 0) return null;
             return <section key={group} aria-labelledby={`metric-group-${group}`}>
               <h3 id={`metric-group-${group}`} className="mb-4 border-b border-gold-300/15 pb-2 font-display text-xl font-black uppercase tracking-[0.12em] text-gold-200 sm:text-2xl">{metricGroupLabels[group]}</h3>
               <MetricDashboardGrid metrics={metrics} />
             </section>;
-          })}<RivalryPairList pairs={dashboardData.rivalryPairs} live={false} /></div>}
-        </section>
-        <section className="mt-12">
-          <SectionHeading eyebrow={isAllTime ? "Prestige" : "All-Time · Prestige"} title="Badge-Seltenheit" />
-          <p className="-mt-4 mb-5 max-w-3xl text-sm leading-6 text-white/45">Anteil der aktiven, dauerhaften Spieler, die diese Schwelle mindestens einmal erreicht haben. Höhere Stufen zählen deshalb auch bei den darunterliegenden Schwellen mit; Gäste und AK-Spieler sind ausgeschlossen.</p>
-          <OptionalDataState group="badge-rarity">
-            <BadgeRarityGrid badges={data.badgeRarity} />
-          </OptionalDataState>
+          })}</div>}
         </section>
         {isAllTime && <section id="history" className="mt-12 scroll-mt-28">
           <SectionHeading eyebrow="Zeitarchiv" title="Historische Versuche" />
@@ -84,7 +74,6 @@ export function StatsPage() {
           />
         </section>}
       </DataState>
-      <AdminBadgeCatalogSlot unlocked={unlocked} />
     </div>
   );
 }

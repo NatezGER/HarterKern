@@ -13,9 +13,13 @@ import { LatestEventCard } from "@/components/dashboard/LatestEventCard";
 import { OptionalDataState } from "@/components/common/OptionalDataState";
 import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { useSeason } from "@/hooks/useSeason";
+import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
+import { BeerVolumeCard } from "@/components/stats/BeerVolumeCard";
 
 export function DashboardPage() {
   const { season, isAllTime } = useSeason();
+  const { data } = useEffectivePublicData();
+  const validAttempts = Number(data.statistics.find(({ id }) => id === "valid")?.value ?? 0);
   return (
     <div className="space-y-8 sm:space-y-12 lg:space-y-16">
       <HeroCard />
@@ -30,6 +34,7 @@ export function DashboardPage() {
             </AnimatedCard>
           </div>
           <HallOfFamePreview />
+          <BeerVolumeCard validAttempts={validAttempts} compact />
           <LatestEventCard />
           <div className="hidden sm:block"><DailyBestCards /></div>
           <WRProgression />

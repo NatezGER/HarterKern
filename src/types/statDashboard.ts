@@ -57,3 +57,16 @@ export interface StatisticDashboard {
   metrics: RankedMetric[];
   rivalryPairs: RivalryPairSummary[];
 }
+
+export interface RivalryHubSummary {
+  rivalryEvents: number;
+  playersWithRivalry: number;
+  directTakeovers: number;
+  strongestPair: RivalryPairSummary | null;
+  longestPair: RivalryPairSummary | null;
+}
+
+export interface RivalryHubData {
+  summary: RivalryHubSummary;
+  pairs: RivalryPairSummary[];
+}

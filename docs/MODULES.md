@@ -18,7 +18,7 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 ## 2. Dashboard
 
 - **Zweck:** Startseitenüberblick mit Rekord, Tagesbesten, Hall-of-Fame-Vorschau,
-  Events und optionalem Prestige-Feed.
+  Events, gemeinsamem All-Time-Beervolumen und optionalem Prestige-Feed.
 - **Einstieg:** `src/pages/DashboardPage.tsx`.
 - **Hooks/Services:** `useEffectivePublicData`, `dataGroupService`, `statsService`,
   `eventService`, `playerService`.
@@ -203,6 +203,8 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   gebündelter Lead-Read ergänzt pro permanentem Spieler Führungssekunden und
   gebrochene Eventbestzeiten. Abgeschlossene Events lesen zusätzlich ihre
   qualifizierten Paare aus `rivalry_pair_events` für „Rivalries dieses Events“.
+  Geschlossene Events zeigen aus den bereits geladenen regulären gültigen
+  Attempts zusätzlich ihr Beer Volume; Gäste, AK und DNF bleiben ausgeschlossen.
 - **Trophy-Statistiken:** Live und geschlossenes Trophy-Event nutzen denselben
   `get_trophy_event_dashboard`-Read (eine Client-Anfrage pro Refresh). Er bündelt
   die vorhandenen Most-Wanted-/BINGO-Daten mit event-gefilterten Top-Rankings;
@@ -220,9 +222,10 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 
 ## 8. Statistiken
 
-- **Zweck:** globale Kennzahlen, Rekordverlauf und historische Versuche mit
-  unabhängig geladenen Zusatzmodulen.
-- **Einstieg:** `src/pages/StatsPage.tsx`.
+- **Zweck:** schlanke Übersicht sowie getrennte Performance-, Rivalry- und
+  Badge/BINGO-Bereiche mit unabhängig geladenen Zusatzmodulen.
+- **Einstiege:** `src/pages/StatsOverviewPage.tsx`, `src/pages/StatsPage.tsx`,
+  `src/pages/StatsRivalriesPage.tsx`, `src/pages/StatsBadgesPage.tsx`.
 - **Hooks/Services:** `useEffectivePublicData`, `useDataPlatform`,
   `dataGroupService`, `statsService`, `attemptService`, `eventService`.
 - **Views/RPCs:** `global_statistics`, `world_record_history`,
@@ -232,7 +235,11 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Tests:** `npm test -- src/services/dataGroupService.test.ts`.
 - **Direkte Abhängigkeiten:** historische Versuche und optionale Statistikmodule.
 - **Nicht enthalten:** Spielerprofil und Live-Verwaltung.
-- **Route Load:** Der Statistik-Kern benötigt All-Time 4 und saisonal 5
+- **Route Load:** `/stats` lädt nur den Statistik-Kern plus einen kompakten
+  Rivalry-Summary-RPC. Performance lädt Kern, Dashboard, Most Wanted und
+  All-Time-Historie; Badges lädt Kern, Dashboard, Most Wanted und Badge-Rarity.
+  Rivalries lädt genau einen season-aware Hub-RPC und erzeugt kein N+1.
+  Der Statistik-Kern benötigt All-Time 4 und saisonal 5
   Requests; der saisonale Zusatzrequest liest nur die Bestzeit aus
   `season_qualified_official_times`. Events und die nicht
   mehr verwendete Recent-Attempt-Vorschau werden dort nicht geladen.
@@ -270,6 +277,14 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Rivalry-Auswertungen:** Paar-Rankings trennen Rivalry-Events, deren
   zeitliche Spanne und Takeovers innerhalb qualifizierter Rivalry-Events von
   sämtlichen direkten Paar-Takeovers unterhalb oder oberhalb der Schwelle.
+  `get_rivalry_hub` liefert Übersicht oder vollständige Paarliste aus demselben
+  kanonischen `event_pair_summaries`-Read. „Alle Rivalries“ und „Direkte
+  Duelle“ bleiben getrennt und verlinken den bestehenden Compare.
+- **Beer Volume:** Ein gemeinsamer Helper rechnet ausschließlich kanonische
+  gültige offizielle Versuche mit 0,2 Litern. All-Time und Saison verwenden
+  `global_statistics` beziehungsweise `season_global_statistics`; Eventdetail
+  verwendet seine bereits gefilterten Attempt-Daten. Die Meilensteinliste ist
+  zentral und zeigt nur erreichte sowie nächste Stufe.
 
 ## 9. Prestige, Badges, Trophäen und Liga-Momente
 
