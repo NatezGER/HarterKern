@@ -69,6 +69,18 @@ export interface SeasonMostWantedEndingView {
   Relationships: [];
 }
 
+/** One route payload; later hits contain presentation fields, not raw timestamps. */
+export interface MostWantedSnapshotPayload {
+  endings: Array<MostWantedEndingView["Row"] & {
+    first_source_order: number | null;
+    additional_hits: Array<Pick<QualifiedOfficialTimeView["Row"],
+      "source_id" | "player_id" | "guest_id" | "display_name" |
+      "avatar_url" | "avatar_path" | "is_guest" | "time_hundredths" |
+      "source_type" | "source_order">>;
+  }>;
+  progress: MostWantedProgressView["Row"] & { least_common_hit_count: number | null };
+}
+
 export interface SeasonMostWantedProgressView {
   Row: MostWantedProgressView["Row"] & { season_year: number };
   Relationships: [];

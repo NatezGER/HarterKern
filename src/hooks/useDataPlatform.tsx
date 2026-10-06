@@ -249,7 +249,12 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured) return;
     const unsubscribe = subscribeToDataPlatform((table) => {
       const activeGroups = allPlanGroups(planRef.current);
-      const affected = groupsForRealtimeTable(table).filter((group) => activeGroups.includes(group));
+      const tableGroups = groupsForRealtimeTable(table);
+      // Inactive MW snapshots become stale, but do not start a background read.
+      if (tableGroups.includes("most-wanted") && !activeGroups.includes("most-wanted")) {
+        invalidateDataGroups(["most-wanted"]);
+      }
+      const affected = tableGroups.filter((group) => activeGroups.includes(group));
       if (affected.length) scheduleGroups(affected);
     }, (channelStatus) => {
       setRealtimeStatus(channelStatus === "SUBSCRIBED"

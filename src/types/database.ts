@@ -626,6 +626,10 @@ export interface Database {
         Args: { p_player_id: string };
         Returns: Array<{ rival_player_id: string; display_name: string; avatar_url: string | null; avatar_path: string | null; rivalry_events: number; direct_takeovers: number; first_rivalry_date: string; last_rivalry_date: string }>;
       };
+      get_most_wanted_snapshot: {
+        Args: { p_season_year?: number | null };
+        Returns: Json;
+      };
       get_player_most_wanted_statistics: {
         Args: { p_player_ids: string[]; p_season_year?: number | null };
         Returns: Array<{
