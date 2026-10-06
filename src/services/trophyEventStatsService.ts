@@ -1,4 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
+import { readSignal } from "@/services/readSignal";
 import type { MostWantedEnding, MostWantedHit, MostWantedHunter } from "@/types";
 import type { TrophyEventSpecialStats } from "@/types/trophyEventStats";
 import { mapStatisticDashboard } from "@/services/statDashboardService";
@@ -78,10 +79,11 @@ function mapHunter(value: unknown): MostWantedHunter {
 
 export async function getTrophyEventSpecialStats(
   eventId: string,
+  signal?: AbortSignal,
 ): Promise<TrophyEventSpecialStats | null> {
-  const { data, error } = await getSupabase().rpc("get_trophy_event_dashboard", {
+  const { data, error } = await readSignal(getSupabase().rpc("get_trophy_event_dashboard", {
     p_event_id: eventId,
-  });
+  }), signal);
   if (error) throw error;
   if (data == null) return null;
   const envelope = object(data);

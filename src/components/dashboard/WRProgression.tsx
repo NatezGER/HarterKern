@@ -1,7 +1,8 @@
 import { AnimatedCard } from "@/components/common/AnimatedCard";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { ProgressionTimeline } from "@/components/progression/ProgressionTimeline";
-import { getPlayerById, getRankedPlayers } from "@/data/selectors";
+import { getRankedPlayers } from "@/data/selectors";
+import type { Player } from "@/types";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -10,23 +11,23 @@ import { PlayerOverlaySelector } from "@/components/progression/PlayerOverlaySel
 import { usePlayerProgressionOverlays } from "@/hooks/usePlayerProgressionOverlays";
 import { regularPlayerOptions } from "@/services/playerProgressionOverlayService";
 
-export function WRProgression({ compact = false, collapsibleHistory = false }: { compact?: boolean; collapsibleHistory?: boolean }) {
+export function WRProgression({ compact = false, collapsibleHistory = false, roster }: { compact?: boolean; collapsibleHistory?: boolean; roster?: Pick<Player, "id" | "name" | "avatarUrl">[] }) {
   const { data } = useEffectivePublicData();
   const { season, isAllTime } = useSeason();
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const overlays = usePlayerProgressionOverlays(selectedPlayers, isAllTime ? undefined : Number(season));
-  const playerOptions = regularPlayerOptions(getRankedPlayers(data.players, data.leaderboard)
+  const playerOptions = regularPlayerOptions(roster ?? getRankedPlayers(data.players, data.leaderboard)
     .map(({ player }) => player));
   const playersWithoutData = !overlays.loading ? selectedPlayers.filter((id) =>
     !overlays.data.some((series) => series.id === id && series.points.length > 0)) : [];
   const points = data.worldRecordHistory.map((record) => {
-    const player = getPlayerById(data.players, record.playerId);
+    const player = (roster ?? data.players).find(({ id }) => id === record.playerId);
     return {
       id: record.id,
       playerId: record.playerId,
-      playerName: player?.name ?? "Unbekannter Spieler",
-      avatarUrl: player?.avatarUrl ?? null,
+      playerName: player?.name ?? record.playerName ?? "Unbekannter Spieler",
+      avatarUrl: player?.avatarUrl ?? record.playerAvatarUrl ?? null,
       timeHundredths: Math.round(record.time * 100),
       achievedAt: record.achievedAt,
       achievedDate: record.date,

@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { getErrorMessage } from "@/lib/errors";
 import type { SeasonSelection } from "@/lib/season";
-import { getStatisticDashboard } from "@/services/statDashboardService";
-import type { StatisticDashboard } from "@/types/statDashboard";
+import { getPerformanceDashboard } from "@/services/performanceDashboardService";
+import type { PerformanceDashboard } from "@/services/performanceDashboardService";
 
 /** Independent read: never blocks the route or attempt persistence. */
-export function useStatisticDashboard(season: SeasonSelection, refreshVersion: number, enabled = true) {
+export function usePerformanceDashboard(season: SeasonSelection, refreshVersion: number, enabled = true) {
   const [retryVersion, setRetryVersion] = useState(0);
   const [state, setState] = useState<{
     season?: SeasonSelection;
-    data: StatisticDashboard | null;
+    data: PerformanceDashboard | null;
     loading: boolean;
     error: string;
   }>({ data: null, loading: true, error: "" });
@@ -19,7 +19,7 @@ export function useStatisticDashboard(season: SeasonSelection, refreshVersion: n
     let active = true;
     const controller = new AbortController();
     setState({ season, data: null, loading: true, error: "" });
-    void getStatisticDashboard(season, undefined, controller.signal).then((data) => {
+    void getPerformanceDashboard(season, controller.signal).then((data) => {
       if (active) setState({ season, data, loading: false, error: "" });
     }).catch((error) => {
       if (active) setState({ season, data: null, loading: false, error: getErrorMessage(error) });

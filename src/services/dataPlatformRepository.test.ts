@@ -15,9 +15,14 @@ describe("data platform realtime subscription", () => {
       removeChannel,
     } as unknown as Pick<ReturnType<typeof getSupabase>, "channel" | "removeChannel">;
 
-    const cleanup = subscribeToDataPlatform(vi.fn(), vi.fn(), client);
+    const onChange = vi.fn();
+    const cleanup = subscribeToDataPlatform(onChange, vi.fn(), client);
     expect(client.channel).toHaveBeenCalledOnce();
-    expect(on).toHaveBeenCalledTimes(7);
+    expect(on).toHaveBeenCalledTimes(8);
+    const pauseSubscription = on.mock.calls.find(([, filter]) => filter.table === "event_statistical_pauses");
+    expect(pauseSubscription).toBeDefined();
+    pauseSubscription?.[2]();
+    expect(onChange).toHaveBeenCalledWith("event_statistical_pauses");
     expect(on).toHaveBeenCalledWith(
       "postgres_changes",
       { event: "*", schema: "public", table: "event_photos" },

@@ -3,11 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ rpc: vi.fn() }));
 vi.mock("@/lib/supabase", () => ({ getSupabase: () => ({ rpc: mocks.rpc }) }));
 
-import { getStatisticDashboard, mapStatisticDashboard } from "@/services/statDashboardService";
+import { getStatisticDashboard, mapStatisticDashboard, statisticDashboardCache } from "@/services/statDashboardService";
 
 describe("scope-aware statistic dashboard service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    statisticDashboardCache.invalidate();
     mocks.rpc.mockResolvedValue({ data: { metrics: [], rivalryPairs: [] }, error: null });
   });
 
@@ -64,6 +65,33 @@ describe("scope-aware statistic dashboard service", () => {
     expect(metrics.map(({ key }) => key)).toEqual(["two-in-sixty-total", "two-in-sixty-best"]);
     expect(metrics.every(({ group }) => group === "volume")).toBe(true);
     expect(metrics.find(({ key }) => key === "two-in-sixty-best")?.minimumSample).toBe(1);
+  });
+
+  it("shares the exact in-flight promise and reuses a successful result", async () => {
+    let resolve!: (value: unknown) => void;
+    mocks.rpc.mockReturnValue(new Promise((done) => { resolve = done; }));
+    const first = getStatisticDashboard(2026);
+    expect(getStatisticDashboard(2026)).toBe(first);
+    expect(mocks.rpc).toHaveBeenCalledOnce();
+    resolve({ data: { metrics: [], rivalryPairs: [] }, error: null });
+    await first;
+    await getStatisticDashboard(2026);
+    expect(mocks.rpc).toHaveBeenCalledOnce();
+  });
+
+  it("serializes an invalidation during a running Unified request without caching stale data", async () => {
+    const resolvers: ((value: unknown) => void)[] = [];
+    mocks.rpc.mockImplementation(() => new Promise((done) => resolvers.push(done)));
+    const first = getStatisticDashboard(2026);
+    statisticDashboardCache.invalidate();
+    expect(getStatisticDashboard(2026)).toBe(first);
+    expect(mocks.rpc).toHaveBeenCalledOnce();
+    resolvers[0]({ data: null, error: null });
+    await vi.waitFor(() => expect(mocks.rpc).toHaveBeenCalledTimes(2));
+    resolvers[1]({ data: { metrics: [], rivalryPairs: [] }, error: null });
+    expect(await first).not.toBeNull();
+    await getStatisticDashboard(2026);
+    expect(mocks.rpc).toHaveBeenCalledTimes(2);
   });
 
   it("maps separate rivalry-event and all-takeover pair values", () => {

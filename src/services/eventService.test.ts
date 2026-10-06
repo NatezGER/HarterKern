@@ -69,4 +69,22 @@ describe("event medal loading", () => {
     expect(mocks.rpc).not.toHaveBeenCalled();
     expect(mocks.from).not.toHaveBeenCalledWith("event_podium");
   });
+  it("does not start the seasonal medal fan-out after leaving the route", async () => {
+    let resolve!: (value: unknown) => void;
+    const pending = new Promise((done) => { resolve = done; });
+    const builder = {
+      select: vi.fn(), is: vi.fn(), gte: vi.fn(), lt: vi.fn(),
+      order: vi.fn(), abortSignal: vi.fn(),
+      then: pending.then.bind(pending),
+    };
+    for (const method of [builder.select, builder.is, builder.gte, builder.lt, builder.order, builder.abortSignal]) method.mockReturnValue(builder);
+    mocks.from.mockReturnValue(builder);
+    const controller = new AbortController();
+    const task = getEvents(2026, true, controller.signal);
+    controller.abort();
+    resolve({ data: [{ id: "previous-event" }], error: null });
+    await expect(task).rejects.toMatchObject({ name: "AbortError" });
+    expect(mocks.from).toHaveBeenCalledTimes(1);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
 });

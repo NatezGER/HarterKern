@@ -1,4 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
+import { readSignal } from "@/services/readSignal";
 import { mapEvent } from "@/services/mappers";
 import type { Event } from "@/types";
 import type { Database } from "@/types/database";
@@ -8,7 +9,9 @@ import type { SeasonSelection } from "@/lib/season";
 export async function getEvents(
   season: SeasonSelection = ALL_TIME_SEASON,
   includeMedals = true,
+  signal?: AbortSignal,
 ): Promise<Event[]> {
+  signal?.throwIfAborted();
   const client = getSupabase();
   if (season === ALL_TIME_SEASON) {
     const [eventsResult, statsResult, participantsResult, guestsResult, podiumResult,
@@ -21,7 +24,7 @@ export async function getEvents(
       client.from("event_guests").select("event_id,id"),
       includeMedals ? client.from("event_podium").select("*")
         : Promise.resolve({ data: [], error: null }),
-      includeMedals ? client.rpc("get_medal_qualified_events", { p_event_ids: null })
+      includeMedals ? readSignal(client.rpc("get_medal_qualified_events", { p_event_ids: null }), signal)
         : Promise.resolve({ data: [], error: null }),
       client.from("event_winners").select("event_id,display_name"),
     ]);
@@ -47,7 +50,8 @@ export async function getEvents(
   let eventsQuery = client.from("events").select("*").is("deleted_at", null);
   const range = getSeasonDateRange(season);
   eventsQuery = eventsQuery.gte("start_date", range.start).lt("start_date", range.end);
-  const selectedEventsResult = await eventsQuery.order("started_at", { ascending: false });
+  const selectedEventsResult = await readSignal(eventsQuery.order("started_at", { ascending: false }), signal);
+  signal?.throwIfAborted();
   if (selectedEventsResult.error) throw selectedEventsResult.error;
   if (selectedEventsResult.data.length === 0) return [];
   const eventIds = selectedEventsResult.data.map(({ id }) => id);
@@ -58,7 +62,7 @@ export async function getEvents(
     client.from("event_guests").select("event_id,id").in("event_id", eventIds),
     includeMedals ? client.from("event_podium").select("*").in("event_id", eventIds)
       : Promise.resolve({ data: [], error: null }),
-    includeMedals ? client.rpc("get_medal_qualified_events", { p_event_ids: eventIds })
+    includeMedals ? readSignal(client.rpc("get_medal_qualified_events", { p_event_ids: eventIds }), signal)
       : Promise.resolve({ data: [], error: null }),
     client.from("event_winners").select("event_id,display_name").in("event_id", eventIds),
   ]);

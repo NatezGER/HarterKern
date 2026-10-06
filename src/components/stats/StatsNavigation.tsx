@@ -1,10 +1,11 @@
-import { Award, ChartNoAxesCombined, LayoutDashboard, Swords } from "lucide-react";
+import { Award, ChartNoAxesCombined, LayoutDashboard, Swords, Target } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/cn";
 
 const items = [
   { to: "/stats", label: "Übersicht", icon: LayoutDashboard, end: true },
   { to: "/stats/performance", label: "Performance", icon: ChartNoAxesCombined },
+  { to: "/stats/most-wanted", label: "Most Wanted", icon: Target },
   { to: "/stats/rivalries", label: "Rivalries", icon: Swords },
   { to: "/stats/badges", label: "Badges", icon: Award },
 ];

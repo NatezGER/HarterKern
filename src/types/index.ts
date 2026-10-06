@@ -35,6 +35,8 @@ export interface DailyWinner {
 }
 
 export interface WorldRecord {
+  playerName?: string;
+  playerAvatarUrl?: string | null;
   id: string;
   playerId: string;
   time: number;

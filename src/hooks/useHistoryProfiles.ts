@@ -39,12 +39,13 @@ export function useEventDetail(eventId: string) {
     }
     let active = true;
     setState(initialState);
-    void getEventDetail(eventId)
+    const controller = new AbortController();
+    void getEventDetail(eventId, controller.signal)
       .then((data) => {
         if (!active) return;
         setState({ data, loading: false, error: "" });
         if (!data) return;
-        void getEventDetailExtras(eventId, data.awardsTrophies).then((extras) => {
+        void getEventDetailExtras(eventId, data.awardsTrophies, controller.signal).then((extras) => {
           if (!active) return;
           setState((current) => current.data
             ? { ...current, data: { ...current.data, ...extras } }
@@ -76,6 +77,7 @@ export function useEventDetail(eventId: string) {
       }));
     return () => {
       active = false;
+      controller.abort();
     };
   }, [eventId, status, version]);
   return state;

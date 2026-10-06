@@ -3,6 +3,9 @@ import { ALL_TIME_SEASON } from "@/lib/season";
 import type { SeasonSelection } from "@/lib/season";
 import { statisticMetricRegistry } from "@/constants/statMetricRegistry";
 import type { RankedMetric, RivalryPairSummary, StatisticDashboard, StatisticScope } from "@/types/statDashboard";
+import { ReadCache, statisticReadKey } from "@/services/readCache";
+
+export const statisticDashboardCache = new ReadCache<StatisticDashboard | null>();
 
 type RecordValue = Record<string, unknown>;
 const object = (value: unknown): RecordValue => value && typeof value === "object" && !Array.isArray(value) ? value as RecordValue : {};
@@ -72,11 +75,13 @@ export function mapStatisticDashboard(value: unknown, scope: StatisticScope): St
   return { scope, metrics, rivalryPairs };
 }
 
-export async function getStatisticDashboard(season: SeasonSelection = ALL_TIME_SEASON, eventId?: string) {
-  const { data, error } = await getSupabase().rpc("get_unified_statistics_dashboard", {
-    p_season_year: season === ALL_TIME_SEASON ? null : season,
-    p_event_id: eventId ?? null,
-  });
-  if (error) throw error;
-  return mapStatisticDashboard(data, eventId ? "special-event" : season === ALL_TIME_SEASON ? "all-time" : "season");
+export function getStatisticDashboard(season: SeasonSelection = ALL_TIME_SEASON, eventId?: string, signal?: AbortSignal) {
+  return statisticDashboardCache.read(statisticReadKey("unified", season, eventId), async () => {
+    const { data, error } = await getSupabase().rpc("get_unified_statistics_dashboard", {
+      p_season_year: season === ALL_TIME_SEASON ? null : season,
+      p_event_id: eventId ?? null,
+    });
+    if (error) throw error;
+    return mapStatisticDashboard(data, eventId ? "special-event" : season === ALL_TIME_SEASON ? "all-time" : "season");
+  }, signal);
 }
