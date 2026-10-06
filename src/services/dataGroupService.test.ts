@@ -36,10 +36,13 @@ import {
   getRouteDataPlan,
   groupsForRealtimeTable,
   loadDataGroup,
+  dataGroupCache,
+  invalidateDataGroups,
+  shouldRefreshDataGroup,
 } from "@/services/dataGroupService";
 
 describe("route data groups", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); dataGroupCache.invalidate(); });
 
   it("limits Hall of Fame to its three required database requests", () => {
     expect(getRouteDataPlan("/leaderboard")).toEqual({ required: ["leaderboard"], optional: [] });
@@ -49,11 +52,11 @@ describe("route data groups", () => {
   it("loads each statistics subroute independently", () => {
     expect(getRouteDataPlan("/stats")).toEqual({ required: ["statistics"], optional: [] });
     expect(getRouteDataPlan("/stats/performance")).toEqual({
-      required: ["statistics", "historical"], optional: ["most-wanted"],
+      required: ["performance", "historical"], optional: [],
     });
     expect(getRouteDataPlan("/stats/rivalries")).toEqual({ required: ["navigation"], optional: [] });
     expect(getRouteDataPlan("/stats/badges")).toEqual({
-      required: ["statistics"], optional: ["most-wanted", "badge-rarity"],
+      required: ["statistics"], optional: ["badge-rarity"],
     });
     expect(getRouteDataPlan("/").optional).toEqual(["prestige-activities"]);
     expect(dataGroupRequestCounts.statistics).toBe(5);
@@ -94,7 +97,7 @@ describe("route data groups", () => {
     mocks.getEvents.mockResolvedValue([]);
     mocks.getGlobalStatistics.mockResolvedValue([]);
     await loadDataGroup("events", 2026);
-    expect(mocks.getEvents).toHaveBeenCalledWith(2026);
+    expect(mocks.getEvents).toHaveBeenCalledWith(2026, true, undefined);
   });
 
   it("loads live raw data only for live and management routes", () => {
@@ -136,8 +139,8 @@ describe("route data groups", () => {
     await loadDataGroup("dashboard", 2026);
     expect(mocks.getWorldRecordHistory).toHaveBeenNthCalledWith(1, "all-time");
     expect(mocks.getWorldRecordHistory).toHaveBeenNthCalledWith(2, 2026);
-    expect(mocks.getEvents).toHaveBeenNthCalledWith(1, "all-time", false);
-    expect(mocks.getEvents).toHaveBeenNthCalledWith(2, 2026, false);
+    expect(mocks.getEvents).toHaveBeenNthCalledWith(1, "all-time", false, undefined);
+    expect(mocks.getEvents).toHaveBeenNthCalledWith(2, 2026, false, undefined);
     expect(mocks.getGlobalStatistics).toHaveBeenCalledTimes(2);
     expect(mocks.getGlobalStatistics).toHaveBeenNthCalledWith(1, "all-time");
   });
@@ -159,5 +162,46 @@ describe("route data groups", () => {
     expect(groupsForRealtimeTable("players")).not.toContain("profile-attempt-numbers");
     expect(groupsForRealtimeTable("attempts")).toContain("profile-progression");
     expect(groupsForRealtimeTable("attempts")).toContain("bingo");
+  });
+
+  it("loads only WR history and archive for Performance, never Most Wanted or events", async () => {
+    mocks.getWorldRecordHistory.mockResolvedValue([]);
+    const plan = getRouteDataPlan("/stats/performance");
+    await Promise.all([...plan.required, ...plan.optional].map((group) => loadDataGroup(group)));
+    expect(mocks.getWorldRecordHistory).toHaveBeenCalledOnce();
+    expect(mocks.getMostWantedSnapshot).not.toHaveBeenCalled();
+    expect(mocks.getEvents).not.toHaveBeenCalled();
+    expect(mocks.getPlayers).not.toHaveBeenCalled();
+    expect(mocks.getGlobalStatistics).not.toHaveBeenCalled();
+    expect(getRouteDataPlan("/stats/performance", 2026)).toEqual({ required: ["performance"], optional: [] });
+    const affected = groupsForRealtimeTable("attempts").filter((group) => plan.required.includes(group));
+    expect(affected.sort()).toEqual(["historical", "performance"]);
+  });
+
+  it("loads Most Wanted only on its own statistics route", async () => {
+    const plan = getRouteDataPlan("/stats/most-wanted");
+    expect(plan).toEqual({ required: ["most-wanted"], optional: [] });
+    await Promise.all(plan.required.map((group) => loadDataGroup(group, 2026)));
+    expect(mocks.getMostWantedSnapshot).toHaveBeenCalledWith(2026);
+    expect(mocks.getWorldRecordHistory).not.toHaveBeenCalled();
+  });
+
+  it("reuses fresh groups on focus, refreshes stale groups, and invalidates real changes", async () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(100_000);
+    try {
+      mocks.getWorldRecordHistory.mockResolvedValue([]);
+      await loadDataGroup("performance", 2026);
+      expect(shouldRefreshDataGroup("performance", 2026)).toBe(false);
+      now.mockReturnValue(119_999);
+      await loadDataGroup("performance", 2026);
+      expect(mocks.getWorldRecordHistory).toHaveBeenCalledOnce();
+      now.mockReturnValue(120_001);
+      expect(shouldRefreshDataGroup("performance", 2026)).toBe(true);
+      await loadDataGroup("performance", 2026);
+      expect(mocks.getWorldRecordHistory).toHaveBeenCalledTimes(2);
+      invalidateDataGroups(["performance"]);
+      await loadDataGroup("performance", 2026);
+      expect(mocks.getWorldRecordHistory).toHaveBeenCalledTimes(3);
+    } finally { now.mockRestore(); }
   });
 });

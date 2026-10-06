@@ -26,6 +26,8 @@ import {
   getRouteDataPlan,
   groupsForRealtimeTable,
   loadDataGroup,
+  invalidateDataGroups,
+  shouldRefreshDataGroup,
 } from "@/services/dataGroupService";
 import type { DataGroup, RouteDataPlan } from "@/services/dataGroupService";
 import type { LiveEventState } from "@/types/liveEvent";
@@ -83,10 +85,11 @@ function allPlanGroups(plan: RouteDataPlan) {
 export function DataPlatformProvider({ children }: { children: ReactNode }) {
   const { season } = useSeason();
   const { pathname } = useLocation();
-  const plan = useMemo(() => getRouteDataPlan(pathname), [pathname]);
+  const plan = useMemo(() => getRouteDataPlan(pathname, season), [pathname, season]);
   const planRef = useRef(plan);
   planRef.current = plan;
   const routeRun = useRef(0);
+  const routeController = useRef(new AbortController());
   const routeRefresh = useRef<Promise<void> | null>(null);
   const refetchTimer = useRef<number | null>(null);
   const scheduledGroups = useRef(new Set<DataGroup>());
@@ -109,7 +112,7 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
     if (expectedRun != null && routeRun.current !== expectedRun) return;
     updateGroup(group, { status: "loading", error: null });
     try {
-      const patch = await loadDataGroup(group, season);
+      const patch = await loadDataGroup(group, season, routeController.current.signal);
       if (expectedRun != null && routeRun.current !== expectedRun) return;
       setSnapshot((current) => mergePatchForRun(
         current, patch, expectedRun, routeRun.current,
@@ -157,8 +160,9 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
   }, [loadGroup, loadOptionalGroups]);
 
   const refresh = useCallback(() => {
+    invalidateDataGroups(allPlanGroups(planRef.current));
     if (routeRefresh.current) return routeRefresh.current;
-    const task = loadPlan(planRef.current).finally(() => {
+    const task = loadPlan(planRef.current, routeRun.current).finally(() => {
       if (routeRefresh.current === task) routeRefresh.current = null;
     });
     routeRefresh.current = task;
@@ -166,27 +170,33 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
   }, [loadPlan]);
 
   const refreshGroup = useCallback(async (group: DataGroup) => {
-    await loadGroup(group);
+    invalidateDataGroups([group]);
+    await loadGroup(group, routeRun.current);
   }, [loadGroup]);
 
   const refreshSelectedGroups = useCallback(async (selected: DataGroup[]) => {
+    const runId = routeRun.current;
     const currentPlan = planRef.current;
     const required = selected.filter((group) => currentPlan.required.includes(group));
     const optional = selected.filter((group) => currentPlan.optional.includes(group));
     if (required.length) {
       try {
-        await loadDataGroups(required, loadGroup);
+        await loadDataGroups(required, loadGroup, runId);
+        if (routeRun.current !== runId) return;
         setStatus("ready");
         setError(null);
       } catch (caught) {
+        if (routeRun.current !== runId) return;
         setStatus("error");
         setError(getErrorMessage(caught));
       }
     }
-    await loadOptionalGroups(optional);
+    await loadOptionalGroups(optional, runId);
   }, [loadGroup, loadOptionalGroups]);
 
-  const scheduleGroups = useCallback((selected: DataGroup[]) => {
+  const scheduleGroups = useCallback((selected: DataGroup[], invalidate = true) => {
+    if (!selected.length) return;
+    if (invalidate) invalidateDataGroups(selected);
     invalidatePlayerProfileSections(profileSectionsForDataGroups(selected));
     for (const group of selected) scheduledGroups.current.add(group);
     if (refetchTimer.current != null) window.clearTimeout(refetchTimer.current);
@@ -201,6 +211,9 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const runId = ++routeRun.current;
+    const controller = new AbortController();
+    routeController.current = controller;
+    routeRefresh.current = null;
     setStatus("loading");
     setError(null);
     const initialize = async () => {
@@ -208,6 +221,7 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
       await loadPlan(plan, runId);
     };
     void initialize().catch(() => undefined);
+    return () => { routeRun.current = runId + 1; controller.abort(); };
   }, [loadPlan, plan]);
 
   useEffect(() => {
@@ -244,25 +258,28 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
           ? "disconnected"
           : "connecting");
     });
+    const pendingGroups = scheduledGroups.current;
     return () => {
       unsubscribe();
       if (refetchTimer.current != null) window.clearTimeout(refetchTimer.current);
+      pendingGroups.clear();
     };
   }, [scheduleGroups]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const refreshVisible = () => {
-      if (document.visibilityState === "visible") scheduleGroups(allPlanGroups(planRef.current));
+      if (document.visibilityState === "visible") refreshFocused();
     };
-    const refreshFocused = () => scheduleGroups(allPlanGroups(planRef.current));
+    const refreshFocused = () => scheduleGroups(allPlanGroups(planRef.current)
+      .filter((group) => shouldRefreshDataGroup(group, season)), false);
     window.addEventListener("focus", refreshFocused);
     document.addEventListener("visibilitychange", refreshVisible);
     return () => {
       window.removeEventListener("focus", refreshFocused);
       document.removeEventListener("visibilitychange", refreshVisible);
     };
-  }, [scheduleGroups]);
+  }, [scheduleGroups, season]);
 
   const hasActiveEvent = plan.required.includes("live") &&
     snapshot.liveState.events.some(({ status: value }) => value === "active");

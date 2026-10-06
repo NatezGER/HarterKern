@@ -14,6 +14,8 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 import {
+  getEventDetail,
+  getEventDetailExtras,
   getAttemptBadgeUnlocks,
   getClosedEventIds,
   getPlayerCompareTimeline,
@@ -29,6 +31,25 @@ import {
   getPlayerProgression,
   getPlayerTrophies,
 } from "@/services/historyProfileService";
+
+describe("event read lifecycle", () => {
+  it("does not launch medals or Trophy extras after route cancellation", async () => {
+    mocks.from.mockReset(); mocks.rpc.mockReset();
+    let resolve!: (value: unknown) => void;
+    const pending = new Promise((done) => { resolve = done; });
+    const builder = { select: vi.fn(), eq: vi.fn(), is: vi.fn(), abortSignal: vi.fn(), maybeSingle: vi.fn(() => pending) };
+    for (const method of [builder.select, builder.eq, builder.is, builder.abortSignal]) method.mockReturnValue(builder);
+    mocks.from.mockReturnValue(builder);
+    const controller = new AbortController();
+    const task = getEventDetail("event", controller.signal);
+    controller.abort();
+    resolve({ data: { id: "event", awards_trophies: true }, error: null });
+    await expect(task).rejects.toMatchObject({ name: "AbortError" });
+    await expect(getEventDetailExtras("event", true, controller.signal)).rejects.toMatchObject({ name: "AbortError" });
+    expect(mocks.from).toHaveBeenCalledTimes(1);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+});
 
 describe("player profile core repository", () => {
   beforeEach(() => {

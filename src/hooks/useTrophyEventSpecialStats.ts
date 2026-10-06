@@ -20,15 +20,16 @@ export function useTrophyEventSpecialStats(
       return;
     }
     let active = true;
+    const controller = new AbortController();
     setState((current) => ({ ...current, loading: true, error: "" }));
-    void getTrophyEventSpecialStats(eventId)
+    void getTrophyEventSpecialStats(eventId, controller.signal)
       .then((data) => active && setState({ data, loading: false, error: "" }))
       .catch((error) => active && setState({
         data: null,
         loading: false,
         error: getErrorMessage(error),
       }));
-    return () => { active = false; };
+    return () => { active = false; controller.abort(); };
   }, [enabled, eventId, refreshVersion]);
 
   return state;

@@ -549,6 +549,10 @@ export interface Database {
         Args: { p_season_year?: number | null; p_event_id?: string | null };
         Returns: Json;
       };
+      get_statistics_performance_dashboard: {
+        Args: { p_season_year?: number | null };
+        Returns: Json;
+      };
       get_rivalry_hub: {
         Args: { p_season_year?: number | null; p_include_pairs?: boolean };
         Returns: Json;

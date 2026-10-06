@@ -9,6 +9,7 @@ describe("statistics routes", () => {
   it("registers every stats subpage as a directly reachable route", () => {
     expect(routes).toContain('{ path: "stats", element: <StatsOverviewPage /> }');
     expect(routes).toContain('{ path: "stats/performance", element: <StatsPage /> }');
+    expect(routes).toContain('{ path: "stats/most-wanted", element: <StatsMostWantedPage /> }');
     expect(routes).toContain('{ path: "stats/rivalries", element: <StatsRivalriesPage /> }');
     expect(routes).toContain('{ path: "stats/badges", element: <StatsBadgesPage /> }');
   });

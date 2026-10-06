@@ -81,6 +81,8 @@ export async function getWorldRecordHistory(
   return data.map((row) => ({
       id: row.record_id,
       playerId: row.player_id,
+      playerName: row.display_name,
+      playerAvatarUrl: resolveAvatar(row.avatar_path, row.avatar_url),
       time: hundredthsToSeconds(row.time_hundredths),
       date: row.achieved_date,
       achievedAt: row.achieved_at,

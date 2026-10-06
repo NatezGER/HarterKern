@@ -1,4 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
+import { readSignal } from "@/services/readSignal";
 import type {
   CompactBadge,
   EventAttemptDetail,
@@ -222,10 +223,11 @@ function mapTrophy(row: {
   };
 }
 
-export async function getEventDetail(eventId: string): Promise<EventDetail | null> {
+export async function getEventDetail(eventId: string, signal?: AbortSignal): Promise<EventDetail | null> {
   const client = getSupabase();
-  const eventResult = await client.from("events").select("*")
-    .eq("id", eventId).is("deleted_at", null).maybeSingle();
+  const eventResult = await readSignal(client.from("events").select("*")
+    .eq("id", eventId).is("deleted_at", null), signal).maybeSingle();
+  signal?.throwIfAborted();
   if (eventResult.error) throw eventResult.error;
   const event = eventResult.data;
   if (!event) return null;
@@ -234,7 +236,7 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
     client.from("event_statistics").select("*").eq("event_id", eventId).maybeSingle(),
     client.from("event_podium").select("*").eq("event_id", eventId)
       .order("rank").order("best_time_hundredths").order("display_name"),
-    client.rpc("get_medal_qualified_events", { p_event_ids: [eventId] }).maybeSingle(),
+    readSignal(client.rpc("get_medal_qualified_events", { p_event_ids: [eventId] }), signal).maybeSingle(),
     client.from("event_attempt_details").select("*").eq("event_id", eventId).order("submitted_at"),
     client.from(event.status === "closed"
       ? "event_final_standings"
@@ -373,7 +375,8 @@ export async function getEventDetail(eventId: string): Promise<EventDetail | nul
   };
 }
 
-export async function getEventDetailExtras(eventId: string, includeTrophySpecialStats = false) {
+export async function getEventDetailExtras(eventId: string, includeTrophySpecialStats = false, signal?: AbortSignal) {
+  signal?.throwIfAborted();
   const client = getSupabase();
   const [badgeResult, trophyResult, specialStatsResult] = await Promise.allSettled([
     client.from("event_badge_unlocks").select("*").eq("source_event_id", eventId)
@@ -382,7 +385,7 @@ export async function getEventDetailExtras(eventId: string, includeTrophySpecial
       .order("awarded_at"),
     client.from("player_trophies").select("*").eq("competition_id", eventId)
       .order("placement"),
-    includeTrophySpecialStats ? getTrophyEventSpecialStats(eventId) : Promise.resolve(null),
+    includeTrophySpecialStats ? getTrophyEventSpecialStats(eventId, signal) : Promise.resolve(null),
   ]);
   const errors: NonNullable<EventDetail["extras"]>["errors"] = {};
   const badges = badgeResult.status === "fulfilled" && !badgeResult.value.error

@@ -378,6 +378,7 @@ export function subscribeToDataPlatform(
       () => onChange("event_participants"),
     )
     .on("postgres_changes", { event: "*", schema: "public", table: "event_guests" }, () => onChange("event_guests"))
+    .on("postgres_changes", { event: "*", schema: "public", table: "event_statistical_pauses" }, () => onChange("event_statistical_pauses"))
     .on("postgres_changes", { event: "*", schema: "public", table: "event_photos" }, () => onChange("event_photos"))
     .subscribe(onStatus);
   return () => {

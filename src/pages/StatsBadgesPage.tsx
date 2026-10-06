@@ -6,7 +6,6 @@ import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { AdminBadgeCatalogSlot } from "@/components/stats/AdminBadgeCatalogSlot";
 import { BadgeRarityGrid } from "@/components/stats/BadgeRarityGrid";
 import { MetricDashboardGrid } from "@/components/stats/MetricRankingCard";
-import { MostWantedMatrix } from "@/components/stats/MostWantedMatrix";
 import { StatsNavigation } from "@/components/stats/StatsNavigation";
 import { Button } from "@/components/ui/button";
 import { metricGroupLabels } from "@/constants/statMetricRegistry";
@@ -29,7 +28,6 @@ export function StatsBadgesPage() {
     <PageHeader eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Badges & BINGO" description="Achievements, seltene Auszeichnungen und die Jagd nach 00 bis 99." action={<SeasonContextBadge />} />
     <StatsNavigation />
     <DataState>
-      <section><SectionHeading eyebrow="00 bis 99" title="Most Wanted" /><OptionalDataState group="most-wanted"><MostWantedMatrix data={data.mostWanted} season={season} /></OptionalDataState></section>
       <section>
         <SectionHeading eyebrow="Ligaweit" title="Achievements" />
         {dashboard.loading && <p className="panel p-5 text-sm text-white/45" role="status">Achievement-Rankings werden geladen …</p>}
