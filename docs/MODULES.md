@@ -325,6 +325,15 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 
 ## 10. Most Wanted und BINGO
 
+- **Isolierter Stats-Read (063):** `/stats/most-wanted` lädt genau einen
+  `get_most_wanted_snapshot(p_season_year)`-RPC über den bestehenden
+  20s-DataGroup-ReadCache. Gemeinsame qualifizierte Basis und dünne
+  Attemptnummerierung ohne dekorierte Event-Views; keine globale Rohzeitliste.
+  Alle sichtbaren späteren Treffer bleiben als kompakte Detailprojektion erhalten.
+  Alte Views bleiben für andere SQL-Verbraucher bestehen.
+  Analyse, Paritäts-/Runtime-Preflight und Network-Abnahme:
+  `docs/STATS_MOST_WANTED_ISOLATION.md`.
+
 - **Zweck:** globale Most-Wanted-Matrix und persönliches 10×10-BINGO.
 - **Einstiege:** `src/components/stats/MostWantedMatrix.tsx`,
   `src/components/players/PersonalBingo.tsx`.

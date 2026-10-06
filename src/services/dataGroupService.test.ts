@@ -181,9 +181,76 @@ describe("route data groups", () => {
   it("loads Most Wanted only on its own statistics route", async () => {
     const plan = getRouteDataPlan("/stats/most-wanted");
     expect(plan).toEqual({ required: ["most-wanted"], optional: [] });
+    expect(dataGroupRequestCounts["most-wanted"]).toBe(1);
     await Promise.all(plan.required.map((group) => loadDataGroup(group, 2026)));
     expect(mocks.getMostWantedSnapshot).toHaveBeenCalledWith(2026);
     expect(mocks.getWorldRecordHistory).not.toHaveBeenCalled();
+  });
+
+  it("deduplicates MW reads, separates scopes, reuses TTL and invalidates only MW", async () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(100_000);
+    try {
+      let finish!: (value: object) => void;
+      mocks.getMostWantedSnapshot.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
+      const first = loadDataGroup("most-wanted");
+      expect(loadDataGroup("most-wanted")).toBe(first);
+      expect(mocks.getMostWantedSnapshot).toHaveBeenCalledOnce();
+      finish({});
+      await first;
+      mocks.getMostWantedSnapshot.mockResolvedValue({});
+      await loadDataGroup("most-wanted", 2026);
+      await loadDataGroup("most-wanted");
+      expect(mocks.getMostWantedSnapshot).toHaveBeenCalledTimes(2);
+      now.mockReturnValue(119_999);
+      expect(shouldRefreshDataGroup("most-wanted", "all-time")).toBe(false);
+      await loadDataGroup("most-wanted");
+      expect(mocks.getMostWantedSnapshot).toHaveBeenCalledTimes(2);
+      now.mockReturnValue(120_000);
+      await loadDataGroup("most-wanted");
+      expect(mocks.getMostWantedSnapshot).toHaveBeenCalledTimes(3);
+      invalidateDataGroups(["badge-rarity"]);
+      await loadDataGroup("most-wanted");
+      expect(mocks.getMostWantedSnapshot).toHaveBeenCalledTimes(3);
+      invalidateDataGroups(["most-wanted"]);
+      await loadDataGroup("most-wanted");
+      expect(mocks.getMostWantedSnapshot).toHaveBeenCalledTimes(4);
+    } finally { now.mockRestore(); }
+  });
+
+  it("does not cache MW failures or repeat an invalidated read after unmount", async () => {
+    mocks.getMostWantedSnapshot.mockRejectedValueOnce(new Error("timeout")).mockResolvedValue({});
+    await expect(loadDataGroup("most-wanted")).rejects.toThrow("timeout");
+    await loadDataGroup("most-wanted");
+    expect(mocks.getMostWantedSnapshot).toHaveBeenCalledTimes(2);
+    invalidateDataGroups(["most-wanted"]);
+    let finish!: (value: object) => void;
+    mocks.getMostWantedSnapshot.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
+    const owner = new AbortController();
+    const pending = loadDataGroup("most-wanted", "all-time", owner.signal);
+    owner.abort();
+    invalidateDataGroups(["most-wanted"]);
+    finish({});
+    await pending;
+    expect(mocks.getMostWantedSnapshot).toHaveBeenCalledTimes(3);
+    await loadDataGroup("most-wanted");
+    expect(mocks.getMostWantedSnapshot).toHaveBeenCalledTimes(4);
+  });
+
+  it("limits MW realtime to relevant sources and never adds MW to another route", () => {
+    for (const table of ["attempts", "historical_attempts", "events", "players", "event_guests"]) {
+      const affected = groupsForRealtimeTable(table);
+      expect(affected).toContain("most-wanted");
+      expect(affected.filter(group => getRouteDataPlan("/stats/most-wanted").required.includes(group)))
+        .toEqual(["most-wanted"]);
+      for (const path of ["/stats/performance", "/stats/badges"]) {
+        const plan = getRouteDataPlan(path);
+        expect(affected.filter(group => [...plan.required, ...plan.optional].includes(group)))
+          .not.toContain("most-wanted");
+      }
+    }
+    for (const table of ["event_photos", "event_participants", "event_statistical_pauses", "badge_definitions"]) {
+      expect(groupsForRealtimeTable(table)).not.toContain("most-wanted");
+    }
   });
 
   it("reuses fresh groups on focus, refreshes stale groups, and invalidates real changes", async () => {

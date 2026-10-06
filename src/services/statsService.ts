@@ -16,6 +16,7 @@ import { hundredthsToSeconds } from "@/utils/time";
 import { ALL_TIME_SEASON, getSeasonDateRange } from "@/lib/season";
 import type { SeasonSelection } from "@/lib/season";
 import { dnfPercentage } from "@/lib/officialTimePerformance";
+import type { MostWantedSnapshotPayload } from "@/types/pr8";
 
 type DiscoveryEnding = {
   achieved: boolean;
@@ -136,40 +137,15 @@ export async function getPrestigeActivities(): Promise<PrestigeActivity[]> {
 export async function getMostWantedSnapshot(
   season: SeasonSelection = ALL_TIME_SEASON,
 ): Promise<MostWantedSnapshot> {
-  const client = getSupabase();
-  const endingsQuery = season === ALL_TIME_SEASON
-    ? client.from("most_wanted_endings").select("*").order("ending")
-    : client.from("season_most_wanted_endings").select("*")
-      .eq("season_year", season).order("ending");
-  const progressQuery = season === ALL_TIME_SEASON
-    ? client.from("most_wanted_progress").select("*").single()
-    : client.from("season_most_wanted_progress").select("*")
-      .eq("season_year", season).single();
-  const hitsQuery = season === ALL_TIME_SEASON
-    ? client.from("qualified_official_times").select("source_id,player_id,guest_id,display_name,avatar_url,avatar_path,is_guest,time_hundredths,occurred_at,occurred_date,has_exact_time,source_type,source_priority,source_order")
-    : client.from("season_qualified_official_times").select("source_id,player_id,guest_id,display_name,avatar_url,avatar_path,is_guest,time_hundredths,occurred_at,occurred_date,has_exact_time,source_type,source_priority,source_order")
-      .eq("season_year", season);
-  const [endingsResult, progressResult, hitsResult] = await Promise.all([
-    endingsQuery,
-    progressQuery,
-    hitsQuery,
-  ]);
-  if (endingsResult.error) throw endingsResult.error;
-  if (progressResult.error) throw progressResult.error;
-  if (hitsResult.error) throw hitsResult.error;
-  const progress = progressResult.data;
-  const hits = [...hitsResult.data].sort((left, right) =>
-    left.occurred_at.localeCompare(right.occurred_at) ||
-    left.source_priority - right.source_priority ||
-    left.source_order - right.source_order ||
-    left.source_id.localeCompare(right.source_id));
-  const hitsByEnding = new Map<number, typeof hits>();
-  for (const hit of hits) {
-    const ending = hit.time_hundredths % 100;
-    hitsByEnding.set(ending, [...(hitsByEnding.get(ending) ?? []), hit]);
-  }
+  const { data, error } = await getSupabase().rpc("get_most_wanted_snapshot", {
+    p_season_year: season === ALL_TIME_SEASON ? null : season,
+  });
+  if (error) throw error;
+  if (!data) throw new Error("Most-Wanted-Snapshot fehlt.");
+  const snapshot = data as unknown as MostWantedSnapshotPayload;
+  const progress = snapshot.progress;
   return {
-    endings: endingsResult.data.map((row) => ({
+    endings: snapshot.endings.map((row) => ({
       ending: row.ending,
       label: row.ending_label,
       achieved: row.achieved,
@@ -186,9 +162,9 @@ export async function getMostWantedSnapshot(
       hasExactTime: row.first_has_exact_time,
       eventId: row.first_event_id,
       sourceType: row.first_source_type,
-      sourceOrder: hitsByEnding.get(row.ending)?.[0]?.source_order ?? null,
+      sourceOrder: row.first_source_order,
       sourceLabel: row.source_label,
-      additionalHits: (hitsByEnding.get(row.ending) ?? []).slice(1).map((hit) => ({
+      additionalHits: row.additional_hits.map((hit) => ({
         id: hit.source_id,
         playerId: hit.player_id,
         guestId: hit.guest_id,
@@ -196,9 +172,6 @@ export async function getMostWantedSnapshot(
         avatarUrl: resolveAvatar(hit.avatar_path, hit.avatar_url),
         isGuest: hit.is_guest,
         timeHundredths: hit.time_hundredths,
-        occurredAt: hit.occurred_at,
-        occurredDate: hit.occurred_date,
-        hasExactTime: hit.has_exact_time,
         sourceType: hit.source_type,
         sourceOrder: hit.source_order,
       })),
@@ -210,7 +183,7 @@ export async function getMostWantedSnapshot(
     mostCommonEnding: progress.most_common_ending,
     mostCommonHits: Number(progress.most_common_hit_count),
     rarestAchievedEndings: progress.rarest_achieved_endings ?? [],
-    topHunters: buildDiscoveryHunters(endingsResult.data).slice(0, 5),
+    topHunters: buildDiscoveryHunters(snapshot.endings).slice(0, 5),
   };
 }
 

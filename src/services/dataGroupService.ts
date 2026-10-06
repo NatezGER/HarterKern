@@ -78,7 +78,7 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
   "prestige-activities": 2,
   "group-milestones": 1,
   "badge-rarity": 1,
-  "most-wanted": 3,
+  "most-wanted": 1,
   "league-time": 2,
   bingo: 1,
   historical: 1,
@@ -260,7 +260,7 @@ export function groupsForRealtimeTable(table: string): DataGroup[] {
     case "events":
     case "event_participants":
     case "event_guests":
-      return ["profile-core", "profile-season", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-performance", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "performance", "prestige-activities", "group-milestones", "badge-rarity", "most-wanted", "league-time", "bingo", "event-detail", "events"];
+      return ["profile-core", "profile-season", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-performance", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "performance", "prestige-activities", "group-milestones", "badge-rarity", ...(table === "event_participants" ? [] : ["most-wanted" as const]), "league-time", "bingo", "event-detail", "events"];
     case "event_photos":
       return ["event-detail"];
     default:

@@ -157,9 +157,10 @@ export interface MostWantedHit {
   avatarUrl: string | null;
   isGuest: boolean;
   timeHundredths: number;
-  occurredAt: string;
-  occurredDate: string;
-  hasExactTime: boolean;
+  // Trophy payloads include these; the MW list displays only identity and time.
+  occurredAt?: string;
+  occurredDate?: string;
+  hasExactTime?: boolean;
   sourceType: "attempt" | "historical_attempt";
   sourceOrder: number;
 }
