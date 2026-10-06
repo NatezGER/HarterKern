@@ -13,7 +13,6 @@ import { useDataGroup } from "@/hooks/useDataPlatform";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { useManagementMode } from "@/hooks/useManagementMode";
 import { useSeason } from "@/hooks/useSeason";
-import { useStatisticDashboard } from "@/hooks/useStatisticDashboard";
 import type { MetricGroup } from "@/types/statDashboard";
 
 const groups: MetricGroup[] = ["bingo", "achievements"];
@@ -21,8 +20,14 @@ const groups: MetricGroup[] = ["bingo", "achievements"];
 export function StatsBadgesPage() {
   const { data } = useEffectivePublicData();
   const { season, isAllTime } = useSeason();
-  const { version } = useDataGroup("statistics");
-  const dashboard = useStatisticDashboard(season, version);
+  const groupState = useDataGroup("badge-statistics");
+  const dashboard = {
+    loading: groupState.status === "idle" || groupState.status === "loading",
+    error: groupState.error,
+    retry: groupState.refresh,
+    data: groupState.status === "ready" && data.badgeStatistics?.season === season
+      ? data.badgeStatistics.dashboard : null,
+  };
   const { unlocked } = useManagementMode();
   return <div className="space-y-8 sm:space-y-10">
     <PageHeader eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Badges & BINGO" description="Achievements, seltene Auszeichnungen und die Jagd nach 00 bis 99." action={<SeasonContextBadge />} />

@@ -56,7 +56,7 @@ describe("route data groups", () => {
     });
     expect(getRouteDataPlan("/stats/rivalries")).toEqual({ required: ["navigation"], optional: [] });
     expect(getRouteDataPlan("/stats/badges")).toEqual({
-      required: ["statistics"], optional: ["badge-rarity"],
+      required: ["navigation"], optional: ["badge-statistics", "badge-rarity"],
     });
     expect(getRouteDataPlan("/").optional).toEqual(["prestige-activities"]);
     expect(dataGroupRequestCounts.statistics).toBe(5);

@@ -288,6 +288,14 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 
 ## 9. Prestige, Badges, Trophäen und Liga-Momente
 
+- **Stats-Isolation (064):** Die öffentliche Badge-Route lädt nur
+  `get_statistics_badge_dashboard` und den bestehenden Ledger-Rarity-RPC.
+  Kein Unified-/Statistik-Kern-Read. Der bestehende Dashboard-Feed verwendet
+  `get_prestige_activity_feed_v2`: Ledger-Badges, kanonische WR/PB/Milestones.
+  Legacy-Award-Differenzen werden im Preflight ausdrücklich klassifiziert.
+  Requestgraph, Cache/Realtime, SQL-Editor-Dateien und Abnahme:
+  `docs/STATS_BADGES_PRESTIGE_ISOLATION.md`.
+
 - **Zweck:** Prestige-Aktivitäten, Badge-Seltenheit, Meilensteine und Trophäen.
 - **Einstiege:** `PrestigeActivityFeed`, `BadgeGallery`, `TrophyCabinet`,
   `GroupMilestones` unter `src/components/`.

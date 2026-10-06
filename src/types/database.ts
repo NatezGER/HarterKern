@@ -630,6 +630,14 @@ export interface Database {
         Args: { p_season_year?: number | null };
         Returns: Json;
       };
+      get_statistics_badge_dashboard: {
+        Args: { p_season_year?: number | null };
+        Returns: Json;
+      };
+      get_prestige_activity_feed_v2: {
+        Args: { p_limit?: number };
+        Returns: Database["public"]["Views"]["prestige_activity_feed"]["Row"][];
+      };
       get_player_most_wanted_statistics: {
         Args: { p_player_ids: string[]; p_season_year?: number | null };
         Returns: Array<{
