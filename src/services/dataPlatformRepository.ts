@@ -1,4 +1,5 @@
 import { getSupabase } from "@/lib/supabase";
+import { mayChangeBadgeStatistics } from "@/services/badgeRealtime";
 import type { Player, PublicDataSnapshot } from "@/types";
 import type {
   AttemptInput,
@@ -366,11 +367,17 @@ export function subscribeToDataPlatform(
   const channel = client.channel("pr6a-data-platform")
     .on("postgres_changes", { event: "*", schema: "public", table: "players" }, () => onChange("players"))
     .on("postgres_changes", { event: "*", schema: "public", table: "events" }, () => onChange("events"))
-    .on("postgres_changes", { event: "*", schema: "public", table: "attempts" }, () => onChange("attempts"))
+    .on("postgres_changes", { event: "*", schema: "public", table: "attempts" }, (payload) => {
+      onChange("attempts");
+      if (mayChangeBadgeStatistics("attempts", payload)) onChange("badge-qualified-sources");
+    })
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "historical_attempts" },
-      () => onChange("historical_attempts"),
+      (payload) => {
+        onChange("historical_attempts");
+        if (mayChangeBadgeStatistics("historical_attempts", payload)) onChange("badge-qualified-sources");
+      },
     )
     .on(
       "postgres_changes",
@@ -380,6 +387,8 @@ export function subscribeToDataPlatform(
     .on("postgres_changes", { event: "*", schema: "public", table: "event_guests" }, () => onChange("event_guests"))
     .on("postgres_changes", { event: "*", schema: "public", table: "event_statistical_pauses" }, () => onChange("event_statistical_pauses"))
     .on("postgres_changes", { event: "*", schema: "public", table: "event_photos" }, () => onChange("event_photos"))
+    .on("postgres_changes", { event: "*", schema: "public", table: "player_badge_award_ledger" }, () => onChange("player_badge_award_ledger"))
+    .on("postgres_changes", { event: "*", schema: "public", table: "badge_definitions" }, () => onChange("badge_definitions"))
     .subscribe(onStatus);
   return () => {
     void client.removeChannel(channel);

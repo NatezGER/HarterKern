@@ -250,6 +250,10 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
     const unsubscribe = subscribeToDataPlatform((table) => {
       const activeGroups = allPlanGroups(planRef.current);
       const tableGroups = groupsForRealtimeTable(table);
+      const inactiveBadgeGroups = tableGroups.filter((group) =>
+        ["badge-statistics", "badge-rarity", "prestige-activities"].includes(group)
+        && !activeGroups.includes(group));
+      if (inactiveBadgeGroups.length) invalidateDataGroups(inactiveBadgeGroups);
       // Inactive MW snapshots become stale, but do not start a background read.
       if (tableGroups.includes("most-wanted") && !activeGroups.includes("most-wanted")) {
         invalidateDataGroups(["most-wanted"]);

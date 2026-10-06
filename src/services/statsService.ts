@@ -107,9 +107,7 @@ function resolveAvatar(path: string | null, legacy: string | null) {
 export async function getPrestigeActivities(): Promise<PrestigeActivity[]> {
   const client = getSupabase();
   const [prestigeResult, wantedResult] = await Promise.all([
-    client.from("prestige_activity_feed").select("*")
-      .order("occurred_at", { ascending: false }).order("priority", { ascending: false })
-      .limit(18),
+    client.rpc("get_prestige_activity_feed_v2", { p_limit: 18 }),
     client.from("most_wanted_activity_feed").select("*")
       .order("occurred_at", { ascending: false }).limit(12),
   ]);

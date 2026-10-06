@@ -247,6 +247,10 @@ export interface EventLeadPlayerStatistic {
 }
 
 export interface PublicDataSnapshot {
+  badgeStatistics?: {
+    season: import("@/lib/season").SeasonSelection;
+    dashboard: import("@/types/statDashboard").StatisticDashboard;
+  };
   players: Player[];
   leaderboard: LeaderboardEntry[];
   dailyWinners: DailyWinner[];
