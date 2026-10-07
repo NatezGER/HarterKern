@@ -285,12 +285,14 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Eventführung:** Die vorhandene saisonfilterbare Abfrage liefert zusätzlich
   strikt gebrochene Eventbestzeiten und wird kompakt innerhalb der
   Ligastatistiken dargestellt.
-- **Rivalry-Auswertungen:** Paar-Rankings trennen Rivalry-Events, deren
-  zeitliche Spanne und Takeovers innerhalb qualifizierter Rivalry-Events von
-  sämtlichen direkten Paar-Takeovers unterhalb oder oberhalb der Schwelle.
-  `get_rivalry_hub` liefert Übersicht oder vollständige Paarliste aus demselben
-  kanonischen `event_pair_summaries`-Read. „Alle Rivalries“ und „Direkte
-  Duelle“ bleiben getrennt und verlinken den bestehenden Compare.
+- **Rivalry-Auswertungen:** Der Rivalry-Tab verwendet `get_rivalry_hub_v2`
+  aus Migration 066: Spotlight, echte/historische Rivalries und Duelle,
+  jeweils mit serverseitigem Score, Intensity und vergleichbarer H2H-Bilanz.
+  Length zählt qualifizierte Rivalry-Events, keine Tage. Saisonwerte bleiben
+  von All-Time-Status getrennt. Quelle ist die unveränderte Closed-Event-View
+  `rivalry_pair_events`; Compare und Badge-Eligibility bleiben unverändert.
+  Der Übersichtsteaser nutzt weiterhin `get_rivalry_hub`. Details, fokussierte
+  Tests und Read-only-Preflight: `docs/STATS_RIVALRY_HUB_V2.md`.
 - **Beer Volume:** Ein gemeinsamer Helper rechnet ausschließlich kanonische
   gültige offizielle Versuche mit 0,2 Litern. All-Time und Saison verwenden
   `global_statistics` beziehungsweise `season_global_statistics`; Eventdetail

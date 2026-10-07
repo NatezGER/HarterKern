@@ -557,6 +557,10 @@ export interface Database {
         Args: { p_season_year?: number | null; p_include_pairs?: boolean };
         Returns: Json;
       };
+      get_rivalry_hub_v2: {
+        Args: { p_season_year?: number | null };
+        Returns: Json;
+      };
       get_player_compare_metric_bundle: {
         Args: { p_player_ids: string[]; p_season_year?: number | null };
         Returns: Json;
