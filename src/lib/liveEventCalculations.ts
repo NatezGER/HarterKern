@@ -82,6 +82,8 @@ export function getLiveStandings(
         isEventEligibleLiveAttempt(attempt, player),
       )),
       attempts: playerAttempts.length,
+      validAttempts: playerAttempts.filter((attempt) => isEventEligibleLiveAttempt(attempt, player)
+        && attempt.result === "time" && attempt.timeSeconds != null).length,
       lastAttempt: [...playerAttempts].sort(
         (a, b) => b.submittedAt.localeCompare(a.submittedAt),
       )[0],

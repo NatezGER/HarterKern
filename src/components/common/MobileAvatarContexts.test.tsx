@@ -82,6 +82,7 @@ const standing: LiveStanding = {
   bestTime: 2.06,
   averageTime: 2.4,
   attempts: 3,
+  validAttempts: 3,
 };
 
 const renderContext = (node: ReactNode) => renderToStaticMarkup(node);

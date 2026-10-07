@@ -634,6 +634,10 @@ export interface Database {
         Args: { p_season_year?: number | null };
         Returns: Json;
       };
+      get_team_milestones_snapshot: {
+        Args: { p_season_year?: number | null };
+        Returns: Json;
+      };
       get_prestige_activity_feed_v2: {
         Args: { p_limit?: number };
         Returns: Database["public"]["Views"]["prestige_activity_feed"]["Row"][];

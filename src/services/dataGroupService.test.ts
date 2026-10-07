@@ -24,6 +24,7 @@ vi.mock("@/services/statsService", () => ({
   getPrestigeActivities: vi.fn(),
   getWorldRecordHistory: mocks.getWorldRecordHistory,
 }));
+vi.mock("@/services/badgeDashboardService", () => ({ getBadgeDashboard: vi.fn() }));
 vi.mock("@/services/attemptService", () => ({ getRecentAttempts: vi.fn() }));
 vi.mock("@/services/eventService", () => ({ getEvents: mocks.getEvents }));
 vi.mock("@/services/dataPlatformRepository", () => ({
@@ -52,11 +53,11 @@ describe("route data groups", () => {
   it("loads each statistics subroute independently", () => {
     expect(getRouteDataPlan("/stats")).toEqual({ required: ["statistics"], optional: [] });
     expect(getRouteDataPlan("/stats/performance")).toEqual({
-      required: ["performance", "historical"], optional: [],
+      required: ["performance", "historical"], optional: ["badge-statistics"],
     });
     expect(getRouteDataPlan("/stats/rivalries")).toEqual({ required: ["navigation"], optional: [] });
     expect(getRouteDataPlan("/stats/badges")).toEqual({
-      required: ["navigation"], optional: ["badge-statistics", "badge-rarity"],
+      required: ["navigation"], optional: ["badge-rarity"],
     });
     expect(getRouteDataPlan("/").optional).toEqual(["prestige-activities"]);
     expect(dataGroupRequestCounts.statistics).toBe(5);
@@ -173,16 +174,16 @@ describe("route data groups", () => {
     expect(mocks.getEvents).not.toHaveBeenCalled();
     expect(mocks.getPlayers).not.toHaveBeenCalled();
     expect(mocks.getGlobalStatistics).not.toHaveBeenCalled();
-    expect(getRouteDataPlan("/stats/performance", 2026)).toEqual({ required: ["performance"], optional: [] });
+    expect(getRouteDataPlan("/stats/performance", 2026)).toEqual({ required: ["performance"], optional: ["badge-statistics"] });
     const affected = groupsForRealtimeTable("attempts").filter((group) => plan.required.includes(group));
     expect(affected.sort()).toEqual(["historical", "performance"]);
   });
 
   it("loads Most Wanted only on its own statistics route", async () => {
-    const plan = getRouteDataPlan("/stats/most-wanted");
-    expect(plan).toEqual({ required: ["most-wanted"], optional: [] });
+    const plan = getRouteDataPlan("/stats/milestones");
+    expect(plan).toEqual({ required: ["navigation"], optional: ["most-wanted", "team-milestones"] });
     expect(dataGroupRequestCounts["most-wanted"]).toBe(1);
-    await Promise.all(plan.required.map((group) => loadDataGroup(group, 2026)));
+    await Promise.all(plan.optional.filter(group => group === "most-wanted").map((group) => loadDataGroup(group, 2026)));
     expect(mocks.getMostWantedSnapshot).toHaveBeenCalledWith(2026);
     expect(mocks.getWorldRecordHistory).not.toHaveBeenCalled();
   });
@@ -240,7 +241,7 @@ describe("route data groups", () => {
     for (const table of ["attempts", "historical_attempts", "events", "players", "event_guests"]) {
       const affected = groupsForRealtimeTable(table);
       expect(affected).toContain("most-wanted");
-      expect(affected.filter(group => getRouteDataPlan("/stats/most-wanted").required.includes(group)))
+      expect(affected.filter(group => getRouteDataPlan("/stats/milestones").optional.includes(group) && group === "most-wanted"))
         .toEqual(["most-wanted"]);
       for (const path of ["/stats/performance", "/stats/badges"]) {
         const plan = getRouteDataPlan(path);

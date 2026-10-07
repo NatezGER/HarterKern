@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppLayout } from "@/layouts/AppLayout";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { LeaderboardPage } from "@/pages/LeaderboardPage";
@@ -29,7 +29,8 @@ export const router = createBrowserRouter([
       { path: "compare", element: <PlayerComparePage /> },
       { path: "stats", element: <StatsOverviewPage /> },
       { path: "stats/performance", element: <StatsPage /> },
-      { path: "stats/most-wanted", element: <StatsMostWantedPage /> },
+      { path: "stats/milestones", element: <StatsMostWantedPage /> },
+      { path: "stats/most-wanted", element: <Navigate to="/stats/milestones" replace /> },
       { path: "stats/rivalries", element: <StatsRivalriesPage /> },
       { path: "stats/badges", element: <StatsBadgesPage /> },
       { path: "settings", element: <SettingsPage /> },

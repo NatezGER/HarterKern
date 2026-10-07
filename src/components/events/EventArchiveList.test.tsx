@@ -25,6 +25,11 @@ const render = (value: Event) => renderToStaticMarkup(
 );
 
 describe("Event archive Trophy marker", () => {
+  it("shows valid attempts instead of the raw count including DNF", () => {
+    const markup = render(event({ attempts: 97, validAttempts: 3, dnfCount: 94 }));
+    expect(markup).toContain("Gültige Versuche");
+    expect(markup).not.toContain(">97<");
+  });
   it("does not mark normal events", () => {
     expect(render(event())).not.toContain("data-asset-id");
     expect(render(event())).toContain('data-event-theme="default"');

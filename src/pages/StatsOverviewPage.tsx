@@ -12,21 +12,23 @@ import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { useRivalryHub } from "@/hooks/useRivalryHub";
 import { useSeason } from "@/hooks/useSeason";
 import { Button } from "@/components/ui/button";
+import { WRProgression } from "@/components/dashboard/WRProgression";
 
 export function StatsOverviewPage() {
   const { data } = useEffectivePublicData();
   const { season, isAllTime } = useSeason();
   const rivalry = useRivalryHub(season, false);
   const validAttempts = Number(data.statistics.find(({ id }) => id === "valid")?.value ?? 0);
-  const highlights = data.statistics.filter(({ id }) => ["fastest", "average", "dnf"].includes(id));
+  const highlights = data.statistics.filter(({ id }) => id === "fastest");
   return <div className="space-y-8 sm:space-y-10">
     <PageHeader eyebrow={isAllTime ? "League Intelligence" : `League Intelligence · Saison ${season}`} title="Statistiken" description={isAllTime ? appMeta.statsDescription : `Eventbasierte Ligawerte der Saison ${season}.`} action={<SeasonContextBadge />} />
     <StatsNavigation />
     <DataState>
+      <WRProgression collapsibleHistory />
       <section>
         <SectionHeading eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Liga-Überblick" />
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {data.statistics.filter(({ id }) => id === "players" || id === "events" || id === "valid").map((statistic) => <StatCard key={statistic.id} statistic={statistic} />)}
+          {data.statistics.filter(({ id }) => id === "players" || id === "events").map((statistic) => <StatCard key={statistic.id} statistic={statistic} />)}
           <BeerVolumeCard validAttempts={validAttempts} compact className="col-span-2 lg:col-span-1" />
         </div>
       </section>
@@ -44,10 +46,10 @@ export function StatsOverviewPage() {
         {rivalry.error && <div className="mt-6 flex items-center gap-3 text-sm text-amber-200/75" role="alert"><span>Rivalry-Überblick nicht verfügbar.</span><button type="button" onClick={rivalry.retry} className="underline">Neu laden</button></div>}
         {rivalry.data && <div className="mt-6 grid grid-cols-3 gap-3"><TeaserStat label="Rivalry-Events" value={rivalry.data.summary.rivalryEvents} /><TeaserStat label="Rivalry-Spieler" value={rivalry.data.summary.playersWithRivalry} /><TeaserStat label="Direkte Takeovers" value={rivalry.data.summary.directTakeovers} /></div>}
       </section>
-      <BeerVolumeCard validAttempts={validAttempts} contextLabel={isAllTime ? "Ligaweit gemeinsam" : `Saison ${season} gemeinsam`} />
       <section className="grid gap-3 sm:grid-cols-2">
         <AreaCard to="/stats/performance" title="Performance" text="Rekorde, Progression, Konstanz und Event-Performance." />
-        <AreaCard to="/stats/badges" title="Badges & BINGO" text="Achievements, Badge-Seltenheit und Most Wanted." />
+        <AreaCard to="/stats/milestones" title="Meilensteine" text="Most Wanted, gemeinsam getrunken und Top-10-Teamzeit." />
+        <AreaCard to="/stats/badges" title="Badges" text="Badge-Familien, Stufen, Empfänger und Seltenheit." />
       </section>
     </DataState>
   </div>;

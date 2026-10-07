@@ -90,7 +90,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
           <div className="grid grid-cols-3 items-end gap-2 sm:gap-4">
             {podium.map((entry) => {
               const rank = entry.rank as 1 | 2 | 3;
-              const card = <><PodiumMedal rank={rank} size={entry.rank === 1 ? "lg" : "md"} className="mx-auto" /><ProfileAvatar id={entry.playerId ?? entry.guestId ?? entry.name} name={entry.name} url={entry.avatarUrl} className={entry.rank === 1 ? "mx-auto mt-3 size-14 ring-gold-400/40 sm:mt-6 sm:size-20" : "mx-auto mt-3 size-11 sm:mt-6 sm:size-16"} /><p className="mt-3 truncate font-display text-base font-black uppercase sm:mt-4 sm:text-2xl">{entry.name}</p><p className="mt-1 hidden text-xs text-white/40 sm:block">{entry.isGuest ? "Gast" : `${entry.attempts} Versuche`}</p><p className="gold-text mt-2 font-display text-xl font-black sm:mt-5 sm:text-4xl">{displayTime(entry.bestHundredths)}</p></>;
+              const card = <><PodiumMedal rank={rank} size={entry.rank === 1 ? "lg" : "md"} className="mx-auto" /><ProfileAvatar id={entry.playerId ?? entry.guestId ?? entry.name} name={entry.name} url={entry.avatarUrl} className={entry.rank === 1 ? "mx-auto mt-3 size-14 ring-gold-400/40 sm:mt-6 sm:size-20" : "mx-auto mt-3 size-11 sm:mt-6 sm:size-16"} /><p className="mt-3 truncate font-display text-base font-black uppercase sm:mt-4 sm:text-2xl">{entry.name}</p><p className="mt-1 hidden text-xs text-white/40 sm:block">{entry.isGuest ? "Gast" : `${entry.validAttempts} Gültige Versuche`}</p><p className="gold-text mt-2 font-display text-xl font-black sm:mt-5 sm:text-4xl">{displayTime(entry.bestHundredths)}</p></>;
               const className = `panel block p-3 text-center transition hover:-translate-y-1 sm:p-6 ${entry.rank === 1 ? "order-2 min-h-52 border-gold-400/25 sm:min-h-80" : entry.rank === 2 ? "order-1 min-h-44 sm:min-h-72" : "order-3 min-h-40 sm:min-h-64"}`;
               return entry.playerId ? <Link key={`${entry.rank}-${entry.playerId}`} to={`/player/${entry.playerId}`} data-placement={rank} className={className}>{card}</Link> : <article key={`${entry.rank}-${entry.guestId}`} data-placement={rank} className={className}>{card}</article>;
             })}
@@ -103,7 +103,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
         <div className={cn("panel divide-y divide-white/[0.06] overflow-hidden", denmark && "dk-scoreboard")}>
           {detail.finalStandings.map((entry) => {
             const placement = entry.rank != null ? `${entry.rank}.` : entry.isAk ? "AK" : "DNF";
-            const row = <><span className="w-10 shrink-0 text-center font-display text-xl font-black text-gold-300 sm:w-14 sm:text-2xl">{placement}</span><ProfileAvatar id={entry.playerId ?? entry.guestId ?? entry.name} name={entry.name} url={entry.avatarUrl} className="size-10 shrink-0 sm:size-12" /><div className="min-w-0 flex-1"><p className="truncate font-bold">{entry.name}</p><p className="text-[10px] uppercase tracking-wider text-white/35">{entry.isGuest ? "Gast" : entry.isAk ? "Außer Konkurrenz" : `${entry.attempts} Versuche`}</p></div><span className="shrink-0 font-display text-lg font-black sm:text-2xl">{entry.bestHundredths == null ? "DNF" : displayTime(entry.bestHundredths)}</span></>;
+            const row = <><span className="w-10 shrink-0 text-center font-display text-xl font-black text-gold-300 sm:w-14 sm:text-2xl">{placement}</span><ProfileAvatar id={entry.playerId ?? entry.guestId ?? entry.name} name={entry.name} url={entry.avatarUrl} className="size-10 shrink-0 sm:size-12" /><div className="min-w-0 flex-1"><p className="truncate font-bold">{entry.name}</p><p className="text-[10px] uppercase tracking-wider text-white/35">{entry.isGuest ? "Gast" : entry.isAk ? "Außer Konkurrenz" : `${entry.validAttempts} Gültige Versuche`}</p></div><span className="shrink-0 font-display text-lg font-black sm:text-2xl">{entry.bestHundredths == null ? "DNF" : displayTime(entry.bestHundredths)}</span></>;
             const className = "flex min-h-16 items-center gap-3 px-3 py-3 sm:min-h-20 sm:gap-4 sm:px-6";
             return entry.playerId ? <Link key={entry.playerId} to={`/player/${entry.playerId}`} data-rank={entry.rank ?? undefined} className={`${className} transition hover:bg-white/[0.03]`}>{row}</Link> : <div key={entry.guestId ?? entry.name} data-rank={entry.rank ?? undefined} className={className}>{row}</div>;
           })}
@@ -143,7 +143,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
         {denmark ? <DenmarkSectionHeading eyebrow="Eventdaten" title="Eventstatistiken" /> : <h2 className="display-title mb-4 text-2xl sm:mb-5 sm:text-3xl">Eventstatistiken</h2>}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <Metric icon={Users} label="Teilnehmer" value={String(detail.participants)} />
-          <Metric icon={Timer} label="Gültig" value={String(detail.validAttempts)} />
+          <Metric icon={Timer} label="Gültige Versuche" value={String(detail.validAttempts)} />
           <Metric icon={CircleX} label="DNF" value={String(detail.dnfCount)} />
           <Metric icon={Trophy} label="Eventbestzeit" value={displayTime(detail.fastestHundredths)} />
           <Metric icon={Target} label="Durchschnitt" value={displayTime(detail.averageHundredths)} className="col-span-2 lg:col-span-1" />

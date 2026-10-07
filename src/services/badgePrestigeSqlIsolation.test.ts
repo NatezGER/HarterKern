@@ -50,8 +50,8 @@ describe("badge/prestige SQL boundaries (static, not a database compile test)", 
   it("removes the hidden Unified hook and guards obsolete scopes", () => {
     const page = read("src/pages/StatsBadgesPage.tsx");
     expect(page).not.toMatch(/useStatisticDashboard|MostWantedMatrix|usePerformanceDashboard|useRivalryHub/);
-    expect(page).toContain('useDataGroup("badge-statistics")');
-    expect(page).toContain("data.badgeStatistics?.season === season");
+    expect(page).not.toContain('useDataGroup("badge-statistics")');
+    expect(read("src/components/stats/BadgeRankingSections.tsx")).toContain("data.badgeStatistics?.season === season");
     expect(page).toContain("AdminBadgeCatalogSlot unlocked={unlocked}");
   });
 });

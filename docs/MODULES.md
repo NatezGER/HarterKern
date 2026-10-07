@@ -222,6 +222,16 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 
 ## 8. Statistiken
 
+- **Informationsarchitektur (065):** Fünf Tabs: Übersicht, Performance,
+  Meilensteine, Rivalries, Badges. `/stats/most-wanted` leitet ohne eigenen Read
+  auf `/stats/milestones` weiter. Meilensteine lädt genau zwei unabhängige
+  Snapshots: Most Wanted (063) und Teammetriken (065). Performance übernimmt
+  BINGO-/Achievement-Rankings über den unveränderten 064-RPC; Badges lädt nur
+  Rarity/Empfänger plus den bestehenden freigeschalteten Admin-Katalog.
+  WR-Progression erscheint zusätzlich prominent in der Übersicht aus bereits
+  geladenen Daten. Detailanalyse, Quellen und offene Abnahme:
+  `docs/STATS_INFORMATION_ARCHITECTURE.md`.
+
 - **Zweck:** schlanke Übersicht sowie getrennte Performance-, Rivalry- und
   Badge/BINGO-Bereiche mit unabhängig geladenen Zusatzmodulen.
 - **Einstiege:** `src/pages/StatsOverviewPage.tsx`, `src/pages/StatsPage.tsx`,
@@ -236,8 +246,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 - **Direkte Abhängigkeiten:** historische Versuche und optionale Statistikmodule.
 - **Nicht enthalten:** Spielerprofil und Live-Verwaltung.
 - **Route Load:** `/stats` lädt nur den Statistik-Kern plus einen kompakten
-  Rivalry-Summary-RPC. Performance lädt Kern, Dashboard, Most Wanted und
-  All-Time-Historie; Badges lädt Kern, Dashboard, Most Wanted und Badge-Rarity.
+  Rivalry-Summary-RPC. Performance lädt den isolierten 062-RPC, WR-Historie,
+  optional All-Time-Historie und separat die verschobenen 064-Rankings;
+  Badges lädt ausschließlich Badge-Rarity.
   Rivalries lädt genau einen season-aware Hub-RPC und erzeugt kein N+1.
   Der Statistik-Kern benötigt All-Time 4 und saisonal 5
   Requests; der saisonale Zusatzrequest liest nur die Bestzeit aus
@@ -288,8 +299,9 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 
 ## 9. Prestige, Badges, Trophäen und Liga-Momente
 
-- **Stats-Isolation (064):** Die öffentliche Badge-Route lädt nur
-  `get_statistics_badge_dashboard` und den bestehenden Ledger-Rarity-RPC.
+- **Stats-Isolation (064/065):** Die öffentliche Badge-Route lädt nur den
+  bestehenden Ledger-Rarity-RPC. `get_statistics_badge_dashboard` wird jetzt
+  für die verschobenen Rankings ausschließlich auf Performance geladen.
   Kein Unified-/Statistik-Kern-Read. Der bestehende Dashboard-Feed verwendet
   `get_prestige_activity_feed_v2`: Ledger-Badges, kanonische WR/PB/Milestones.
   Legacy-Award-Differenzen werden im Preflight ausdrücklich klassifiziert.

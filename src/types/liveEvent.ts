@@ -80,6 +80,7 @@ export interface LiveStanding {
   bestTime: number | null;
   averageTime: number | null;
   attempts: number;
+  validAttempts: number;
   lastAttempt?: LiveAttempt;
 }
 
