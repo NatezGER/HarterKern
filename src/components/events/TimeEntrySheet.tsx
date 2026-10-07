@@ -79,7 +79,7 @@ export function TimeEntrySheet({
       </div>
       <div className="mb-3 grid grid-cols-3 gap-2 sm:mb-4">
         <EntryMetric label="Event-Bestzeit" value={formatTime(standing.bestTime ?? 0)} />
-        <EntryMetric label="Versuche" value={String(standing.attempts)} />
+        <EntryMetric label="Gültige Versuche" value={String(standing.validAttempts)} />
         <EntryMetric label="Event-Ø" value={formatTime(standing.averageTime ?? 0)} />
       </div>
       <div

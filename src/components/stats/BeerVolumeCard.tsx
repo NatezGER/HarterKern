@@ -1,4 +1,5 @@
 import { Beer } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { resolveBeerVolumeMilestone } from "@/lib/beerVolume";
 
@@ -7,7 +8,8 @@ const liters = (value: number) => value.toLocaleString("de-DE", {
   maximumFractionDigits: 1,
 });
 
-export function BeerVolumeCard({ validAttempts, contextLabel, compact = false, className }: {
+export function BeerVolumeCard({ validAttempts, contextLabel, compact = false, className, artwork }: {
+  artwork?: ReactNode;
   validAttempts: number;
   contextLabel?: string;
   compact?: boolean;
@@ -16,7 +18,7 @@ export function BeerVolumeCard({ validAttempts, contextLabel, compact = false, c
   const volume = resolveBeerVolumeMilestone(validAttempts);
   return <article className={cn("panel overflow-hidden p-5 sm:p-7", className)} data-beer-volume>
     <div className="flex items-start gap-4">
-      <span className="grid size-11 shrink-0 place-items-center rounded-2xl border border-gold-300/20 bg-gold-300/10 text-gold-200"><Beer className="size-5" /></span>
+      <span data-team-artwork="beer" aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-2xl border border-gold-300/20 bg-gold-300/10 text-gold-200">{artwork ?? <Beer className="size-5" />}</span>
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold-300/70">{contextLabel ?? "Gemeinsam getrunken"}</p>
         <p className="mt-1 font-display text-3xl font-black text-white sm:text-4xl">{liters(volume.liters)} L</p>

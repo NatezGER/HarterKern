@@ -13,6 +13,8 @@ vi.mock("@/hooks/useEffectivePublicData", () => ({ useEffectivePublicData: () =>
     { id: "events", label: "Events", value: "2", change: "Abende", icon: "trophy" },
   ], eventLeadStatistics: [], mostWanted: {},
   leagueTimeStatistics: {}, badgeRarity: [],
+  teamMilestones: { season: state.season, validAttempts: 10, teamTimeHundredths: 2784, playerCount: 10 },
+  badgeStatistics: { season: state.season, dashboard: { metrics: [{ key: "bingo-fields", title: "BINGO-Ranking", group: "bingo", rankings: [], overallValue: null }] } },
 } }) }));
 vi.mock("@/hooks/useDataPlatform", () => ({
   useDataPlatform: () => ({ snapshot: { liveState: { historicalAttempts: [] } } }),
@@ -30,6 +32,7 @@ vi.mock("@/hooks/usePerformanceDashboard", () => ({ usePerformanceDashboard: () 
   }], rivalryPairs: [],
 }}, loading: false, error: state.dashboardError ? "timeout" : "", retry: vi.fn() }) }));
 vi.mock("@/hooks/useManagementMode", () => ({ useManagementMode: () => ({ unlocked: false }) }));
+vi.mock("@/hooks/useRivalryHub", () => ({ useRivalryHub: () => ({ data: null, loading: false, error: null }) }));
 vi.mock("@/components/common/DataState", () => ({ DataState: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/common/OptionalDataState", () => ({ OptionalDataState: ({ children }: { children: ReactNode }) => children }));
 vi.mock("@/components/dashboard/WRProgression", () => ({ WRProgression: () => <div>Record Progression</div> }));
@@ -47,8 +50,20 @@ vi.mock("@/components/stats/StatsNavigation", () => ({ StatsNavigation: () => <n
 
 import { StatsPage } from "@/pages/StatsPage";
 import { StatsMostWantedPage } from "@/pages/StatsMostWantedPage";
+import { StatsOverviewPage } from "@/pages/StatsOverviewPage";
+import { MemoryRouter } from "react-router-dom";
 
 describe("StatsPage structure", () => {
+  it("keeps WR progression prominent and attempt-number analysis only on Performance", () => {
+    state.season = "all-time";
+    const overview = renderToStaticMarkup(<MemoryRouter><StatsOverviewPage /></MemoryRouter>);
+    expect(overview.indexOf("Record Progression")).toBeLessThan(overview.indexOf("Liga-Überblick"));
+    expect(overview).not.toContain("Versuchnummern-Chart");
+    expect(overview).toContain("2,0 L");
+    const milestones = renderToStaticMarkup(<StatsMostWantedPage />);
+    expect(milestones).toContain("2,0 L");
+    expect(milestones).toContain("Top-10-Teamzeit");
+  });
   it("keeps only performance-related statistics on the performance page", () => {
     state.dashboardError = false;
     state.season = "all-time";
@@ -83,6 +98,7 @@ describe("StatsPage structure", () => {
     const markup = renderToStaticMarkup(<StatsPage />);
     expect(markup).toContain("Saison 2026");
     expect(markup).toContain("Versuchnummern-Chart");
+    expect(markup).toContain("BINGO-Ranking");
     expect(markup).not.toContain("History collapsed");
     expect(markup).not.toContain("Most Wanted Matrix");
     state.season = "all-time";
@@ -90,6 +106,8 @@ describe("StatsPage structure", () => {
   it("renders the unchanged matrix on the new Most Wanted page", () => {
     const markup = renderToStaticMarkup(<StatsMostWantedPage />);
     expect(markup).toContain("Most Wanted Matrix");
+    expect(markup).toContain("Meilensteine");
+    expect(markup).toContain("Top-10-Teamzeit");
     expect(markup).toContain("Stats Subnavigation");
     expect(markup).not.toContain("Record Progression");
   });

@@ -20,6 +20,7 @@ import { ReadCache } from "@/services/readCache";
 import { statisticDashboardCache } from "@/services/statDashboardService";
 import { performanceDashboardCache } from "@/services/performanceDashboardService";
 import { getBadgeDashboard } from "@/services/badgeDashboardService";
+import { getTeamMilestones } from "@/services/teamMilestonesService";
 
 export type DataGroup =
   | "navigation"
@@ -41,6 +42,7 @@ export type DataGroup =
   | "performance"
   | "prestige-activities"
   | "group-milestones"
+  | "team-milestones"
   | "badge-rarity"
   | "badge-statistics"
   | "most-wanted"
@@ -79,6 +81,7 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
   performance: 1, // WR history; the independent performance hook adds one RPC.
   "prestige-activities": 2,
   "group-milestones": 1,
+  "team-milestones": 1,
   "badge-rarity": 1,
   "badge-statistics": 1,
   "most-wanted": 1,
@@ -122,12 +125,13 @@ export function getRouteDataPlan(pathname: string, season: SeasonSelection = ALL
     };
   }
   if (pathname === "/stats/performance") return {
-    required: season === ALL_TIME_SEASON ? ["performance", "historical"] : ["performance"], optional: [],
+    required: season === ALL_TIME_SEASON ? ["performance", "historical"] : ["performance"], optional: ["badge-statistics"],
   };
-  if (pathname === "/stats/most-wanted") return { required: ["most-wanted"], optional: [] };
+  if (pathname === "/stats/most-wanted") return { required: ["navigation"], optional: [] };
+  if (pathname === "/stats/milestones") return { required: ["navigation"], optional: ["most-wanted", "team-milestones"] };
   if (pathname === "/stats/rivalries") return { required: ["navigation"], optional: [] };
   if (pathname === "/stats/badges") return {
-    required: ["navigation"], optional: ["badge-statistics", "badge-rarity"],
+    required: ["navigation"], optional: ["badge-rarity"],
   };
   if (pathname === "/events/live" || pathname === "/settings") {
     return { required: ["live"], optional: [] };
@@ -234,6 +238,8 @@ async function loadUncached(group: DataGroup, season: SeasonSelection, signal?: 
       return { publicData: { activities: await getPrestigeActivities() } };
     case "group-milestones":
       return { publicData: { milestones: await getGroupMilestones() } };
+    case "team-milestones":
+      return { publicData: { teamMilestones: await getTeamMilestones(season) } };
     case "badge-rarity":
       return { publicData: { badgeRarity: await getBadgeRarity() } };
     case "badge-statistics":
@@ -257,6 +263,11 @@ export function loadDataGroup(
 }
 
 export function groupsForRealtimeTable(table: string): DataGroup[] {
+  const teamSources = ["players", "attempts", "historical_attempts", "events"];
+  return [...existingGroupsForRealtimeTable(table), ...(teamSources.includes(table) ? ["team-milestones" as const] : [])];
+}
+
+function existingGroupsForRealtimeTable(table: string): DataGroup[] {
   switch (table) {
     case "player_badge_award_ledger":
     case "badge_definitions":

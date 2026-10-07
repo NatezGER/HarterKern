@@ -16,6 +16,7 @@ import { MetricDashboardGrid } from "@/components/stats/MetricRankingCard";
 import { metricGroupLabels } from "@/constants/statMetricRegistry";
 import type { MetricGroup } from "@/types/statDashboard";
 import { StatsNavigation } from "@/components/stats/StatsNavigation";
+import { BadgeRankingSections } from "@/components/stats/BadgeRankingSections";
 
 export function StatsPage() {
   const { snapshot } = useDataPlatform();
@@ -55,6 +56,7 @@ export function StatsPage() {
             </section>;
           })}</div>}
         </section>
+        <BadgeRankingSections />
         {isAllTime && <section id="history" className="mt-12 scroll-mt-28">
           <SectionHeading eyebrow="Zeitarchiv" title="Historische Versuche" />
           <p className="-mt-4 mb-5 max-w-3xl text-sm leading-6 text-white/45">

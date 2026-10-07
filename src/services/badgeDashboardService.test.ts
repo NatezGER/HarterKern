@@ -26,11 +26,10 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("isolated badges route", () => {
-  it.each(["all-time" as const, 2026])("makes exactly two scoped reads for %s and no old/fan-out reads", async season => {
+  it.each(["all-time" as const, 2026])("makes only the rarity read for %s and no old/fan-out reads", async season => {
     const plan = getRouteDataPlan("/stats/badges", season);
     await Promise.all([...plan.required, ...plan.optional].map(group => loadDataGroup(group, season)));
     expect(mocks.rpc.mock.calls).toEqual([
-      ["get_statistics_badge_dashboard", { p_season_year: season === "all-time" ? null : season }],
       ["get_badge_rarity"],
     ]);
     expect(mocks.from).not.toHaveBeenCalled();
@@ -89,7 +88,7 @@ describe("isolated badges route", () => {
     expect(mocks.rpc).toHaveBeenCalledTimes(2);
   });
   it("does not add badge reads to inactive statistics routes", () => {
-    for (const route of ["/stats/performance","/stats/most-wanted","/stats/rivalries"]) {
+    for (const route of ["/stats/milestones","/stats/most-wanted","/stats/rivalries"]) {
       const plan = getRouteDataPlan(route);
       expect([...plan.required,...plan.optional]).not.toContain("badge-statistics");
       expect([...plan.required,...plan.optional]).not.toContain("badge-rarity");

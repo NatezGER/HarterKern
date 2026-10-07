@@ -61,6 +61,14 @@ const attempt = (
 });
 
 describe("live event rules", () => {
+  it("counts only eligible valid times while preserving raw attempt counts", () => {
+    const rows = getLiveStandings(event, [attempt("1", "paul", 2.3),
+      attempt("2", "paul", undefined, "dns"), attempt("3", "paul", 1, "time", true),
+      attempt("4", "guest", 3), attempt("5", "ak", 1)], players);
+    expect(rows.find(row => row.player.id === "paul")).toMatchObject({ attempts: 3, validAttempts: 1 });
+    expect(rows.find(row => row.player.id === "guest")?.validAttempts).toBe(1);
+    expect(rows.find(row => row.player.id === "ak")?.validAttempts).toBe(0);
+  });
   it("creates every entered time as an immediately official attempt", () => {
     expect(createLiveAttempt({
       playerId: "paul",

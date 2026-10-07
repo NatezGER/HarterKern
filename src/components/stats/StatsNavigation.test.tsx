@@ -8,16 +8,16 @@ describe("StatsNavigation", () => {
     const markup = renderToStaticMarkup(<MemoryRouter initialEntries={["/stats/rivalries"]}><StatsNavigation /></MemoryRouter>);
     expect(markup).toContain('href="/stats"');
     expect(markup).toContain('href="/stats/performance"');
-    expect(markup).toContain('href="/stats/most-wanted"');
+    expect(markup).toContain('href="/stats/milestones"');
     expect(markup).toContain('href="/stats/rivalries"');
     expect(markup).toContain('href="/stats/badges"');
     expect(markup).toMatch(/aria-current="page"[^>]*href="\/stats\/rivalries"/);
   });
-  it("keeps Most Wanted reachable in the horizontally scrollable mobile/desktop nav", () => {
-    const markup = renderToStaticMarkup(<MemoryRouter initialEntries={["/stats/most-wanted"]}><StatsNavigation /></MemoryRouter>);
-    expect(markup).toMatch(/aria-current="page"[^>]*href="\/stats\/most-wanted"/);
+  it("keeps Meilensteine reachable in the horizontally scrollable mobile/desktop nav", () => {
+    const markup = renderToStaticMarkup(<MemoryRouter initialEntries={["/stats/milestones"]}><StatsNavigation /></MemoryRouter>);
+    expect(markup).toMatch(/aria-current="page"[^>]*href="\/stats\/milestones"/);
     expect(markup).toContain("overflow-x-auto");
     expect(markup).toContain("min-w-max");
-    expect(markup).toContain("Most Wanted");
+    expect(markup).toContain("Meilensteine");
   });
 });

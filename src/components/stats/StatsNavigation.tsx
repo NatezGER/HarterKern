@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 const items = [
   { to: "/stats", label: "Übersicht", icon: LayoutDashboard, end: true },
   { to: "/stats/performance", label: "Performance", icon: ChartNoAxesCombined },
-  { to: "/stats/most-wanted", label: "Most Wanted", icon: Target },
+  { to: "/stats/milestones", label: "Meilensteine", icon: Target },
   { to: "/stats/rivalries", label: "Rivalries", icon: Swords },
   { to: "/stats/badges", label: "Badges", icon: Award },
 ];

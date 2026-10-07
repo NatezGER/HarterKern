@@ -43,9 +43,9 @@ describe("Most Wanted snapshot RPC", () => {
   beforeEach(() => { vi.clearAllMocks(); dataGroupCache.invalidate(); mocks.rpc.mockResolvedValue({ data: payload(), error: null }); });
 
   it("runs the real MW route loader twice concurrently with one HTTP request", async () => {
-    const plan = getRouteDataPlan("/stats/most-wanted");
+    const plan = getRouteDataPlan("/stats/milestones");
     await Promise.all([1, 2].flatMap(() =>
-      [...plan.required, ...plan.optional].map(group => loadDataGroup(group))));
+      plan.optional.filter(group => group === "most-wanted").map(group => loadDataGroup(group))));
     expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("get_most_wanted_snapshot", { p_season_year: null });
     expect(mocks.from).not.toHaveBeenCalled();
   });

@@ -21,10 +21,10 @@ vi.mock("@/components/stats/MetricRankingCard", () => ({ MetricDashboardGrid: ({
 import { StatsBadgesPage } from "./StatsBadgesPage";
 beforeEach(() => { state.season = "all-time"; state.payloadSeason = "all-time"; state.status = "ready"; state.error = null; });
 describe("isolated Badges UI", () => {
-  it("preserves BINGO, achievements and rarity without adding a feed or MW matrix", () => {
+  it("keeps rarity while rankings move to Performance", () => {
     const html = renderToStaticMarkup(<StatsBadgesPage />);
-    expect(html).toContain("bingo-fields");
-    expect(html).toContain("badge-gold");
+    expect(html).not.toContain("bingo-fields");
+    expect(html).not.toContain("badge-gold");
     expect(html).toContain("Rarity grid");
     expect(html).not.toContain("Most Wanted · 00");
   });
@@ -33,7 +33,7 @@ describe("isolated Badges UI", () => {
     expect(renderToStaticMarkup(<StatsBadgesPage />)).not.toContain("bingo-fields");
     state.status = "error"; state.error = "timeout";
     const html = renderToStaticMarkup(<StatsBadgesPage />);
-    expect(html).toContain("Bereich neu laden");
+    expect(html).not.toContain("Achievement-Rankings");
     expect(html).toContain("Rarity grid");
     expect(html).not.toContain("badge-gold");
   });

@@ -68,7 +68,7 @@ export function ParticipantCard({
         />
         <Metric label="Eventbestzeit" value={formatTime(standing.bestTime ?? 0)} />
         <Metric label="Event-Durchschnitt" value={formatTime(standing.averageTime ?? 0)} />
-        <Metric label="Versuche" value={String(standing.attempts)} />
+        <Metric label="Gültige Versuche" value={String(standing.validAttempts)} />
       </div>
       {firstAttemptBenchmark != null && <p className="mb-3 mt-1 text-center text-[11px] font-semibold text-gold-300/80 md:mt-0">
         Bester 1. Versuch bisher: {formatTime(firstAttemptBenchmark / 100)}

@@ -44,7 +44,7 @@ export function EventArchiveList({ events, emptyLabel }: { events: Event[]; empt
         <EventValue label="Sieger" value={event.winnerNames.join(" & ") || "—"} />
         <EventValue label="Siegerzeit" value={formatTime(event.fastest)} />
         <EventValue label="Teilnehmer" value={String(event.participantIds.length)} />
-        <EventValue label="Versuche" value={String(event.attempts)} />
+        <EventValue label="Gültige Versuche" value={String(event.validAttempts)} />
       </div>
       <ChevronRight className="hidden size-5 text-white/20 transition group-hover:translate-x-1 group-hover:text-gold-300 sm:block" />
     </Link>)}

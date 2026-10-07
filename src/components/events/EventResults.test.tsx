@@ -95,6 +95,13 @@ const trophy = (
 });
 
 describe("EventResults polish", () => {
+  it("uses valid participant counts on podium and ranking rows", () => {
+    const changed = { ...detail, finalStandings: detail.finalStandings.map(entry => ({ ...entry, attempts: 97 })) };
+    const markup = renderToStaticMarkup(<MemoryRouter><EventResults detail={changed} /></MemoryRouter>);
+    expect(markup).toContain("2 Gültige Versuche");
+    expect(markup).not.toContain("97 Versuche");
+    expect(markup).toContain("Gültige Versuche");
+  });
   it("builds direct-route overlay choices from the event detail itself", () => {
     expect(eventParticipantOptions([
       { ...detail.finalStandings[0], isAk: false },
