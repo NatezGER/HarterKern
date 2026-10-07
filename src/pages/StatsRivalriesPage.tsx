@@ -3,12 +3,12 @@ import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { RivalryHubContent } from "@/components/stats/RivalryHubContent";
 import { StatsNavigation } from "@/components/stats/StatsNavigation";
 import { Button } from "@/components/ui/button";
-import { useRivalryHub } from "@/hooks/useRivalryHub";
+import { useRivalryHubV2 } from "@/hooks/useRivalryHubV2";
 import { useSeason } from "@/hooks/useSeason";
 
 export function StatsRivalriesPage() {
   const { season, isAllTime } = useSeason();
-  const hub = useRivalryHub(season, true);
+  const hub = useRivalryHubV2(season);
   return <div className="space-y-8 sm:space-y-10">
     <PageHeader eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Rivalries" description="Die vollständige Geschichte direkter Duelle und qualifizierter Rivalry-Events." action={<SeasonContextBadge />} />
     <StatsNavigation />
