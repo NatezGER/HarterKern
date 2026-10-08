@@ -24,14 +24,14 @@ describe("beer volume", () => {
   it("resolves milestones below, exactly on and above a threshold", () => {
     expect(resolveBeerVolumeMilestone(49).next?.liters).toBe(10);
     expect(resolveBeerVolumeMilestone(50).reached?.liters).toBe(10);
-    expect(resolveBeerVolumeMilestone(51).next?.liters).toBe(20);
-    expect(resolveBeerVolumeMilestone(687).progress).toBeCloseTo(91.6);
+    expect(resolveBeerVolumeMilestone(51).next?.liters).toBe(12);
+    expect(resolveBeerVolumeMilestone(687).progress).toBeCloseTo(37);
   });
 
-  it("keeps the million-liter end goal stable", () => {
+  it("uses the final catalogue goal without inventing another target", () => {
     const end = resolveBeerVolumeMilestone(5_000_000);
     expect(end.liters).toBe(1_000_000);
-    expect(end.reached?.label).toBe("Endgegner");
+    expect(end.reached?.liters).toBe(219000);
     expect(end.next).toBeNull();
     expect(end.progress).toBe(100);
     expect(resolveBeerVolumeMilestone(6_000_000).next).toBeNull();
