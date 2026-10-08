@@ -195,6 +195,12 @@ export interface Database {
         Relationships: [];
       };
       award_assets: AwardAssetsTable;
+      team_milestone_content: {
+        Row: { milestone_id: string; info_text: string | null; image_path: string | null; updated_at: string };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       event_statistical_pauses: {
         Row: { id: string; event_id: string; paused_at: string; resumed_at: string; description: string | null; created_at: string; updated_at: string };
         Insert: { id?: string; event_id: string; paused_at: string; resumed_at: string; description?: string | null };
@@ -640,6 +646,10 @@ export interface Database {
       };
       get_team_milestones_snapshot: {
         Args: { p_season_year?: number | null };
+        Returns: Json;
+      };
+      get_team_milestones_snapshot_v2: {
+        Args: { p_season_year?: number | null; p_milestones?: Json };
         Returns: Json;
       };
       get_prestige_activity_feed_v2: {

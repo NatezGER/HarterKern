@@ -44,14 +44,15 @@ describe("central team milestone catalogue and progression", () => {
     expect(resolve({ definitions, currentValue: 11, direction:"down" }).nextMilestone?.threshold).toBe(10);
     expect(definitions.map(m=>m.threshold)).toEqual([60,1,10]);
   });
-  it("has no fake completions for missing values, empty catalogues or incomplete teams", () => {
+  it("rejects missing values but accepts server adjusted placeholder team totals", () => {
     expect(resolve({ definitions:[],currentValue:1,direction:"up" }).complete).toBe(false);
     for (const value of [null,NaN,Infinity,-1]) expect(resolve({ definitions:beerMilestones,currentValue:value,direction:"up" }).achievedMilestones).toEqual([]);
     for (const playerCount of [0,2,9]) {
       const result = resolveTeamMilestones({ season:2026,validAttempts:262,teamTimeHundredths:500,playerCount });
-      expect(result.time.achievedMilestones).toEqual([]); expect(result.qualified).toBe(false);
+      expect(result.time.achievedMilestones).toHaveLength(25); expect(result.qualified).toBe(true);
       expect(result.beer.achievedMilestone?.threshold).toBe(51.1);
     }
     expect(resolveTeamMilestones({ season:2026,validAttempts:0,teamTimeHundredths:2610,playerCount:10 }).time.remaining).toBe(.14);
+    expect(resolveTeamMilestones({ season:2026,validAttempts:0,teamTimeHundredths:4820,playerCount:1 }).time.progress).toBeCloseTo(.6);
   });
 });

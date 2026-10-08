@@ -1,5 +1,4 @@
-import { PageHeader } from "@/components/common/PageHeader";
-import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
+import { StatsHeader } from "@/components/stats/StatsHeader";
 import { RivalryHubContent } from "@/components/stats/RivalryHubContent";
 import { StatsNavigation } from "@/components/stats/StatsNavigation";
 import { Button } from "@/components/ui/button";
@@ -7,10 +6,10 @@ import { useRivalryHubV2 } from "@/hooks/useRivalryHubV2";
 import { useSeason } from "@/hooks/useSeason";
 
 export function StatsRivalriesPage() {
-  const { season, isAllTime } = useSeason();
+  const { season } = useSeason();
   const hub = useRivalryHubV2(season);
   return <div className="space-y-8 sm:space-y-10">
-    <PageHeader eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Rivalries" description="Die vollständige Geschichte direkter Duelle und qualifizierter Rivalry-Events." action={<SeasonContextBadge />} />
+    <StatsHeader title="Rivalries" />
     <StatsNavigation />
     <aside className="rounded-2xl border border-red-300/15 bg-red-400/[0.05] p-4 text-sm leading-6 text-white/55"><strong className="text-red-100">Direct Duel ≠ Rivalry:</strong> Jeder direkte Führungswechsel zählt zum Duell. Ab drei Takeovers desselben Paars in einem Event entsteht ein Rivalry-Event.</aside>
     {hub.loading && <p className="panel p-6 text-sm text-white/40" role="status">Rivalry-Historie wird geladen …</p>}

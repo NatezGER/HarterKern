@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({ dashboardError: false, season: "all-time" as string | number, snapshotSeason: undefined as string | number | undefined }));
+vi.mock("@/hooks/useMilestoneContent", () => ({ useMilestoneContent: () => ({ data: {}, loading: false, error: "" }) }));
 
 vi.mock("@/hooks/useSeason", () => ({ useSeason: () => ({ season: state.season, isAllTime: state.season === "all-time" }) }));
 vi.mock("@/hooks/useEffectivePublicData", () => ({ useEffectivePublicData: () => ({ data: {
@@ -85,11 +86,12 @@ describe("StatsPage structure", () => {
     state.dashboardError = false;
     state.season = "all-time";
     const markup = renderToStaticMarkup(<StatsPage />);
+    expect(markup).not.toContain("Reguläre Spieler");
     expect(markup).not.toContain("Most Wanted Matrix");
     expect(markup).toContain("Versuchnummern-Chart");
     expect(markup.indexOf("Versuchnummern-Chart")).toBeLessThan(markup.indexOf("Ligastatistiken"));
     expect(markup.indexOf("Record Progression")).toBeLessThan(markup.indexOf("Schnellste Zeit"));
-    expect(markup).toContain("Reguläre Spieler");
+    expect(markup).not.toContain("Reguläre Spieler");
     expect(markup).not.toContain("Gültige Eventversuche");
     expect(markup).not.toContain("Liga-Meilensteine");
     expect(markup).toContain("data-metric-dashboard");

@@ -58,6 +58,7 @@ describe("BadgeRarityGrid", () => {
     expect(markup).toContain("Profilbild von Paul");
     expect(markup).toContain('href="/player/player-1"');
     expect(markup).toContain("25 %");
+    expect(markup.indexOf('href="/player/player-1"')).toBeLessThan(markup.indexOf('aria-controls="badge-rarity-detail-empty-gold"'));
   });
 
   it("shows a clean empty state", () => {

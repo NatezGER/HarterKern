@@ -6,6 +6,7 @@ interface AdminMediaResponse {
   ok?: boolean;
   publicUrl?: string;
   token?: string;
+  updatedAt?: string;
 }
 
 export function getStoredManagementToken() {
