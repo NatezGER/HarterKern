@@ -222,6 +222,12 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
 
 ## 8. Statistiken
 
+- **PR70 lokal:** Meilensteine verwendet Snapshot V2 (067, inklusive 5s-Platzhaltern
+  und serverseitigen Crossing-Belegen) plus einen gebündelten Editorial-Read.
+  Verwaltung über bestehendes admin-media; eigener Public-Read-Artwork-Bucket.
+  Migration 065 bleibt erhalten. Details/Deployment und offene Runtime-Abnahme:
+  `docs/TEAM_MILESTONE_SYSTEM.md`.
+
 - **Informationsarchitektur (065):** Fünf Tabs: Übersicht, Performance,
   Meilensteine, Rivalries, Badges. `/stats/most-wanted` leitet ohne eigenen Read
   auf `/stats/milestones` weiter. Meilensteine lädt genau zwei unabhängige

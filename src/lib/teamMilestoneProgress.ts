@@ -1,6 +1,6 @@
 export function resolveMilestoneProgress<T extends { threshold: number }>({
-  definitions, currentValue, direction,
-}: { definitions: readonly T[]; currentValue: number | null; direction: "up" | "down" }) {
+  definitions, currentValue, direction, initialValue,
+}: { definitions: readonly T[]; currentValue: number | null; direction: "up" | "down"; initialValue?: number }) {
   const sorted = [...definitions].sort((a,b) => direction === "up" ? a.threshold-b.threshold : b.threshold-a.threshold);
   const valid = currentValue != null && Number.isFinite(currentValue) && currentValue >= 0;
   const achievedMilestones = valid ? sorted.filter(m => direction === "up"
@@ -10,8 +10,7 @@ export function resolveMilestoneProgress<T extends { threshold: number }>({
   const complete = valid && sorted.length > 0 && nextMilestone == null;
   let progress = complete ? 1 : 0;
   if (valid && nextMilestone) {
-    // Up begins at zero. Down has no invented slow baseline before its first tier.
-    const previous = achievedMilestone?.threshold ?? (direction === "up" ? 0 : null);
+    const previous = achievedMilestone?.threshold ?? initialValue ?? (direction === "up" ? 0 : null);
     if (previous != null && previous !== nextMilestone.threshold) {
       progress = direction === "up"
         ? (currentValue-previous)/(nextMilestone.threshold-previous)

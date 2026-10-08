@@ -11,6 +11,7 @@ import { useManagementMode } from "@/hooks/useManagementMode";
 import { formatTime } from "@/utils/format";
 import type { LiveAttempt } from "@/types/liveEvent";
 import { AwardAssetManagement } from "@/components/management/AwardAssetManagement";
+import { MilestoneManagement } from "@/components/management/MilestoneManagement";
 
 export function ManagementPanel() {
   const { unlocked, unlock, lock } = useManagementMode();
@@ -113,6 +114,7 @@ export function ManagementPanel() {
               <PlayerManagement />
             </div>
             <AwardAssetManagement />
+            <MilestoneManagement />
             <HistoricalManagementDisclosure
               expanded={historyExpanded}
               onToggle={() => setHistoryExpanded((value) => !value)}

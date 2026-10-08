@@ -1,98 +1,176 @@
-# Team Milestone System
+# Team Milestone System — PR70
+Basis: origin/main 1412ba1 (PR69 enthalten).
+Branch: feat/stats-final-polish-milestone-cms. Nur lokal; nicht committed/deployed.
 
-Basis: origin/main a6cc3bacc7ed549d181297c2242eae18d83da7c4.
-Branch: feat/team-milestone-system. Lokal implementiert, nicht deployed.
+## Audit / unveränderte Regeln
+- PR69-Katalog: 46 Bier- und 25 Teamzeitstufen. IDs, Titel und Schwellen bleiben
+  in src/constants/teamMilestones.ts; keine zweite Admin-/SQL-Registry.
+- 065 liest qualified_official_times / season_qualified_official_times für PBs
+  sowie global_statistics / season_global_statistics für Eventmenge.
+- 017 qualifiziert PBs inklusive historischer Einträge; 026 ordnet Events anhand
+  start_date und historische Einträge anhand attempt_date einer Saison zu.
+- Historische Einträge haben ein echtes Datum, aber keine belegte Uhrzeit/Event-ID.
+- 063 Most Wanted, 065, 066 Rivalry V2 und alle früheren Migrationen unverändert.
+  Badge-Eligibility, Rivalry/Compare-Berechnung, Performance und Save-Hotpath unverändert.
+- Vorhandene Upload-Architektur: admin-media prüft signiertes Management-Token,
+  anschließend Service-Role-Mutation. award-assets erlaubt nur PNG/WebP und
+  awardbezogene IDs; daher dedizierter Bucket statt Aufweichen der Award-Regeln.
 
-## Architektur und Daten
+## 5-Sekunden-Teamzeit und History
+Neue additive Migration 067: get_team_milestones_snapshot_v2(integer,jsonb).
+Ein kompakter Snapshot für den gewählten Scope, nicht alle Rohversuche im Browser.
+Der Client übergibt id/kind/threshold aus dem einzigen Katalog (maximal 200).
+Schwellen sind ausschließlich Read-/Präsentationsparameter, niemals Award-Writes.
 
-- Statischer typisierter Katalog: src/constants/teamMilestones.ts.
-  46 beer-volume- und 25 team-time-Einträge; kein category-Feld.
-  Schwellen: Liter bzw. Sekunden. IDs und assetKeys sind stabil und eindeutig.
-- Ein Resolver: src/lib/teamMilestoneProgress.ts. Kopiert und sortiert die
-  Definitionen numerisch, ohne den Katalog zu mutieren.
-- src/lib/teamMilestones.ts projiziert Snapshot 065 in beide Fortschritte.
-  Bier nutzt weiterhin den gemeinsamen beerVolume-Konverter (0,2 L/Versuch).
-  Die kompakte BeerVolumeCard verwendet denselben Katalog/Resolver; keine
-  zweite Schwellenliste. Das kompakte Layout bleibt erhalten.
-- Migration 065 unverändert. Keine Migration 067, keine neue Tabelle, keine Writes.
-  get_team_milestones_snapshot bleibt kanonisch: gültige Eventversuche für
-  Volumen, Summe der zehn schnellsten unterschiedlichen Spieler-PBs für Zeit.
-  Historische qualifizierte Zeiten können PBs beitragen, aber kein Eventbier.
-- Most Wanted/063, Rivalry, Badge-Eligibility, Compare und Save-Hotpath unverändert.
+Ausgangszustand: 10 Slots × 500 Hundertstel = 50,00 s.
+Je regulärem Spieler gilt seine bisherige relevante PB; höchstens zehn schnellste
+PBs plus (10-playerCount) × 500. Bestehende Spieler >5 s werden nicht künstlich
+auf 5 s gekappt. Dadurch kann das Hinzukommen einer langsamen PB den Teamwert
+auch erhöhen; eine frühere nachweisbare Schwellenüberschreitung bleibt History.
+Beispiele: 1 × 3,00 s + 9 × 5,00 s = 48,00 s;
+7 × 3,00 s + 3 × 5,00 s = 36,00 s; null Spieler = 50,00 s.
+Platzhalter zählen für Fortschritt und Erreichung vollständig.
+Kein X/10 in der Hauptkarte; playerCount/placeholderCount nur im Snapshot.
 
-## Progression
+067 projiziert dieselbe Qualifikation auf Basistabellen ohne die dekorierte
+event_attempt_details-View. Sortierung: occurred_at, source_priority,
+source_order (historical sort_order; bei Attempts 0), source_id.
+Gleichzeitige Event-Attempts sind durch ID deterministisch geordnet.
+Historische Tagesdaten sortieren wie 017 vor echten Attempts am selben Tag;
+ihre occurredAt-Ausgabe bleibt null (keine behauptete Mitternachtsmessung).
 
-previous = zuletzt erreichte Schwelle, next = nächste noch offene Schwelle.
-- Up: (current-previous)/(next-previous).
-- Down: (previous-current)/(previous-next).
-- Clamp 0..1, Anzeige round(progress*100).
-- Rest up: next-current; down: current-next. Rest auf 8 Dezimalstellen gegen
-  binäre Floating-Point-Artefakte normalisiert, Anzeige maximal zwei.
-- Gleiche Schwelle gilt als erreicht; neue Stufe beginnt bei 0 %.
-- Bier vor erster Schwelle: Nullpunkt als Start.
-- Teamzeit oberhalb erster Schwelle: 0 % und erstes Ziel; keine willkürliche
-  langsamere Ausgangszeit erfinden.
-- Nach letzter Schwelle: 100 %, kein erfundenes Folgeziel.
-- Fehlende/ungültige Messwerte: keine Freischaltung.
-- Teilteam X<10: Summe und X/10 bleiben sichtbar, aber keine Teamzeitstufen
-  erreicht. Reguläre Freischaltung erst mit zehn Spielern und gültiger Summe.
+Ein lokaler PL/pgSQL-Zustand hält PB pro Spieler. Nur erste/bessere persönliche
+Zeiten verändern diesen Zustand. Pro Änderung: zehn schnellste PBs, Platzhalter,
+neuer Teamwert. Kein Write/Trigger, kein Ledger oder Unified-Aufruf.
+First crossing: erste Verbesserung zu <= threshold; mehrere übersprungene Stufen
+erhalten denselben Beleg. Team improvement = vorherige minus neue Teamzeit.
+Eventbier: gültiger regulärer Eventversuch × 0,2 L; historische/eventlose Zeiten
+tragen keine Liter bei. Erster kumulativer Wert >= threshold ist der Trigger.
+Belege: sourceId/sourceType, Datum, vorhandener Event/Spieler, Attemptzeit,
+Teamverbesserung. Fehlender Kontext wird ausgelassen, nicht erfunden.
+Nach Datenkorrektur wird History aus dem aktuellen kanonischen Bestand rekonstruiert;
+sie ist kein unveränderliches Award-Ledger.
 
-Referenzen: 52,4 L zwischen 51,1 und 60 = 14,6 %, Anzeige 15 %, Rest 7,6 L.
-26,10 s zwischen 26,59 und 25,96 = 77,8 %, Anzeige 78 %, Rest 0,14 s.
-Beide Balken wachsen links nach rechts.
+## Progress / Scope / UI
+Zentraler Resolver: Stufenintervall up=(current-previous)/(next-previous),
+down=(previous-current)/(previous-next), geklemmt auf 0..1.
+Teamzeit beginnt jetzt explizit bei 50 s (48,20 -> 60 % Richtung 47 s).
+Unverändert: 52,4 L zwischen 51,1 und 60 -> 15 %; 26,10 s Richtung 25,96 -> 78 %.
+Gleichwertige Hauptkarten ab lg, darunter gestapelt. Solide Goldfüllung auf dunklem
+klar umrandetem Track. Keine generischen Erklärungen, Einordnung oder Trivia im UI.
+Reihenfolge: Team-Fortschritt, unverändertes Most Wanted, getrennte History-Spalten
+(Bier links, Zeit rechts), mobil nacheinander.
+Karten/History verwenden weiterhin den synchronen snapshot.season === season-Guard.
 
-## Darstellung und Scope
+StatsHeader mobil nur STATISTIKEN; Desktop kompakter Bereichstitel.
+StatsNavigation mobil 3+2 ohne horizontalen Scroll, ab sm eine Reihe,
+44px Touchhöhe. Sticky top-20 unter bestehendem 80px Header, z30 unter Header z40;
+bestehende Viewport-Gutters bleiben erhalten. Kein zusätzlicher globaler Header.
+Performance zeigt Spieler-/Eventzahl nicht mehr; Overview fachlich unverändert.
+WR nutzt vorhandenen SVG-Chart und Zeitraum-Zoom/Pan-Tasten. EventModal als Portal,
+900px horizontal nutzbare Grafik, 55dvh Höhe. Browser-Zoom bleibt erlaubt.
+Rivalry-Score/Namen und Compare-Werte zentriert; fachliche Berechnungen unberührt.
+Badge-Empfänger öffnen im zugehörigen Grid-Element direkt unter dem Badge,
+kein separates Seitenende und kein automatischer Scroll.
 
-Team-Fortschritt → unverändertes Most Wanted → erreichte Meilensteine.
-Zwei gleichwertige Cards ab lg, darunter gestapelt; min-w-0, umbrechende Titel,
-responsive Artwork-Flächen. Historientexte sind aufklappbar, zukünftige Stufen
-werden dort nicht gerendert. Keine erfundenen First-Reached-Daten.
+## Supabase Content / Admin / Storage
+team_milestone_content(milestone_id PK, info_text nullable max4000,
+image_path nullable, updated_at). Kein Threshold- oder Kategorieneditor.
+Public SELECT via RLS; keine anon/authenticated Schreibrechte/-Policies.
+Änderungen ausschließlich über bestehendes serverseitig geprüftes admin-media.
+Kein neues Auth-Modell; Management-Token ist keine auth.users-UUID,
+deshalb kein irreführendes updated_by.
 
-Der globale All-Time-/Season-Scope filtert Rohwerte, nicht den statischen Katalog.
-Karten UND Historie prüfen synchron snapshot.season === season.
-Erreicht bedeutet aktuell im Scope erreicht, keine immutable Award-Historie;
-Quellenkorrekturen können erreichte Stufen wieder reduzieren.
+Bucket team-milestone-artwork, public Read, max5MB, WebP/PNG/JPEG.
+Keine öffentliche Upload-/Replace-/Remove-Policy. Die Edge Function nutzt
+erst nach bestehender Tokenprüfung Service-Role-Rechte.
+Upload zuerst unter neuer unveränderlicher UUID-Datei; dann DB-Referenz.
+Versionsprüfung auf updated_at verhindert veraltete/parallele Saves.
+Mehrfachklick gesperrt. Fehlgeschlagener Save lässt alte DB-Referenz bestehen.
+Remove setzt image_path null. Alte/fehlgeschlagene Uploads bleiben bewusst
+orphan-safe im Bucket; kein konkurrierender Save kann referenzierte Dateien löschen.
+Dies benötigt später bewusstes, separat freigegebenes Garbage-Collection-Verfahren.
 
-## Artwork
+Adminbereich in bestehendem ManagementPanel; automatisch sortierte zwei Kataloglisten,
+Vorschau, Dateiauswahl/Replace/Remove, Textarea, Save/Fehler/Uploadstatus.
+Bildempfehlung 1920×1080 / 16:9, akzeptabel ca.1280×720, kein hartes Seitenverhältnis;
+object-cover mit mittigem Motiv. CMS-Bild vor lokalem assetKey-Bild, sonst CSS/Icon.
+Kaputtes Bild wird durch Fallback ersetzt, neue URL wird erneut versucht.
+Info nur wenn nicht leer; lange Texte aufklappbar; keine Quellenpflicht.
+Neuer Meilenstein: Katalog erweitern, erscheint ohne DB-Zeile automatisch im Admin.
+Bestehende interestingFact/source bleiben im Katalog, werden hier nicht gerendert.
 
-src/assets/team-milestones/<assetKey>.webp (oder avif/png/jpg/jpeg/svg).
-Vite-Glob entdeckt Dateien beim Build automatisch; Reihenfolge der Formate:
-avif, webp, png, jpg, jpeg, svg. Keine HTTP-Probes für nicht vorhandene Bilder.
-Fehlende Datei: neutraler CSS/Icon-Fallback. Bild-Ladefehler: derselbe Fallback.
-Normale Lazy-Image-Requests nur für vorhandenes Artwork, keine Metadaten-RPCs.
-Keine Bilder generiert oder heruntergeladen.
+## Reads / Cache / Deployment
+/stats/milestones: 063 + 067 V2 + ein gebündelter Content-Read (3 Modul-Reads).
+Kein N+1; keine zusätzlichen Overview-Reads. Bestehender 20s Snapshot-ReadCache
+mit scopebezogener Deduplizierung/Realtime/Focus bleibt erhalten.
+Scope-unabhängiger Content nutzt denselben ReadCache-Typ, kein Polling/Realtimeabo.
+Adminsave invalidiert nur Content und benachrichtigt aktive lokale Consumer;
+Focus lädt nur bei abgelaufener Stale-Zeit. Fehler blockieren keine Metriken.
 
-## So fügt man einen neuen Meilenstein hinzu
+Deployment-Reihenfolge: additive 067 prüfen/anwenden, admin-media aktualisieren,
+danach Frontend. SQL allein aktiviert den neuen Admin-Endpoint nicht.
+Kein produktives Deployment durch diesen Auftrag erfolgt.
 
-1. Einen typisierten Katalogeintrag mit eindeutiger ID/Schwelle/assetKey und
-   Beschreibung hinzufügen. interestingFact darf null bleiben; andernfalls
-   passende Source angeben. Zahlen nicht in JSX eintragen.
-2. Optional eigenes Artwork unter dem Asset-Key ablegen und neu bauen.
+## Prüfungen und offene Abnahme
+Fokussierte React-/Service-/Resolver-Tests und statische SQL-/Security-Vertragstests.
+SQL-fixtures: supabase/tests/database/team_milestone_content_history.sql,
+ausschließlich disposable lokale DB; niemals Produktion.
+Manueller vollständiger Rollback-Preflight:
+supabase/tests/read_only/team_milestones_v2_preflight.sql.
+Enthält unveränderte 067, aktuellen Katalog, All-Time/Saison-Parität mit 065 plus
+Placeholders, Belege, Grants/Policies und EXPLAIN (ANALYZE,BUFFERS,TIMING OFF).
+PL/pgSQL-EXPLAIN zeigt Gesamtlaufzeit, keine nested Scan-Pläne. Echte Kosten sind
+erst auf realistischem Bestand bewertbar; noch keine Indexbehauptung/-änderung.
 
-Keine UI-/Resolver-Änderung nötig. Katalogtests verhindern doppelte IDs,
-Schwellen je kind und Asset-Keys. Quellenentscheidungen stehen im vereinfachten
-TEAM_MILESTONE_SOURCE_AUDIT.md. Die freigegebene Schokoladenstufe ist 17.000 L.
+Lokal kein PostgreSQL/pgTAP/Docker/Deno und keine Supabase-.env vorhanden.
+Keine SQL-Ausführung, keine gemessene RPC-Runtime, keine All-Time-/Saison-Realwerte
+oder drei realen Trigger-Beispiele. Alle Rechenbeispiele sind ausdrücklich Beispiele.
+Browser: Navigation/Heading bei 360/390/430/1440 ohne horizontalen Overflow gemessen.
+Mangels Daten nur Setup-Zustand: Sticky-Scroll, Chart-Dialog, befüllte Karten,
+Admin-Upload, Bildcrop und Badge-Accordion bleiben echte visuelle Abnahme offen.
 
-## Reads und Performance
+Abschluss der lokalen automatisierten Prüfung: 77 Tests in 15 Dateien bestanden;
+check:quick und Produktionsbuild erfolgreich, git diff --check ohne Fehler.
+Vier bereits bekannte unveränderte Denmark-Asset-Platzhalterwarnungen im Build.
+Keine vollständige Suite, kein Deno-Typecheck und keine DB-Laufzeitprüfung behauptet.
 
-Weiterhin die bestehenden zwei Inhalts-RPCs: 063 Most Wanted und 065 Teammetriken.
-OptionalDataState konsumiert Gruppenstatus, erzeugt auch bei zweimaliger Nutzung
-keinen zweiten Snapshot-Read. Cache-Keys bleiben scopebezogen, 20 Sekunden,
-In-flight-Deduplizierung, Retry/Realtime/Focus unverändert. Keine N+1-, Unified-,
-Badge-, Rivalry- oder Performance-Reads. Fakten/Quellen/Asset-Mapping statisch.
-Lade-Reihenfolge der optionalen Gruppen unverändert (Most Wanted, Teammetriken).
-Reale Produktionswerte und Network-/Runtime-Messung wurden nicht erhoben.
+## Geänderte Dateien PR70
 
-## Tests und Abnahme
-
-Resolver-/Katalogtests: Grenzwerte, Sortierung, beide Richtungen, Beispiele,
-fehlende Werte, kompletter Katalog und Teilteam.
-UI: Hauptkarten, Prozent/Rest, Fallback, Fact-Guard, nur erreichte Historie,
-Seitenreihenfolge und synchroner Stale-Guard.
-Bestehende Service-/Cache-/Route-Tests schützen die Read-Isolation.
-Lokale Prüfung: 57 Tests in 10 Dateien bestanden; check:quick (Lint und
-TypeScript), Produktionsbuild und git diff --check erfolgreich. Der Build
-meldet vier bestehende Asset-Warnungen aus den unveränderten Denmark-Styles.
-Browser-Abnahme bleibt offen: 1440 px und 360/390/430 px, lange Titel,
-große Literzahlen, Fact-Disclosure und nachgereichte Bilder.
-Keine Behauptung, SSR-/Klassentests würden echte Overflow-Messungen ersetzen.
+- src/components/management/MilestoneManagement.tsx
+- src/components/stats/MilestoneArtwork.test.tsx
+- src/components/stats/StatsHeader.tsx
+- src/hooks/useMilestoneContent.ts
+- src/services/milestoneContentService.test.ts
+- src/services/milestoneContentService.ts
+- supabase/migrations/202610080067_team_milestone_content_history.sql
+- supabase/tests/database/team_milestone_content_history.sql
+- supabase/tests/read_only/team_milestones_v2_preflight.sql
+- supabase/tests/teamMilestoneCms.test.ts
+- docs/MODULES.md
+- docs/TEAM_MILESTONE_SYSTEM.md
+- src/components/compare/CompareMetricRow.tsx
+- src/components/dashboard/WRProgression.tsx
+- src/components/management/ManagementPanel.tsx
+- src/components/stats/BadgeRarityGrid.test.tsx
+- src/components/stats/BadgeRarityGrid.tsx
+- src/components/stats/MilestoneArtwork.tsx
+- src/components/stats/RivalryHubContent.tsx
+- src/components/stats/StatsNavigation.test.tsx
+- src/components/stats/StatsNavigation.tsx
+- src/components/stats/TeamMilestones.test.tsx
+- src/components/stats/TeamMilestones.tsx
+- src/lib/teamMilestoneProgress.ts
+- src/lib/teamMilestones.test.ts
+- src/lib/teamMilestones.ts
+- src/pages/StatsBadgesPage.tsx
+- src/pages/StatsMostWantedPage.tsx
+- src/pages/StatsOverviewPage.tsx
+- src/pages/StatsPage.tsx
+- src/pages/StatsRivalriesPage.tsx
+- src/pages/StatsStructure.test.tsx
+- src/services/adminMediaService.ts
+- src/services/teamMilestonesService.test.ts
+- src/services/teamMilestonesService.ts
+- src/types/database.ts
+- supabase/functions/admin-media/index.ts

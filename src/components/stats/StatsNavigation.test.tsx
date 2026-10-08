@@ -13,11 +13,13 @@ describe("StatsNavigation", () => {
     expect(markup).toContain('href="/stats/badges"');
     expect(markup).toMatch(/aria-current="page"[^>]*href="\/stats\/rivalries"/);
   });
-  it("keeps Meilensteine reachable in the horizontally scrollable mobile/desktop nav", () => {
+  it("keeps every destination visible in a sticky 3+2 mobile grid without scroll", () => {
     const markup = renderToStaticMarkup(<MemoryRouter initialEntries={["/stats/milestones"]}><StatsNavigation /></MemoryRouter>);
     expect(markup).toMatch(/aria-current="page"[^>]*href="\/stats\/milestones"/);
-    expect(markup).toContain("overflow-x-auto");
-    expect(markup).toContain("min-w-max");
+    expect(markup).not.toContain("overflow-x-auto");
+    expect(markup).not.toContain("min-w-max");
+    expect(markup).toContain("grid-cols-6");
+    expect(markup).toContain("sticky top-20 z-30");
     expect(markup).toContain("Meilensteine");
   });
 });

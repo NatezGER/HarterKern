@@ -111,16 +111,16 @@ const PairCard = memo(function PairCard({ pair: p, spotlight = false, scopeLabel
     </div>
     <div className="mt-5 flex min-w-0 items-center gap-3">
       <ProfileAvatar id={p.playerAId} name={p.playerADisplayName} url={p.playerAAvatarUrl} className="size-11 sm:size-14" />
-      <h3 className="min-w-0 flex-1 break-words font-display text-xl font-black sm:text-2xl">{p.playerADisplayName} ↔ {p.playerBDisplayName}</h3>
+      <h3 className="min-w-0 flex-1 break-words text-center font-display text-xl font-black sm:text-2xl">{p.playerADisplayName} ↔ {p.playerBDisplayName}</h3>
       <ProfileAvatar id={p.playerBId} name={p.playerBDisplayName} url={p.playerBAvatarUrl} className="size-11 sm:size-14" />
     </div>
     {p.historicalRivalry && <p className="mt-3 text-xs leading-5 text-amber-200/80">Historisch etablierte Rivalry · kein Rivalry-Event im gewählten Scope. Erstes All-Time: {date(p.firstRivalryEventDateAllTime)}.</p>}
     {p.duelOnly && <p className="mt-3 text-xs text-white/45">Noch kein Rivalry-Event</p>}
-    <div className="mt-5 border-y border-white/10 py-4">
+    <div className="mt-5 border-y border-white/10 py-4 text-center">
       <p className="text-xs uppercase tracking-widest text-gold-200">Rivalry Score</p>
       <p className={`mt-1 break-words font-display font-black tabular-nums text-gold-200 ${spotlight ? "text-6xl sm:text-7xl" : "text-4xl"}`}>{p.rivalryScore}</p>
     </div>
-    <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
+    <dl className="mt-5 grid grid-cols-2 gap-4 text-center sm:grid-cols-3">
       <Value label="Intensity" value={p.intensityPercent == null ? "—" : `${p.intensityPercent} %`} />
       <Value label="Rivalry-Events" value={p.rivalryLength} />
       <Value label="Vergleichbare Events" value={p.comparableH2hEvents} />

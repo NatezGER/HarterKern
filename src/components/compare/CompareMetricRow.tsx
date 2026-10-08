@@ -35,7 +35,7 @@ function MetricValue({
 }) {
   return (
     <div className={cn(
-      "flex min-w-0 items-center gap-1 px-2 py-3 sm:gap-2 sm:px-5",
+      "flex min-w-0 flex-wrap items-center justify-center gap-1 px-2 py-3 text-center sm:gap-2 sm:px-5",
       align === "right" && "flex-row-reverse",
     )}>
       <strong className={cn(

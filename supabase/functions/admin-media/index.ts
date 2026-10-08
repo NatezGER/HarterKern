@@ -144,6 +144,43 @@ Deno.serve(async (request) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
+    if (action === "save-milestone-content") {
+      const milestoneId = String(form.get("milestoneId") ?? "");
+      if (!/^(beer|team)-[a-z0-9-]{1,120}$/.test(milestoneId)) throw new Error("Ungültiger Meilenstein.");
+      const infoText = String(form.get("infoText") ?? "").trim();
+      if (infoText.length > 4000) throw new Error("Infotext darf höchstens 4000 Zeichen enthalten.");
+      const current = await supabase.from("team_milestone_content")
+        .select("image_path,updated_at").eq("milestone_id", milestoneId).maybeSingle();
+      if (current.error) throw current.error;
+      if ((current.data?.updated_at ?? "") !== String(form.get("updatedAt") ?? "")) {
+        throw new Error("Inhalt wurde zwischenzeitlich geändert. Bitte neu laden und erneut bearbeiten.");
+      }
+      let imagePath = current.data?.image_path ?? null;
+      const fileValue = form.get("file");
+      if (fileValue instanceof File) {
+        const file = requireImage(fileValue, 5 * 1024 * 1024);
+        imagePath = `${milestoneId}/${crypto.randomUUID()}.${extensionFor(file.type)}`;
+        const uploaded = await supabase.storage.from("team-milestone-artwork").upload(imagePath, file, {
+          contentType: file.type, cacheControl: "31536000", upsert: false,
+        });
+        if (uploaded.error) throw uploaded.error;
+      } else if (form.get("removeImage") === "true") {
+        imagePath = null;
+      }
+      const values = {
+        milestone_id: milestoneId, info_text: infoText || null, image_path: imagePath,
+      };
+      const saved = current.data
+        ? await supabase.from("team_milestone_content").update(values).eq("milestone_id", milestoneId)
+          .eq("updated_at", current.data.updated_at).select("milestone_id,updated_at")
+        : await supabase.from("team_milestone_content").insert(values).select("milestone_id,updated_at");
+      if (saved.error) throw saved.error;
+      if (!saved.data?.length) throw new Error("Inhalt wurde gleichzeitig geändert. Bitte neu laden.");
+      // Intentionally orphan-safe: immutable uploads are never deleted here.
+      // Failed/concurrent saves cannot delete an object another save references.
+      return json({ ok: true, updatedAt: saved.data[0].updated_at });
+    }
+
     if (action === "upload-avatar") {
       const playerId = requirePostgresUuid(form.get("playerId"), "Spieler");
       const file = requireImage(form.get("file"), 5 * 1024 * 1024);

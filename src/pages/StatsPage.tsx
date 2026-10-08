@@ -1,13 +1,11 @@
 import { DataState } from "@/components/common/DataState";
-import { PageHeader } from "@/components/common/PageHeader";
+import { StatsHeader } from "@/components/stats/StatsHeader";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { StatCard } from "@/components/stats/StatCard";
-import { appMeta } from "@/constants/content";
 import { useDataGroup, useDataPlatform } from "@/hooks/useDataPlatform";
 import { usePerformanceDashboard } from "@/hooks/usePerformanceDashboard";
 import { Button } from "@/components/ui/button";
 import { WRProgression } from "@/components/dashboard/WRProgression";
-import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { useSeason } from "@/hooks/useSeason";
 import { useState } from "react";
 import { HistoricalAttemptsDisclosure } from "@/components/history/HistoricalAttemptsDisclosure";
@@ -28,7 +26,7 @@ export function StatsPage() {
   const dashboardData = performance?.dashboard;
   return (
     <div className="space-y-10">
-      <PageHeader eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Performance" description={isAllTime ? appMeta.statsDescription : `Eventbasierte Ligawerte der Saison ${season}.`} action={<SeasonContextBadge />} />
+      <StatsHeader title="Performance" />
       <StatsNavigation />
       <DataState>
         <section>
@@ -43,6 +41,7 @@ export function StatsPage() {
           <SectionHeading eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Ligastatistiken" />
           <div className="mb-3 grid grid-cols-2 gap-3 sm:gap-4">
             {(performance?.statistics ?? [])
+              .filter(({ id }) => id !== "players" && id !== "events")
               .map((statistic) => <StatCard key={statistic.id} statistic={statistic} />)}
           </div>
           {dashboard.loading && <p className="panel p-5 text-sm text-white/45" role="status">Ranking-Statistiken werden geladen …</p>}

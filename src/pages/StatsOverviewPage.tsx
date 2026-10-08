@@ -1,13 +1,11 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Swords } from "lucide-react";
 import { DataState } from "@/components/common/DataState";
-import { PageHeader } from "@/components/common/PageHeader";
+import { StatsHeader } from "@/components/stats/StatsHeader";
 import { SectionHeading } from "@/components/common/SectionHeading";
-import { SeasonContextBadge } from "@/components/common/SeasonContextBadge";
 import { BeerVolumeCard } from "@/components/stats/BeerVolumeCard";
 import { StatCard } from "@/components/stats/StatCard";
 import { StatsNavigation } from "@/components/stats/StatsNavigation";
-import { appMeta } from "@/constants/content";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 import { useRivalryHub } from "@/hooks/useRivalryHub";
 import { useSeason } from "@/hooks/useSeason";
@@ -21,7 +19,7 @@ export function StatsOverviewPage() {
   const validAttempts = Number(data.statistics.find(({ id }) => id === "valid")?.value ?? 0);
   const highlights = data.statistics.filter(({ id }) => id === "fastest");
   return <div className="space-y-8 sm:space-y-10">
-    <PageHeader eyebrow={isAllTime ? "League Intelligence" : `League Intelligence · Saison ${season}`} title="Statistiken" description={isAllTime ? appMeta.statsDescription : `Eventbasierte Ligawerte der Saison ${season}.`} action={<SeasonContextBadge />} />
+    <StatsHeader title="Statistiken" />
     <StatsNavigation />
     <DataState>
       <WRProgression collapsibleHistory />
