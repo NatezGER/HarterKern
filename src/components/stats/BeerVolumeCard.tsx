@@ -36,6 +36,6 @@ export function BeerVolumeCard({ validAttempts, contextLabel, compact = false, c
         <div className="h-full rounded-full bg-gradient-to-r from-amber-600 to-gold-300" style={{ width: `${volume.progress}%` }} />
       </div>
       {!compact && <p className="mt-2 text-[11px] text-white/35">Noch {liters(volume.remainingLiters)} L bis {volume.next.label}.</p>}
-    </div> : <p className="mt-5 text-sm font-bold text-gold-200">1.000.000 L – gemeinsamer Endgegner erreicht.</p>}
+    </div> : <p className="mt-5 text-sm font-bold text-gold-200">Alle aktuellen Meilensteine erreicht.</p>}
   </article>;
 }

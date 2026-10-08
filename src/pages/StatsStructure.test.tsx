@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-const state = vi.hoisted(() => ({ dashboardError: false, season: "all-time" as string | number }));
+const state = vi.hoisted(() => ({ dashboardError: false, season: "all-time" as string | number, snapshotSeason: undefined as string | number | undefined }));
 
 vi.mock("@/hooks/useSeason", () => ({ useSeason: () => ({ season: state.season, isAllTime: state.season === "all-time" }) }));
 vi.mock("@/hooks/useEffectivePublicData", () => ({ useEffectivePublicData: () => ({ data: {
@@ -13,7 +13,7 @@ vi.mock("@/hooks/useEffectivePublicData", () => ({ useEffectivePublicData: () =>
     { id: "events", label: "Events", value: "2", change: "Abende", icon: "trophy" },
   ], eventLeadStatistics: [], mostWanted: {},
   leagueTimeStatistics: {}, badgeRarity: [],
-  teamMilestones: { season: state.season, validAttempts: 10, teamTimeHundredths: 2784, playerCount: 10 },
+  teamMilestones: { season: state.snapshotSeason ?? state.season, validAttempts: 10, teamTimeHundredths: 2784, playerCount: 10 },
   badgeStatistics: { season: state.season, dashboard: { metrics: [{ key: "bingo-fields", title: "BINGO-Ranking", group: "bingo", rankings: [], overallValue: null }] } },
 } }) }));
 vi.mock("@/hooks/useDataPlatform", () => ({
@@ -54,6 +54,23 @@ import { StatsOverviewPage } from "@/pages/StatsOverviewPage";
 import { MemoryRouter } from "react-router-dom";
 
 describe("StatsPage structure", () => {
+  it("orders team progress before Most Wanted and achieved history after it", () => {
+    state.season = 2026;
+    const markup = renderToStaticMarkup(<StatsMostWantedPage />);
+    expect(markup.indexOf("Top-10-Teamzeit")).toBeLessThan(markup.indexOf("Most Wanted Matrix"));
+    expect(markup.indexOf("Most Wanted Matrix")).toBeLessThan(markup.indexOf("Erreichte Meilensteine"));
+    expect(markup).toContain('data-achieved-milestone=');
+  });
+  it("hides stale team cards and history synchronously on a scope change", () => {
+    state.season = 2026; state.snapshotSeason = "all-time";
+    try {
+      const markup = renderToStaticMarkup(<StatsMostWantedPage />);
+      expect(markup).not.toContain("27,84 s");
+      expect(markup).not.toContain('data-achieved-milestone=');
+      expect(markup).not.toContain('data-team-kind=');
+      expect(markup).toContain("Most Wanted Matrix");
+    } finally { state.snapshotSeason = undefined; }
+  });
   it("keeps WR progression prominent and attempt-number analysis only on Performance", () => {
     state.season = "all-time";
     const overview = renderToStaticMarkup(<MemoryRouter><StatsOverviewPage /></MemoryRouter>);
