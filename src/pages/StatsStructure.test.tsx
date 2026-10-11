@@ -10,6 +10,7 @@ vi.mock("@/hooks/useEffectivePublicData", () => ({ useEffectivePublicData: () =>
   statistics: [
     { id: "fastest", label: "Schnellste Zeit", value: "2,99 s", change: "Weltrekord", icon: "timer" },
     { id: "valid", label: "Gültige Eventversuche", value: "10", change: "Offiziell", icon: "timer" },
+    { id: "community-valid", label: "Gemeinsam getrunken", value: "10", change: "Gültige Eventzeiten inklusive Gäste", icon: "timer" },
     { id: "players", label: "Reguläre Spieler", value: "3", change: "Aktiv", icon: "users" },
     { id: "events", label: "Events", value: "2", change: "Abende", icon: "trophy" },
   ], eventLeadStatistics: [], mostWanted: {},
