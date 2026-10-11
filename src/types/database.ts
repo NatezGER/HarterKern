@@ -419,6 +419,7 @@ export interface Database {
       };
       global_statistics: {
         Row: {
+          community_valid_attempts: number;
           regular_players: number;
           event_count: number;
           approved_attempts: number;
@@ -429,10 +430,11 @@ export interface Database {
         };
         Relationships: [];
       };
-      event_lead_segments: {
+      event_participant_lead_segments: {
         Row: {
           event_id: string;
-          player_id: string;
+          player_id: string | null;
+          guest_id: string | null;
           lead_started_at: string;
           lead_ended_at: string;
           duration_seconds: number;
@@ -514,7 +516,7 @@ export interface Database {
         Relationships: [];
       };
       event_lead_participant_statistics: {
-        Row: { event_id: string; player_id: string; lead_seconds: number; event_best_breaks: number };
+        Row: { event_id: string; player_id: string | null; guest_id: string | null; lead_seconds: number; event_best_breaks: number };
         Relationships: [];
       };
       season_player_statistics: {

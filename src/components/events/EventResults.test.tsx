@@ -111,6 +111,10 @@ describe("EventResults polish", () => {
       id: "player-1",
       name: "Paul",
       avatarUrl: "https://cdn.example/paul.webp",
+    }, {
+      id: "guest-1",
+      name: "Gast",
+      avatarUrl: null,
     }]);
   });
 

@@ -21,7 +21,7 @@ describe("live mobile safety", () => {
       participantIds: ["player-1"], status: "active", awardsTrophies: false,
     }} attempts={4} />);
     expect(markup).toContain("Freitag");
-    expect(markup).toContain("4 Eventversuche insgesamt");
+    expect(markup).toContain("4 Starts insgesamt (inkl. DNF)");
     expect(markup).toContain("p-4 sm:p-9");
     expect(markup).not.toContain("Event beenden");
   });
@@ -36,7 +36,7 @@ describe("live mobile safety", () => {
     const normal = renderToStaticMarkup(<LiveEventHeader event={{ ...base, trophyCompetitionKey: "other" }} attempts={4} />);
     expect(denmark).toContain("denmark-hero");
     expect(denmark).toContain("Harter Kern · Dänemark");
-    expect(denmark).toContain("4 Eventversuche insgesamt");
+    expect(denmark).toContain("4 Starts insgesamt (inkl. DNF)");
     expect(normal).not.toContain("denmark-hero");
   });
 

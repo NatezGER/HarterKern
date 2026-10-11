@@ -165,8 +165,14 @@ Examples:
   takeovers and rolling windows. Ordinary totals and rates use aggregate read
   models.
 - Matrix-Glitch und Eventmuster reuse ihre scope-first ordered attempt
-  population. Statistische Eventführung beginnt mit dem offiziellen Versuch
-  des dritten regulären Spielers; DNF zählt für Qualifikation und Zeitgrenzen.
+  population. Statistische Eventführung beginnt mit der ersten gültigen Zeit,
+  unabhängig von der Teilnehmerzahl. Gäste zählen als Eventteilnehmer, nicht als
+  permanente Spieler. DNF kann die statistische Endgrenze setzen, keine Führung.
+  Migration 068 zentralisiert dies in `event_eligible_attempts` und
+  `event_participant_lead_segments_all`; persönliche Lead-Reads projizieren daraus
+  ausschließlich permanente Spieler mit ihren tatsächlichen Zeitabschnitten.
+  Vollständige normale Eventpodien benötigen drei wertbare Teilnehmer inklusive
+  Gästen. Gäste zählen zum Verbrauch, aber nicht zu persönlichen PB-/WR-Werten.
   Paarweise Rivalries verwenden unabhängig von der globalen Eventführung die
   chronologischen persönlichen Event-PBs. Explizite Eventpausen werden zentral
   und ohne doppelte Überschneidungszeit abgezogen.

@@ -19,7 +19,7 @@ import { BeerVolumeCard } from "@/components/stats/BeerVolumeCard";
 export function DashboardPage() {
   const { season, isAllTime } = useSeason();
   const { data } = useEffectivePublicData();
-  const validAttempts = Number(data.statistics.find(({ id }) => id === "valid")?.value ?? 0);
+  const validAttempts = Number(data.statistics.find(({ id }) => id === "community-valid")?.value ?? 0);
   return (
     <div className="space-y-8 sm:space-y-12 lg:space-y-16">
       <HeroCard />

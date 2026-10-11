@@ -63,7 +63,7 @@ export function LiveLeaderboard({ standings, transition, onTransitionComplete }:
         )}
       >
         <motion.span key={standing.rank ?? "unranked"} initial={affected && !reducedMotion ? { opacity: 0, y: 5 } : false} animate={{ opacity: 1, y: 0 }} className="font-display text-2xl font-black text-gold-400">{standing.rank ? String(standing.rank).padStart(2, "0") : "—"}</motion.span>
-        <ParticipantName standing={standing} />
+        <div className="min-w-0"><ParticipantName standing={standing} /><p className="mt-1 pl-[3.25rem] text-xs text-white/45">{standing.validAttempts} gültige Versuche</p></div>
         <p className="hidden text-right text-sm text-white/40 sm:block">{standing.player.kind === "permanent" ? `PB ${formatTime(standing.player.personalBest)}` : "Nur Eventwertung"}</p>
         <div className="text-right">
           <AnimatePresence mode="popLayout" initial={false}><motion.p key={standing.bestTime ?? "no-time"} initial={affected && !reducedMotion ? { opacity: 0, y: 8, scale: 1.08 } : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={reducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: motionConfig.timeDuration }} className="font-display text-xl font-black">{standing.bestTime == null ? "—" : formatTime(standing.bestTime)}</motion.p></AnimatePresence>

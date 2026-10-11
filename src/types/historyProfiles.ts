@@ -122,7 +122,8 @@ export interface EventRivalrySummary {
 }
 
 export interface EventLeadSegmentDetail {
-  playerId: string;
+  playerId: string | null;
+  guestId?: string | null;
   playerName: string;
   avatarUrl: string | null;
   leadingTimeHundredths: number;

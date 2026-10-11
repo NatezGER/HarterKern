@@ -42,8 +42,8 @@ insert into public.event_statistical_pauses (event_id, paused_at, resumed_at, de
 
 select is((select statistical_started_at from public.event_statistical_windows where event_id='60000000-0000-0000-0000-000000000101'), '2026-10-01 00:00Z'::timestamptz, 'event starts at first official attempt');
 select is((select statistical_ended_at from public.event_statistical_windows where event_id='60000000-0000-0000-0000-000000000101'), '2026-10-01 00:20Z'::timestamptz, 'event ends at last official DNF');
-select is((select qualification_started_at from public.event_lead_windows where event_id='60000000-0000-0000-0000-000000000101'), '2026-10-01 00:02Z'::timestamptz, 'third player DNF starts leadership');
-select ok(exists(select 1 from public.event_lead_windows where event_id='60000000-0000-0000-0000-000000000102'), 'all-DNF event has leadership window');
+select is((select qualification_started_at from public.event_lead_windows where event_id='60000000-0000-0000-0000-000000000101'), '2026-10-01 00:00Z'::timestamptz, 'first valid time starts leadership');
+select ok(not exists(select 1 from public.event_lead_windows where event_id='60000000-0000-0000-0000-000000000102'), 'all-DNF event has no leadership window');
 select is((select count(*) from public.event_lead_segments where event_id='60000000-0000-0000-0000-000000000102'), 0::bigint, 'all-DNF window initially has no leader');
 select is((select max(lead_ended_at) from public.event_lead_segments where event_id='60000000-0000-0000-0000-000000000101'), '2026-10-01 00:20Z'::timestamptz, 'last DNF ends event leadership');
 select isnt((select max(lead_ended_at) from public.event_lead_segments where event_id='60000000-0000-0000-0000-000000000101'), '2026-10-02 20:00Z'::timestamptz, 'closed_at does not extend leadership');

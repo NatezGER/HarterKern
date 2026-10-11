@@ -16,7 +16,7 @@ export function StatsOverviewPage() {
   const { data } = useEffectivePublicData();
   const { season, isAllTime } = useSeason();
   const rivalry = useRivalryHub(season, false);
-  const validAttempts = Number(data.statistics.find(({ id }) => id === "valid")?.value ?? 0);
+  const validAttempts = Number(data.statistics.find(({ id }) => id === "community-valid")?.value ?? 0);
   const highlights = data.statistics.filter(({ id }) => id === "fastest");
   return <div className="space-y-8 sm:space-y-10">
     <StatsHeader title="Statistiken" />

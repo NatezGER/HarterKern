@@ -61,6 +61,27 @@ const attempt = (
 });
 
 describe("live event rules", () => {
+  it("keeps a guest-heavy event fully ranked while counting only successful attempts", () => {
+    const participants = [participant("paul"), participant("mats"),
+      participant("anna", 0, false, "guest"), participant("tom", 0, false, "guest"),
+      participant("dnf-guest", 0, false, "guest"), participant("ak", 0, true)];
+    const guestEvent = { ...event, participantIds: participants.map(p => p.id) };
+    const attempts = [attempt("1", "anna", 2.41), attempt("2", "paul", 2.52),
+      attempt("3", "tom", 2.6), attempt("4", "mats", 2.65),
+      attempt("5", "anna", undefined, "dns"), attempt("6", "paul", undefined, "dns"),
+      attempt("7", "anna", 2.8), attempt("8", "paul", 2.9),
+      attempt("9", "dnf-guest", undefined, "dns"), attempt("0", "ak", 1)];
+    const rows = getLiveStandings(guestEvent, attempts, participants);
+    expect(rows.slice(0, 3).map(row => row.player.id)).toEqual(["anna", "paul", "tom"]);
+    for (const id of ["anna", "paul"]) {
+      expect(rows.find(row => row.player.id === id)).toMatchObject({ attempts: 3, validAttempts: 2 });
+    }
+    for (const id of ["dnf-guest", "ak"]) {
+      expect(rows.find(row => row.player.id === id)).toMatchObject({ rank: null, validAttempts: 0 });
+    }
+    expect(getAttemptMilestones(participants, attempts).get("1")?.isPersonalBest).not.toBe(true);
+    expect(getOfficialWorldRecord(participants, attempts)).toBe(2.52);
+  });
   it("counts only eligible valid times while preserving raw attempt counts", () => {
     const rows = getLiveStandings(event, [attempt("1", "paul", 2.3),
       attempt("2", "paul", undefined, "dns"), attempt("3", "paul", 1, "time", true),

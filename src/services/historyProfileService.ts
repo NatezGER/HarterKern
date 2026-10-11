@@ -246,7 +246,7 @@ export async function getEventDetail(eventId: string, signal?: AbortSignal): Pro
       .eq("event_id", eventId).eq("is_rivalry_event", true)
       .order("direct_takeovers", { ascending: false })
       .order("player_low_id").order("player_high_id"),
-    client.from("event_lead_segments").select("*").eq("event_id", eventId)
+    client.from("event_participant_lead_segments").select("*").eq("event_id", eventId)
       .order("sequence"),
   ]);
   for (const result of [statsResult, podiumResult, medalEventResult, attemptsResult,
@@ -280,10 +280,10 @@ export async function getEventDetail(eventId: string, signal?: AbortSignal): Pro
     times.push(attempt.timeHundredths);
     attemptNumbers.set(attempt.attemptNumber, times);
   }
-  const leadByPlayer = new Map((leadResult.data ?? []).map((row) => [row.player_id, row]));
+  const leadByParticipant = new Map((leadResult.data ?? []).map((row) => [row.player_id ?? row.guest_id, row]));
   const participantStats = participantRows.map((row) => {
     const participant = mapParticipant(row);
-    const lead = participant.playerId ? leadByPlayer.get(participant.playerId) : null;
+    const lead = leadByParticipant.get(participant.playerId ?? participant.guestId);
     return { ...participant, leadSeconds: Number(lead?.lead_seconds ?? 0),
       eventBestBreaks: Number(lead?.event_best_breaks ?? 0) };
   });
@@ -305,8 +305,10 @@ export async function getEventDetail(eventId: string, signal?: AbortSignal): Pro
     })
     : [];
   const stats = statsResult.data;
-  const participantsById = new Map(participantStats.flatMap((participant) =>
-    participant.playerId ? [[participant.playerId, participant] as const] : []));
+  const participantsById = new Map(participantStats.flatMap((participant) => {
+    const id = participant.playerId ?? participant.guestId;
+    return id ? [[id, participant] as const] : [];
+  }));
   return {
     id: event.id,
     name: event.name?.trim() || "Spieleabend",
@@ -361,8 +363,9 @@ export async function getEventDetail(eventId: string, signal?: AbortSignal): Pro
     })),
     eventLeadSegments: (leadSegmentsResult.data ?? []).map((row) => ({
       playerId: row.player_id,
-      playerName: participantsById.get(row.player_id)?.name ?? "Unbekannt",
-      avatarUrl: participantsById.get(row.player_id)?.avatarUrl ?? null,
+      guestId: row.guest_id,
+      playerName: participantsById.get(row.player_id ?? row.guest_id ?? "")?.name ?? "Unbekannt",
+      avatarUrl: participantsById.get(row.player_id ?? row.guest_id ?? "")?.avatarUrl ?? null,
       leadingTimeHundredths: row.leading_time_hundredths,
       leadStartedAt: row.lead_started_at,
       leadEndedAt: row.lead_ended_at,
