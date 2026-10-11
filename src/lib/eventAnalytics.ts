@@ -1,4 +1,4 @@
-import { getAttemptMilestones, getLiveStandings } from "@/lib/liveEventCalculations";
+import { getAttemptMilestones, getLiveStandings, isEventEligibleLiveAttempt } from "@/lib/liveEventCalculations";
 import type { LiveAttempt, LiveEvent, LiveParticipant } from "@/types/liveEvent";
 
 const average = (values: number[]) =>
@@ -23,7 +23,9 @@ export function getEventAnalytics(
     const participant = players.find((player) => player.id === id);
     return participant ? [participant] : [];
   });
-  const validTimes = attempts.flatMap((attempt) =>
+  const eligibleAttempts = attempts.filter(attempt =>
+    isEventEligibleLiveAttempt(attempt, players.find(player => player.id === attempt.playerId)));
+  const validTimes = eligibleAttempts.flatMap((attempt) =>
     attempt.result === "time" && attempt.timeSeconds != null ? [attempt.timeSeconds] : [],
   );
   const milestones = getAttemptMilestones(players, allAttempts);
@@ -31,7 +33,8 @@ export function getEventAnalytics(
     const participantAttempts = attempts.filter(({ playerId }) =>
       playerId === standing.player.id,
     );
-    const times = participantAttempts.flatMap((attempt) =>
+    const times = participantAttempts.filter(attempt =>
+      isEventEligibleLiveAttempt(attempt, standing.player)).flatMap((attempt) =>
       attempt.result === "time" && attempt.timeSeconds != null ? [attempt.timeSeconds] : [],
     );
     return {

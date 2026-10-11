@@ -32,7 +32,7 @@ insert into public.event_guests(id,event_id,display_name)
 values ('67000000-0000-0000-0003-000000000001','67000000-0000-0000-0001-000000000001','Milestone guest');
 insert into public.attempts(guest_id,event_id,status,time_hundredths,submitted_at,approved_at)
 values ('67000000-0000-0000-0003-000000000001','67000000-0000-0000-0001-000000000001','approved',99,'2094-01-01 00:08Z','2094-01-01 00:08Z');
-select is((public.get_team_milestones_snapshot_v2(2094)->>'validAttempts')::bigint,4::bigint,'only valid regular event attempts, including slower valid PB');
+select is((public.get_team_milestones_snapshot_v2(2094)->>'validAttempts')::bigint,5::bigint,'valid event attempts including guests and slower valid PB');
 select is((public.get_team_milestones_snapshot_v2(2094)->>'teamTimeHundredths')::bigint,4480::bigint,'same-player improvement, slower non-PB unchanged; guest/AK/DNF excluded');
 create temporary table milestone_result as select public.get_team_milestones_snapshot_v2(2094,'[
   {"id":"beer-exact","kind":"beer-volume","threshold":0.2},

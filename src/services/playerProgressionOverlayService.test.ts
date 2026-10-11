@@ -6,6 +6,18 @@ vi.mock("@/lib/supabase", () => ({ getSupabase: () => ({ rpc, storage: { from: (
 import { buildEventPlayerProgressions, loadPlayerProgressionOverlays, regularPlayerOptions, resolveProgressionAvatar } from "@/services/playerProgressionOverlayService";
 
 describe("multi-player progression overlays", () => {
+  it("includes guest event PBs without creating a personal player identity", () => {
+    const rows = [320, 330, 290].map((time, index) => ({
+      id: String(index), playerId: null, guestId: "guest", name: "Anna", avatarUrl: null,
+      isGuest: true, isAk: false, isDnf: false, timeHundredths: time,
+      submittedAt: `2026-01-01T10:0${index}:00Z`, attemptNumber: index + 1,
+    }));
+    const [series] = buildEventPlayerProgressions(rows, ["guest"]);
+    expect(series.label).toBe("Anna");
+    expect(series.points.map(point => point.timeHundredths)).toEqual([320, 290]);
+    expect(series.points.every(point => point.playerId === undefined)).toBe(true);
+    expect(rpc).not.toHaveBeenCalled();
+  });
   beforeEach(() => rpc.mockReset());
 
   it("resolves the RPC's relative storage avatar through the canonical player avatar path", () => {

@@ -395,6 +395,7 @@ export function mapGlobalStatistics(values: {
   event_count: number;
   approved_attempts: number;
   valid_attempts: number;
+  community_valid_attempts?: number;
   dnf_count: number;
   world_record_hundredths: number | null;
   average_hundredths: number | null;
@@ -404,6 +405,7 @@ export function mapGlobalStatistics(values: {
   return [
     { id: "fastest", label: "Schnellste Zeit", value: time(values.world_record_hundredths), change: season === ALL_TIME_SEASON ? "Aktueller Weltrekord" : `Saisonrekord ${season}`, icon: "timer" },
     { id: "valid", label: "Gültige Eventversuche", value: String(values.valid_attempts), change: "Offizielle Zeiten", icon: "timer" },
+    { id: "community-valid", label: "Gemeinsam getrunken", value: String(values.community_valid_attempts ?? values.valid_attempts), change: "Gültige Eventzeiten inklusive Gäste", icon: "timer" },
     { id: "dnf", label: "DNF", value: `${values.dnf_count} · ${dnfPercent.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`, change: "Anteil aller Eventversuche", icon: "target" },
     { id: "players", label: "Reguläre Spieler", value: String(values.regular_players), change: "Gäste ausgeschlossen", icon: "users" },
     { id: "events", label: "Events", value: String(values.event_count), change: "Abgeschlossene Abende", icon: "trophy" },

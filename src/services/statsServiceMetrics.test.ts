@@ -8,11 +8,13 @@ describe("global statistic cards", () => {
       event_count: 4,
       approved_attempts: 21,
       valid_attempts: 20,
+      community_valid_attempts: 30,
       dnf_count: 1,
       world_record_hundredths: 250,
       average_hundredths: 342,
     }, "all-time");
     expect(cards.find(({ id }) => id === "valid")).toMatchObject({ label: "Gültige Eventversuche", value: "20" });
+    expect(cards.find(({ id }) => id === "community-valid")?.value).toBe("30");
     expect(cards.find(({ id }) => id === "dnf")?.value).toBe("1 · 4,8 %");
     expect(cards.find(({ id }) => id === "average")?.value).toBe("3,42 s");
     expect(cards.some(({ change }) => change === "DNF ausgeschlossen")).toBe(false);

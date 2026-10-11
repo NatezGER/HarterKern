@@ -4,6 +4,18 @@ import { buildEventLeadProgression, formatLeadDuration } from "@/lib/eventLeadPr
 const attempt = (id: string, timeHundredths: number | null, submittedAt: string, changes = {}) => ({ id, playerId: id, guestId: null, name: id, avatarUrl: null, timeHundredths, isDnf: false, isAk: false, submittedAt, attemptNumber: Number(id), ...changes });
 
 describe("event lead progression", () => {
+  it("preserves guest/player/guest/player leadership from the first valid time", () => {
+    const points = buildEventLeadProgression([
+      attempt("1", 320, "2026-01-01T18:00:00Z", { playerId: null, guestId: "anna" }),
+      attempt("2", 310, "2026-01-01T18:25:00Z", { playerId: "paul" }),
+      attempt("3", 295, "2026-01-01T19:05:00Z", { playerId: null, guestId: "tom" }),
+      attempt("4", 290, "2026-01-01T19:15:00Z", { playerId: "fipsi" }),
+    ], "2026-01-01T19:20:00Z");
+    expect(points.map(point => point.id)).toEqual(["1", "2", "3", "4"]);
+    expect(points.map(point => point.durationLabel)).toEqual([
+      "25 Min.", "40 Min.", "10 Min.", "bis Eventende · 5 Min.",
+    ]);
+  });
   it("starts with the first valid attempt and only adds faster leaders", () => {
     const result = buildEventLeadProgression([
       attempt("1", 400, "2026-01-01T18:00:00Z"),

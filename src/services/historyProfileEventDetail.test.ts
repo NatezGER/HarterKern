@@ -117,7 +117,7 @@ function arrangeCore(changes: Partial<Record<string, QueryResult>> = {}) {
       event_best_breaks: 2,
     }], error: null },
     rivalry_pair_events: { data: [], error: null },
-    event_lead_segments: { data: [], error: null },
+    event_participant_lead_segments: { data: [], error: null },
     ...changes,
   };
   mocks.from.mockImplementation((table: string) => query(results[table]));
@@ -125,6 +125,23 @@ function arrangeCore(changes: Partial<Record<string, QueryResult>> = {}) {
 }
 
 describe("event detail loading", () => {
+  it("maps guest leadership and duration through the guest identity", async () => {
+    arrangeCore({
+      event_lead_participant_statistics: { data: [{
+        event_id: event.id, player_id: null, guest_id: "guest-1",
+        lead_seconds: 1500, event_best_breaks: 1,
+      }], error: null },
+      event_participant_lead_segments: { data: [{
+        player_id: null, guest_id: "guest-1", duration_seconds: 1500,
+        leading_time_hundredths: 350, sequence: 1,
+      }], error: null },
+    });
+    const detail = await getEventDetail(event.id);
+    expect(detail?.participantStats[0]).toMatchObject({ name: "Gast", leadSeconds: 1500 });
+    expect(detail?.eventLeadSegments[0]).toMatchObject({
+      playerId: null, guestId: "guest-1", playerName: "Gast", durationSeconds: 1500,
+    });
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     arrangeCore();

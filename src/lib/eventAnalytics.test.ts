@@ -62,6 +62,15 @@ const attempts: LiveAttempt[] = [
 ];
 
 describe("event analytics", () => {
+  it("excludes AK times from event averages without excluding guests", () => {
+    const result = getEventAnalytics(event, [...attempts,
+      { ...attempts[0], id: "ak-attempt", timeSeconds: 0.5, outOfCompetition: true },
+      { ...attempts[1], id: "dnf", result: "dns", timeSeconds: undefined },
+    ], participants);
+    expect(result.validAttempts).toBe(2);
+    expect(result.averageTime).toBe(2.5);
+    expect(result.participantStats.find(row => row.player.id === "player")?.averageTime).toBe(2);
+  });
   it("counts guests fully inside the event and calculates median", () => {
     const result = getEventAnalytics(event, attempts, participants);
     expect(result.guestCount).toBe(1);

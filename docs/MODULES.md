@@ -200,19 +200,22 @@ UI-Helfer, Typen und Formatierungsfunktionen sind nicht vollständig aufgelistet
   `event_badge_unlocks`, `event_photos`, `event_attempt_number_statistics`,
   `player_trophies`; historische `sync_*`-RPCs.
 - **Eventdetail:** Eventfotos werden nicht mehr geladen oder gerendert. Ein
-  gebündelter Lead-Read ergänzt pro permanentem Spieler Führungssekunden und
+  gebündelter Lead-Read ergänzt pro Teilnehmer (Spieler oder Gast) Führungssekunden und
   gebrochene Eventbestzeiten. Abgeschlossene Events lesen zusätzlich ihre
   qualifizierten Paare aus `rivalry_pair_events` für „Rivalries dieses Events“.
   Geschlossene Events zeigen aus den bereits geladenen regulären gültigen
-  Attempts zusätzlich ihr Beer Volume; Gäste, AK und DNF bleiben ausgeschlossen.
+  Attempts zusätzlich ihr Beer Volume; Gäste zählen mit, AK und DNF nicht.
+  `event_participant_lead_segments` liefert die vollständige Führungschronologie;
+  persönliche Lead-Views bleiben reine Spieler-Projektionen.
 - **Trophy-Statistiken:** Live und geschlossenes Trophy-Event nutzen denselben
   `get_trophy_event_dashboard`-Read (eine Client-Anfrage pro Refresh). Er bündelt
   die vorhandenen Most-Wanted-/BINGO-Daten mit event-gefilterten Top-Rankings;
   normale Events fragen ihn nicht ab. Die Live-Rivalry-Watch ist rein lesend und
   ändert die Closed-Event-View `rivalry_pair_events` nicht.
-- **Event-PB-Overlays:** Reguläre Eventteilnehmer können lokal eingeblendet
+- **Event-PB-Overlays:** Reguläre Eventteilnehmer und Gäste können lokal eingeblendet
   werden. Nur strikt schnellere, gültige und freigegebene Eventzeiten bilden
-  Punkte; DNF, AK, Gäste, gleiche und langsamere Zeiten werden verworfen.
+  Punkte; DNF, AK, gleiche und langsamere Zeiten werden verworfen. Gast-Overlays
+  bleiben eventlokal und erzeugen kein persönliches Profil.
 - **Tests:** `npm test -- src/services/historicalAttemptRepository.test.ts`.
 - **Direkte Abhängigkeiten:** Statistikroute, Badges/Trophäen, Storage-Fotos.
 - **Nicht enthalten:** Live-Erfassung und Spieler-BINGO.

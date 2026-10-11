@@ -13,7 +13,7 @@ export function countBeerEligibleEventAttempts(attempts: Array<{
   isDnf: boolean;
   timeHundredths: number | null;
 }>) {
-  return attempts.filter((attempt) => !attempt.isGuest && !attempt.isAk
+  return attempts.filter((attempt) => !attempt.isAk
     && !attempt.isDnf && attempt.timeHundredths != null).length;
 }
 

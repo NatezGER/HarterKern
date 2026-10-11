@@ -11,14 +11,14 @@ describe("beer volume", () => {
     expect(beerLitersForAttempts(687)).toBeCloseTo(137.4);
   });
 
-  it("excludes DNF, AK, guests and attempts without a valid time", () => {
+  it("includes guests but excludes DNF, AK and attempts without a valid time", () => {
     expect(countBeerEligibleEventAttempts([
       { isGuest: false, isAk: false, isDnf: false, timeHundredths: 300 },
       { isGuest: false, isAk: false, isDnf: true, timeHundredths: null },
       { isGuest: false, isAk: true, isDnf: false, timeHundredths: 310 },
       { isGuest: true, isAk: false, isDnf: false, timeHundredths: 320 },
       { isGuest: false, isAk: false, isDnf: false, timeHundredths: null },
-    ])).toBe(1);
+    ])).toBe(2);
   });
 
   it("resolves milestones below, exactly on and above a threshold", () => {

@@ -21,7 +21,7 @@ export function LiveEventHeader({
         <span className="flex items-center gap-2"><Clock3 className="size-4" /> {elapsed}</span>
         <span className="flex items-center gap-2"><Users className="size-4" /> {event.participantIds.length} Teilnehmer</span>
       </div>
-      <p className="mt-2 text-xs text-white/70">{attempts} Eventversuche insgesamt</p>
+      <p className="mt-2 text-xs text-white/70">{attempts} Starts insgesamt (inkl. DNF)</p>
     </DenmarkHero>;
   }
   return (
@@ -39,7 +39,7 @@ export function LiveEventHeader({
             <span className="flex items-center gap-2"><Clock3 className="size-4" /> {elapsed}</span>
             <span className="flex items-center gap-2"><Users className="size-4" /> {event.participantIds.length} Teilnehmer</span>
           </div>
-          <p className="mt-1.5 text-xs text-white/30 sm:mt-2">{attempts} Eventversuche insgesamt</p>
+          <p className="mt-1.5 text-xs text-white/30 sm:mt-2">{attempts} Starts insgesamt (inkl. DNF)</p>
         </div>
       </div>
     </section>

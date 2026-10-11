@@ -37,12 +37,12 @@ export function resolveProgressionAvatar(value: string | null) {
 
 function mapRow(row: OverlayRow): TimelinePoint { return { id: row.source_id, playerId: row.player_id, playerName: row.display_name, avatarUrl: resolveProgressionAvatar(row.avatar_url), timeHundredths: row.time_hundredths, achievedAt: row.achieved_at, achievedDate: row.achieved_date, eventId: row.event_id, sourceLabel: row.source_label, improvementHundredths: row.improvement_hundredths, durationDays: row.duration_days, isCurrent: row.is_current, hasExactTime: row.source_type === "attempt" }; }
 
-export function buildEventPlayerProgressions(attempts: Array<{ id: string; playerId: string | null; name: string; avatarUrl: string | null; isGuest: boolean; isAk: boolean; isDnf: boolean; timeHundredths: number | null; submittedAt: string; attemptNumber: number }>, selectedIds: string[]): TimelineOverlaySeries[] {
+export function buildEventPlayerProgressions(attempts: Array<{ id: string; playerId: string | null; guestId?: string | null; name: string; avatarUrl: string | null; isGuest: boolean; isAk: boolean; isDnf: boolean; timeHundredths: number | null; submittedAt: string; attemptNumber: number }>, selectedIds: string[]): TimelineOverlaySeries[] {
   return selectedIds.map((playerId) => {
     let best = Infinity;
-    const qualified = attempts.filter((attempt) => attempt.playerId === playerId && !attempt.isGuest && !attempt.isAk && !attempt.isDnf && attempt.timeHundredths != null).sort((a, b) => a.submittedAt.localeCompare(b.submittedAt) || a.id.localeCompare(b.id));
+    const qualified = attempts.filter((attempt) => (attempt.playerId ?? attempt.guestId) === playerId && !attempt.isAk && !attempt.isDnf && attempt.timeHundredths != null).sort((a, b) => a.submittedAt.localeCompare(b.submittedAt) || a.id.localeCompare(b.id));
     const points: TimelinePoint[] = [];
-    for (const attempt of qualified) if (attempt.timeHundredths! < best) { const previous = best; best = attempt.timeHundredths!; points.push({ id: attempt.id, playerId, playerName: attempt.name, avatarUrl: attempt.avatarUrl, timeHundredths: best, achievedAt: attempt.submittedAt, achievedDate: attempt.submittedAt.slice(0, 10), eventId: null, sourceLabel: "Event-PB", improvementHundredths: Number.isFinite(previous) ? previous - best : null, durationDays: 0, attemptNumber: attempt.attemptNumber, isCurrent: false, hasExactTime: true }); }
+    for (const attempt of qualified) if (attempt.timeHundredths! < best) { const previous = best; best = attempt.timeHundredths!; points.push({ id: attempt.id, playerId: attempt.playerId ?? undefined, playerName: attempt.name, avatarUrl: attempt.avatarUrl, timeHundredths: best, achievedAt: attempt.submittedAt, achievedDate: attempt.submittedAt.slice(0, 10), eventId: null, sourceLabel: "Event-PB", improvementHundredths: Number.isFinite(previous) ? previous - best : null, durationDays: 0, attemptNumber: attempt.attemptNumber, isCurrent: false, hasExactTime: true }); }
     return { id: playerId, label: qualified[0]?.name ?? playerId, points };
   });
 }
@@ -51,8 +51,8 @@ export function regularPlayerOptions(players: Array<{ id: string; name: string; 
 
 export function eventParticipantOptions(participants: EventParticipantDetail[]): OverlayPlayerOption[] {
   return participants.flatMap((participant) =>
-    participant.playerId && !participant.isAk
-      ? [{ id: participant.playerId, name: participant.name, avatarUrl: participant.avatarUrl }]
+    (participant.playerId ?? participant.guestId) && !participant.isAk
+      ? [{ id: (participant.playerId ?? participant.guestId)!, name: participant.name, avatarUrl: participant.avatarUrl }]
       : [],
   );
 }
