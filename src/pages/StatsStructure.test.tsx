@@ -7,12 +7,15 @@ vi.mock("@/hooks/useMilestoneContent", () => ({ useMilestoneContent: () => ({ da
 
 vi.mock("@/hooks/useSeason", () => ({ useSeason: () => ({ season: state.season, isAllTime: state.season === "all-time" }) }));
 vi.mock("@/hooks/useEffectivePublicData", () => ({ useEffectivePublicData: () => ({ data: {
+  statisticsSeason: state.snapshotSeason ?? state.season,
   statistics: [
     { id: "fastest", label: "Schnellste Zeit", value: "2,99 s", change: "Weltrekord", icon: "timer" },
     { id: "valid", label: "Gültige Eventversuche", value: "10", change: "Offiziell", icon: "timer" },
     { id: "community-valid", label: "Gemeinsam getrunken", value: "10", change: "Gültige Eventzeiten inklusive Gäste", icon: "timer" },
     { id: "players", label: "Reguläre Spieler", value: "3", change: "Aktiv", icon: "users" },
     { id: "events", label: "Events", value: "2", change: "Abende", icon: "trophy" },
+    { id: "guests", label: "Gäste", value: "4", change: "Dedupliziert", icon: "users" },
+    { id: "closed-events", label: "Abgeschlossene Events", value: "1", change: "Geschlossen", icon: "trophy" },
   ], eventLeadStatistics: [], mostWanted: {},
   leagueTimeStatistics: {}, badgeRarity: [],
   teamMilestones: { season: state.snapshotSeason ?? state.season, validAttempts: 10, teamTimeHundredths: 2784, playerCount: 10 },
@@ -73,15 +76,32 @@ describe("StatsPage structure", () => {
       expect(markup).toContain("Most Wanted Matrix");
     } finally { state.snapshotSeason = undefined; }
   });
-  it("keeps WR progression prominent and attempt-number analysis only on Performance", () => {
+  it("puts shared beer milestone progress before scope facts, Rivalries and area navigation", () => {
     state.season = "all-time";
     const overview = renderToStaticMarkup(<MemoryRouter><StatsOverviewPage /></MemoryRouter>);
-    expect(overview.indexOf("Record Progression")).toBeLessThan(overview.indexOf("Liga-Überblick"));
+    expect(overview.indexOf("Gemeinsam getrunken")).toBeLessThan(overview.indexOf("Reguläre Spieler"));
+    expect(overview.indexOf("Abgeschlossene Events")).toBeLessThan(overview.indexOf("Head to Head"));
+    expect(overview.indexOf("Head to Head")).toBeLessThan(overview.indexOf("Rekorde, Progression"));
+    for (const text of ["Gäste", "Abgeschlossene Events", "Rivalries", "data-team-kind", "data-artwork-fallback", "Stufenfortschritt"]) expect(overview).toContain(text);
+    for (const text of ["Schneller Blick", "Highlights", "Schnellste Zeit", "Liga-Überblick", "Record Progression"]) expect(overview).not.toContain(text);
     expect(overview).not.toContain("Versuchnummern-Chart");
     expect(overview).toContain("2,0 L");
     const milestones = renderToStaticMarkup(<StatsMostWantedPage />);
     expect(milestones).toContain("2,0 L");
     expect(milestones).toContain("Top-10-Teamzeit");
+  });
+  it("hides stale overview facts and volume until the selected scope arrives", () => {
+    state.season = 2026; state.snapshotSeason = "all-time";
+    try {
+      const markup = renderToStaticMarkup(<MemoryRouter><StatsOverviewPage /></MemoryRouter>);
+      expect(markup).not.toContain("2,0 L");
+      expect(markup).not.toContain('data-team-kind=');
+      expect(markup).toContain("Scope-Fakten werden geladen");
+      expect(markup).toContain("Rivalries");
+    } finally { state.snapshotSeason = undefined; }
+    const current = renderToStaticMarkup(<MemoryRouter><StatsOverviewPage /></MemoryRouter>);
+    expect(current).toContain("Saison 2026");
+    expect(current).toContain("2,0 L");
   });
   it("keeps only performance-related statistics on the performance page", () => {
     state.dashboardError = false;

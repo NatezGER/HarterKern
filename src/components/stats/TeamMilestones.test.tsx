@@ -1,12 +1,21 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { TeamMilestones, TeamMilestoneHistory } from "./TeamMilestones";
+import { BeerMilestoneProgress, TeamMilestones, TeamMilestoneHistory } from "./TeamMilestones";
 import { MilestoneEditor } from "@/components/management/MilestoneManagement";
 import { beerMilestones } from "@/constants/teamMilestones";
 import type { TeamMilestonesSnapshot } from "@/services/teamMilestonesService";
 
 const snapshot: TeamMilestonesSnapshot = { season:2026, validAttempts:262, teamTimeHundredths:2610, playerCount:10 };
 describe("team milestone cards and editorial content", () => {
+  it("reuses the same current artwork and progression for the overview beer card", () => {
+    const html = renderToStaticMarkup(<BeerMilestoneProgress validAttempts={262} scope="Saison 2026"
+      content={{ "beer-dowdeswell-51-1": { infoText: null, imageUrl: "https://example.com/current.webp" } }} />);
+    expect(html).toContain("52,4 L");
+    expect(html).toContain("Saison 2026");
+    expect(html).toContain("https://example.com/current.webp");
+    expect(html).toContain("Noch 7,6 L");
+    expect(html).not.toContain("Top-10-Teamzeit");
+  });
   it("renders matched solid progress bars without old hardcoded explanations", () => {
     const html = renderToStaticMarkup(<TeamMilestones snapshot={snapshot} />);
     for (const text of ["lg:grid-cols-2","52,4 L","26,10 s","15 %","78 %","Noch 7,6 L","Noch 0,14 s schneller","data-artwork-fallback","h-full bg-gold-300"]) expect(html).toContain(text);

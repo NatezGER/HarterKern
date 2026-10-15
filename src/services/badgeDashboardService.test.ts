@@ -12,6 +12,11 @@ import { mayChangeBadgeStatistics } from "./badgeRealtime";
 import { mergePatchForRun } from "@/hooks/dataPlatformRunGuard";
 import { emptyPublicData } from "./publicDataService";
 const payload = { metrics: [
+  { key: "bingo-lines", overallValue: 6.67, rankings: [
+    { rank: 1, playerId: "p1", name: "A", value: 9 },
+    { rank: 2, playerId: "p2", name: "B", value: 7 },
+    { rank: 3, playerId: "p3", name: "C", value: 4 },
+  ] },
   { key: "bingo-fields", overallValue: 2, rankings: [{ rank: 1, playerId: "p1",
     name: "Hunter", value: 2, count: 2, total: 100 }] },
   { key: "badge-gold", overallValue: 1, rankings: [{ rank: 1, playerId: "p1",
@@ -40,6 +45,9 @@ describe("isolated badges route", () => {
     expect(eternal.dashboard.metrics.find(m => m.key === "badge-gold")?.rankings[0].value).toBe(1);
     expect(seasonal.dashboard.metrics.some(m => m.key.startsWith("badge-"))).toBe(false);
     expect(seasonal.dashboard.metrics.find(m => m.key === "bingo-fields")?.rankings[0].value).toBe(2);
+    for (const result of [eternal, seasonal]) {
+      expect(result.dashboard.metrics.find(m => m.key === "bingo-lines")?.rankings.map(r => [r.name, r.value])).toEqual([["A", 9], ["B", 7], ["C", 4]]);
+    }
     expect(eternal.dashboard.metrics.every(m => ["bingo","achievements"].includes(m.group))).toBe(true);
   });
   it("deduplicates, reuses TTL on focus and refreshes only invalidated reads", async () => {

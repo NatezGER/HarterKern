@@ -247,6 +247,7 @@ export interface EventLeadPlayerStatistic {
 }
 
 export interface PublicDataSnapshot {
+  statisticsSeason?: import("@/lib/season").SeasonSelection;
   teamMilestones?: import("@/services/teamMilestonesService").TeamMilestonesSnapshot;
   badgeStatistics?: {
     season: import("@/lib/season").SeasonSelection;

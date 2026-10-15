@@ -44,6 +44,14 @@ import {
 
 describe("route data groups", () => {
   beforeEach(() => { vi.clearAllMocks(); dataGroupCache.invalidate(); });
+  it("tags overview statistics with their actual scope", async () => {
+    mocks.getPlayers.mockResolvedValue([]);
+    mocks.getWorldRecordHistory.mockResolvedValue([]);
+    mocks.getGlobalStatistics.mockResolvedValue([]);
+    const patch = await loadDataGroup("statistics", 2026);
+    expect(patch.publicData?.statisticsSeason).toBe(2026);
+    expect(mocks.getGlobalStatistics).toHaveBeenCalledWith(2026);
+  });
 
   it("limits Hall of Fame to its three required database requests", () => {
     expect(getRouteDataPlan("/leaderboard")).toEqual({ required: ["leaderboard"], optional: [] });
