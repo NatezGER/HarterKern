@@ -21,7 +21,8 @@ describe("statistics routes", () => {
     expect(overview).not.toContain("useStatisticDashboard");
     expect(overview).not.toContain("MostWantedMatrix");
     expect(overview).not.toContain("BadgeRarityGrid");
-    expect(overview).toContain("<WRProgression collapsibleHistory />");
+    expect(overview).toContain("BeerMilestoneProgress");
+    expect(overview).not.toContain("WRProgression");
     expect(overview).not.toContain("AttemptNumberChart");
   });
 });
