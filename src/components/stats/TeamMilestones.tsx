@@ -6,6 +6,7 @@ import { resolveTeamMilestones } from "@/lib/teamMilestones";
 import { resolveMilestoneProgress } from "@/lib/teamMilestoneProgress";
 import { MilestoneArtwork } from "./MilestoneArtwork";
 import { formatDate } from "@/utils/format";
+import { beerLitersForAttempts } from "@/lib/beerVolume";
 
 const labels = { "beer-volume": "Gemeinsam getrunken", "team-time": "Top-10-Teamzeit" };
 const format = (n: number, kind: TeamMilestoneKind) => n.toLocaleString("de-DE", {
@@ -48,13 +49,20 @@ function ProgressCard({ kind, value, progress: p, scope, artwork, content }: {
     {current && <Info text={content[current.id]?.infoText} />}
   </article>;
 }
+export function BeerMilestoneProgress({ validAttempts, scope, artwork, content = {} }: {
+  validAttempts: number; scope: string; artwork?: ReactNode; content?: MilestoneContentMap;
+}) {
+  const liters = beerLitersForAttempts(validAttempts);
+  const progress = resolveMilestoneProgress({ definitions: beerMilestones, currentValue: liters, direction: "up" });
+  return <ProgressCard kind="beer-volume" value={liters} progress={progress} scope={scope} artwork={artwork} content={content} />;
+}
 export function TeamMilestones({ snapshot, beerArtwork, timeArtwork, content = {} }: {
   snapshot: TeamMilestonesSnapshot; beerArtwork?: ReactNode; timeArtwork?: ReactNode; content?: MilestoneContentMap;
 }) {
   const m = resolveTeamMilestones(snapshot);
   const scope = snapshot.season === "all-time" ? "Ewig" : `Saison ${snapshot.season}`;
   return <div className="grid min-w-0 gap-4 lg:grid-cols-2">
-    <ProgressCard kind="beer-volume" value={m.liters} progress={m.beer} scope={scope} artwork={beerArtwork} content={content} />
+    <BeerMilestoneProgress validAttempts={snapshot.validAttempts} scope={scope} artwork={beerArtwork} content={content} />
     <ProgressCard kind="team-time" value={m.seconds} progress={m.time} scope={scope} artwork={timeArtwork} content={content} />
   </div>;
 }

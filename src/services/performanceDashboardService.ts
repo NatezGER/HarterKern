@@ -24,6 +24,22 @@ export function getPerformanceDashboard(season: SeasonSelection = ALL_TIME_SEASO
     const dashboard = mapStatisticDashboard(data, season === ALL_TIME_SEASON ? "all-time" : "season")!;
     dashboard.metrics = dashboard.metrics.filter(({ group }) =>
       ["performance", "consistency", "volume", "event", "records"].includes(group));
+    // These definitions belong to the isolated event-performance RPC.
+    // Legacy Compare/Trophy payloads keep their existing registry semantics.
+    dashboard.metrics = dashboard.metrics.map((metric) => {
+      if (["sub5", "sub4", "sub3", "sub25", "sub2"].includes(metric.key)) {
+        return { ...metric, description: "Anteil gültiger Eventzeiten",
+          info: "Nur reguläre Spieler; ohne DNF, AK, Gäste und historische Zeiten. Gleiche Quote bedeutet gleichen Rang; die größere Stichprobe steht zuerst." };
+      }
+      if (metric.key === "event-max") return { ...metric,
+        title: "Meiste gültige Versuche in einem Event",
+        description: "Persönlicher Event-Höchstwert ohne DNF, AK und Gäste" };
+      if (metric.key === "common") return { ...metric, overallFormat: "count" as const,
+        title: "Meiste Zeitwiederholungen",
+        description: "Häufigkeit der eigenen häufigsten exakten Eventzeit",
+        info: "Nur gültige reguläre Eventzeiten. Bei gleich häufigen Zeiten wird die schnellere als Beispiel angezeigt." };
+      return metric;
+    });
     const records = (value: unknown): Record<string, unknown>[] =>
       Array.isArray(value) ? value.filter((row) => row && typeof row === "object") : [];
     return {

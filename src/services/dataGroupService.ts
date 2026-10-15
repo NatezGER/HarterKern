@@ -218,7 +218,7 @@ async function loadUncached(group: DataGroup, season: SeasonSelection, signal?: 
         durationDays: 0,
         isCurrent: true,
       } : null;
-      return { publicData: { players, leaderboard, dailyWinners, worldRecordHistory, seasonRecord, events, statistics } };
+      return { publicData: { players, leaderboard, dailyWinners, worldRecordHistory, seasonRecord, events, statistics, statisticsSeason: ALL_TIME_SEASON } };
     }
     case "statistics": {
       const [players, worldRecordHistory, statistics] =
@@ -228,7 +228,7 @@ async function loadUncached(group: DataGroup, season: SeasonSelection, signal?: 
           getGlobalStatistics(season),
         ]);
       return {
-        publicData: { players, worldRecordHistory, statistics },
+        publicData: { players, worldRecordHistory, statistics, statisticsSeason: season },
       };
     }
     case "performance": {

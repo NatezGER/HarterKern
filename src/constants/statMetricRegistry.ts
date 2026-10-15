@@ -20,6 +20,7 @@ const career = ["all-time", "season"] as StatisticScope[];
 const allTime = ["all-time"] as StatisticScope[];
 
 export const statisticMetricRegistry: StatisticMetricDefinition[] = [
+  { key: "bingo-lines", title: "Bingos", description: "Gewichtete Bingo-Punkte im Scope", info: "Jede vollständige Zeile, Spalte und Diagonale zählt mit ihrer höchsten erreichten Farbe: Bronze 1, Silber 2, Gold 3, Diamant 5 Punkte. Alle Linien zählen, nicht die höchste Badge-Stufe.", format: "count", direction: "desc", minimumSample: 1, group: "bingo", scopes: career },
   { key: "fastest", title: "Schnellste Zeit", description: "Persönliche Bestzeiten", format: "time", direction: "asc", minimumSample: 1, group: "performance", scopes: all, compareBlock: "speed" },
   { key: "average", title: "Bester Durchschnitt", description: "Mindestens 3 gültige Eventversuche", format: "time", direction: "asc", minimumSample: 3, group: "performance", scopes: all, compareBlock: "speed" },
   { key: "median", title: "Bester Median", description: "Mindestens 3 gültige Zeiten", format: "time", direction: "asc", minimumSample: 3, group: "performance", scopes: all, compareBlock: "speed" },

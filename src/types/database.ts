@@ -420,6 +420,8 @@ export interface Database {
       global_statistics: {
         Row: {
           community_valid_attempts: number;
+          guest_count: number;
+          closed_event_count: number;
           regular_players: number;
           event_count: number;
           approved_attempts: number;
