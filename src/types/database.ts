@@ -924,6 +924,10 @@ export interface Database {
           }>;
         };
       };
+      get_beer_statistics_dashboard: {
+        Args: { p_season_year?: number | null };
+        Returns: Json;
+      };
       sync_start_event_v5: {
         Args: Database["public"]["Functions"]["sync_start_event_v4"]["Args"] & { p_beer_brand?: string | null };
         Returns: Database["public"]["Functions"]["sync_start_event_v4"]["Returns"];

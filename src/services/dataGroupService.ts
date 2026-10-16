@@ -21,6 +21,7 @@ import { statisticDashboardCache } from "@/services/statDashboardService";
 import { performanceDashboardCache } from "@/services/performanceDashboardService";
 import { getBadgeDashboard } from "@/services/badgeDashboardService";
 import { getTeamMilestones } from "@/services/teamMilestonesService";
+import { getBeerStatistics } from "@/services/beerStatisticsService";
 
 export type DataGroup =
   | "navigation"
@@ -43,6 +44,7 @@ export type DataGroup =
   | "prestige-activities"
   | "group-milestones"
   | "team-milestones"
+  | "beer-statistics"
   | "badge-rarity"
   | "badge-statistics"
   | "most-wanted"
@@ -82,6 +84,7 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
   "prestige-activities": 2,
   "group-milestones": 1,
   "team-milestones": 1,
+  "beer-statistics": 1,
   "badge-rarity": 1,
   "badge-statistics": 1,
   "most-wanted": 1,
@@ -129,6 +132,7 @@ export function getRouteDataPlan(pathname: string, season: SeasonSelection = ALL
   };
   if (pathname === "/stats/most-wanted") return { required: ["navigation"], optional: [] };
   if (pathname === "/stats/milestones") return { required: ["navigation"], optional: ["most-wanted", "team-milestones"] };
+  if (pathname === "/stats/beer") return { required: ["navigation"], optional: ["beer-statistics"] };
   if (pathname === "/stats/rivalries") return { required: ["navigation"], optional: [] };
   if (pathname === "/stats/badges") return {
     required: ["navigation"], optional: ["badge-rarity"],
@@ -238,6 +242,8 @@ async function loadUncached(group: DataGroup, season: SeasonSelection, signal?: 
       return { publicData: { activities: await getPrestigeActivities() } };
     case "group-milestones":
       return { publicData: { milestones: await getGroupMilestones() } };
+    case "beer-statistics":
+      return { publicData: { beerStatistics: await getBeerStatistics(season, signal) } };
     case "team-milestones":
       return { publicData: { teamMilestones: await getTeamMilestones(season) } };
     case "badge-rarity":
@@ -264,7 +270,8 @@ export function loadDataGroup(
 
 export function groupsForRealtimeTable(table: string): DataGroup[] {
   const teamSources = ["players", "attempts", "historical_attempts", "events"];
-  return [...existingGroupsForRealtimeTable(table), ...(teamSources.includes(table) ? ["team-milestones" as const] : [])];
+  const beerSources = ["players", "attempts", "events", "event_guests"];
+  return [...(beerSources.includes(table) ? ["beer-statistics" as const] : []), ...existingGroupsForRealtimeTable(table), ...(teamSources.includes(table) ? ["team-milestones" as const] : [])];
 }
 
 function existingGroupsForRealtimeTable(table: string): DataGroup[] {

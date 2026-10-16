@@ -10,6 +10,7 @@ import { StatsPage } from "@/pages/StatsPage";
 import { StatsMostWantedPage } from "@/pages/StatsMostWantedPage";
 import { StatsOverviewPage } from "@/pages/StatsOverviewPage";
 import { StatsRivalriesPage } from "@/pages/StatsRivalriesPage";
+import { StatsBeerPage } from "@/pages/StatsBeerPage";
 import { StatsBadgesPage } from "@/pages/StatsBadgesPage";
 import { LiveEventPage } from "@/pages/LiveEventPage";
 import { EventResultsPage } from "@/pages/EventResultsPage";
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
       { path: "stats/milestones", element: <StatsMostWantedPage /> },
       { path: "stats/most-wanted", element: <Navigate to="/stats/milestones" replace /> },
       { path: "stats/rivalries", element: <StatsRivalriesPage /> },
+      { path: "stats/beer", element: <StatsBeerPage /> },
       { path: "stats/badges", element: <StatsBadgesPage /> },
       { path: "settings", element: <SettingsPage /> },
       { path: "events/live", element: <LiveEventPage /> },
