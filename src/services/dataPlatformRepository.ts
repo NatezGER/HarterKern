@@ -88,6 +88,7 @@ export async function loadLiveState(publicPlayerRows: Player[]): Promise<LiveEve
   const events = eventRows.map((row) => ({
     id: row.id,
     name: row.name ?? undefined,
+    beerBrand: row.beer_brand ?? null,
     date: row.start_date,
     startedAt: row.started_at,
     endsAt: row.ends_at,
@@ -116,6 +117,7 @@ export async function loadLiveState(publicPlayerRows: Player[]): Promise<LiveEve
     participantKind: participant?.kind ?? (row.guest_id ? "guest" : "permanent"),
     eventId: row.event_id ?? undefined,
     eventName: row.event_name ?? undefined,
+    beerBrand: row.beer_brand ?? null,
     result: row.is_dnf ? "dns" as const : "time" as const,
     timeSeconds: row.is_dnf ? undefined : hundredthsToSeconds(row.time_hundredths),
     date: row.submitted_at.slice(0, 10),
@@ -165,7 +167,8 @@ export async function startRemoteEvent(
     name: participant.name,
     kind: participant.kind,
   }));
-  const { data, error } = await getSupabase().rpc("sync_start_event_v4", {
+  const { data, error } = await getSupabase().rpc("sync_start_event_v5", {
+    p_beer_brand: input.beerBrand?.trim() || null,
     p_name: input.name?.trim() || null,
     p_start_date: input.date,
     p_participants: participants,
@@ -264,7 +267,8 @@ export async function updateRemoteAttempt(
   const nextParticipantId = changes.playerId ?? current.playerId;
   const participantKind = participant?.kind ?? current.participantKind ?? "permanent";
   const request = current.eventId
-    ? getSupabase().rpc("sync_update_event_attempt", {
+    ? getSupabase().rpc("sync_update_event_attempt_v2", {
+      ...(changes.beerBrand !== undefined ? { p_beer_brand: changes.beerBrand?.trim() || null, p_update_beer_brand: true } : {}),
       p_attempt_id: id,
       p_participant_id: nextParticipantId,
       p_participant_kind: participantKind,
@@ -334,8 +338,10 @@ export async function updateRemoteEvent(
   name: string,
   date: string,
   awardsTrophies = false,
+  beerBrand?: string | null,
 ) {
-  const { error } = await getSupabase().rpc("sync_update_event_v2", {
+  const { error } = await getSupabase().rpc("sync_update_event_v3", {
+    ...(beerBrand !== undefined ? { p_beer_brand: beerBrand?.trim() || null, p_update_beer_brand: true } : {}),
     p_event_id: id,
     p_name: name.trim() || null,
     p_start_date: date,

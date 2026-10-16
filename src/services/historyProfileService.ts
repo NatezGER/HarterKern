@@ -312,6 +312,7 @@ export async function getEventDetail(eventId: string, signal?: AbortSignal): Pro
   return {
     id: event.id,
     name: event.name?.trim() || "Spieleabend",
+    beerBrand: event.beer_brand ?? null,
     date: event.start_date,
     startedAt: event.started_at,
     closedAt: event.closed_at,

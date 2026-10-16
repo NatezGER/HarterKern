@@ -14,6 +14,7 @@ export interface LiveParticipant {
 }
 
 export interface LiveAttempt {
+  beerBrand?: string | null;
   id: string;
   playerId: string;
   participantKind?: "permanent" | "guest";
@@ -49,6 +50,7 @@ export interface HistoricalAttemptInput {
 }
 
 export interface LiveEvent {
+  beerBrand?: string | null;
   id: string;
   name?: string;
   date: string;
@@ -90,6 +92,7 @@ export type StartLiveEventParticipant = LiveParticipant & (
 );
 
 export interface StartLiveEventInput {
+  beerBrand?: string | null;
   name?: string;
   date: string;
   participants: StartLiveEventParticipant[];
@@ -114,6 +117,7 @@ export interface AttemptInput {
 }
 
 export interface AttemptUpdate {
+  beerBrand?: string | null;
   playerId?: string;
   eventName?: string;
   result?: LiveAttemptResult;

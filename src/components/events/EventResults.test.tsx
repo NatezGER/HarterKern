@@ -95,6 +95,12 @@ const trophy = (
 });
 
 describe("EventResults polish", () => {
+  it("shows beer once only for a closed event with a default", () => {
+    const render = (value: EventDetail) => renderToStaticMarkup(<MemoryRouter><EventResults detail={value} /></MemoryRouter>);
+    expect(render({ ...detail, beerBrand: "Flensburger Pilsener" }).match(/Flensburger Pilsener/g)).toHaveLength(1);
+    expect(render({ ...detail, beerBrand: null })).not.toContain('<p class="mt-2 break-words text-xs text-white/45">🍺');
+    expect(render({ ...detail, status: "active", beerBrand: "Flensburger Pilsener" })).not.toContain("Flensburger Pilsener");
+  });
   it("uses valid participant counts on podium and ranking rows", () => {
     const changed = { ...detail, finalStandings: detail.finalStandings.map(entry => ({ ...entry, attempts: 97 })) };
     const markup = renderToStaticMarkup(<MemoryRouter><EventResults detail={changed} /></MemoryRouter>);

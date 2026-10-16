@@ -20,6 +20,7 @@ export function AttemptEditDialog({
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
   const [eventName, setEventName] = useState("");
+  const [beerBrand, setBeerBrand] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,6 +31,7 @@ export function AttemptEditDialog({
     setTime(attempt.timeSeconds?.toLocaleString("de-DE", { minimumFractionDigits: 2 }) ?? "");
     setDate(attempt.date);
     setEventName(attempt.eventName ?? "");
+    setBeerBrand(attempt.beerBrand ?? "");
     setConfirmDelete(false);
     setError("");
   }, [attempt]);
@@ -47,6 +49,7 @@ export function AttemptEditDialog({
       timeSeconds: parsed == null ? undefined : parsed / 100,
       date,
       eventName,
+      ...(attempt.eventId ? { beerBrand: beerBrand.trim() || null } : {}),
       outOfCompetition: false,
     });
     if (saved) onClose();
@@ -79,6 +82,9 @@ export function AttemptEditDialog({
         <label className="text-xs text-white/45 sm:col-span-2">Eventname
           <Input className="mt-2 rounded-xl" value={eventName} onChange={(event) => setEventName(event.target.value)} placeholder="Optional" />
         </label>
+        {attempt.eventId && (<label className="min-w-0 text-xs text-white/45">Bier / Marke
+          <Input className="mt-2 rounded-xl" value={beerBrand} maxLength={80} onChange={(event) => setBeerBrand(event.target.value)} placeholder="z. B. Flensburger Pilsener" />
+        </label>)}
       </div>
       <p aria-live="assertive" className="mt-3 text-sm text-red-300">{error}</p>
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">

@@ -77,6 +77,7 @@ export interface Database {
       };
       events: {
         Row: {
+          beer_brand: string | null;
           id: string;
           name: string | null;
           start_date: string;
@@ -101,6 +102,7 @@ export interface Database {
         Insert: {
           id?: string;
           name?: string | null;
+          beer_brand?: string | null;
           start_date: string;
           started_at?: string;
           ends_at: string;
@@ -123,6 +125,7 @@ export interface Database {
       };
       attempts: {
         Row: {
+          beer_brand: string | null;
           id: string;
           player_id: string | null;
           guest_id: string | null;
@@ -148,6 +151,7 @@ export interface Database {
           player_id?: string | null;
           guest_id?: string | null;
           event_id?: string | null;
+          beer_brand?: string | null;
           event_name?: string | null;
           is_ak?: boolean;
           legacy_source_id?: string | null;
@@ -919,6 +923,18 @@ export interface Database {
             kind: "permanent" | "guest";
           }>;
         };
+      };
+      sync_start_event_v5: {
+        Args: Database["public"]["Functions"]["sync_start_event_v4"]["Args"] & { p_beer_brand?: string | null };
+        Returns: Database["public"]["Functions"]["sync_start_event_v4"]["Returns"];
+      };
+      sync_update_event_v3: {
+        Args: Database["public"]["Functions"]["sync_update_event_v2"]["Args"] & { p_beer_brand?: string | null; p_update_beer_brand?: boolean };
+        Returns: undefined;
+      };
+      sync_update_event_attempt_v2: {
+        Args: DataPlatformFunctions["sync_update_event_attempt"]["Args"] & { p_beer_brand?: string | null; p_update_beer_brand?: boolean };
+        Returns: undefined;
       };
       sync_start_event_v4: {
         Args: {

@@ -327,6 +327,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
         changes.name ?? current.name ?? "",
         changes.date ?? current.date,
         changes.awardsTrophies ?? current.awardsTrophies ?? false,
+        changes.beerBrand,
       );
       await refreshAfterMutation();
       return true;
