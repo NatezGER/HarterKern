@@ -13,6 +13,8 @@ describe("statistics routes", () => {
     expect(routes).toContain('<Navigate to="/stats/milestones" replace />');
     expect(getRouteDataPlan("/stats/most-wanted")).toEqual({ required: ["navigation"], optional: [] });
     expect(routes).toContain('{ path: "stats/rivalries", element: <StatsRivalriesPage /> }');
+    expect(routes).toContain('{ path: "stats/beer", element: <StatsBeerPage /> }');
+    expect(getRouteDataPlan("/stats/beer")).toEqual({ required: ["navigation"], optional: ["beer-statistics"] });
     expect(routes).toContain('{ path: "stats/badges", element: <StatsBadgesPage /> }');
   });
 

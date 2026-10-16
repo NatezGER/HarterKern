@@ -251,7 +251,7 @@ export function DataPlatformProvider({ children }: { children: ReactNode }) {
       const activeGroups = allPlanGroups(planRef.current);
       const tableGroups = groupsForRealtimeTable(table);
       const inactiveScopedGroups = tableGroups.filter((group) =>
-        ["badge-statistics", "badge-rarity", "prestige-activities", "team-milestones"].includes(group)
+        ["badge-statistics", "badge-rarity", "prestige-activities", "team-milestones", "beer-statistics"].includes(group)
         && !activeGroups.includes(group));
       if (inactiveScopedGroups.length) invalidateDataGroups(inactiveScopedGroups);
       // Inactive MW snapshots become stale, but do not start a background read.
