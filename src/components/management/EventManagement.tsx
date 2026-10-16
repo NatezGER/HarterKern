@@ -9,10 +9,12 @@ export function EventManagement() {
   const [selectedId, setSelectedId] = useState(state.events[0]?.id ?? "");
   const selected = state.events.find(({ id }) => id === selectedId);
   const [name, setName] = useState("");
+  const [beerBrand, setBeerBrand] = useState("");
   const [date, setDate] = useState("");
   const [awardsTrophies, setAwardsTrophies] = useState(false);
   useEffect(() => {
     setName(selected?.name ?? "");
+    setBeerBrand(selected?.beerBrand ?? "");
     setDate(selected?.date ?? "");
     setAwardsTrophies(selected?.awardsTrophies ?? false);
   }, [selected]);
@@ -30,8 +32,11 @@ export function EventManagement() {
           <input type="checkbox" checked={awardsTrophies} onChange={(event) => setAwardsTrophies(event.target.checked)} className="size-4 accent-amber-400" />
           Trophäen für dieses Event vergeben
         </label>
+        <label className="min-w-0 text-xs text-white/45">Bier / Marke
+          <Input className="mt-2 rounded-xl" value={beerBrand} maxLength={80} onChange={(event) => setBeerBrand(event.target.value)} placeholder="z. B. Flensburger Pilsener" />
+        </label>
       </div>
-      <Button className="mt-4" onClick={() => void updateEvent(selected.id, { name: name.trim() || undefined, date, awardsTrophies })}><Save className="size-4" /> Event speichern</Button>
+      <Button className="mt-4" onClick={() => void updateEvent(selected.id, { name: name.trim() || undefined, date, awardsTrophies, beerBrand: beerBrand.trim() || null })}><Save className="size-4" /> Event speichern</Button>
     </section>
   );
 }

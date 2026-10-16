@@ -70,6 +70,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
           </div>
           <h1 className="display-title mt-4 text-4xl sm:text-6xl">{detail.name}</h1>
           <p className="mt-3 flex items-center gap-2 text-sm text-white/45"><CalendarDays className="size-4" /> {formatDate(detail.date)}</p>
+          {detail.status === "closed" && detail.beerBrand && <p className="mt-2 break-words text-xs text-white/45">🍺 {detail.beerBrand}</p>}
           {detail.description && <p className="mt-5 max-w-3xl text-sm leading-relaxed text-white/55">{detail.description}</p>}
         </div>
       </section>

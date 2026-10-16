@@ -55,6 +55,7 @@ export function StartEventPanel({
 }) {
   const { startEvent, startingEvent } = useLiveEvent();
   const [name, setName] = useState("");
+  const [beerBrand, setBeerBrand] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [selected, setSelected] = useState<string[]>([]);
   const [temporary, setTemporary] = useState<StartLiveEventParticipant[]>([]);
@@ -119,7 +120,7 @@ export function StartEventPanel({
     }
     setError("");
     const trophyCompetition = findSelectableTrophyCompetition(trophyCompetitionIdValue);
-    const result = await startEvent({ name, date, participants, awardsTrophies, trophyCompetition });
+    const result = await startEvent({ name, date, participants, awardsTrophies, trophyCompetition, beerBrand: beerBrand.trim() || null });
     if (!result.eventId) {
       setError(result.error ?? "Event konnte nicht gestartet werden.");
       return;
@@ -141,6 +142,9 @@ export function StartEventPanel({
             <label className="min-w-0 text-xs font-semibold text-white/45">
               Datum
               <Input className="mt-2 min-w-0 max-w-full rounded-xl" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+            </label>
+            <label className="min-w-0 text-xs text-white/45">Bier / Marke
+              <Input className="mt-2 rounded-xl" value={beerBrand} maxLength={80} onChange={(event) => setBeerBrand(event.target.value)} placeholder="z. B. Flensburger Pilsener" />
             </label>
           </div>
           <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-gold-400/15 bg-gold-400/[0.04] p-4">

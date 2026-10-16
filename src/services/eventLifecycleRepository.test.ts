@@ -63,7 +63,7 @@ describe("event lifecycle repository", () => {
       participants: [existingPlayer, secondExistingPlayer],
     });
 
-    expect(mocks.rpc).toHaveBeenCalledWith("sync_start_event_v4", expect.objectContaining({
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_start_event_v5", expect.objectContaining({
       p_awards_trophies: false,
       p_trophy_competition_key: null,
       p_trophy_competition_year: null,
@@ -139,12 +139,12 @@ describe("event lifecycle repository", () => {
     await closeRemoteEvent("event-one", "manual");
     expect((await startRemoteEvent(input)).eventId).toBe("event-two");
     expect(mocks.rpc.mock.calls.map(([name]) => name)).toEqual([
-      "sync_start_event_v4",
+      "sync_start_event_v5",
       "sync_close_event",
-      "sync_start_event_v4",
+      "sync_start_event_v5",
     ]);
     const startPayloads = mocks.rpc.mock.calls
-      .filter(([name]) => name === "sync_start_event_v4")
+      .filter(([name]) => name === "sync_start_event_v5")
       .map(([, args]) => args.p_participants);
     expect(startPayloads).toEqual([
       [expect.objectContaining({ id: existingPlayer.id })],
@@ -171,7 +171,7 @@ describe("event lifecycle repository", () => {
       trophyCompetition: { key: "denmark", year: 2026 },
     });
 
-    expect(mocks.rpc).toHaveBeenCalledWith("sync_start_event_v4", expect.objectContaining({
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_start_event_v5", expect.objectContaining({
       p_awards_trophies: true,
       p_trophy_competition_key: "denmark",
       p_trophy_competition_year: 2026,
@@ -181,7 +181,7 @@ describe("event lifecycle repository", () => {
   it("persists the trophy-event flag through the versioned update RPC", async () => {
     mocks.rpc.mockResolvedValue({ data: null, error: null });
     await updateRemoteEvent("event-one", "Finale", "2026-08-02", true);
-    expect(mocks.rpc).toHaveBeenCalledWith("sync_update_event_v2", {
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_update_event_v3", {
       p_event_id: "event-one",
       p_name: "Finale",
       p_start_date: "2026-08-02",

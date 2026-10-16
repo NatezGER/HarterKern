@@ -136,6 +136,7 @@ export interface EventLeadSegmentDetail {
 }
 
 export interface EventDetail {
+  beerBrand?: string | null;
   id: string;
   name: string;
   date: string;
