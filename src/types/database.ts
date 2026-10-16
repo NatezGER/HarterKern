@@ -603,6 +603,13 @@ export interface Database {
         Args: { p_event_id: string };
         Returns: Array<{ player_id: string; best_time_hundredths: number }>;
       };
+      get_event_sweet_spots: {
+        Args: { p_event_id: string };
+        Returns: Array<{
+          player_id: string; attempt_number: number; average_hundredths: number;
+          sample_count: number; next_attempt_number: number;
+        }>;
+      };
       get_trophy_event_special_stats: {
         Args: { p_event_id: string };
         Returns: Json;
