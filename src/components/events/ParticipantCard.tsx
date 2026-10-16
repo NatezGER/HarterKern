@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { formatTime } from "@/utils/format";
 import type { LiveStanding } from "@/types/liveEvent";
 import { MOBILE_CONTEXT_AVATAR_FRAME } from "@/constants/avatar";
+import type { SweetSpot } from "@/services/sweetSpotService";
 
 const lastStatus = (standing: LiveStanding) => {
   const attempt = standing.lastAttempt;
@@ -41,17 +42,25 @@ function Identity({ standing, onAdd }: { standing: LiveStanding; onAdd: () => vo
 export function ParticipantCard({
   standing,
   firstAttemptBenchmark,
+  sweetSpot,
   saved,
   onAdd,
 }: {
   standing: LiveStanding;
   firstAttemptBenchmark?: number | null;
+  sweetSpot?: SweetSpot | null;
   saved: boolean;
   onAdd: () => void;
 }) {
+  const eligible = standing.player.kind === "permanent" && !standing.player.isAk;
+  const firstHint = eligible && firstAttemptBenchmark != null
+    ? `Bester 1. Versuch bisher: ${formatTime(firstAttemptBenchmark / 100)}` : "";
+  const sweetHint = eligible && sweetSpot
+    ? `🔥 Sweet Spot incoming · #${sweetSpot.attemptNumber} · Ø ${formatTime(sweetSpot.averageHundredths / 100)}` : "";
+  const context = sweetHint || firstHint;
   return (
     <article className={cn(
-      "panel flex min-h-36 flex-col p-3 transition md:min-h-72 md:p-6",
+      "panel relative flex min-h-36 min-w-0 flex-col p-3 transition md:min-h-72 md:p-6",
       saved && "border-emerald-400/40 shadow-[0_0_32px_rgba(52,211,153,.15)]",
     )}>
       <button type="button" onClick={onAdd} className="flex min-h-28 flex-col items-center justify-center gap-3 rounded-2xl text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 md:hidden" aria-label={`Zeit für ${standing.player.name} erfassen`}>
@@ -70,9 +79,10 @@ export function ParticipantCard({
         <Metric label="Event-Durchschnitt" value={formatTime(standing.averageTime ?? 0)} />
         <Metric label="Gültige Versuche" value={String(standing.validAttempts)} />
       </div>
-      {firstAttemptBenchmark != null && <p className="mb-3 mt-1 text-center text-[11px] font-semibold text-gold-300/80 md:mt-0">
-        Bester 1. Versuch bisher: {formatTime(firstAttemptBenchmark / 100)}
-      </p>}
+      <p data-participant-context className="absolute inset-x-3 bottom-1 h-3 truncate text-center text-[9px] font-semibold leading-3 text-gold-300/80 md:inset-x-6 md:bottom-[5.25rem] md:text-[11px]"
+        title={context || undefined} aria-label={context || undefined}>
+        {context}
+      </p>
       <Button size="lg" onClick={onAdd} className="mt-auto hidden h-14 w-full md:flex">
         <Plus className="size-5" /> Neue Zeit
       </Button>

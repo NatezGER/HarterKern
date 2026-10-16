@@ -20,6 +20,8 @@ import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { useDataGroup } from "@/hooks/useDataPlatform";
 import { useTrophyEventSpecialStats } from "@/hooks/useTrophyEventSpecialStats";
 import { useFirstAttemptBenchmarks } from "@/hooks/useFirstAttemptBenchmarks";
+import { useSweetSpots } from "@/hooks/useSweetSpots";
+import { visibleSweetSpot } from "@/lib/sweetSpot";
 import { usePublicData } from "@/hooks/usePublicData";
 import {
   getLiveStandings,
@@ -55,6 +57,7 @@ export function LiveEventPage() {
   } = useLiveEvent();
   const { version: liveVersion } = useDataGroup("live");
   const firstAttemptBenchmarks = useFirstAttemptBenchmarks(activeEvent?.id ?? "", liveVersion);
+  const sweetSpots = useSweetSpots(activeEvent?.id ?? "", liveVersion);
   const trophyStats = useTrophyEventSpecialStats(
     activeEvent?.id ?? "",
     Boolean(activeEvent?.awardsTrophies),
@@ -210,6 +213,9 @@ export function LiveEventPage() {
               <ParticipantCard
                 key={standing.player.id}
                 standing={standing}
+                sweetSpot={visibleSweetSpot(
+                  standing.player, activeEvent.id, attempts, sweetSpots.get(standing.player.id),
+                )}
                 firstAttemptBenchmark={visibleFirstAttemptBenchmark(
                   standing.player, attempts, firstAttemptBenchmarks.get(standing.player.id),
                 )}
