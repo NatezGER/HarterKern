@@ -93,7 +93,9 @@ select is((select beer_brand from public.attempts where id=pg_temp.beer_attempt(
 -- Same helper as migration's one-time invocation: already assigned default, no UI re-edit.
 update public.events set beer_brand='Previously assigned' where id=pg_temp.beer_event();
 update public.attempts set beer_brand=' ' where id=pg_temp.beer_attempt(1);
+update public.attempts set beer_brand=null,deleted_at=now() where id=pg_temp.beer_attempt(5);
 select is(public.backfill_closed_event_beer(pg_temp.beer_event()),1::bigint,'one-time helper fills only remaining blank');
+select is((select beer_brand from public.attempts where id=pg_temp.beer_attempt(5)),null::text,'deleted attempt is not backfilled');
 select is(public.backfill_closed_event_beer(pg_temp.beer_event()),0::bigint,'backfill is idempotent');
 select is((select beer_brand from public.attempts where id=pg_temp.beer_attempt(1)),'Previously assigned','already assigned historical default picked up');
 

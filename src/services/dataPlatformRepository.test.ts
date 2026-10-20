@@ -18,8 +18,13 @@ describe("data platform realtime subscription", () => {
     const onChange = vi.fn();
     const cleanup = subscribeToDataPlatform(onChange, vi.fn(), client);
     expect(client.channel).toHaveBeenCalledOnce();
-    expect(on).toHaveBeenCalledTimes(10);
-    for (const table of ["player_badge_award_ledger", "badge_definitions"]) {
+    expect(on).toHaveBeenCalledTimes(11);
+    for (const table of ["player_badge_award_ledger", "badge_definitions", "beer_brand_images"]) {
+      expect(on).toHaveBeenCalledWith(
+        "postgres_changes",
+        { event: "*", schema: "public", table },
+        expect.any(Function),
+      );
       const subscription = on.mock.calls.find(([, filter]) => filter.table === table);
       expect(subscription).toBeDefined();
       subscription?.[2]();

@@ -8,6 +8,7 @@ begin
   update public.attempts a set beer_brand=btrim(e.beer_brand)
   from public.events e
   where a.event_id=e.id and (p_event_id is null or e.id=p_event_id)
+    and a.deleted_at is null
     and e.status='closed' and e.deleted_at is null
     and nullif(btrim(e.beer_brand),'') is not null
     and nullif(btrim(a.beer_brand),'') is null;
@@ -36,8 +37,8 @@ revoke all on function public.sync_update_event_v4(uuid,text,date,boolean,text,b
 grant execute on function public.sync_update_event_v4(uuid,text,date,boolean,text,boolean) to anon, authenticated;
 
 -- Controlled one-time pickup of already assigned closed-event defaults.
--- Includes guest/DNF/deleted attempts' empty snapshots, but never deleted events.
--- Re-running the helper is idempotent; DNF/deleted attempts stay excluded by reads.
+-- Includes guest/DNF empty snapshots, but never deleted attempts or events.
+-- Re-running the helper is idempotent; DNF attempts stay excluded by reads.
 do $$ declare affected bigint; begin
   affected := public.backfill_closed_event_beer(null);
   raise notice 'Beer snapshot backfill: % previously empty attempts', affected;

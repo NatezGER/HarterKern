@@ -18,7 +18,11 @@ describe("milestone migration and admin deployment contracts (static, not DB exe
     expect(edge.indexOf('verifyAdminToken(token, tokenSecret)')).toBeLessThan(edge.indexOf('action === "save-milestone-content"'));
   });
   it("uploads before assigning the image, checks revision and never deletes a referenced upload", () => {
-    const action = edge.slice(edge.indexOf('if (action === "save-milestone-content")'),edge.indexOf('if (action === "upload-avatar")'));
+    const start = edge.indexOf('if (action === "save-milestone-content")');
+    const end = edge.indexOf('if (action === "upload-beer-image"', start);
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(end).toBeGreaterThan(start);
+    const action = edge.slice(start, end);
     expect(action.indexOf('.upload(imagePath, file')).toBeLessThan(action.indexOf('.update(values)'));
     expect(action).toContain('.eq("updated_at", current.data.updated_at)');
     expect(action).toContain('if (!saved.data?.length)');

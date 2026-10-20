@@ -9,7 +9,7 @@ Aussagen zu Hero, Payload und fehlender historischer Nachpflege.
 1. Vor Migration 073 ausschließlich
    supabase/tests/read_only/beer_statistics_v2_backfill_check.sql ausführen.
    Die erste Abfrage listet die exakten Kandidaten pro Event inklusive Gäste,
-   DNF und gelöschter Attempts. Zahlen prüfen; bei unerwartetem Umfang stoppen.
+   DNF, aber ohne gelöschte Attempts. Zahlen prüfen; bei unerwartetem Umfang stoppen.
    Keine Produktionszahlen wurden lokal ermittelt.
 2. 073 zunächst in einer zurückgerollten Preflight-Transaktion prüfen.
    Die enthaltene Nachpflege schreibt innerhalb dieser Transaktion tatsächlich
@@ -21,8 +21,10 @@ Aussagen zu Hero, Payload und fehlender historischer Nachpflege.
    meldet die Anzahl per NOTICE. Nur leere Marken und nicht gelöschte,
    abgeschlossene Events mit nichtleerem Default sind Kandidaten. Alle
    bestehenden Snapshots/Overrides bleiben unverändert, auch andere Marken.
-   Gäste/DNF sowie gelöschte Attempts bekommen ebenfalls leere Snapshots
-   ergänzt; deren Statistik-Eligibility ändert sich nicht. Kein Mengen-Backfill.
+   Nicht gelöschte Gast-/DNF-Attempts bekommen ebenfalls leere Snapshots
+   ergänzt; deren Statistik-Eligibility ändert sich nicht. Gelöschte Attempts
+   bleiben unangetastet und lösen keine Nachpflege-UPDATE-Trigger aus.
+   Kein Mengen-Backfill.
 4. admin-media mit den zwei neuen Aktionen deployen, anschließend Frontend.
    Ohne 073 fehlen v4 und neue Payload-Felder; ohne Edge-Deployment funktionieren
    Bildaktionen nicht. Keine produktiven Aktionen in diesem Auftrag ausgeführt.
