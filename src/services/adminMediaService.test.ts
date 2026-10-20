@@ -55,6 +55,11 @@ describe("code-admin authorization", () => {
       .rejects.toThrow("nicht freigeschaltet");
   });
 
+  it.each(["upload-beer-image", "remove-beer-image"])("blocks unauthorized %s", async action => {
+    await expect(invokeAdminMedia(action, { brand: "Königshof" })).rejects.toThrow("nicht freigeschaltet");
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
   it("blocks media calls after the admin mode is locked", async () => {
     await verifyManagementCode("5221");
     clearManagementCode();

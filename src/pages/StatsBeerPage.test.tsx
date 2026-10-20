@@ -8,25 +8,30 @@ vi.mock("@/hooks/useEffectivePublicData", () => ({ useEffectivePublicData: () =>
 vi.mock("@/hooks/useDataPlatform", () => ({ useDataGroup: () => ({ status: state.status, error: state.error, refresh: vi.fn() }) }));
 vi.mock("@/hooks/useMilestoneContent", () => ({ useMilestoneContent: () => ({ data: {}, error: "" }) }));
 vi.mock("@/components/common/DataState", () => ({ DataState: ({ children }: { children: ReactNode }) => children }));
-vi.mock("react-router-dom", () => ({ NavLink: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a> }));
+vi.mock("react-router-dom", () => ({ Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>, NavLink: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a> }));
 import { StatsBeerPage } from "./StatsBeerPage";
 import { beerEffectLabel } from "@/lib/beerStatisticsFormat";
 const fixture = (): BeerStatistics => ({
   season: "all-time", summary: { attempts: 3, brands: 1, events: 1, people: 3, bestBeer: null },
-  brands: [{ brand: "Flensburger", attempts: 3, events: 1, people: 3, performanceAttempts: 1,
+  brands: [{ imagePath: null, players: [], eventDetails: [], brand: "Flensburger", attempts: 3, events: 1, people: 3, performanceAttempts: 1,
     averageHundredths: 250, bestHundredths: 250, qualified: false, performancePosition: null,
     mostDrinker: { personKey: "p", playerId: "p", name: "Paul", isGuest: false, isAk: false, attempts: 1 }, bestPlayer: null }],
-  favorites: [], effects: [], variety: [],
+  favorites: [], effects: [], variety: [], fastest: [], unlucky: [],
 });
 const render = () => renderToStaticMarkup(<StatsBeerPage />);
 beforeEach(() => { state.data = fixture(); state.season = "all-time"; state.status = "ready"; });
-it("offers Bier in the statistics navigation and shows documented volume with artwork", () => {
+it("shows record book, shelf and player sections without the old volume hero", () => {
   const html = render();
   expect(html).toContain('href="/stats/beer"');
-  expect(html).toContain("Dokumentiert getrunken");
+  expect(html.indexOf("Bier-Rekordbuch")).toBeLessThan(html.indexOf("Bierregal"));
+  expect(html.indexOf("Bierregal")).toBeLessThan(html.indexOf("Spieler &amp; Bier"));
   expect(html).toContain("0,6 L");
-  expect(html).toContain("3 gültige dokumentierte Bier-Versuche");
-  expect(html).toContain("data-artwork-slot");
+  expect(html).toContain("3 Versuche");
+  expect(html).not.toContain("data-artwork-slot");
+  expect(html).not.toContain("Dokumentiert getrunken");
+  expect(html).toContain("<summary");
+  expect(html).toContain("<details");
+  expect(html).not.toContain("<details open");
 });
 it("shows raw single-sample brand data without giving a winner award", () => {
   const html = render();

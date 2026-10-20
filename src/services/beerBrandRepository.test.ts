@@ -58,9 +58,9 @@ it("updates or clears only the requested attempt beer, and preserves omitted bee
 it("updates the event default explicitly without an attempt request", async () => {
   await updateRemoteEvent("e", "Event", "2026-10-16", false, " Astra Urtyp ");
   expect(mocks.rpc).toHaveBeenCalledOnce();
-  expect(mocks.rpc).toHaveBeenLastCalledWith("sync_update_event_v3", expect.objectContaining({ p_beer_brand: "Astra Urtyp", p_update_beer_brand: true }));
+  expect(mocks.rpc).toHaveBeenLastCalledWith("sync_update_event_v4", expect.objectContaining({ p_beer_brand: "Astra Urtyp", p_update_beer_brand: true }));
   await updateRemoteEvent("e", "Event", "2026-10-16", false, "");
-  expect(mocks.rpc).toHaveBeenLastCalledWith("sync_update_event_v3", expect.objectContaining({ p_beer_brand: null, p_update_beer_brand: true }));
+  expect(mocks.rpc).toHaveBeenLastCalledWith("sync_update_event_v4", expect.objectContaining({ p_beer_brand: null, p_update_beer_brand: true }));
 });
 it("maps persisted event defaults and independent attempt snapshots", async () => {
   const rows: Record<string, unknown[]> = {

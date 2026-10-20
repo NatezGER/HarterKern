@@ -11,6 +11,7 @@ import { useManagementMode } from "@/hooks/useManagementMode";
 import { formatTime } from "@/utils/format";
 import type { LiveAttempt } from "@/types/liveEvent";
 import { AwardAssetManagement } from "@/components/management/AwardAssetManagement";
+import { BeerImageManagement } from "@/components/management/BeerImageManagement";
 import { MilestoneManagement } from "@/components/management/MilestoneManagement";
 
 export function ManagementPanel() {
@@ -115,6 +116,7 @@ export function ManagementPanel() {
             </div>
             <AwardAssetManagement />
             <MilestoneManagement />
+            <BeerImageManagement />
             <HistoricalManagementDisclosure
               expanded={historyExpanded}
               onToggle={() => setHistoryExpanded((value) => !value)}

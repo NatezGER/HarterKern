@@ -1,5 +1,8 @@
 # Bierstatistik – isolierter Stats-Tab (072)
 
+Aktuelle Erweiterung und Deploymenthinweise: [Bierstatistik 2.0](BEER_STATISTICS_V2.md).
+Die folgende Beschreibung dokumentiert den unveränderten 072-Ausgangsstand.
+
 ## Basis und Populationen
 Geprüfte Basis: origin/main c1fe64e (PR 74), Snapshot-Migration 071.
 072 ist die nächste freie additive Migration. Keine bisherigen Migrationen

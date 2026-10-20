@@ -932,7 +932,9 @@ export interface Database {
         Args: Database["public"]["Functions"]["sync_start_event_v4"]["Args"] & { p_beer_brand?: string | null };
         Returns: Database["public"]["Functions"]["sync_start_event_v4"]["Returns"];
       };
-      sync_update_event_v3: {
+      get_beer_image_catalog: { Args: Record<string, never>; Returns: Json };
+      sync_update_event_v3: Database["public"]["Functions"]["sync_update_event_v4"];
+      sync_update_event_v4: {
         Args: Database["public"]["Functions"]["sync_update_event_v2"]["Args"] & { p_beer_brand?: string | null; p_update_beer_brand?: boolean };
         Returns: undefined;
       };

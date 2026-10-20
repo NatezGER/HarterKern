@@ -1,4 +1,4 @@
--- LOCAL disposable database only, with migrations through 071 and pgTAP.
+-- LOCAL disposable database only, with migrations through 073 and pgTAP.
 -- Never execute synthetic fixtures against production.
 begin;
 create extension if not exists pgtap;
@@ -79,5 +79,30 @@ select throws_ok(
 select throws_ok(
   format('update public.attempts set beer_brand=%L where id=%L', repeat('x',81),pg_temp.beer_attempt(1)),
   '23514', null, 'database rejects overlong attempt beer');
+
+-- 073: a running event must not fill even empty snapshots.
+select public.sync_update_event_v4((payload->>'eventId')::uuid,'Blank beer',current_date,false,'Active beer',true) from beer_blank;
+select is((select beer_brand from public.attempts where id=pg_temp.beer_attempt(1)),null::text,'unrelated event unchanged');
+-- Reuse closed event with individual snapshots, guest DNF and NULLs.
+select public.sync_update_event_v4(pg_temp.beer_event(),'Beer snapshot fixture',current_date,true,'Closed beer',true);
+select is((select beer_brand from public.attempts where id=pg_temp.beer_attempt(1)),'Closed beer','closed edit fills empty regular snapshot');
+select is((select beer_brand from public.attempts where id=pg_temp.beer_attempt(2)),'Closed beer','closed edit fills empty guest DNF snapshot');
+select is((select beer_brand from public.attempts where id=pg_temp.beer_attempt(3)),'Astra Urtyp','closed edit preserves nonempty override');
+select public.sync_update_event_v4(pg_temp.beer_event(),'Beer snapshot fixture',current_date,true,null,true);
+select is((select beer_brand from public.attempts where id=pg_temp.beer_attempt(1)),'Closed beer','clearing default preserves snapshots');
+-- Same helper as migration's one-time invocation: already assigned default, no UI re-edit.
+update public.events set beer_brand='Previously assigned' where id=pg_temp.beer_event();
+update public.attempts set beer_brand=' ' where id=pg_temp.beer_attempt(1);
+select is(public.backfill_closed_event_beer(pg_temp.beer_event()),1::bigint,'one-time helper fills only remaining blank');
+select is(public.backfill_closed_event_beer(pg_temp.beer_event()),0::bigint,'backfill is idempotent');
+select is((select beer_brand from public.attempts where id=pg_temp.beer_attempt(1)),'Previously assigned','already assigned historical default picked up');
+
+-- Active event with a genuinely empty attempt remains empty after an edit.
+select public.sync_create_event_attempt(pg_temp.beer_attempt(6),(payload->>'eventId')::uuid,
+  (payload->'participants'->0->>'participantId')::uuid,'permanent',300,false,now()) from beer_blank;
+update public.attempts set beer_brand=null where id=pg_temp.beer_attempt(6);
+select public.sync_update_event_v4((payload->>'eventId')::uuid,'Blank beer',current_date,false,'Changed active',true) from beer_blank;
+select is((select beer_brand from public.attempts where id=pg_temp.beer_attempt(6)),null::text,'active edit does not backfill old attempts');
+select ok(not has_function_privilege('anon','public.backfill_closed_event_beer(uuid)','execute'),'public cannot invoke all-event backfill');
 select * from finish();
 rollback;

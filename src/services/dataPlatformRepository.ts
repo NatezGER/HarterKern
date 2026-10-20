@@ -340,7 +340,7 @@ export async function updateRemoteEvent(
   awardsTrophies = false,
   beerBrand?: string | null,
 ) {
-  const { error } = await getSupabase().rpc("sync_update_event_v3", {
+  const { error } = await getSupabase().rpc("sync_update_event_v4", {
     ...(beerBrand !== undefined ? { p_beer_brand: beerBrand?.trim() || null, p_update_beer_brand: true } : {}),
     p_event_id: id,
     p_name: name.trim() || null,
@@ -392,6 +392,7 @@ export function subscribeToDataPlatform(
     )
     .on("postgres_changes", { event: "*", schema: "public", table: "event_guests" }, () => onChange("event_guests"))
     .on("postgres_changes", { event: "*", schema: "public", table: "event_statistical_pauses" }, () => onChange("event_statistical_pauses"))
+    .on("postgres_changes", { event: "*", schema: "public", table: "beer_brand_images" }, () => onChange("beer_brand_images"))
     .on("postgres_changes", { event: "*", schema: "public", table: "event_photos" }, () => onChange("event_photos"))
     .on("postgres_changes", { event: "*", schema: "public", table: "player_badge_award_ledger" }, () => onChange("player_badge_award_ledger"))
     .on("postgres_changes", { event: "*", schema: "public", table: "badge_definitions" }, () => onChange("badge_definitions"))

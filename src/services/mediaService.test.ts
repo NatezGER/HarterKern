@@ -10,6 +10,7 @@ vi.mock("@/lib/media", async (importOriginal) => ({
 }));
 
 import {
+  saveBeerImage,
   removeEventPhoto,
   removePlayerAvatar,
   uploadEventPhotos,
@@ -43,6 +44,23 @@ describe("code-admin media workflow", () => {
       );
     },
   );
+
+  it("uploads, replaces and deletes exact global brand images through the protected gateway", async () => {
+    const file = new File(["png"], "bottle.png", { type: "image/png" });
+    await saveBeerImage("Königshof", null, file);
+    await saveBeerImage("Königshof", "old.webp", file);
+    await saveBeerImage("Königshof", "new.webp");
+    expect(invokeAdminMedia.mock.calls).toEqual([
+      ["upload-beer-image", { brand: "Königshof", previousPath: "" }, file],
+      ["upload-beer-image", { brand: "Königshof", previousPath: "old.webp" }, file],
+      ["remove-beer-image", { brand: "Königshof", previousPath: "new.webp" }, undefined],
+    ]);
+  });
+  it("rejects unsupported or oversized beer artwork", async () => {
+    await expect(saveBeerImage("Bier", null, new File(["x"], "x.svg", { type: "image/svg+xml" }))).rejects.toThrow();
+    await expect(saveBeerImage("Bier", null, new File([new Uint8Array(5242881)], "x.png", { type: "image/png" }))).rejects.toThrow();
+    expect(invokeAdminMedia).not.toHaveBeenCalled();
+  });
 
   it("removes an avatar through the protected gateway", async () => {
     await removePlayerAvatar(playerId);

@@ -6,7 +6,7 @@ import { getBeerStatistics, mapBeerStatistics } from "./beerStatisticsService";
 import { dataGroupCache, getRouteDataPlan, loadDataGroup, invalidateDataGroups, groupsForRealtimeTable, dataGroupRequestCounts } from "./dataGroupService";
 const payload = (seasonYear: number | null = null) => ({
   seasonYear, summary: { attempts: 3, brands: 1, events: 1, people: 3, bestBeer: null },
-  brands: [], favorites: [], effects: [], variety: [],
+  brands: [], favorites: [], effects: [], variety: [], fastest: [], unlucky: [],
 });
 beforeEach(() => {
   vi.clearAllMocks(); dataGroupCache.invalidate();
@@ -33,7 +33,7 @@ it("deduplicates reads and caches separately per season in the existing route ca
 it("isolates the tab and invalidates only on its canonical sources", () => {
   expect(getRouteDataPlan("/stats/beer")).toEqual({ required: ["navigation"], optional: ["beer-statistics"] });
   expect(dataGroupRequestCounts["beer-statistics"]).toBe(1);
-  for (const source of ["attempts", "events", "players", "event_guests"]) expect(groupsForRealtimeTable(source)).toContain("beer-statistics");
+  for (const source of ["attempts", "events", "players", "event_guests", "beer_brand_images"]) expect(groupsForRealtimeTable(source)).toContain("beer-statistics");
   for (const source of ["historical_attempts", "badge_definitions", "event_photos"]) expect(groupsForRealtimeTable(source)).not.toContain("beer-statistics");
   for (const route of ["/stats", "/stats/performance", "/stats/badges", "/stats/rivalries", "/players", "/events/live"]) {
     const plan = getRouteDataPlan(route);
@@ -46,6 +46,21 @@ it("does not disguise errors or a wrong-scope payload as empty data", async () =
   expect(() => mapBeerStatistics({ ...payload(), brands: null }, "all-time")).toThrow();
   mocks.rpc.mockResolvedValue({ data: null, error: new Error("timeout") });
   await expect(getBeerStatistics(2026)).rejects.toThrow("timeout");
+});
+it("retains identical global brand image paths through All-Time and season mapping", () => {
+  const brands = [{ brand: "Königshof", imagePath: "same.webp", players: [], eventDetails: [] }];
+  expect(mapBeerStatistics({ ...payload(), brands }, "all-time").brands[0].imagePath).toBe("same.webp");
+  expect(mapBeerStatistics({ ...payload(2026), brands }, 2026).brands[0].imagePath).toBe("same.webp");
+});
+it("extends the single read with explicit joins and all-pair unlucky data", () => {
+  const sql=readFileSync("supabase/migrations/202610200073_beer_statistics_v2.sql","utf8");
+  const read=sql.slice(sql.indexOf("create or replace function public.get_beer_statistics_dashboard"));
+  expect(read).not.toMatch(/\\b(?:insert into|update public|delete from)\\b/i);
+  expect(read).toContain("from player_details where attempts>=2 and effect>0");
+  expect(read).toContain("left join brand_performance p on p.beer_brand=c.beer_brand");
+  expect(read).toContain("q.attempt_id");
+  expect(read).toContain("'eventDetails'");
+  expect(read).toContain("'imagePath'");
 });
 it("keeps the SQL read-only, snapshot-based and tied to canonical eligibility", () => {
   const sql = readFileSync("supabase/migrations/202610160072_beer_statistics.sql", "utf8");

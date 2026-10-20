@@ -181,7 +181,7 @@ describe("event lifecycle repository", () => {
   it("persists the trophy-event flag through the versioned update RPC", async () => {
     mocks.rpc.mockResolvedValue({ data: null, error: null });
     await updateRemoteEvent("event-one", "Finale", "2026-08-02", true);
-    expect(mocks.rpc).toHaveBeenCalledWith("sync_update_event_v3", {
+    expect(mocks.rpc).toHaveBeenCalledWith("sync_update_event_v4", {
       p_event_id: "event-one",
       p_name: "Finale",
       p_start_date: "2026-08-02",
