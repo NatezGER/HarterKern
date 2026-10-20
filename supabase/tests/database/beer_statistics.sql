@@ -1,4 +1,4 @@
--- Disposable LOCAL database only, migrations through 072 + pgTAP.
+-- Disposable LOCAL database only, migrations through 073 + pgTAP.
 -- Synthetic fixtures; never execute in production. No permanent changes.
 begin;
 create extension if not exists pgtap;
@@ -96,6 +96,20 @@ select is((select (v->>'brands')::integer from beer72_snap s,lateral jsonb_array
  where s.yr=2026 and v->>'playerId'=pg_temp.bid(1)::text),2,'variety includes a brand with one sample');
 select is((public.get_beer_statistics_dashboard(1800)->'brands'),'[]'::jsonb,'unsupported/empty season has empty arrays');
 
+
+-- 073: single regular attempt is a record; guests/AK/archived must not enter it.
+select ok(exists(select 1 from beer72_snap s,lateral jsonb_array_elements(s.data->'fastest') v
+ where s.yr=2026 and v->>'attemptId'=pg_temp.bid(1003)::text),'single attempt qualifies for individual record');
+select ok(not exists(select 1 from beer72_snap s,lateral jsonb_array_elements(s.data->'fastest') v
+ where s.yr=2026 and v->>'playerId' in(pg_temp.bid(3)::text,pg_temp.bid(4)::text)),'fastest excludes AK/archived');
+select is(jsonb_array_length(pg_temp.bb(2026,'__beer72__Flensburger')->'players'),2,'brand player details use regular population');
+select is(jsonb_array_length(pg_temp.bb(2026,'__beer72__Flensburger')->'eventDetails'),1,'brand event details scoped');
+insert into public.beer_brand_images(brand,image_path) values('__beer72__Flensburger','fixture.webp');
+update beer72_snap set data=public.get_beer_statistics_dashboard(yr);
+select is(pg_temp.bb(2026,'__beer72__Flensburger')->>'imagePath','fixture.webp','global image in season');
+select is(pg_temp.bb(null,'__beer72__Flensburger')->>'imagePath','fixture.webp','same image All-Time');
+select ok(not has_table_privilege('anon','public.beer_brand_images','INSERT'),'no public image table writes');
+
 -- Favorite tie-breaks: count first, then best, then exact brand text.
 select pg_temp.ba(21,1,null,101,250,'__beer72__C');
 select pg_temp.ba(22,1,null,101,250,'__beer72__C');
@@ -126,5 +140,14 @@ update beer72_snap set data=public.get_beer_statistics_dashboard(yr);
 select is((pg_temp.bb(2026,'__beer72__Override')->>'attempts')::integer,1,'individual snapshot override appears under its own brand');
 select is((pg_temp.bb(2026,'__beer72__Flensburger')->>'attempts')::integer,7,'override removes only its original snapshot contribution');
 select is(pg_temp.bb(2026,'Never use this default'),null::jsonb,'changed event default not used retroactively');
+
+-- An explicitly slower non-favorite qualified brand must enter Pechvogel.
+select pg_temp.ba(31,1,null,101,900,'__beer72__Slow');
+select pg_temp.ba(32,1,null,101,900,'__beer72__Slow');
+update beer72_snap set data=public.get_beer_statistics_dashboard(yr);
+select isnt(pg_temp.bf(2026,1)->>'brand','__beer72__Slow','slow brand is not favorite');
+select ok(exists(select 1 from beer72_snap s,lateral jsonb_array_elements(s.data->'unlucky') v
+ where s.yr=2026 and v->>'playerId'=pg_temp.bid(1)::text and v->>'brand'='__beer72__Slow'
+ and (v->>'effectHundredths')::numeric>0),'unlucky considers ALL qualified player-brand pairs');
 select * from finish();
 rollback;

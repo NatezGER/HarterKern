@@ -14,6 +14,17 @@ export async function removePlayerAvatar(playerId: string) {
   await invokeAdminMedia("remove-avatar", { playerId });
 }
 
+export async function saveBeerImage(brand: string, previousPath: string | null, file?: File) {
+  if (file) {
+    const validation = validateImageFile(file, "avatar");
+    if (validation) throw new Error(validation);
+    if (!["image/png", "image/webp"].includes(file.type)) throw new Error("Bitte PNG oder WebP auswählen.");
+  }
+  const result = await invokeAdminMedia(file ? "upload-beer-image" : "remove-beer-image",
+    { brand, previousPath: previousPath ?? "" }, file);
+  if (!result?.ok) throw new Error("Bildaktion wurde nicht bestätigt.");
+}
+
 export interface PhotoUploadResult {
   fileName: string;
   ok: boolean;

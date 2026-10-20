@@ -181,6 +181,63 @@ Deno.serve(async (request) => {
       return json({ ok: true, updatedAt: saved.data[0].updated_at });
     }
 
+    if (action === "upload-beer-image" || action === "remove-beer-image") {
+      const brand = form.get("brand");
+      if (typeof brand !== "string" || !brand.trim() || brand.length > 80) {
+        throw new Error("Ungültige Biermarke.");
+      }
+      const catalog = await supabase.rpc("get_beer_image_catalog");
+      if (catalog.error) throw catalog.error;
+      if (!catalog.data?.some((row: { brand: string }) => row.brand === brand)) {
+        throw new Error("Diese Biermarke ist nicht bekannt.");
+      }
+      const current = await supabase.from("beer_brand_images")
+        .select("image_path").eq("brand", brand).maybeSingle();
+      if (current.error) throw current.error;
+      if ((current.data?.image_path ?? "") !== String(form.get("previousPath") ?? "")) {
+        throw new Error("Bild wurde zwischenzeitlich geändert. Bitte neu laden.");
+      }
+      let path: string | null = null;
+      if (action === "upload-beer-image") {
+        const file = requireImage(form.get("file"), 5 * 1024 * 1024);
+        if (file.type !== "image/png" && file.type !== "image/webp") {
+          throw new Error("Flaschenbilder müssen PNG oder WebP sein.");
+        }
+        const dimensions = readAwardImageDimensions(new Uint8Array(await file.arrayBuffer()), file.type);
+        if (dimensions.width < 1 || dimensions.height < 1 ||
+          dimensions.width > 8192 || dimensions.height > 8192 ||
+          dimensions.width * dimensions.height > 20000000) {
+          throw new Error("Ungültige oder zu große Bildabmessungen.");
+        }
+        path = `${crypto.randomUUID()}.${extensionFor(file.type)}`;
+        const uploaded = await supabase.storage.from("beer-brand-images").upload(path, file, {
+          contentType: file.type, cacheControl: "31536000", upsert: false,
+        });
+        if (uploaded.error) throw uploaded.error;
+      }
+      // Compare-and-swap: never remove the object selected by a concurrent editor.
+      const saved = path
+        ? current.data
+          ? await supabase.from("beer_brand_images").update({ image_path: path, updated_at: new Date().toISOString() })
+            .eq("brand", brand).eq("image_path", current.data.image_path).select("brand")
+          : await supabase.from("beer_brand_images").insert({ brand, image_path: path }).select("brand")
+        : current.data
+          ? await supabase.from("beer_brand_images").delete().eq("brand", brand)
+            .eq("image_path", current.data.image_path).select("brand")
+          : { data: [{ brand }], error: null };
+      if (saved.error || !saved.data?.length) {
+        if (path) await supabase.storage.from("beer-brand-images").remove([path]);
+        throw saved.error ?? new Error("Bild wurde gleichzeitig geändert. Bitte neu laden.");
+      }
+      if (current.data?.image_path) {
+        const cleanup = await supabase.storage.from("beer-brand-images").remove([current.data.image_path]);
+        if (cleanup.error) {
+          throw new Error("Bildzuordnung gespeichert; alte Datei konnte nicht bereinigt werden. Bitte neu laden.");
+        }
+      }
+      return json({ ok: true });
+    }
+
     if (action === "upload-avatar") {
       const playerId = requirePostgresUuid(form.get("playerId"), "Spieler");
       const file = requireImage(form.get("file"), 5 * 1024 * 1024);

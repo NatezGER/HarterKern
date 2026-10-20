@@ -270,7 +270,7 @@ export function loadDataGroup(
 
 export function groupsForRealtimeTable(table: string): DataGroup[] {
   const teamSources = ["players", "attempts", "historical_attempts", "events"];
-  const beerSources = ["players", "attempts", "events", "event_guests"];
+  const beerSources = ["players", "attempts", "events", "event_guests", "beer_brand_images"];
   return [...(beerSources.includes(table) ? ["beer-statistics" as const] : []), ...existingGroupsForRealtimeTable(table), ...(teamSources.includes(table) ? ["team-milestones" as const] : [])];
 }
 
