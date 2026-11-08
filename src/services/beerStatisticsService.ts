@@ -12,7 +12,11 @@ export function mapBeerStatistics(value: unknown, season: SeasonSelection): Beer
     || !["brands", "favorites", "effects", "variety", "fastest", "unlucky"].every(key => Array.isArray(root[key]))) {
     throw new Error("Ungültige Bierstatistik oder falscher Zeitraum.");
   }
-  return { season, summary: root.summary, brands: root.brands, favorites: root.favorites,
+  const rankings = root.rankings as Record<string, unknown> | undefined;
+  if (!rankings || !["power", "record", "volume", "turbo"].every(key => Array.isArray(rankings[key]))) {
+    throw new Error("Die Bier-Powerwerte sind noch nicht verfügbar. Bitte Migration 074 bereitstellen.");
+  }
+  return { season, rankings, summary: root.summary, brands: root.brands, favorites: root.favorites,
     effects: root.effects, variety: root.variety, fastest: root.fastest, unlucky: root.unlucky } as BeerStatistics;
 }
 export async function getBeerStatistics(season: SeasonSelection, signal?: AbortSignal) {

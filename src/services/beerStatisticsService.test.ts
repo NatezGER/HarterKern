@@ -5,6 +5,7 @@ vi.mock("@/lib/supabase", () => ({ getSupabase: () => ({ rpc: mocks.rpc }) }));
 import { getBeerStatistics, mapBeerStatistics } from "./beerStatisticsService";
 import { dataGroupCache, getRouteDataPlan, loadDataGroup, invalidateDataGroups, groupsForRealtimeTable, dataGroupRequestCounts } from "./dataGroupService";
 const payload = (seasonYear: number | null = null) => ({
+  rankings: {power:[],record:[],volume:[],turbo:[]},
   seasonYear, summary: { attempts: 3, brands: 1, events: 1, people: 3, bestBeer: null },
   brands: [], favorites: [], effects: [], variety: [], fastest: [], unlucky: [],
 });
@@ -43,6 +44,7 @@ it("isolates the tab and invalidates only on its canonical sources", () => {
 it("does not disguise errors or a wrong-scope payload as empty data", async () => {
   expect(() => mapBeerStatistics(payload(2026), "all-time")).toThrow();
   expect(() => mapBeerStatistics(null, "all-time")).toThrow();
+  expect(() => mapBeerStatistics({...payload(), rankings: undefined}, "all-time")).toThrow("Migration 074");
   expect(() => mapBeerStatistics({ ...payload(), brands: null }, "all-time")).toThrow();
   mocks.rpc.mockResolvedValue({ data: null, error: new Error("timeout") });
   await expect(getBeerStatistics(2026)).rejects.toThrow("timeout");
@@ -71,4 +73,12 @@ it("keeps the SQL read-only, snapshot-based and tied to canonical eligibility", 
   expect(sql).not.toMatch(/\b(?:insert into|update public|delete from|create trigger|create index)\b/i);
   expect(sql.replace(/--[^\n]*/g, "")).not.toContain("events.beer_brand");
   expect(sql).not.toContain("historical_attempts");
+});
+it("preserves canonical scope, consumption and complete baselines in the power RPC", () => {
+  const previous = readFileSync("supabase/migrations/202610200073_beer_statistics_v2.sql", "utf8").replace(/\r\n/g, "\n");
+  const current = readFileSync("supabase/migrations/202611080074_beer_statistics_power.sql", "utf8").replace(/\r\n/g, "\n");
+  const core = (sql: string) => sql.slice(sql.indexOf("with scoped_events as"), sql.indexOf("), qualified_player_beers as"));
+  expect(core(current)).toBe(core(previous));
+  expect(current).toContain("security invoker");
+  expect(current.replace(/--[^\n]*/g, "")).not.toMatch(/\b(?:insert|update|delete|create trigger|create table)\b/i);
 });
