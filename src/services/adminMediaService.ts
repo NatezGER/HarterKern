@@ -55,7 +55,14 @@ export async function invokeAdminMedia(
     "admin-media",
     { body },
   );
-  if (error) throw new Error(await readFunctionError(error));
+  if (error) {
+    const message = await readFunctionError(error);
+    if ((action === "upload-beer-image" || action === "remove-beer-image")
+      && message === "Unbekannte Medienaktion.") {
+      throw new Error("Der Server unterstützt die Bierbilder-Verwaltung noch nicht. Bitte die aktuelle Supabase-Funktion admin-media bereitstellen.");
+    }
+    throw new Error(message);
+  }
   return data;
 }
 

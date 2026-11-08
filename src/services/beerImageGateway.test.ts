@@ -74,6 +74,20 @@ it("uploads, replaces and deletes with DB-first unlink and old-object cleanup",a
   expect((await request("remove-beer-image",{brand:"Known",previousPath:next})).status).toBe(200);
   expect(row).toBeNull();expect(remove).toHaveBeenLastCalledWith([next]);
 });
+it.each(["image/png","image/webp"])("preserves original image bytes including alpha metadata for %s",async type=>{
+  let file=png();
+  if(type==="image/webp"){
+    const bytes=new Uint8Array(30);
+    bytes.set([82,73,70,70],0);bytes.set([87,69,66,80],8);bytes.set([86,80,56,88],12);
+    new DataView(bytes.buffer).setUint32(16,10,true);
+    bytes[20]=16; // VP8X alpha flag; test transport, not a full image decoder.
+    file=new File([bytes],"alpha.webp",{type});
+  }
+  expect((await request("upload-beer-image",{brand:"Known",previousPath:""},file)).status).toBe(200);
+  const uploaded=upload.mock.calls[0][1] as File;
+  expect(uploaded.type).toBe(type);
+  expect(new Uint8Array(await uploaded.arrayBuffer())).toEqual(new Uint8Array(await file.arrayBuffer()));
+});
 it("rejects stale edits, unknown brands and corrupt files",async()=>{
   row={image_path:"current.webp"};
   expect((await request("upload-beer-image",{brand:"Known",previousPath:"old.webp"},png())).status).toBe(400);

@@ -4,7 +4,20 @@ export interface BeerFavorite {
   averageHundredths: number; bestHundredths: number; overallAverageHundredths: number;
   overallAttempts: number; effectHundredths: number;
 }
+export type BeerRankingCategory = "power" | "record" | "volume" | "turbo";
+export interface BeerRankingRow {
+  brand: string; rank: number; value: number;
+  playerCount: number | null; playerId: string | null; playerName: string | null;
+}
 export interface BeerBrandStatistic {
+  powerValue: number | null;
+  powerPlayerCount: number;
+  powerQualified: boolean;
+  powerPlayers: BeerFavorite[];
+  fastestPlayers: BeerFavorite[];
+  customers: { personKey: string; playerId: string | null; name: string; isGuest: boolean; isAk: boolean; attempts: number }[];
+  turbo: BeerFavorite[];
+  brake: BeerFavorite[];
   imagePath: string | null;
   players: BeerFavorite[];
   eventDetails: { eventId: string; name: string; date: string; attempts: number }[];
@@ -16,6 +29,7 @@ export interface BeerBrandStatistic {
 }
 export interface BeerStatistics {
   season: SeasonSelection;
+  rankings: Record<BeerRankingCategory, BeerRankingRow[]>;
   summary: { attempts: number; brands: number; events: number; people: number; bestBeer: string | null };
   brands: BeerBrandStatistic[];
   fastest: { attemptId: string; playerId: string; name: string; brand: string; timeHundredths: number;

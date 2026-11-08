@@ -60,6 +60,23 @@ describe("code-admin authorization", () => {
     expect(invoke).not.toHaveBeenCalled();
   });
 
+  it.each(["upload-beer-image", "remove-beer-image"])("explains an outdated server only for %s and preserves the sent action", async action => {
+    await verifyManagementCode("5221");
+    invoke.mockResolvedValue({ data: null, error: { context: new Response(JSON.stringify({error:"Unbekannte Medienaktion."}), {status:400}) } });
+    await expect(invokeAdminMedia(action,{brand:"Known"})).rejects.toThrow("aktuelle Supabase-Funktion admin-media");
+    expect((invoke.mock.calls.at(-1)![1].body as FormData).get("action")).toBe(action);
+  });
+  it.each(["Die Adminfreigabe ist abgelaufen.", "Bucket not found", "Ungültige Bildabmessungen.", "Invalid JWT"])("preserves unrelated beer error: %s", async message => {
+    await verifyManagementCode("5221");
+    invoke.mockResolvedValue({ data:null, error:{context:new Response(JSON.stringify({error:message}),{status:400})} });
+    await expect(invokeAdminMedia("upload-beer-image",{brand:"Known"})).rejects.toThrow(message);
+  });
+  it.each(["upload-avatar","upload-award-asset","upload-event-photo","save-milestone-content"])("does not relabel unknown legacy action %s", async action => {
+    await verifyManagementCode("5221");
+    invoke.mockResolvedValue({data:null,error:new Error("Unbekannte Medienaktion.")});
+    await expect(invokeAdminMedia(action,{})).rejects.toThrow("Unbekannte Medienaktion.");
+  });
+
   it("blocks media calls after the admin mode is locked", async () => {
     await verifyManagementCode("5221");
     clearManagementCode();

@@ -12,19 +12,20 @@ vi.mock("react-router-dom", () => ({ Link: ({ children, to }: { children: ReactN
 import { StatsBeerPage } from "./StatsBeerPage";
 import { beerEffectLabel } from "@/lib/beerStatisticsFormat";
 const fixture = (): BeerStatistics => ({
+  rankings: {power:[],record:[],volume:[],turbo:[]},
   season: "all-time", summary: { attempts: 3, brands: 1, events: 1, people: 3, bestBeer: null },
-  brands: [{ imagePath: null, players: [], eventDetails: [], brand: "Flensburger", attempts: 3, events: 1, people: 3, performanceAttempts: 1,
+  brands: [{ powerValue:250,powerPlayerCount:1,powerQualified:false,powerPlayers:[],fastestPlayers:[],customers:[],turbo:[],brake:[], imagePath: null, players: [], eventDetails: [], brand: "Flensburger", attempts: 3, events: 1, people: 3, performanceAttempts: 1,
     averageHundredths: 250, bestHundredths: 250, qualified: false, performancePosition: null,
     mostDrinker: { personKey: "p", playerId: "p", name: "Paul", isGuest: false, isAk: false, attempts: 1 }, bestPlayer: null }],
   favorites: [], effects: [], variety: [], fastest: [], unlucky: [],
 });
 const render = () => renderToStaticMarkup(<StatsBeerPage />);
 beforeEach(() => { state.data = fixture(); state.season = "all-time"; state.status = "ready"; });
-it("shows record book, shelf and player sections without the old volume hero", () => {
+it("shows podium, single detail and collapsed player sections without the old volume hero", () => {
   const html = render();
   expect(html).toContain('href="/stats/beer"');
-  expect(html.indexOf("Bier-Rekordbuch")).toBeLessThan(html.indexOf("Bierregal"));
-  expect(html.indexOf("Bierregal")).toBeLessThan(html.indexOf("Spieler &amp; Bier"));
+  expect(html.indexOf("Bier-Rekordbuch")).toBeLessThan(html.indexOf("Bier im Detail"));
+  expect(html.indexOf("Bier im Detail")).toBeLessThan(html.indexOf("Spieler &amp; Bier"));
   expect(html).toContain("0,6 L");
   expect(html).toContain("3 Versuche");
   expect(html).not.toContain("data-artwork-slot");
@@ -36,10 +37,11 @@ it("shows record book, shelf and player sections without the old volume hero", (
 it("shows raw single-sample brand data without giving a winner award", () => {
   const html = render();
   expect(html).toContain("2,50 s");
-  expect(html).toContain("1/2 Leistungsversuche");
+  expect(html).toContain("1/5 Spieler");
+  expect(html).toContain("Noch nicht qualifiziert");
   expect(html).not.toContain("Bestes Bier nach qualifiziertem");
   expect(html).not.toContain("Leistungsplatz 1");
-  expect(html).toContain("Noch niemand mit 2 Leistungsversuchen");
+  expect(html).toContain("Noch keine qualifizierte Marke");
 });
 it("shows the empty state without zero-volume brand rankings", () => {
   state.data = { ...fixture(), summary: { attempts: 0, brands: 0, events: 0, people: 0, bestBeer: null }, brands: [] };
