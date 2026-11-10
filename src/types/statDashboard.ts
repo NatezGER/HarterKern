@@ -1,7 +1,8 @@
+import type { DevelopmentEvidence } from "./performanceDevelopment";
 import type { ChaosEvidence, EndspurtEvidence, RivalryEventEvidence } from "./performanceEvidence";
 
 export type StatisticScope = "all-time" | "season" | "special-event";
-export type MetricFormat = "time" | "time-gain" | "count" | "percent" | "duration" | "days";
+export type MetricFormat = "time" | "time-gain" | "precise-time" | "count" | "percent" | "duration" | "days";
 export type MetricGroup = "performance" | "consistency" | "volume" | "event" |
   "bingo" | "rivalry" | "achievements" | "records";
 export type CompareBlockKey = "speed" | "consistency" | "volume" | "clutch" |
@@ -19,6 +20,7 @@ export interface FiveWindowEvidence {
 }
 
 export interface MetricRankEntry {
+  developmentEvidence?: DevelopmentEvidence;
   windowEvidence?: FiveWindowEvidence;
   endspurtEvidence?: EndspurtEvidence[];
   rivalryEvidence?: RivalryEventEvidence[];

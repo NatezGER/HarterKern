@@ -1,3 +1,4 @@
+import { PerformanceDevelopmentDetails } from "./PerformanceDevelopmentDetails";
 import { useState } from "react";
 import { MetricRankingCard } from "./MetricRankingCard";
 import { PerformanceEventDetails } from "./PerformanceEventDetails";
@@ -49,7 +50,7 @@ export function PerformanceRankings({ metrics }: { metrics: RankedMetric[] }) {
         {section.keys.map(key => key === "thresholds" ? <ThresholdRankingCard key={key} metrics={metrics} /> : byKey.has(key) &&
           <MetricRankingCard key={key} metric={byKey.get(key)!} linkPlayers={key.startsWith("performance-")} wrapDetail={key === "performance-endspurt"}
             renderDetails={key === "best-five-window" ? entry => entry.windowEvidence && <FiveWindowDetails evidence={entry.windowEvidence} />
-              : key.startsWith("performance-") ? entry => <PerformanceEventDetails entry={entry} /> : undefined} />)}
+              : key.startsWith("performance-") ? entry => entry.developmentEvidence ? <PerformanceDevelopmentDetails evidence={entry.developmentEvidence} /> : <PerformanceEventDetails entry={entry} /> : undefined} />)}
       </div>
     </section>)}
   </div>;

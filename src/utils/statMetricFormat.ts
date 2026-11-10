@@ -3,6 +3,7 @@ import { formatTime } from "@/utils/format";
 
 export function formatMetricValue(value: number | null, format: MetricFormat) {
   if (value == null) return "—";
+  if (format === "precise-time") return `${(value / 100).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} s`;
   if (format === "time-gain") return `${(value / 100).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} s`;
   if (format === "time") return formatTime(value / 100);
   if (format === "percent") return `${value.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`;
