@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MetricRankingCard } from "./MetricRankingCard";
+import { PerformanceEventDetails } from "./PerformanceEventDetails";
 import { performanceSections, timeThresholds } from "@/constants/performanceSections";
 import { formatMetricValue } from "@/utils/statMetricFormat";
 import type { FiveWindowEvidence, RankedMetric } from "@/types/statDashboard";
@@ -46,7 +47,9 @@ export function PerformanceRankings({ metrics }: { metrics: RankedMetric[] }) {
       <h3 id={`heading-${section.id}`} className="mb-4 border-b border-gold-300/15 pb-2 font-display text-xl font-black text-gold-200 sm:text-2xl">{section.title}</h3>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" data-metric-dashboard>
         {section.keys.map(key => key === "thresholds" ? <ThresholdRankingCard key={key} metrics={metrics} /> : byKey.has(key) &&
-          <MetricRankingCard key={key} metric={byKey.get(key)!} renderDetails={key === "best-five-window" ? entry => entry.windowEvidence && <FiveWindowDetails evidence={entry.windowEvidence} /> : undefined} />)}
+          <MetricRankingCard key={key} metric={byKey.get(key)!} linkPlayers={key.startsWith("performance-")} wrapDetail={key === "performance-endspurt"}
+            renderDetails={key === "best-five-window" ? entry => entry.windowEvidence && <FiveWindowDetails evidence={entry.windowEvidence} />
+              : key.startsWith("performance-") ? entry => <PerformanceEventDetails entry={entry} /> : undefined} />)}
       </div>
     </section>)}
   </div>;
