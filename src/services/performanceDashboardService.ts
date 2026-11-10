@@ -1,3 +1,5 @@
+import { performanceDevelopmentMetrics } from "@/constants/performanceDevelopmentMetrics";
+import { parseDevelopmentEvidence } from "./performanceDevelopmentEvidence";
 import { performanceEventMetrics } from "@/constants/performanceEventMetrics";
 import { parseChaosEvidence, parseEndspurtEvidence, parseRivalryEvidence } from "./performanceEvidence";
 import { getSupabase } from "@/lib/supabase";
@@ -43,7 +45,7 @@ export function getPerformanceDashboard(season: SeasonSelection = ALL_TIME_SEASO
     });
     if (error) throw error;
     if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Performance-Payload fehlt.");
-    const dashboard = mapStatisticDashboard(data, season === ALL_TIME_SEASON ? "all-time" : "season", [...statisticMetricRegistry, hunterDefinition, ...performanceEventMetrics])!;
+    const dashboard = mapStatisticDashboard(data, season === ALL_TIME_SEASON ? "all-time" : "season", [...statisticMetricRegistry, hunterDefinition, ...performanceEventMetrics, ...performanceDevelopmentMetrics])!;
     dashboard.metrics = dashboard.metrics.filter(({ group, key }) =>
       key === "most-wanted-firsts" || ["performance", "consistency", "volume", "event", "records"].includes(group));
     // These definitions belong to the isolated event-performance RPC.
@@ -63,7 +65,7 @@ export function getPerformanceDashboard(season: SeasonSelection = ALL_TIME_SEASO
       if (metric.key === "fast-starter") return { ...metric, minimumSample: 2,
         description: "Median von Attempt 1 minus finaler Event-PB · mindestens zwei Events",
         info: "Pro Event mindestens drei eigene offizielle Versuche; der tatsächliche erste Versuch muss gültig sein. Die bestehende Medianformel bleibt unverändert." };
-      if (performanceEventMetrics.some(definition => definition.key === metric.key)) {
+      if ([...performanceEventMetrics, ...performanceDevelopmentMetrics].some(definition => definition.key === metric.key)) {
         const rawMetrics = Array.isArray(data.metrics) ? data.metrics : [];
         const raw = rawMetrics.find(m => m && typeof m === "object" && !Array.isArray(m) && m.key === metric.key);
         const rankings = raw && typeof raw === "object" && !Array.isArray(raw) && Array.isArray(raw.rankings) ? raw.rankings : [];
@@ -74,6 +76,7 @@ export function getPerformanceDashboard(season: SeasonSelection = ALL_TIME_SEASO
             endspurtEvidence: parseEndspurtEvidence(r.endspurtEvidence),
             rivalryEvidence: parseRivalryEvidence(r.rivalryEvidence),
             chaosEvidence: parseChaosEvidence(r.chaosEvidence),
+            developmentEvidence: parseDevelopmentEvidence(r.developmentEvidence),
           };
         }) };
       }
