@@ -3,7 +3,7 @@ import { ProfileAvatar } from "@/components/common/ProfileAvatar";
 import type { RankedMetric } from "@/types/statDashboard";
 import { formatMetricValue } from "@/utils/statMetricFormat";
 
-export function MetricRankingCard({ metric, limit = 5, controls, renderDetails }: { metric: RankedMetric; limit?: number; controls?: ReactNode; renderDetails?: (entry: RankedMetric["rankings"][number]) => ReactNode }) {
+export function MetricRankingCard({ metric, limit = 5, controls, renderDetails, linkPlayers = false, wrapDetail = false }: { metric: RankedMetric; limit?: number; controls?: ReactNode; renderDetails?: (entry: RankedMetric["rankings"][number]) => ReactNode; linkPlayers?: boolean; wrapDetail?: boolean }) {
   return <article className={`panel min-w-0 ${metric.compact ? "p-3 sm:p-4" : "p-4 sm:p-5"}`} data-metric-key={metric.key}>
     <h3 className={`font-display font-black ${metric.compact ? "text-base" : "text-lg sm:text-xl"}`}>{metric.title}</h3>
     <p className="mt-1 text-xs text-white/45">{metric.description}</p>
@@ -23,7 +23,7 @@ export function MetricRankingCard({ metric, limit = 5, controls, renderDetails }
         <div className="flex min-w-0 items-center gap-2">
         <span className="w-6 shrink-0 font-display text-lg font-black tabular-nums text-gold-300">{entry.rank}.</span>
         <ProfileAvatar id={entry.playerId} name={entry.name} url={entry.avatarUrl} className={`${index === 0 ? "size-9" : "size-8"} shrink-0`} />
-        <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{entry.name}</p>{entry.detail && <p className="truncate text-[11px] text-white/45">{entry.detail}</p>}</div>
+        <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{linkPlayers ? <a href={`/player/${entry.playerId}`} className="hover:text-gold-200 focus-visible:outline focus-visible:outline-gold-300">{entry.name}</a> : entry.name}</p>{entry.detail && <p className={`${wrapDetail ? "break-words" : "truncate"} text-[11px] text-white/45`}>{entry.detail}</p>}</div>
         <div className="shrink-0 text-right"><strong className="font-display text-lg font-black tabular-nums">{formatMetricValue(entry.value, metric.format)}</strong>{entry.count != null && <p className="text-[11px] tabular-nums text-white/45">{entry.total != null ? `${entry.count} / ${entry.total}` : `${entry.count} gültige Versuche`}</p>}</div>
         </div>
         {renderDetails?.(entry)}

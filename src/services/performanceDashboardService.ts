@@ -1,3 +1,5 @@
+import { performanceEventMetrics } from "@/constants/performanceEventMetrics";
+import { parseChaosEvidence, parseEndspurtEvidence, parseRivalryEvidence } from "./performanceEvidence";
 import { getSupabase } from "@/lib/supabase";
 import { ALL_TIME_SEASON, type SeasonSelection } from "@/lib/season";
 import { mapStatisticDashboard } from "@/services/statDashboardService";
@@ -41,7 +43,7 @@ export function getPerformanceDashboard(season: SeasonSelection = ALL_TIME_SEASO
     });
     if (error) throw error;
     if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Performance-Payload fehlt.");
-    const dashboard = mapStatisticDashboard(data, season === ALL_TIME_SEASON ? "all-time" : "season", [...statisticMetricRegistry, hunterDefinition])!;
+    const dashboard = mapStatisticDashboard(data, season === ALL_TIME_SEASON ? "all-time" : "season", [...statisticMetricRegistry, hunterDefinition, ...performanceEventMetrics])!;
     dashboard.metrics = dashboard.metrics.filter(({ group, key }) =>
       key === "most-wanted-firsts" || ["performance", "consistency", "volume", "event", "records"].includes(group));
     // These definitions belong to the isolated event-performance RPC.
@@ -58,6 +60,23 @@ export function getPerformanceDashboard(season: SeasonSelection = ALL_TIME_SEASO
         title: "Meiste Zeitwiederholungen",
         description: "Häufigkeit der eigenen häufigsten exakten Eventzeit",
         info: "Nur gültige reguläre Eventzeiten. Bei gleich häufigen Zeiten wird die schnellere als Beispiel angezeigt." };
+      if (metric.key === "fast-starter") return { ...metric, minimumSample: 2,
+        description: "Median von Attempt 1 minus finaler Event-PB · mindestens zwei Events",
+        info: "Pro Event mindestens drei eigene offizielle Versuche; der tatsächliche erste Versuch muss gültig sein. Die bestehende Medianformel bleibt unverändert." };
+      if (performanceEventMetrics.some(definition => definition.key === metric.key)) {
+        const rawMetrics = Array.isArray(data.metrics) ? data.metrics : [];
+        const raw = rawMetrics.find(m => m && typeof m === "object" && !Array.isArray(m) && m.key === metric.key);
+        const rankings = raw && typeof raw === "object" && !Array.isArray(raw) && Array.isArray(raw.rankings) ? raw.rankings : [];
+        return { ...metric, rankings: metric.rankings.map(entry => {
+          const r = rankings.find(item => item && typeof item === "object" && !Array.isArray(item) && item.playerId === entry.playerId);
+          if (!r || typeof r !== "object" || Array.isArray(r)) return entry;
+          return { ...entry,
+            endspurtEvidence: parseEndspurtEvidence(r.endspurtEvidence),
+            rivalryEvidence: parseRivalryEvidence(r.rivalryEvidence),
+            chaosEvidence: parseChaosEvidence(r.chaosEvidence),
+          };
+        }) };
+      }
       if (metric.key === "dnf") return { ...metric, minimumSample: 10, description: "Mindestens 10 offizielle Eventversuche; DNF / Versuche" };
       if (metric.key === "near-repeat") return { ...metric, description: "Direkte gültige Nachbarpaare mit höchstens 0,10 s Abstand", info: "Treffer / gültige Nachbarpaare; mindestens fünf Paare. Gleiche Zeiten zählen mit. DNF und Eventgrenzen unterbrechen die Folge." };
       if (metric.key.startsWith("wr-") && season !== ALL_TIME_SEASON) return { ...metric, title: metric.title.replace(/WR/g, "SR") };
