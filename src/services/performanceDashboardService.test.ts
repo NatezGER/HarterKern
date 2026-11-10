@@ -33,10 +33,28 @@ describe("isolated Performance RPC", () => {
     expect(mocks.rpc.mock.calls).toEqual([["get_statistics_performance_dashboard", { p_season_year: null }]]);
     expect(result.attemptNumbers).toEqual([{ attemptNumber: 2, samples: 5, validAttempts: 5, dnfCount: 0, averageHundredths: 312 }]);
     expect(result.statistics.map(({ value }) => value)).toEqual(["2", "4"]);
-    expect(result.dashboard.metrics.every(({ group }) => !["bingo", "rivalry", "achievements"].includes(group))).toBe(true);
+    expect(result.dashboard.metrics.every(({ group }) => !["rivalry", "achievements"].includes(group))).toBe(true);
     await getPerformanceDashboard();
     expect(mocks.rpc).toHaveBeenCalledOnce();
     await getPerformanceDashboard(2026);
     expect(mocks.rpc).toHaveBeenLastCalledWith("get_statistics_performance_dashboard", { p_season_year: 2026 });
   });
+});
+
+it("isolates Near Repeat/DNF definitions and preserves first-hit ties and window evidence", async () => {
+  const evidence = { eventId: "e", eventName: "Finale", eventDate: "2026-01-01", startAttempt: 2, endAttempt: 6,
+    times: [200, 210, 220, 230, 240], attemptIds: ["a", "b", "c", "d", "e"], averageHundredths: 220 };
+  mocks.rpc.mockResolvedValue({ error: null, data: { metrics: [
+    { key: "best-five-window", rankings: [{ rank: 1, playerId: "a", value: 220, windowEvidence: evidence }] },
+    { key: "most-wanted-firsts", rankings: [{ rank: 1, playerId: "a", value: 3 }, { rank: 1, playerId: "b", value: 3 }] },
+  ] } });
+  const { dashboard } = await getPerformanceDashboard(2026);
+  expect(dashboard.metrics.find(m => m.key === "best-five-window")?.rankings[0].windowEvidence).toEqual(evidence);
+  expect(dashboard.metrics.find(m => m.key === "most-wanted-firsts")?.rankings.map(r => r.rank)).toEqual([1, 1]);
+  expect(dashboard.metrics.find(m => m.key === "dnf")?.minimumSample).toBe(10);
+  expect(dashboard.metrics.find(m => m.key === "near-repeat")?.description).toContain("0,10");
+  expect(statisticMetricByKey.get("dnf")?.minimumSample).toBe(5);
+  expect(statisticMetricByKey.get("near-repeat")?.description).toContain("0,05");
+  expect(dashboard.metrics.find(m => m.key === "wr-jump")?.title).toContain("SR");
+  expect(statisticMetricByKey.has("most-wanted-firsts")).toBe(false);
 });

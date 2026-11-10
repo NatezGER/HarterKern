@@ -1,7 +1,7 @@
 import { getSupabase } from "@/lib/supabase";
 import { ALL_TIME_SEASON } from "@/lib/season";
 import type { SeasonSelection } from "@/lib/season";
-import { statisticMetricRegistry } from "@/constants/statMetricRegistry";
+import { statisticMetricRegistry, type StatisticMetricDefinition } from "@/constants/statMetricRegistry";
 import type { RankedMetric, RivalryPairSummary, StatisticDashboard, StatisticScope } from "@/types/statDashboard";
 import { ReadCache, statisticReadKey } from "@/services/readCache";
 
@@ -17,14 +17,14 @@ function avatarUrl(path: string | null, legacy: string | null) {
   return path ? getSupabase().storage.from("player-avatars").getPublicUrl(path).data.publicUrl : legacy;
 }
 
-export function mapStatisticDashboard(value: unknown, scope: StatisticScope): StatisticDashboard | null {
+export function mapStatisticDashboard(value: unknown, scope: StatisticScope, definitions: StatisticMetricDefinition[] = statisticMetricRegistry): StatisticDashboard | null {
   if (value == null) return null;
   const root = object(value);
   const byKey = new Map(array(root.metrics).map((item) => {
     const row = object(item);
     return [string(row.key), row] as const;
   }));
-  const metrics: RankedMetric[] = statisticMetricRegistry.filter((definition) => definition.scopes.includes(scope))
+  const metrics: RankedMetric[] = definitions.filter((definition) => definition.scopes.includes(scope))
     .map((definition) => {
       const row = byKey.get(definition.key) ?? {};
       return {

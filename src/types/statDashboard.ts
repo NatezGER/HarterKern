@@ -5,7 +5,20 @@ export type MetricGroup = "performance" | "consistency" | "volume" | "event" |
 export type CompareBlockKey = "speed" | "consistency" | "volume" | "clutch" |
   "bingo" | "achievements";
 
+export interface FiveWindowEvidence {
+  eventId: string;
+  eventName: string;
+  eventDate: string;
+  startAttempt: number;
+  endAttempt: number;
+  times: number[];
+  attemptIds: string[];
+  averageHundredths: number;
+}
+
 export interface MetricRankEntry {
+  windowEvidence?: FiveWindowEvidence;
+
   rank: number;
   playerId: string;
   name: string;
