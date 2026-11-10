@@ -8,9 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useSeason } from "@/hooks/useSeason";
 import { useState } from "react";
 import { HistoricalAttemptsDisclosure } from "@/components/history/HistoricalAttemptsDisclosure";
-import { MetricDashboardGrid } from "@/components/stats/MetricRankingCard";
-import { metricGroupLabels } from "@/constants/statMetricRegistry";
-import type { MetricGroup } from "@/types/statDashboard";
+import { MetricRankingCard } from "@/components/stats/MetricRankingCard";
+import { PerformanceRankings } from "@/components/stats/PerformanceRankings";
 import { StatsNavigation } from "@/components/stats/StatsNavigation";
 import { BadgeRankingSections } from "@/components/stats/BadgeRankingSections";
 
@@ -36,16 +35,15 @@ export function StatsPage() {
           </div>
           {dashboard.loading && <p className="panel p-5 text-sm text-white/45" role="status">Ranking-Statistiken werden geladen …</p>}
           {dashboard.error && <div className="panel flex flex-col items-start gap-3 p-5 text-sm text-amber-200/80" role="alert"><p>Ranking-Statistiken konnten nicht geladen werden.</p><Button type="button" variant="outline" onClick={dashboard.retry}>Bereich neu laden</Button></div>}
-          {dashboardData && <div className="space-y-8">{(["performance", "consistency", "volume", "event", "records"] as MetricGroup[]).map((group) => {
-            const metrics = dashboardData.metrics.filter((metric) => metric.group === group);
-            if (metrics.length === 0) return null;
-            return <section key={group} aria-labelledby={`metric-group-${group}`}>
-              <h3 id={`metric-group-${group}`} className="mb-4 border-b border-gold-300/15 pb-2 font-display text-xl font-black uppercase tracking-[0.12em] text-gold-200 sm:text-2xl">{metricGroupLabels[group]}</h3>
-              <MetricDashboardGrid metrics={metrics} />
-            </section>;
-          })}</div>}
+          {dashboardData && <PerformanceRankings metrics={dashboardData.metrics} />}
         </section>
-        <BadgeRankingSections />
+        <section id="performance-bingo" className="scroll-mt-28 space-y-3" aria-labelledby="heading-bingo">
+          <h3 id="heading-bingo" className="mb-4 border-b border-gold-300/15 pb-2 font-display text-xl font-black text-gold-200 sm:text-2xl">IX. BINGO & Most Wanted</h3>
+          <BadgeRankingSections groups={["bingo"]} showHeadings={false} />
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {dashboardData?.metrics.filter(m => m.key === "most-wanted-firsts").map(metric => <MetricRankingCard key={metric.key} metric={metric} />)}
+          </div>
+        </section>
         {isAllTime && <section id="history" className="mt-12 scroll-mt-28">
           <SectionHeading eyebrow="Zeitarchiv" title="Historische Versuche" />
           <p className="-mt-4 mb-5 max-w-3xl text-sm leading-6 text-white/45">
