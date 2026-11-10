@@ -83,8 +83,9 @@ describe("StatsPage structure", () => {
     expect(overview.indexOf("Abgeschlossene Events")).toBeLessThan(overview.indexOf("Head to Head"));
     expect(overview.indexOf("Head to Head")).toBeLessThan(overview.indexOf("Rekorde, Progression"));
     for (const text of ["Gäste", "Abgeschlossene Events", "Rivalries", "data-team-kind", "data-artwork-fallback", "Stufenfortschritt"]) expect(overview).toContain(text);
-    for (const text of ["Schneller Blick", "Highlights", "Schnellste Zeit", "Liga-Überblick", "Record Progression"]) expect(overview).not.toContain(text);
-    expect(overview).not.toContain("Versuchnummern-Chart");
+    for (const text of ["Schneller Blick", "Highlights", "Schnellste Zeit", "Liga-Überblick"]) expect(overview).not.toContain(text);
+    expect(overview).toContain("Versuchnummern-Chart");
+    expect(overview.indexOf("Record Progression")).toBeLessThan(overview.indexOf("Gemeinsam getrunken"));
     expect(overview).toContain("2,0 L");
     const milestones = renderToStaticMarkup(<StatsMostWantedPage />);
     expect(milestones).toContain("2,0 L");
@@ -109,9 +110,7 @@ describe("StatsPage structure", () => {
     const markup = renderToStaticMarkup(<StatsPage />);
     expect(markup).not.toContain("Reguläre Spieler");
     expect(markup).not.toContain("Most Wanted Matrix");
-    expect(markup).toContain("Versuchnummern-Chart");
-    expect(markup.indexOf("Versuchnummern-Chart")).toBeLessThan(markup.indexOf("Ligastatistiken"));
-    expect(markup.indexOf("Record Progression")).toBeLessThan(markup.indexOf("Schnellste Zeit"));
+    expect(markup).not.toContain("Versuchnummern-Chart");
     expect(markup).not.toContain("Reguläre Spieler");
     expect(markup).not.toContain("Gültige Eventversuche");
     expect(markup).not.toContain("Liga-Meilensteine");
@@ -129,7 +128,7 @@ describe("StatsPage structure", () => {
     const markup = renderToStaticMarkup(<StatsPage />);
     expect(markup).toContain("Ranking-Statistiken konnten nicht geladen werden.");
     expect(markup).toContain("Bereich neu laden");
-    expect(markup).toContain("Record Progression");
+    expect(markup).not.toContain("Record Progression");
     expect(markup).toContain("History collapsed");
   });
   it("preserves the season scope without loading/rendering the All-Time archive", () => {
@@ -137,7 +136,7 @@ describe("StatsPage structure", () => {
     state.season = 2026;
     const markup = renderToStaticMarkup(<StatsPage />);
     expect(markup).toContain("Saison 2026");
-    expect(markup).toContain("Versuchnummern-Chart");
+    expect(markup).not.toContain("Versuchnummern-Chart");
     expect(markup).toContain("BINGO-Ranking");
     expect(markup).not.toContain("History collapsed");
     expect(markup).not.toContain("Most Wanted Matrix");

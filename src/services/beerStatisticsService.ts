@@ -16,11 +16,12 @@ export function mapBeerStatistics(value: unknown, season: SeasonSelection): Beer
   if (!rankings || !["power", "record", "volume", "turbo"].every(key => Array.isArray(rankings[key]))) {
     throw new Error("Die Bier-Powerwerte sind noch nicht verfügbar. Bitte Migration 074 bereitstellen.");
   }
-  return { season, rankings, summary: root.summary, brands: root.brands, favorites: root.favorites,
+  const avatars = Object.fromEntries(Object.entries((root.avatars ?? {}) as Record<string, {path: string | null; url: string | null}>).map(([id, image]) => [id, image.path ? getSupabase().storage.from("player-avatars").getPublicUrl(image.path).data.publicUrl : image.url]));
+  return { avatars, season, rankings, summary: root.summary, brands: root.brands, favorites: root.favorites,
     effects: root.effects, variety: root.variety, fastest: root.fastest, unlucky: root.unlucky } as BeerStatistics;
 }
 export async function getBeerStatistics(season: SeasonSelection, signal?: AbortSignal) {
-  const request = getSupabase().rpc("get_beer_statistics_dashboard", {
+  const request = getSupabase().rpc("get_beer_statistics_dashboard_v31", {
     p_season_year: season === ALL_TIME_SEASON ? null : season,
   });
   const { data, error } = signal ? await request.abortSignal(signal) : await request;

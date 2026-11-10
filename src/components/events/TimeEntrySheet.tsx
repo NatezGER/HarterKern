@@ -1,3 +1,4 @@
+import { eventBeerOptions, normalizeBeerBrand } from "@/lib/beerSelection";
 import { useEffect, useRef, useState } from "react";
 import { Check, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,11 @@ export function TimeEntrySheet({
   onClose: () => void;
   onSaved: (playerId: string, result: "time" | "dns") => void;
 }) {
-  const { submitAttempt } = useLiveEvent();
+  const { submitAttempt, activeEvent, state } = useLiveEvent();
+  const [beerChoice, setBeerChoice] = useState("default");
+  const [customBeer, setCustomBeer] = useState("");
+  const options = eventBeerOptions(activeEvent?.id ?? "", activeEvent?.beerBrand, state.attempts);
+  useEffect(() => { setBeerChoice("default"); setCustomBeer(""); }, [standing?.player.id, activeEvent?.id]);
   const [value, setValue] = useState("");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
@@ -36,6 +41,7 @@ export function TimeEntrySheet({
     savingRef.current = false;
     setSaving(false);
     const onKey = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLElement && event.target.closest("input,select,textarea,[contenteditable]")) return;
       if (/^\d$/.test(event.key) || [",", ".", "Backspace"].includes(event.key)) {
         event.preventDefault();
         setValue((current) => appendTimeKey(
@@ -50,10 +56,16 @@ export function TimeEntrySheet({
 
   if (!standing) return null;
   const save = async (result: "time" | "dns") => {
+    const beer = beerChoice === "default" ? undefined : beerChoice === "none" ? null
+      : beerChoice === "other" ? normalizeBeerBrand(customBeer) : normalizeBeerBrand(beerChoice.slice(6));
+    if (beerChoice === "other" && (!beer || beer.length > 80)) {
+      setConfirmingDnf(false);
+      setMessage("Bitte eine Biermarke mit 1 bis 80 Zeichen eingeben."); return;
+    }
     if (!claimAttemptSave(savingRef)) return;
     setSaving(true);
     const seconds = result === "time" && parsed != null ? parsed / 100 : undefined;
-    const saved = await submitAttempt(standing.player.id, result, seconds);
+    const saved = await submitAttempt(standing.player.id, result, seconds, beer);
     if (!saved) {
       savingRef.current = false;
       setSaving(false);
@@ -61,6 +73,8 @@ export function TimeEntrySheet({
       setMessage("Eingabe ungültig oder bereits gespeichert.");
       return;
     }
+    setBeerChoice("default");
+    setCustomBeer("");
     onSaved(standing.player.id, result);
     onClose();
   };
@@ -103,6 +117,16 @@ export function TimeEntrySheet({
         <Button size="lg" variant="outline" disabled={saving} onClick={() => setConfirmingDnf(true)} className="h-14">
           <Flag className="size-5" /> DNF
         </Button>
+      </div>
+      <div className="mt-3 min-w-0">
+        <label htmlFor="attempt-beer" className="text-xs text-white/60">Bier</label>
+        <select id="attempt-beer" disabled={saving} value={beerChoice} onChange={e => setBeerChoice(e.target.value)} className="mt-1 w-full min-w-0 rounded-xl border border-white/10 bg-black p-2 text-sm">
+          <option value="default">{activeEvent?.beerBrand ? `${activeEvent.beerBrand} (Eventstandard)` : "Kein Eventstandard"}</option>
+          {options.filter(b => b !== normalizeBeerBrand(activeEvent?.beerBrand)).map(b => <option key={b} value={`brand:${b}`}>{b}</option>)}
+          {activeEvent?.beerBrand && <option value="none">Ohne Bierangabe</option>}
+          <option value="other">Anderes Bier eintragen</option>
+        </select>
+        {beerChoice === "other" && <input aria-label="Andere Biermarke" maxLength={80} disabled={saving} value={customBeer} onChange={e => setCustomBeer(e.target.value)} className="mt-2 w-full min-w-0 rounded-xl border border-white/10 bg-black p-2 text-sm" placeholder="Biermarke" />}
       </div>
       {message && <p aria-live="assertive" className="mt-2 text-center text-sm text-red-300">{message}</p>}
     </EventModal>

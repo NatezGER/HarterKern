@@ -24,7 +24,10 @@ import type {
 } from "@/types/historyProfiles";
 import type { DataGroup } from "@/services/dataGroupService";
 
+import { getPlayerBeerProfile, type PlayerBeerProfile } from "./playerBeerService";
+
 export type PlayerProfileSection =
+  | "beer"
   | "core"
   | "season"
   | "badges"
@@ -37,6 +40,7 @@ export type PlayerProfileSection =
   | "bingo";
 
 export interface PlayerProfileSectionData {
+  beer: PlayerBeerProfile;
   core: PlayerProfileCore | null;
   season: PlayerSeasonProfile | null;
   badges: CompactBadge[];
@@ -82,6 +86,7 @@ const loaders: {
     playerId: string,
   ) => Promise<PlayerProfileSectionData[Section]>;
 } = {
+  beer: getPlayerBeerProfile,
   core: getPlayerProfileCore,
   season: () => Promise.resolve(null),
   badges: getPlayerBadges,
@@ -99,6 +104,7 @@ function loadSection<Section extends PlayerProfileSection>(
   playerId: string,
   seasonYear?: number,
 ): Promise<PlayerProfileSectionData[Section]> {
+  if (section === "beer") return getPlayerBeerProfile(playerId, seasonYear) as Promise<PlayerProfileSectionData[Section]>;
   if (section === "season") {
     return (seasonYear == null ? Promise.resolve(null) : getPlayerSeasonProfile(playerId, seasonYear)) as
       Promise<PlayerProfileSectionData[Section]>;
@@ -174,6 +180,7 @@ export function invalidatePlayerProfileSections(
 }
 
 const sectionByGroup: Partial<Record<DataGroup, PlayerProfileSection>> = {
+  "profile-beer": "beer",
   "profile-core": "core",
   "profile-season": "season",
   "profile-badges": "badges",

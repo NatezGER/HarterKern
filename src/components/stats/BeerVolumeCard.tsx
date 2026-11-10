@@ -18,7 +18,7 @@ export function BeerVolumeCard({ validAttempts, contextLabel, compact = false, c
   const volume = resolveBeerVolumeMilestone(validAttempts);
   return <article className={cn("panel overflow-hidden p-5 sm:p-7", className)} data-beer-volume>
     <div className="flex items-start gap-4">
-      <span data-team-artwork="beer" aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-2xl border border-gold-300/20 bg-gold-300/10 text-gold-200">{artwork ?? <Beer className="size-5" />}</span>
+      <span data-team-artwork="beer" aria-hidden="true" className={cn(artwork ? "w-28" : "size-11", "grid shrink-0 place-items-center rounded-2xl border border-gold-300/20 bg-gold-300/10 text-gold-200")}>{artwork ?? <Beer className="size-5" />}</span>
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold-300/70">{contextLabel ?? "Gemeinsam getrunken"}</p>
         <p className="mt-1 font-display text-3xl font-black text-white sm:text-4xl">{liters(volume.liters)} L</p>
@@ -28,7 +28,7 @@ export function BeerVolumeCard({ validAttempts, contextLabel, compact = false, c
     </div>
     {volume.reached && <p className="mt-3 text-xs text-white/40">Zuletzt erreicht: <strong className="text-white/65">{volume.reached.label} · {volume.reached.liters.toLocaleString("de-DE")} L</strong></p>}
     {volume.next ? <div className="mt-5">
-      <div className="flex items-end justify-between gap-3 text-xs">
+      <div className="flex flex-wrap items-end justify-between gap-3 text-xs">
         <span className="text-white/50">Nächstes Ziel: <strong className="text-white/75">{volume.next.label}</strong></span>
         <span className="shrink-0 tabular-nums text-gold-200">{liters(volume.liters)} / {volume.next.liters.toLocaleString("de-DE")} L</span>
       </div>

@@ -69,6 +69,7 @@ interface LiveEventContextValue {
     playerId: string,
     result: "time" | "dns",
     time?: number,
+    beerBrand?: string | null,
   ) => Promise<boolean>;
   updateAttempt: (id: string, changes: AttemptUpdate) => Promise<boolean>;
   deleteAttempt: (id: string) => Promise<boolean>;
@@ -211,6 +212,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
     playerId: string,
     result: "time" | "dns",
     time?: number,
+    beerBrand?: string | null,
   ) => {
     if (!activeEvent || !activeEvent.participantIds.includes(playerId)) return false;
     const player = state.players.find(({ id }) => id === playerId);
@@ -221,6 +223,7 @@ export function LiveEventProvider({ children }: { children: ReactNode }) {
       eventId: activeEvent.id,
       result,
       timeSeconds: time,
+      beerBrand,
       date: activeEvent.date,
       outOfCompetition: player.isAk,
     });

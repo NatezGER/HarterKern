@@ -76,3 +76,27 @@ it("maps persisted event defaults and independent attempt snapshots", async () =
   expect(state.events[0].beerBrand).toBe("Astra Urtyp");
   expect(state.attempts[0].beerBrand).toBe("Flensburger Pilsener");
 });
+
+it.each(["permanent", "guest"] as const)("creates explicit beer snapshots for %s without changing event", async participantKind => {
+  for (const [beerBrand, expected] of [[" Other ","Other"],[null,null],["",null]] as const) {
+    for (const result of ["time","dns"] as const) {
+      mocks.rpc.mockClear();
+      await createRemoteAttempt({playerId:"p",eventId:"e",participantKind,result,timeSeconds:2.5,date:"2026-11-09",outOfCompetition:false,beerBrand});
+      expect(mocks.rpc).toHaveBeenCalledOnce();
+      expect(mocks.rpc).toHaveBeenCalledWith("sync_create_event_attempt_v2",expect.objectContaining({p_beer_brand:expected,p_override_beer_brand:true,p_is_dnf:result === "dns",p_participant_kind:participantKind}));
+    }
+  }
+});
+it("preserves the legacy create write scope except for the requested beer override", () => {
+  const read = (file: string) => readFileSync(`supabase/migrations/${file}`, "utf8").replace(/\r\n/g, "\n");
+  const old = read("202610160071_event_attempt_beer_brand.sql");
+  const next = read("202611090075_player_beer_and_live_selection.sql");
+  const fn = (sql: string, name: string) => sql.match(new RegExp("create or replace function public\\." + name + "\\([\\s\\S]*?\\n\\$\\$;"))?.[0];
+  const restored = fn(next, "sync_create_event_attempt_v2")!
+    .replace("sync_create_event_attempt_v2(", "sync_create_event_attempt(")
+    .replace("p_submitted_at timestamptz,\n  p_beer_brand text default null,\n  p_override_beer_brand boolean default false", "p_submitted_at timestamptz")
+    .replace("  if p_override_beer_brand then\n    event_beer := nullif(btrim(p_beer_brand), '');\n  end if;\n  if char_length(event_beer) > 80 then raise exception 'Biermarke darf maximal 80 Zeichen enthalten.'; end if;\n\n", "");
+  expect(restored).toBe(fn(old, "sync_create_event_attempt"));
+  expect(next).toContain("revoke all on function public.sync_create_event_attempt_v2(uuid,uuid,uuid,text,integer,boolean,timestamptz,text,boolean) from public;");
+  expect(next).toContain("grant execute on function public.sync_create_event_attempt_v2(uuid,uuid,uuid,text,integer,boolean,timestamptz,text,boolean) to anon, authenticated;");
+});

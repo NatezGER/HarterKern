@@ -17,8 +17,8 @@ it("uses exactly one RPC for each scope, without brand or player requests", asyn
   expect((await getBeerStatistics("all-time")).season).toBe("all-time");
   expect((await getBeerStatistics(2026)).season).toBe(2026);
   expect(mocks.rpc.mock.calls).toEqual([
-    ["get_beer_statistics_dashboard", { p_season_year: null }],
-    ["get_beer_statistics_dashboard", { p_season_year: 2026 }],
+    ["get_beer_statistics_dashboard_v31", { p_season_year: null }],
+    ["get_beer_statistics_dashboard_v31", { p_season_year: 2026 }],
   ]);
 });
 it("deduplicates reads and caches separately per season in the existing route cache", async () => {

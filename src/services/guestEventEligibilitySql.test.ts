@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const sql = readFileSync("supabase/migrations/202610110068_guest_event_eligibility.sql", "utf8");
+const sql = readFileSync("supabase/migrations/202610110068_guest_event_eligibility.sql", "utf8").replace(/\r\n/g, "\n");
 describe("guest event eligibility migration contract", () => {
   it("keeps complete event chronology separate from permanent career projections", () => {
     expect(sql).toContain("create view public.event_eligible_attempts");

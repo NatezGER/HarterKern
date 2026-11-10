@@ -1,3 +1,8 @@
+import { WRProgression } from "@/components/dashboard/WRProgression";
+import { AttemptNumberChart } from "@/components/players/AttemptNumberChart";
+import { SectionHeading } from "@/components/common/SectionHeading";
+import { useDataGroup } from "@/hooks/useDataPlatform";
+import { usePerformanceDashboard } from "@/hooks/usePerformanceDashboard";
 import { Link } from "react-router-dom";
 import { ArrowRight, Swords } from "lucide-react";
 import { DataState } from "@/components/common/DataState";
@@ -14,6 +19,8 @@ import { Button } from "@/components/ui/button";
 export function StatsOverviewPage() {
   const { data } = useEffectivePublicData();
   const { season, isAllTime } = useSeason();
+  const { version } = useDataGroup("statistics");
+  const charts = usePerformanceDashboard(season, version);
   const rivalry = useRivalryHub(season, false);
   const content = useMilestoneContent();
   const validAttempts = Number(data.statistics.find(({ id }) => id === "community-valid")?.value ?? 0);
@@ -21,6 +28,13 @@ export function StatsOverviewPage() {
     <StatsHeader title="Statistiken" />
     <StatsNavigation />
     <DataState>
+      <section className="min-w-0" aria-label="Verlauf"><WRProgression collapsibleHistory roster={charts.data?.players ?? []} /></section>
+      <section className="panel min-w-0 p-5 sm:p-8" aria-label="Zeit nach Versuchen">
+        <SectionHeading eyebrow={isAllTime ? "Ligaweit" : `Ligaweit · Saison ${season}`} title="Durchschnitt nach Versuchsnummer" />
+        {charts.data ? <AttemptNumberChart points={charts.data.attemptNumbers} /> : charts.error
+          ? <div role="alert"><p>Versuchsnummern konnten nicht geladen werden.</p><Button variant="outline" onClick={charts.retry}>Bereich neu laden</Button></div>
+          : <p role="status">Versuchsnummern werden geladen …</p>}
+      </section>
       {data.statisticsSeason === season ? <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <BeerMilestoneProgress validAttempts={validAttempts} scope={isAllTime ? "All-Time" : `Saison ${season}`} content={content.data} />
         <div className="grid min-w-0 content-start gap-3 sm:grid-cols-3 lg:grid-cols-1">

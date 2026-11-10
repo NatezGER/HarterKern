@@ -1,3 +1,4 @@
+import { EventBeerImages } from "./EventBeerImages";
 import { CalendarDays, CircleX, Star, Swords, Target, Timer, Trophy, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EventAttemptList } from "@/components/events/EventAttemptList";
@@ -58,7 +59,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
     <DenmarkChampionshipShell context="history" active={denmark} className="flex flex-col gap-6 sm:gap-8 lg:gap-10">
       <section className={cn("panel relative order-1 overflow-hidden p-5 sm:p-10", denmark && "dk-results-hero")}>
         <div className="absolute -right-20 -top-24 size-72 rounded-full bg-gold-400/10 blur-[90px]" />
-        <div className="relative">
+        <div className="relative grid min-w-0 gap-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"><div className="min-w-0">
           {denmark && <p className="denmark-eyebrow mb-4"><span className="denmark-shield" aria-hidden="true" /> Harter Kern · Dänemark {detail.trophyCompetitionYear}</p>}
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-emerald-400/20 bg-emerald-400/[0.07] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">
@@ -70,9 +71,8 @@ export function EventResults({ detail }: { detail: EventDetail }) {
           </div>
           <h1 className="display-title mt-4 text-4xl sm:text-6xl">{detail.name}</h1>
           <p className="mt-3 flex items-center gap-2 text-sm text-white/45"><CalendarDays className="size-4" /> {formatDate(detail.date)}</p>
-          {detail.status === "closed" && detail.beerBrand && <p className="mt-2 break-words text-xs text-white/45">🍺 {detail.beerBrand}</p>}
           {detail.description && <p className="mt-5 max-w-3xl text-sm leading-relaxed text-white/55">{detail.description}</p>}
-        </div>
+        </div>{detail.status === "closed" && <div className="min-w-0 md:justify-self-end"><EventBeerImages eventId={detail.id} /></div>}</div>
       </section>
 
       <section className={cn("order-2", denmark && "dk-podium-section dk-prestige rounded-3xl p-3 sm:p-7")}>
