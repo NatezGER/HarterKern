@@ -1,3 +1,4 @@
+import { PlayerBeerSections } from "@/components/players/PlayerBeerSections";
 import { AlertTriangle, ArrowLeft, CircleX, Crown, Droplets, LoaderCircle, Medal, RefreshCw, Target, Timer, Trophy, Zap } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import type { ReactNode } from "react";
@@ -50,7 +51,7 @@ export function PlayerProfilePage() {
   const rivalries = usePlayerRivalries(id);
   const { data: publicData } = useEffectivePublicData();
   const overlayProgressions = usePlayerProgressionOverlays(selectedOverlayPlayers, seasonYear);
-  const { core, season, trophies, badges, prestige, progression, performance, bingo, attemptNumbers, events } =
+  const { beer, core, season, trophies, badges, prestige, progression, performance, bingo, attemptNumbers, events } =
     usePlayerProfileDetail(id);
   if (core.loading) return <DataState><div /></DataState>;
   if (!core.data) return core.error
@@ -145,6 +146,7 @@ export function PlayerProfilePage() {
       )}</ProfileOptionalState>
 
       {!player.isAk && <PlayerRivalries playerId={player.id} {...rivalries} />}
+      {!player.isAk && <ProfileOptionalState state={beer}>{data => <PlayerBeerSections data={data} scope={isAllTime ? "Ewig" : `Saison ${selectedSeason}`} />}</ProfileOptionalState>}
 
       <section>
         <SectionHeading eyebrow={isAllTime ? "Karrierewerte" : `Saisonwerte ${selectedSeason}`} title="Statistik" />

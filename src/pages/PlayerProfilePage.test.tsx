@@ -9,6 +9,7 @@ const selectedSeason = vi.hoisted(() => ({
 }));
 
 const profile = vi.hoisted(() => ({
+  beer: { data: { validAttempts: 0, beers: [] }, loading: false, error: "", retry: vi.fn() },
   core: {
     data: {
       id: "player-1",

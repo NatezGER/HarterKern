@@ -28,6 +28,7 @@ export interface BeerBrandStatistic {
   bestPlayer: { playerId: string; name: string; attempts: number; averageHundredths: number; bestHundredths: number } | null;
 }
 export interface BeerStatistics {
+  avatars?: Record<string, string | null>;
   season: SeasonSelection;
   rankings: Record<BeerRankingCategory, BeerRankingRow[]>;
   summary: { attempts: number; brands: number; events: number; people: number; bestBeer: string | null };

@@ -225,7 +225,8 @@ export async function createRemoteAttempt(
   const id = options?.id ?? crypto.randomUUID();
   const eventAttempt = Boolean(input.eventId);
   const request = eventAttempt
-    ? getSupabase().rpc("sync_create_event_attempt", {
+    ? getSupabase().rpc(input.beerBrand === undefined ? "sync_create_event_attempt" : "sync_create_event_attempt_v2", {
+      ...(input.beerBrand !== undefined ? { p_beer_brand: input.beerBrand?.trim() || null, p_override_beer_brand: true } : {}),
       p_id: id,
       p_event_id: input.eventId!,
       p_participant_id: input.playerId,

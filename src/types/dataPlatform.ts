@@ -214,8 +214,25 @@ export type DataPlatformFunctions = {
     Args: { p_event_id: string; p_display_name: string };
     Returns: string;
   };
+  get_event_beer_images: { Args: { p_event_id: string }; Returns: { brand: string; image_path: string | null }[] };
+  get_beer_statistics_dashboard_v31: { Args: { p_season_year?: number | null }; Returns: Record<string, unknown> };
+  get_player_beer_profile: { Args: { p_player_id: string; p_season_year?: number | null }; Returns: { seasonYear: number | null; validAttempts: number; beers: { brand: string; bestHundredths: number; attempts: number; imagePath: string | null }[] } };
   sync_create_event_attempt: {
     Args: {
+      p_id: string;
+      p_event_id: string;
+      p_participant_id: string;
+      p_participant_kind: string;
+      p_time_hundredths: number | null;
+      p_is_dnf: boolean;
+      p_submitted_at: string;
+    };
+    Returns: string;
+  };
+  sync_create_event_attempt_v2: {
+    Args: {
+      p_beer_brand?: string | null;
+      p_override_beer_brand?: boolean;
       p_id: string;
       p_event_id: string;
       p_participant_id: string;

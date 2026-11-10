@@ -106,6 +106,7 @@ export interface StartLiveEventResult {
 }
 
 export interface AttemptInput {
+  beerBrand?: string | null;
   playerId: string;
   participantKind?: "permanent" | "guest";
   eventId?: string;

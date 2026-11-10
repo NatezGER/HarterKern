@@ -27,6 +27,7 @@ export type DataGroup =
   | "navigation"
   | "leaderboard"
   | "players"
+  | "profile-beer"
   | "profile-core"
   | "profile-season"
   | "profile-badges"
@@ -67,6 +68,7 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
   navigation: 0,
   leaderboard: 3,
   players: 2,
+  "profile-beer": 0,
   "profile-core": 0,
   "profile-season": 0,
   "profile-badges": 0,
@@ -80,7 +82,7 @@ export const dataGroupRequestCounts: Record<DataGroup, number> = {
   live: 8,
   dashboard: 13,
   statistics: 5,
-  performance: 1, // WR history; the independent performance hook adds one RPC.
+  performance: 0, // The independent performance hook adds one cached RPC.
   "prestige-activities": 2,
   "group-milestones": 1,
   "team-milestones": 1,
@@ -108,6 +110,7 @@ export function getRouteDataPlan(pathname: string, season: SeasonSelection = ALL
       required: ["profile-core"],
       optional: [
         "players",
+        "profile-beer",
         "profile-season",
         "profile-trophies",
         "profile-badges",
@@ -156,7 +159,7 @@ export const dataGroupCache = new ReadCache<DataGroupPatch>();
 export function invalidateDataGroups(groups: DataGroup[]) {
   dataGroupCache.invalidate((key) => groups.some((group) => key.startsWith(group + ":")));
   if (groups.includes("statistics")) statisticDashboardCache.invalidate();
-  if (groups.includes("performance")) performanceDashboardCache.invalidate();
+  if (groups.includes("performance") || groups.includes("statistics")) performanceDashboardCache.invalidate();
 }
 function groupReadKey(group: DataGroup, season: SeasonSelection) {
   return `${group}:${group === "badge-rarity" || group === "prestige-activities" ? ALL_TIME_SEASON : season}`;
@@ -170,6 +173,7 @@ async function loadUncached(group: DataGroup, season: SeasonSelection, signal?: 
   switch (group) {
     case "navigation":
     case "event-detail":
+    case "profile-beer":
     case "profile-core":
     case "profile-season":
     case "profile-badges":
@@ -236,7 +240,7 @@ async function loadUncached(group: DataGroup, season: SeasonSelection, signal?: 
       };
     }
     case "performance": {
-      return { publicData: { worldRecordHistory: await getWorldRecordHistory(season) } };
+      return {};
     }
     case "prestige-activities":
       return { publicData: { activities: await getPrestigeActivities() } };
@@ -271,7 +275,7 @@ export function loadDataGroup(
 export function groupsForRealtimeTable(table: string): DataGroup[] {
   const teamSources = ["players", "attempts", "historical_attempts", "events"];
   const beerSources = ["players", "attempts", "events", "event_guests", "beer_brand_images"];
-  return [...(beerSources.includes(table) ? ["beer-statistics" as const] : []), ...existingGroupsForRealtimeTable(table), ...(teamSources.includes(table) ? ["team-milestones" as const] : [])];
+  return [...(["players", "attempts", "events", "beer_brand_images"].includes(table) ? ["profile-beer" as const] : []), ...(beerSources.includes(table) ? ["beer-statistics" as const] : []), ...existingGroupsForRealtimeTable(table), ...(teamSources.includes(table) ? ["team-milestones" as const] : [])];
 }
 
 function existingGroupsForRealtimeTable(table: string): DataGroup[] {
@@ -292,6 +296,7 @@ function existingGroupsForRealtimeTable(table: string): DataGroup[] {
     case "event_participants":
     case "event_guests":
       return ["profile-core", "profile-season", "profile-badges", "profile-trophies", "profile-prestige", "profile-progression", "profile-performance", "profile-attempt-numbers", "profile-events", "live", "dashboard", "statistics", "performance", "prestige-activities", "group-milestones", ...(table === "events" ? ["badge-statistics" as const] : []), ...(table === "event_participants" ? [] : ["most-wanted" as const]), "league-time", "bingo", "event-detail", "events"];
+    case "beer_brand_images":
     case "event_photos":
       return ["event-detail"];
     default:

@@ -45,6 +45,7 @@ export function createLiveAttempt(input: AttemptInput, id: string, now: string):
     id,
     playerId: input.playerId,
     participantKind: input.participantKind,
+    beerBrand: input.beerBrand,
     eventId: input.eventId,
     eventName: input.eventName?.trim() || undefined,
     result: input.result,

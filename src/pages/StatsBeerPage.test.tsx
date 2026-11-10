@@ -28,7 +28,8 @@ it("shows podium, single detail and collapsed player sections without the old vo
   expect(html.indexOf("Bier im Detail")).toBeLessThan(html.indexOf("Spieler &amp; Bier"));
   expect(html).toContain("0,6 L");
   expect(html).toContain("3 Versuche");
-  expect(html).not.toContain("data-artwork-slot");
+  expect(html.match(/data-artwork-slot/g)).toHaveLength(1);
+  expect(html).not.toContain("data-beer-volume");
   expect(html).not.toContain("Dokumentiert getrunken");
   expect(html).toContain("<summary");
   expect(html).toContain("<details");

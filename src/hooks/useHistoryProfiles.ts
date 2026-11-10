@@ -140,6 +140,7 @@ export function usePlayerProfileDetail(playerId: string) {
   const { season } = useSeason();
   const seasonYear = typeof season === "number" ? season : undefined;
   return {
+    beer: usePlayerProfileSection("beer", playerId, "profile-beer", seasonYear),
     core: usePlayerProfileSection("core", playerId, "profile-core"),
     season: usePlayerProfileSection("season", playerId, "profile-season", seasonYear),
     trophies: usePlayerProfileSection("trophies", playerId, "profile-trophies"),

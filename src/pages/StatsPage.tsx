@@ -5,11 +5,9 @@ import { StatCard } from "@/components/stats/StatCard";
 import { useDataGroup, useDataPlatform } from "@/hooks/useDataPlatform";
 import { usePerformanceDashboard } from "@/hooks/usePerformanceDashboard";
 import { Button } from "@/components/ui/button";
-import { WRProgression } from "@/components/dashboard/WRProgression";
 import { useSeason } from "@/hooks/useSeason";
 import { useState } from "react";
 import { HistoricalAttemptsDisclosure } from "@/components/history/HistoricalAttemptsDisclosure";
-import { AttemptNumberChart } from "@/components/players/AttemptNumberChart";
 import { MetricDashboardGrid } from "@/components/stats/MetricRankingCard";
 import { metricGroupLabels } from "@/constants/statMetricRegistry";
 import type { MetricGroup } from "@/types/statDashboard";
@@ -29,14 +27,6 @@ export function StatsPage() {
       <StatsHeader title="Performance" />
       <StatsNavigation />
       <DataState>
-        <section>
-          <WRProgression collapsibleHistory roster={performance?.players ?? []} />
-        </section>
-        <section className="panel mt-12 p-5 sm:p-8">
-          <SectionHeading eyebrow={isAllTime ? "Ligaweit" : `Ligaweit · Saison ${season}`} title="Durchschnitt nach Versuchsnummer" />
-          {performance ? <AttemptNumberChart points={performance.attemptNumbers} />
-            : <p className="text-sm text-white/45" role="status">{dashboard.error ? "Versuchsnummern konnten nicht geladen werden." : "Versuchsnummern werden geladen …"}</p>}
-        </section>
         <section className="mt-12">
           <SectionHeading eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Ligastatistiken" />
           <div className="mb-3 grid grid-cols-2 gap-3 sm:gap-4">

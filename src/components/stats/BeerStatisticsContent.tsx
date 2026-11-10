@@ -1,3 +1,5 @@
+import { BeerAvatarContext } from "./beerAvatarContext";
+import { BeerPlayerIdentity } from "./BeerPlayerIdentity";
 import { useId, useState } from "react";
 import { Crown } from "lucide-react";
 import type { BeerRankingCategory, BeerRankingRow, BeerStatistics } from "@/types/beerStatistics";
@@ -36,7 +38,7 @@ export function BeerStatisticsContent({ data }: { data: BeerStatistics }) {
   const selected = (selectedBrand ? byBrand.get(selectedBrand) : undefined)
     ?? byBrand.get(ranking[0]?.brand) ?? data.brands[0];
   const podium = [ranking[1],ranking[0],ranking[2]].filter((row): row is BeerRankingRow => Boolean(row));
-  return <div className="min-w-0 space-y-8" data-beer-statistics>
+  return <BeerAvatarContext.Provider value={data.avatars ?? {}}><div className="min-w-0 space-y-8" data-beer-statistics>
     <section className="panel min-w-0 p-3 sm:p-6" aria-label="Bierpodium und Rangliste">
       <p className="text-xs font-bold uppercase tracking-widest text-gold-300">Bier-Rekordbuch</p>
       <h2 className="display-title mt-1 text-3xl">Das Bierpodium</h2>
@@ -77,6 +79,7 @@ export function BeerStatisticsContent({ data }: { data: BeerStatistics }) {
               <span className="block text-xs text-white/50">{rankingNote(row,category)}</span>
             </span>
           </button>
+          {row.playerId && row.playerName && <div className="mt-1 pl-12 text-xs"><BeerPlayerIdentity id={row.playerId} name={row.playerName} /></div>}
         </li>)}
       </ol>
       {ranking.length>10 && <Button className="mt-4 w-full" variant="outline" aria-expanded={expanded}
@@ -98,16 +101,16 @@ export function BeerStatisticsContent({ data }: { data: BeerStatistics }) {
         <section className="min-w-0"><h3 className="font-semibold">Lieblingsbiere</h3>
           <p className="mt-2 text-xs text-white/50">Niedrigster persönlicher Bier-Ø ab zwei Leistungsversuchen.</p>
           <ul className="mt-3 space-y-3">{data.favorites.map(p => <li key={p.playerId} className="text-sm [overflow-wrap:anywhere]">
-            <strong>{p.name}</strong>: {p.brand} · Ø {beerTime(p.averageHundredths)}
+            <BeerPlayerIdentity id={p.playerId} name={p.name} />: {p.brand} · Ø {beerTime(p.averageHundredths)}
             <p className="text-xs text-white/50">{beerEffectLabel(p.effectHundredths)}</p>
           </li>)}</ul>
         </section>
         <section className="min-w-0"><h3 className="font-semibold">Bier-Sommelier</h3>
           <ol className="mt-3 space-y-3">{data.variety.map((p,index) => <li key={p.playerId} className="text-sm [overflow-wrap:anywhere]">
-            <strong>{index+1}. {p.name}</strong> · {p.brands} Sorten · {p.attempts} Versuche
+            <span>{index+1}. <BeerPlayerIdentity id={p.playerId} name={p.name} /></span> · {p.brands} Sorten · {p.attempts} Versuche
           </li>)}</ol>
         </section>
       </div>
     </details>
-  </div>;
+  </div></BeerAvatarContext.Provider>;
 }

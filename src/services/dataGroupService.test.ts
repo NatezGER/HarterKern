@@ -78,6 +78,7 @@ describe("route data groups", () => {
       required: ["profile-core"],
       optional: [
         "players",
+        "profile-beer",
         "profile-season",
         "profile-trophies",
         "profile-badges",
@@ -173,11 +174,11 @@ describe("route data groups", () => {
     expect(groupsForRealtimeTable("attempts")).toContain("bingo");
   });
 
-  it("loads only WR history and archive for Performance, never Most Wanted or events", async () => {
+  it("loads archive without WR history for Performance, never Most Wanted or events", async () => {
     mocks.getWorldRecordHistory.mockResolvedValue([]);
     const plan = getRouteDataPlan("/stats/performance");
     await Promise.all([...plan.required, ...plan.optional].map((group) => loadDataGroup(group)));
-    expect(mocks.getWorldRecordHistory).toHaveBeenCalledOnce();
+    expect(mocks.getWorldRecordHistory).not.toHaveBeenCalled();
     expect(mocks.getMostWantedSnapshot).not.toHaveBeenCalled();
     expect(mocks.getEvents).not.toHaveBeenCalled();
     expect(mocks.getPlayers).not.toHaveBeenCalled();
@@ -266,18 +267,24 @@ describe("route data groups", () => {
     const now = vi.spyOn(Date, "now").mockReturnValue(100_000);
     try {
       mocks.getWorldRecordHistory.mockResolvedValue([]);
-      await loadDataGroup("performance", 2026);
-      expect(shouldRefreshDataGroup("performance", 2026)).toBe(false);
+      await loadDataGroup("statistics", 2026);
+      expect(shouldRefreshDataGroup("statistics", 2026)).toBe(false);
       now.mockReturnValue(119_999);
-      await loadDataGroup("performance", 2026);
+      await loadDataGroup("statistics", 2026);
       expect(mocks.getWorldRecordHistory).toHaveBeenCalledOnce();
       now.mockReturnValue(120_001);
-      expect(shouldRefreshDataGroup("performance", 2026)).toBe(true);
-      await loadDataGroup("performance", 2026);
+      expect(shouldRefreshDataGroup("statistics", 2026)).toBe(true);
+      await loadDataGroup("statistics", 2026);
       expect(mocks.getWorldRecordHistory).toHaveBeenCalledTimes(2);
-      invalidateDataGroups(["performance"]);
-      await loadDataGroup("performance", 2026);
+      invalidateDataGroups(["statistics"]);
+      await loadDataGroup("statistics", 2026);
       expect(mocks.getWorldRecordHistory).toHaveBeenCalledTimes(3);
     } finally { now.mockRestore(); }
   });
+});
+
+it("invalidates event beer images for attempts, defaults and image changes", () => {
+  for (const table of ["attempts", "events", "beer_brand_images"]) {
+    expect(groupsForRealtimeTable(table)).toContain("event-detail");
+  }
 });
