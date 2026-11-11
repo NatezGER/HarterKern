@@ -1,8 +1,33 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactNode } from "react";
+import type { DataPlatformSnapshot } from "@/services/dataPlatformRepository";
+import type { SeasonSelection } from "@/lib/season";
+import { emptyPublicData } from "@/services/publicDataService";
 import { describe, expect, it, vi } from "vitest";
 
-const state = vi.hoisted(() => ({ dashboardError: false, season: "all-time" as string | number, snapshotSeason: undefined as string | number | undefined }));
+const state = vi.hoisted(() => ({ dashboardError: false, season: "all-time" as SeasonSelection, snapshotSeason: undefined as SeasonSelection | undefined }));
+// Match the provider contract rather than a partial pre-medal snapshot.
+function platformSnapshot(): DataPlatformSnapshot {
+  const season = state.snapshotSeason ?? state.season;
+  return {
+    liveState: { version: 2, players: [], events: [], attempts: [], historicalAttempts: [] },
+    publicData: {
+      ...emptyPublicData,
+      players: [],
+      badgeStatistics: {
+        season,
+        dashboard: {
+          scope: season === "all-time" ? "all-time" : "season",
+          rivalryPairs: [],
+          metrics: [{ key: "bingo-fields", title: "BINGO-Ranking", description: "",
+            group: "bingo", format: "count", direction: "desc", minimumSample: 1,
+            rankings: [], overallValue: null, overallCount: null, overallTotal: null, overallDetail: null }],
+        },
+      },
+    },
+  };
+}
+
 vi.mock("@/hooks/useMilestoneContent", () => ({ useMilestoneContent: () => ({ data: {}, loading: false, error: "" }) }));
 
 vi.mock("@/hooks/useSeason", () => ({ useSeason: () => ({ season: state.season, isAllTime: state.season === "all-time" }) }));
@@ -19,11 +44,11 @@ vi.mock("@/hooks/useEffectivePublicData", () => ({ useEffectivePublicData: () =>
   ], eventLeadStatistics: [], mostWanted: {},
   leagueTimeStatistics: {}, badgeRarity: [],
   teamMilestones: { season: state.snapshotSeason ?? state.season, validAttempts: 10, teamTimeHundredths: 2784, playerCount: 10 },
-  badgeStatistics: { season: state.season, dashboard: { metrics: [{ key: "bingo-fields", title: "BINGO-Ranking", group: "bingo", rankings: [], overallValue: null }] } },
+  badgeStatistics: platformSnapshot().publicData.badgeStatistics,
 } }) }));
 vi.mock("@/hooks/useDataPlatform", () => ({
-  useDataPlatform: () => ({ snapshot: { liveState: { historicalAttempts: [] } } }),
-  useDataGroup: () => ({ version: 1 }),
+  useDataPlatform: () => ({ snapshot: platformSnapshot() }),
+  useDataGroup: () => ({ version: 1, status: "ready", error: null, refresh: vi.fn().mockResolvedValue(undefined) }),
 }));
 vi.mock("@/hooks/usePerformanceDashboard", () => ({ usePerformanceDashboard: () => ({ data: state.dashboardError ? null : {
   season: state.season, players: [], attemptNumbers: [],
