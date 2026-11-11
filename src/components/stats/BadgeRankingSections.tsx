@@ -1,3 +1,4 @@
+import { selectRankingGroup } from "@/lib/statRankingComposition";
 import { MetricDashboardGrid } from "@/components/stats/MetricRankingCard";
 import { OptionalDataState } from "@/components/common/OptionalDataState";
 import { metricGroupLabels } from "@/constants/statMetricRegistry";
@@ -11,7 +12,7 @@ export function BadgeRankingSections({ groups = ["bingo", "achievements"], showH
   const dashboard = data.badgeStatistics?.season === season ? data.badgeStatistics.dashboard : null;
   return <OptionalDataState group="badge-statistics">
     {dashboard && <div className="space-y-8">{groups.map(group => {
-      const metrics = dashboard.metrics.filter(metric => metric.group === group);
+      const metrics = selectRankingGroup(dashboard.metrics, group);
       return metrics.length ? <section key={group}>
         {showHeadings && <h3 className="mb-4 border-b border-gold-300/15 pb-2 font-display text-xl font-black uppercase tracking-[0.12em] text-gold-200 sm:text-2xl">{metricGroupLabels[group]}</h3>}
         <MetricDashboardGrid metrics={metrics} />
