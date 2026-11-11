@@ -1,3 +1,4 @@
+import { RecordEmblem } from "@/components/common/RecordEmblem";
 import { motion, useReducedMotion } from "framer-motion";
 import { Check, Crown, Flag, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,8 +28,8 @@ export function PostAttemptResult() {
             : special ? "border-emerald-300/25" : "border-white/10",
         )}
       >
-        <Icon className={cn("mx-auto size-8", postAttempt.result === "dns"
-          ? "text-red-300" : record ? "text-gold-400" : special ? "text-emerald-300" : "text-white/45")} />
+        {special && postAttempt.result !== "dns" ? <RecordEmblem kind={postAttempt.primaryKind === "wr" ? "wr" : postAttempt.primaryKind === "season-record" ? "sr" : postAttempt.primaryKind === "event-best" ? "eb" : "pb"} size="lg" className="mx-auto" /> : <Icon className={cn("mx-auto size-8", postAttempt.result === "dns"
+          ? "text-red-300" : record ? "text-gold-400" : special ? "text-emerald-300" : "text-white/45")} />}
         <p className="mt-3 text-sm font-semibold text-white/55">{postAttempt.playerName}</p>
         <h2 id="post-attempt-title" className={cn(
           "mt-2 font-display font-black uppercase",

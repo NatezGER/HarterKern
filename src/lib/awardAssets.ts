@@ -7,7 +7,7 @@ import {
 } from "../../supabase/functions/admin-media/trophySlots";
 import type { TrophyCompetitionKey } from "../../supabase/functions/admin-media/trophySlots";
 
-export type AwardAssetType = "medal" | "badge" | "trophy";
+export type AwardAssetType = "medal" | "badge" | "trophy" | "record";
 export type MedalRank = 1 | 2 | 3;
 
 const medalTierByRank = {
@@ -91,7 +91,8 @@ export function trophyCompetitionAssetId(
 }
 
 export function awardAssetType(assetId: string): AwardAssetType | null {
-  if (/^medal:podium:(gold|silver|bronze)$/.test(assetId)) return "medal";
+  if (/^medal:(podium|statistics):(gold|silver|bronze)$/.test(assetId)) return "medal";
+  if (/^record:(wr|sr|pb|eb)$/.test(assetId)) return "record";
   if (/^badge:[a-z0-9][a-z0-9-]{1,119}$/.test(assetId)) return "badge";
   if (isTrophySlotAssetId(assetId)) return "trophy";
   return null;
@@ -121,3 +122,7 @@ export function resolveAwardAsset(
 ) {
   return mapping[assetId] || null;
 }
+
+export type RecordKind = "wr" | "sr" | "pb" | "eb";
+export const recordAssetId = (kind: RecordKind) => `record:${kind}`;
+export const statisticsMedalAssetId = (rank: MedalRank) => `medal:statistics:${medalTierByRank[rank]}`;

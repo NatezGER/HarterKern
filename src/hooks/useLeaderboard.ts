@@ -5,7 +5,7 @@ import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
 export function useLeaderboard() {
   const { data } = useEffectivePublicData();
   const [query, setQuery] = useState("");
-  const [mode, setMode] = useState<"best" | "average">("best");
+  const [mode, setMode] = useState<"best" | "average" | "medals">("best");
 
   const entries = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("de-DE");

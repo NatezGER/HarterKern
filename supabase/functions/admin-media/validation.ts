@@ -11,7 +11,8 @@ export function requirePostgresUuid(value: FormDataEntryValue | null, label: str
 
 export function requireAwardAssetId(value: FormDataEntryValue | null) {
   const id = typeof value === "string" ? value : "";
-  const valid = /^medal:podium:(gold|silver|bronze)$/.test(id)
+  const valid = /^medal:(podium|statistics):(gold|silver|bronze)$/.test(id)
+    || /^record:(wr|sr|pb|eb)$/.test(id)
     || /^badge:[a-z0-9][a-z0-9-]{1,119}$/.test(id)
     || isTrophySlotAssetId(id);
   if (!valid) throw new Error("Award-Auswahl ist ungültig.");
@@ -29,7 +30,7 @@ export function validateAwardImageMetadata(input: {
   size: number;
   width?: number;
   height?: number;
-}, assetType: "medal" | "badge" | "trophy" = "badge") {
+}, assetType: "medal" | "badge" | "trophy" | "record" = "badge") {
   if (input.mimeType !== "image/png" && input.mimeType !== "image/webp") {
     return "Award-Grafiken müssen PNG- oder WebP-Dateien sein.";
   }
@@ -91,4 +92,12 @@ export function readAwardImageDimensions(bytes: Uint8Array, mimeType: string) {
     offset = data + size + (size % 2);
   }
   throw new Error("Die WebP-Abmessungen konnten nicht gelesen werden.");
+}
+
+export function requireAwardStoragePath(assetId: string, path: string) {
+  requireAwardAssetId(assetId);
+  if (!path.startsWith(`${assetId}/`) || !/^[0-9a-f-]{36}\.(png|webp)$/.test(path.slice(assetId.length + 1))) {
+    throw new Error("Award-Bildpfad gehört nicht zur ausgewählten Grafik.");
+  }
+  return path;
 }

@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   readAwardImageDimensions,
   requireAwardAssetId,
+  requireAwardStoragePath,
   requireAwardUploadRequest,
   requirePostgresUuid,
   validateAwardImageMetadata,
@@ -93,7 +94,7 @@ function requireImage(value: FormDataEntryValue | null, limit: number) {
 
 async function requireAwardImage(
   value: FormDataEntryValue | null,
-  assetType: "medal" | "badge" | "trophy",
+  assetType: "medal" | "badge" | "trophy" | "record",
 ) {
   if (!(value instanceof File)) throw new Error("Bitte eine Bilddatei auswählen.");
   const fileError = validateAwardImageMetadata(
@@ -347,7 +348,7 @@ Deno.serve(async (request) => {
       const { assetId } = requireAwardUploadRequest(form);
       const assetType = assetId.split(":", 1)[0];
       const { file, width, height } = await requireAwardImage(
-        form.get("file"), assetType as "medal" | "badge" | "trophy",
+        form.get("file"), assetType as "medal" | "badge" | "trophy" | "record",
       );
 
       if (assetType === "badge") {
@@ -361,6 +362,7 @@ Deno.serve(async (request) => {
       const current = await supabase.from("award_assets")
         .select("storage_path").eq("asset_id", assetId).maybeSingle();
       if (current.error) throw current.error;
+      if (current.data) requireAwardStoragePath(assetId, current.data.storage_path);
       const path = `${assetId}/${crypto.randomUUID()}.${extensionFor(file.type)}`;
       const uploaded = await supabase.storage.from("award-assets").upload(path, file, {
         cacheControl: "31536000",
@@ -395,6 +397,7 @@ Deno.serve(async (request) => {
         .select("storage_path").eq("asset_id", assetId).maybeSingle();
       if (current.error) throw current.error;
       if (!current.data) return json({ ok: true });
+      requireAwardStoragePath(assetId, current.data.storage_path);
       const deleted = await supabase.from("award_assets").delete().eq("asset_id", assetId);
       if (deleted.error) throw deleted.error;
       const removed = await supabase.storage.from("award-assets")

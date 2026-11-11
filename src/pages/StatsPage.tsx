@@ -1,5 +1,3 @@
-import { PerformanceMedalTable } from "@/components/stats/PerformanceMedalTable";
-import { calculatePerformanceMedals } from "@/lib/performanceMedals";
 import { DataState } from "@/components/common/DataState";
 import { StatsHeader } from "@/components/stats/StatsHeader";
 import { SectionHeading } from "@/components/common/SectionHeading";
@@ -20,30 +18,14 @@ export function StatsPage() {
   const { season, isAllTime } = useSeason();
   const performanceGroup = useDataGroup("performance");
   const { version } = performanceGroup;
-  const bingoGroup = useDataGroup("badge-statistics");
-  const playersGroup = useDataGroup("players");
   const dashboard = usePerformanceDashboard(season, version);
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const performance = dashboard.data;
   const dashboardData = performance?.dashboard;
-  const badgeData = snapshot.publicData.badgeStatistics;
-  const medals = calculatePerformanceMedals({
-    scope: season,
-    performance: { season: performance?.season, metrics: dashboardData?.metrics ?? [], coverage: "top10",
-      status: dashboard.error ? "error" : dashboard.loading || !performance ? "loading" : performanceGroup.status },
-    bingo: { season: badgeData?.season, metrics: badgeData?.dashboard.metrics ?? [], coverage: "top10", status: bingoGroup.status },
-    players: snapshot.publicData.players, playersStatus: playersGroup.status,
-  });
-  const retryMedals = () => {
-    dashboard.retry();
-    void Promise.allSettled([bingoGroup.refresh(), playersGroup.refresh()]);
-    if (performanceGroup.status === "error") void performanceGroup.refresh().catch(() => undefined);
-  };
   return (
     <div className="space-y-10">
       <StatsHeader title="Performance" />
       <StatsNavigation />
-      <PerformanceMedalTable result={medals} onRetry={retryMedals} />
       <DataState>
         <section className="mt-12">
           <SectionHeading eyebrow={isAllTime ? "All-Time" : `Saison ${season}`} title="Ligastatistiken" />

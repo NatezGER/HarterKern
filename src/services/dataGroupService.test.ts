@@ -61,7 +61,7 @@ describe("route data groups", () => {
   it("loads each statistics subroute independently", () => {
     expect(getRouteDataPlan("/stats")).toEqual({ required: ["statistics"], optional: [] });
     expect(getRouteDataPlan("/stats/performance")).toEqual({
-      required: ["performance", "historical"], optional: ["badge-statistics", "players"],
+      required: ["performance", "historical"], optional: ["badge-statistics"],
     });
     expect(getRouteDataPlan("/stats/rivalries")).toEqual({ required: ["navigation"], optional: [] });
     expect(getRouteDataPlan("/stats/badges")).toEqual({
@@ -181,9 +181,9 @@ describe("route data groups", () => {
     expect(mocks.getWorldRecordHistory).not.toHaveBeenCalled();
     expect(mocks.getMostWantedSnapshot).not.toHaveBeenCalled();
     expect(mocks.getEvents).not.toHaveBeenCalled();
-    expect(mocks.getPlayers).toHaveBeenCalledOnce();
+    expect(mocks.getPlayers).not.toHaveBeenCalled();
     expect(mocks.getGlobalStatistics).not.toHaveBeenCalled();
-    expect(getRouteDataPlan("/stats/performance", 2026)).toEqual({ required: ["performance"], optional: ["badge-statistics", "players"] });
+    expect(getRouteDataPlan("/stats/performance", 2026)).toEqual({ required: ["performance"], optional: ["badge-statistics"] });
     const affected = groupsForRealtimeTable("attempts").filter((group) => plan.required.includes(group));
     expect(affected.sort()).toEqual(["historical", "performance"]);
   });
@@ -287,4 +287,19 @@ it("invalidates event beer images for attempts, defaults and image changes", () 
   for (const table of ["attempts", "events", "beer_brand_images"]) {
     expect(groupsForRealtimeTable(table)).toContain("event-detail");
   }
+});
+
+it("notifies lazy medal consumers, reuses BINGO reads and expires them on Hall refresh", async()=>{
+ const { subscribeMedalData, getMedalDataVersion } = await import("./dataGroupService");
+ const { getBadgeDashboard } = await import("./badgeDashboardService");
+ dataGroupCache.invalidate();vi.mocked(getBadgeDashboard).mockClear();
+ const notify=vi.fn();const stop=subscribeMedalData(notify);const initial=getMedalDataVersion();
+ await Promise.all([loadDataGroup("badge-statistics",2026),loadDataGroup("badge-statistics",2026)]);
+ await loadDataGroup("badge-statistics",2026);
+ expect(getBadgeDashboard).toHaveBeenCalledTimes(1);
+ invalidateDataGroups(["leaderboard"]);
+ expect(getMedalDataVersion()).toBe(initial+1);expect(notify).toHaveBeenCalledOnce();
+ expect(getBadgeDashboard).toHaveBeenCalledTimes(1);
+ await loadDataGroup("badge-statistics",2026);expect(getBadgeDashboard).toHaveBeenCalledTimes(2);
+ stop();invalidateDataGroups(["performance"]);expect(notify).toHaveBeenCalledOnce();
 });

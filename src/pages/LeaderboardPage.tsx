@@ -1,3 +1,5 @@
+import { useHallOfFameMedals } from "@/hooks/useHallOfFameMedals";
+import { PerformanceMedalTable } from "@/components/stats/PerformanceMedalTable";
 import { PageHeader } from "@/components/common/PageHeader";
 import { LeaderboardList } from "@/components/leaderboard/LeaderboardList";
 import { Podium } from "@/components/leaderboard/Podium";
@@ -12,15 +14,18 @@ import { AdvancedHallOfFame } from "@/components/leaderboard/AdvancedHallOfFame"
 export function LeaderboardPage() {
   const { entries, mode, setMode } = useLeaderboard();
   const { season, isAllTime } = useSeason();
+  const medals = useHallOfFameMedals(mode === "medals");
 
   return (
     <div className="space-y-10">
-      <PageHeader eyebrow={isAllTime ? "Hall of Fame" : `Saison ${season}`} title={isAllTime ? "Die Besten" : "Saison-Hall-of-Fame"} description={isAllTime ? appMeta.leaderboardDescription : `Die schnellsten qualifizierten Einzelzeiten der Saison ${season}.`} action={<SeasonContextBadge />} />
+      <PageHeader eyebrow={isAllTime ? "Hall of Fame" : `Saison ${season}`} title={isAllTime ? "Die Besten" : "Saison-Hall-of-Fame"} description={mode === "medals" ? "Olympische Wertung der aktuellen Statistikplatzierungen im gewählten Zeitraum." : isAllTime ? appMeta.leaderboardDescription : `Die schnellsten qualifizierten Einzelzeiten der Saison ${season}.`} action={<SeasonContextBadge />} />
       <div className="flex flex-wrap gap-2" role="group" aria-label="Hall-of-Fame-Wertung">
         <Button type="button" variant={mode === "best" ? "default" : "outline"} aria-pressed={mode === "best"} onClick={() => setMode("best")}>Bestzeit</Button>
         <Button type="button" variant={mode === "average" ? "default" : "outline"} aria-pressed={mode === "average"} onClick={() => setMode("average")}>Durchschnitt</Button>
+        <Button type="button" variant={mode === "medals" ? "default" : "outline"} aria-pressed={mode === "medals"} onClick={() => setMode("medals")}>Medaillenspiegel</Button>
       </div>
       <DataState>
+        {mode === "medals" ? <PerformanceMedalTable result={medals.result} onRetry={medals.retry} /> : (
         <div className="space-y-10">
           <section className="panel dk-frame dk-hof-podium px-4 pt-8 sm:px-10">
             <Podium entries={entries} mode={mode} />
@@ -35,9 +40,9 @@ export function LeaderboardPage() {
                 : `Noch keine qualifizierten Zeiten in Saison ${season}.`}
             />
           </section>
-        </div>
+        </div>)}
       </DataState>
-      {isAllTime && <AdvancedHallOfFame />}
+      {isAllTime && mode !== "medals" && <AdvancedHallOfFame />}
     </div>
   );
 }

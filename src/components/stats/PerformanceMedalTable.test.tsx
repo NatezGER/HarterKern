@@ -9,7 +9,7 @@ const ready = (): PerformanceMedals => ({scope:2026,status:"ready",pending:[],ev
 it("renders medals, zero players, profile links, accessible details and German values", () => {
  const html=renderToStaticMarkup(<PerformanceMedalTable result={ready()} onRetry={()=>{}} />);
  for(const text of ["Statistik-Medaillenspiegel","Saison 2026","Noch keine endgültig vergebenen Saisonmedaillen","Unter 3,00 Sekunden","mehr als fünf","Negativ- und Spaßstatistiken","2,34","Platz 1","Aktuell keine Statistikmedaillen."]) expect(html).toContain(text);
- expect(html).toContain('href="/player/p"'); expect(html).toContain('href="#performance-speed"');
+ expect(html).toContain('href="/player/p"'); expect(html).toContain('href="/stats/performance#performance-speed"');
  expect(html).toContain('aria-label="1 Gold"'); expect(html).toContain('aria-label="0 Silber"');
  expect(html).toContain("<summary"); expect(html).toContain("focus-visible:outline");
  expect(html).toContain("minmax(0,1fr)"); expect(html).toContain("truncate");

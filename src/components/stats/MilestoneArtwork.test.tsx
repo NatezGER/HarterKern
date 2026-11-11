@@ -18,3 +18,9 @@ describe("MilestoneArtwork", () => {
     expect(renderToStaticMarkup(<MilestoneArtwork {...props} imageUrl="https://example.com/two.webp" />)).toContain("two.webp");
   });
 });
+
+it("contains the full personal image while retaining the default team crop",()=>{
+ const props={kind:"beer-volume" as const,title:"Test",imageUrl:"https://example.test/beer.webp"};
+ expect(renderToStaticMarkup(<MilestoneArtwork {...props} contain />)).toContain("object-contain");
+ expect(renderToStaticMarkup(<MilestoneArtwork {...props} />)).toContain("object-cover");
+});
