@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { CircleX, Timer } from "lucide-react";
-import { AccessibleTooltip } from "@/components/common/AccessibleTooltip";
+import { RecordEmblem } from "@/components/common/RecordEmblem";
 import { ProfileAvatar } from "@/components/common/ProfileAvatar";
 import { getAttemptClockLabel, sortEventAttempts } from "@/lib/historyProfiles";
 import { formatTime } from "@/utils/format";
@@ -72,19 +72,15 @@ export function EventAttemptList({ attempts }: { attempts: EventAttemptDetail[] 
               <p className="truncate font-bold">{attempt.name}</p>
               <AttemptMeta attempt={attempt} />
             </div>
-            <div className="flex flex-wrap justify-end gap-1.5">
+            <div className="flex max-w-16 flex-wrap justify-end gap-1 sm:max-w-none">
               {attempt.isPb && (
-                <Mark label="PB" description="Persönliche Bestzeit" />
+                <RecordEmblem kind="pb" className="size-7" />
               )}
               {attempt.isWr && (
-                <Mark
-                  label="WR"
-                  description="Weltrekord zum Zeitpunkt des Versuchs"
-                  gold
-                />
+                <RecordEmblem kind="wr" className="size-7" />
               )}
               {attempt.isEb && (
-                <Mark label="EB" description="Beste Zeit des Events" />
+                <RecordEmblem kind="eb" className="size-7" />
               )}
             </div>
             <p className={`flex min-w-20 items-center justify-end gap-2 font-display text-xl font-black ${attempt.isDnf ? "text-red-300" : ""}`}>
@@ -105,19 +101,5 @@ function AttemptMeta({ attempt }: { attempt: EventAttemptDetail }) {
     <p className="text-[10px] text-white/35">
       Versuch {attempt.attemptNumber}{clock ? ` · ${clock}` : ""}
     </p>
-  );
-}
-
-function Mark({ label, description, gold = false }: {
-  label: string;
-  description: string;
-  gold?: boolean;
-}) {
-  return (
-    <AccessibleTooltip
-      label={label}
-      description={description}
-      className={`px-2 py-1 text-[9px] font-black ${gold ? "bg-gold-400/15 text-gold-300" : "bg-emerald-400/10 text-emerald-300"}`}
-    />
   );
 }

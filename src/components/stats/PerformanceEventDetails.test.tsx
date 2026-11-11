@@ -22,10 +22,10 @@ describe("PR B event evidence", () => {
     expect(html).toContain('href="/events/event-1"');
   });
   it("keeps multiple opponents within one rivalry event", () => {
-    const html = renderToStaticMarkup(<PerformanceEventDetails entry={{ ...entry, value: 1, rivalryEvidence: [
+    const html = renderToStaticMarkup(<PerformanceEventDetails entry={{ ...entry, value: 2, rivalryEvidence: [
       { ...event, opponents: [{ playerId: "b", name: "Ben", takeovers: 3 }, { playerId: "c", name: "Chris", takeovers: 4 }] },
     ] }} />);
-    expect(html).toContain("1 unterschiedliche qualifizierte Events");
+    expect(html).toContain("2 qualifizierte Rivalry-Paarungen");
     expect(html.match(/href="\/events/g)).toHaveLength(1);
     expect(html).toContain("3 direkte Paar-Takeovers"); expect(html).toContain("4 direkte Paar-Takeovers");
     expect(html).toContain('href="/player/b"');
@@ -38,11 +38,11 @@ describe("PR B event evidence", () => {
     for (const text of ["Versuch #2", "3 Gegner", "3,50 s", "2,70 s", "2,80 s", "3,00 s", "3,20 s"]) expect(html).toContain(text);
     expect(html).not.toContain("Versuch-ID");
   });
-  it("places new cards only in V and VII, keeps top five and profile links", () => {
+  it("places retained event cards in VII, keeps top five and profile links", () => {
     const metrics: RankedMetric[] = performanceEventMetrics.map(def => ({ ...def, overallValue: 1, overallCount: null,
       overallTotal: null, overallDetail: null, rankings: Array.from({ length: 6 }, (_, i) => ({ ...entry, playerId: String(i), name: `Player ${i}` })) }));
     const html = renderToStaticMarkup(<PerformanceRankings metrics={metrics} />);
-    expect(html.indexOf('data-metric-key="performance-endspurt"')).toBeLessThan(html.indexOf('id="performance-leadership"'));
+    expect(html).not.toContain('data-metric-key="performance-endspurt"');
     expect(html.indexOf('data-metric-key="performance-rivalry-events"')).toBeLessThan(html.indexOf('data-metric-key="performance-chaos-takeovers"'));
     expect(html).toContain('href="/player/0"'); expect(html).not.toContain("Player 5");
     expect(html).not.toContain("VI. Form"); expect(html).not.toContain('data-metric-key="late-bloomer"');

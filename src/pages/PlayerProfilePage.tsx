@@ -145,8 +145,8 @@ export function PlayerProfilePage() {
         </section>
       )}</ProfileOptionalState>
 
-      {!player.isAk && <PlayerRivalries playerId={player.id} {...rivalries} />}
       {!player.isAk && <ProfileOptionalState state={beer}>{data => <PlayerBeerSections data={data} scope={isAllTime ? "Ewig" : `Saison ${selectedSeason}`} />}</ProfileOptionalState>}
+      {!player.isAk && <PlayerRivalries playerId={player.id} {...rivalries} />}
 
       <section>
         <SectionHeading eyebrow={isAllTime ? "Karrierewerte" : `Saisonwerte ${selectedSeason}`} title="Statistik" />

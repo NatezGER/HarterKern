@@ -47,7 +47,7 @@ export function getPerformanceDashboard(season: SeasonSelection = ALL_TIME_SEASO
     if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Performance-Payload fehlt.");
     const dashboard = mapStatisticDashboard(data, season === ALL_TIME_SEASON ? "all-time" : "season", [...statisticMetricRegistry, hunterDefinition, ...performanceEventMetrics, ...performanceDevelopmentMetrics])!;
     dashboard.metrics = dashboard.metrics.filter(({ group, key }) =>
-      key === "most-wanted-firsts" || ["performance", "consistency", "volume", "event", "records"].includes(group));
+      !["late-bloomer", "performance-endspurt", "performance-form-rise", "performance-form-decay", "performance-fastest-consistent"].includes(key) && (key === "most-wanted-firsts" || ["performance", "consistency", "volume", "event", "records"].includes(group)));
     // These definitions belong to the isolated event-performance RPC.
     // Legacy Compare/Trophy payloads keep their existing registry semantics.
     dashboard.metrics = dashboard.metrics.map((metric) => {

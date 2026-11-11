@@ -66,8 +66,8 @@ describe("composition and eligibility", () => {
     const keys=categories.map(c=>c.metric.key);
     for (const section of performanceSections) for (const key of section.keys) expect(keys).toContain(key==="thresholds" ? "sub3" : key);
     for(const key of ["bingo-lines","bingo-fields","rare-hunter","most-wanted-firsts"]) expect(keys.filter(k=>k===key)).toHaveLength(1);
-    for(const key of ["sub5","sub4","sub25","sub2","one-shot","clutch","late-bloomer","event-breaks","chaos-magnet","badge-total"]) expect(keys).not.toContain(key);
-    for(const key of ["performance-downward-spiral","performance-form-decay","performance-plateau","performance-near-legend"]) expect(keys).toContain(key);
+    for(const key of ["performance-fastest-consistent","performance-endspurt","performance-form-rise","performance-form-decay","sub5","sub4","sub25","sub2","one-shot","clutch","late-bloomer","event-breaks","chaos-magnet","badge-total"]) expect(keys).not.toContain(key);
+    for(const key of ["performance-downward-spiral","performance-plateau","performance-near-legend"]) expect(keys).toContain(key);
   });
   it("counts fixed sub3 independently of display order and permits central exclusions", () => {
     const metrics=[medalMetric("sub5",[1],["0"]),medalMetric("sub3",[1],["1"]),medalMetric("sub2",[1],["2"])];

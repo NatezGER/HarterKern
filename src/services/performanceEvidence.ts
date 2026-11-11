@@ -27,7 +27,7 @@ export function parseRivalryEvidence(value: unknown): RivalryEventEvidence[] | u
 export function parseChaosEvidence(value: unknown): ChaosEvidence[] | undefined {
   if (!Array.isArray(value) || !value.every(v => reference(v) && text(v.attemptId) && positive(v.attemptNumber) && text(v.submittedAt)
     && positive(v.beforePb) && positive(v.newPb) && positive(v.takeovers)
-    && Array.isArray(v.opponents) && v.opponents.length === v.takeovers
+    && Array.isArray(v.opponents) && (v.opponents.length === Math.min(5, Number(v.takeovers)) || v.opponents.length === v.takeovers)
     && v.opponents.every(p => row(p) && text(p.playerId) && text(p.name) && positive(p.bestHundredths)))) return;
   return value as ChaosEvidence[];
 }

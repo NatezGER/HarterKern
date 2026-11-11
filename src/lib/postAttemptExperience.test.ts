@@ -82,7 +82,7 @@ describe("post-attempt result derivation", () => {
     expect(result(2.7).primaryKind).toBe("pb");
     const season = result(2.3);
     expect(season.primaryKind).toBe("season-record");
-    expect(season.achievements).toEqual(["Neue persönliche Bestzeit", "Eventführung"]);
+    expect(season.achievements).toEqual(["Neue persönliche Bestzeit", "Eventbestzeit"]);
     expect(recordCelebrationFor(season)?.kind).toBe("season");
     const world = result(1.9);
     expect(world.primaryKind).toBe("wr");

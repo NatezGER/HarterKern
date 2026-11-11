@@ -91,7 +91,9 @@ export function derivePostAttemptResult(input: {
   const isSeasonRecord = official && seasonYear != null &&
     (previousSeasonRecord == null || attemptHundredths < previousSeasonRecord);
   const isWorldRecord = official && (previousWr == null || attemptHundredths < previousWr);
-  const eventAchievement = isEventBest ? "Eventführung" : tiesEventBest
+  const previousValidTimes = before.attempts.filter(item => item.eventId === event.id && item.result === "time" && item.timeSeconds != null &&
+    isEventEligibleLiveAttempt(item, before.players.find(p => p.id === item.playerId))).length;
+  const eventAchievement = isEventBest ? previousValidTimes < 2 ? "Eventbestzeit" : "Eventführung" : tiesEventBest
     ? "Event-Bestzeit eingestellt" : null;
 
   let primaryKind: PostAttemptResult["primaryKind"] = "normal";

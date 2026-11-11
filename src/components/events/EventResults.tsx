@@ -99,7 +99,13 @@ export function EventResults({ detail }: { detail: EventDetail }) {
         ) : <div className="panel py-14 text-center text-sm text-white/40">Keine gültige Eventzeit vorhanden.</div>}
       </section>
 
-      {detail.status === "closed" && <section className="order-3">
+      {detail.badges.length > 0 && <section className="order-3"><h2 className="display-title mb-4 text-2xl sm:mb-5 sm:text-3xl">Freigeschaltet</h2><BadgeGallery badges={detail.badges} compact showPlayer /></section>}
+      {detail.extras?.errors.badges && <OptionalEventSectionError className="order-3" message={detail.extras.errors.badges} />}
+      {detail.extras?.loading && <section className="panel order-3 p-4 text-sm text-white/40">Badges und Trophäen werden nachgeladen …</section>}
+
+      {detail.status === "closed" && <section className="panel order-4 p-4 sm:p-8"><h2 className="display-title text-2xl sm:text-3xl">Event-Führungsprogression</h2><p className="mt-2 text-xs text-white/40 sm:text-sm">Wer führte zu welchem Zeitpunkt mit welcher Eventbestzeit?</p><div className="mt-4 sm:mt-6"><PlayerOverlaySelector options={eventOptions} selectedIds={selectedPlayers} onChange={setSelectedPlayers} /><ProgressionTimeline points={eventProgression} overlaySeries={eventOverlays} primaryLabel="Eventrekord" primaryToggleable domainStartAt={visualStartAt} domainEndAt={visualEndAt} emptyLabel="Führung beginnt ab der zweiten gültigen Eventzeit." /></div></section>}
+
+      {detail.status === "closed" && <section className="order-5">
         {denmark ? <DenmarkSectionHeading eyebrow="Finale" title="Finale Bestenliste" /> : <h2 className="display-title mb-3 text-2xl sm:mb-5 sm:text-3xl">Finale Bestenliste</h2>}
         <div className={cn("panel divide-y divide-white/[0.06] overflow-hidden", denmark && "dk-scoreboard")}>
           {detail.finalStandings.map((entry) => {
@@ -111,7 +117,7 @@ export function EventResults({ detail }: { detail: EventDetail }) {
         </div>
       </section>}
 
-      {detail.status === "closed" && <section className="order-4">
+      {detail.status === "closed" && <section className="order-5">
         <h2 className="display-title mb-3 text-2xl sm:mb-5 sm:text-3xl">Rivalries dieses Events</h2>
         <div className="panel overflow-hidden">
           {detail.rivalries.length ? <ol className="divide-y divide-white/[0.06]">{detail.rivalries.map((rivalry) => <li key={`${rivalry.playerLowId}:${rivalry.playerHighId}`} className="flex flex-wrap items-center gap-3 p-4 sm:flex-nowrap sm:p-5">
@@ -125,20 +131,14 @@ export function EventResults({ detail }: { detail: EventDetail }) {
       </section>}
 
       {isClosedTrophyEvent && <TrophyEventSpecialStats
-        className="order-4"
+        className="order-5"
         data={detail.trophySpecialStats}
         loading={Boolean(detail.extras?.loading)}
         error={detail.extras?.errors.trophySpecialStats ?? ""}
       />}
 
-      {!isClosedTrophyEvent && detail.trophies.length > 0 && <section className="order-4"><h2 className="display-title mb-4 text-2xl sm:text-3xl">Vergebene Trophäen</h2><TrophyCabinet trophies={detail.trophies} mobileLimit={3} /></section>}
-      {!isClosedTrophyEvent && detail.extras?.errors.trophies && <OptionalEventSectionError className="order-4" message={detail.extras.errors.trophies} />}
-
-      {detail.badges.length > 0 && <section className="order-5 lg:order-4"><h2 className="display-title mb-4 text-2xl sm:mb-5 sm:text-3xl">Freigeschaltet</h2><BadgeGallery badges={detail.badges} compact showPlayer /></section>}
-      {detail.extras?.errors.badges && <OptionalEventSectionError className="order-5 lg:order-4" message={detail.extras.errors.badges} />}
-      {detail.extras?.loading && <section className="panel order-5 p-4 text-sm text-white/40 lg:order-4">Badges und Trophäen werden nachgeladen …</section>}
-
-      {detail.status === "closed" && <section className="panel order-4 p-4 sm:p-8"><h2 className="display-title text-2xl sm:text-3xl">Event-Führungsprogression</h2><p className="mt-2 text-xs text-white/40 sm:text-sm">Wer führte zu welchem Zeitpunkt mit welcher Eventbestzeit?</p><div className="mt-4 sm:mt-6"><PlayerOverlaySelector options={eventOptions} selectedIds={selectedPlayers} onChange={setSelectedPlayers} /><ProgressionTimeline points={eventProgression} overlaySeries={eventOverlays} primaryLabel="Eventrekord" primaryToggleable domainStartAt={visualStartAt} domainEndAt={visualEndAt} emptyLabel="Dieses Event hat keine gültige Führungszeit." /></div></section>}
+      {!isClosedTrophyEvent && detail.trophies.length > 0 && <section className="order-5"><h2 className="display-title mb-4 text-2xl sm:text-3xl">Vergebene Trophäen</h2><TrophyCabinet trophies={detail.trophies} mobileLimit={3} /></section>}
+      {!isClosedTrophyEvent && detail.extras?.errors.trophies && <OptionalEventSectionError className="order-5" message={detail.extras.errors.trophies} />}
 
       <section className="order-5">
         {denmark ? <DenmarkSectionHeading eyebrow="Eventdaten" title="Eventstatistiken" /> : <h2 className="display-title mb-4 text-2xl sm:mb-5 sm:text-3xl">Eventstatistiken</h2>}

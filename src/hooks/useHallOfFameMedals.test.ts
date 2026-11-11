@@ -37,3 +37,9 @@ it("never shows partial data and retries all failed sources",async()=>{
  const hook=useHallOfFameMedals(true);expect(hook.result.rows).toEqual([]);hook.retry();
  expect(h.invalidate).toHaveBeenCalledWith(["performance","badge-statistics"]);expect(h.refresh).toHaveBeenCalledOnce();
 });
+
+it("never requests live All-Time medal sources, even after a season result",()=>{
+ h.state={season:2026,version:1,status:"ready",performance:data(),bingo:data()};h.season="all-time";
+ expect(useHallOfFameMedals(true).result.rows).toEqual([]);h.effect!();
+ expect(h.get).not.toHaveBeenCalled();expect(h.load).not.toHaveBeenCalled();
+});

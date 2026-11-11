@@ -4,7 +4,7 @@ import { useSeason } from "./useSeason";
 import { calculatePerformanceMedals } from "@/lib/performanceMedals";
 import { getPerformanceDashboard, type PerformanceDashboard } from "@/services/performanceDashboardService";
 import { loadDataGroup, invalidateDataGroups, subscribeMedalData, getMedalDataVersion } from "@/services/dataGroupService";
-import type { SeasonSelection } from "@/lib/season";
+import { ALL_TIME_SEASON, type SeasonSelection } from "@/lib/season";
 
 type BingoData = Awaited<ReturnType<typeof loadDataGroup>>["publicData"];
 interface LoadedMedals {
@@ -21,7 +21,7 @@ export function useHallOfFameMedals(enabled: boolean) {
   const version = useSyncExternalStore(subscribeMedalData, getMedalDataVersion, getMedalDataVersion);
   const [state, setState] = useState<LoadedMedals | null>(null);
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || season === ALL_TIME_SEASON) return;
     let active = true;
     const controller = new AbortController();
     setState({ season, version, status: "loading" });
@@ -35,7 +35,7 @@ export function useHallOfFameMedals(enabled: boolean) {
     });
     return () => { active = false; controller.abort(); };
   }, [enabled, season, version]);
-  const current = enabled && state?.season === season && state.version === version ? state : null;
+  const current = enabled && season !== ALL_TIME_SEASON && state?.season === season && state.version === version ? state : null;
   const status = current?.status ?? "loading";
   return {
     result: calculatePerformanceMedals({

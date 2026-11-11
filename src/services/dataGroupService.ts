@@ -1,3 +1,4 @@
+import { performanceDetailCache } from "./performanceDetailService";
 import { loadHistoricalAttempts, loadLiveState } from "@/services/dataPlatformRepository";
 import { getEvents } from "@/services/eventService";
 import { getPlayers } from "@/services/playerService";
@@ -168,7 +169,7 @@ export function invalidateDataGroups(groups: DataGroup[]) {
   if (groups.includes("leaderboard")) groups = [...new Set([...groups, "performance" as const, "badge-statistics" as const])];
   dataGroupCache.invalidate((key) => groups.some((group) => key.startsWith(group + ":")));
   if (groups.includes("statistics")) statisticDashboardCache.invalidate();
-  if (groups.includes("performance") || groups.includes("statistics")) performanceDashboardCache.invalidate();
+  if (groups.includes("performance") || groups.includes("statistics")) { performanceDashboardCache.invalidate(); performanceDetailCache.invalidate(); }
   if (groups.some(group => ["performance", "statistics", "badge-statistics"].includes(group))) {
     medalDataVersion += 1;
     medalListeners.forEach(listener => listener());

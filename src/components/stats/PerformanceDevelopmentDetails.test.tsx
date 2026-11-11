@@ -25,22 +25,22 @@ it.each(evidences)("validates and renders $kind without losing evidence", eviden
   if (evidence.kind === "hunt") expect(html).toContain("13 gültige Versuche, davon 12 Zwischenversuche");
   if (evidence.kind === "plateau") expect(html).toContain("Stand am Saisonende 2026");
   if (evidence.kind === "near") expect(html).toContain("auf 20 begrenzt");
-  if (evidence.kind === "consistent") expect(html).toContain("3,0013 s");
+  if (evidence.kind === "consistent") expect(html).toContain("3,00 s");
 });
 it("rejects invalid windows, nonfinite values and out-of-bound near misses", () => {
   expect(parseDevelopmentEvidence({ ...evidences[1], older: [] })).toBeUndefined();
   expect(parseDevelopmentEvidence({ ...evidences[5], mean: NaN })).toBeUndefined();
   expect(parseDevelopmentEvidence({ ...evidences[4], hits: [{ ...source, priorPb: 300, gap: 11 }] })).toBeUndefined();
   expect(parseDevelopmentEvidence(null)).toBeUndefined();
-  expect(formatMetricValue(300.125, "precise-time")).toBe("3,0013 s");
+  expect(formatMetricValue(300.125, "precise-time")).toBe("3,00 s");
 });
-it("places all eight cards and five development cards in the navigation with top five links", () => {
+it("places all retained cards in the navigation with top five links", () => {
   const metrics = performanceDevelopmentMetrics.map(m => ({ ...m, overallValue:null,overallCount:null,overallTotal:null,overallDetail:null,
     rankings: Array.from({length:6},(_,i) => ({playerId:String(i),name:`Player ${i}`,rank:1,value:3,avatarUrl:null,count:null,total:null,detail:null,developmentEvidence:evidences[0]})) }));
   const html = renderToStaticMarkup(<PerformanceRankings metrics={metrics} />);
   for (const m of metrics) expect(html).toContain(`data-metric-key="${m.key}"`);
   expect(html).toContain('href="#performance-development"');
   expect(html).toContain('href="/player/0"'); expect(html).not.toContain("Player 5");
-  expect(metrics).toHaveLength(8);
+  expect(metrics).toHaveLength(5);
   expect(html.indexOf('performance-upward-spiral')).toBeLessThan(html.indexOf('performance-plateau'));
 });

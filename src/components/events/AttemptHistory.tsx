@@ -1,4 +1,5 @@
-import { Edit3, Medal, Trophy } from "lucide-react";
+import { RecordEmblem } from "@/components/common/RecordEmblem";
+import { Edit3 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { LiveAvatar } from "@/components/events/LiveAvatar";
@@ -58,8 +59,8 @@ export function AttemptHistory({
               </div>
             )}
             <div className="col-start-1 row-start-2 flex gap-2 sm:col-auto sm:row-auto">
-              {milestone?.isPersonalBest && <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-300"><Medal className="size-3" /> PB</span>}
-              {milestone?.isWorldRecord && <span className="flex items-center gap-1 text-[10px] font-bold text-gold-300"><Trophy className="size-3" /> WR</span>}
+              {milestone?.isPersonalBest && <RecordEmblem kind="pb" className="size-7" />}
+              {milestone?.isWorldRecord && <RecordEmblem kind="wr" className="size-7" />}
             </div>
             <p className="col-start-2 row-start-1 text-right font-display text-xl font-black sm:col-auto sm:row-auto">{attempt.result === "dns" ? "DNF" : formatTime(attempt.timeSeconds ?? 0)}</p>
             {unlocked && (

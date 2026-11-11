@@ -36,8 +36,11 @@ export function buildEventLeadProgression(
     .filter((attempt): attempt is EventLeadAttempt & { timeHundredths: number } =>
       !attempt.isDnf && !attempt.isAk && attempt.timeHundredths != null)
     .sort((left, right) => left.submittedAt.localeCompare(right.submittedAt) || left.id.localeCompare(right.id));
-  const leaders: Array<EventLeadAttempt & { timeHundredths: number; improvementHundredths: number | null }> = [];
-  for (const attempt of ordered) {
+  if (ordered.length < 2) return [];
+  // A comparison becomes possible with the second valid time (also same player/guest).
+  const initial = ordered[1].timeHundredths < ordered[0].timeHundredths ? ordered[1] : ordered[0];
+  const leaders: Array<EventLeadAttempt & { timeHundredths: number; improvementHundredths: number | null }> = [{ ...initial, submittedAt: ordered[1].submittedAt, improvementHundredths: null }];
+  for (const attempt of ordered.slice(2)) {
     const previous = leaders.at(-1);
     if (!previous || attempt.timeHundredths < previous.timeHundredths) {
       leaders.push({ ...attempt, improvementHundredths: previous ? previous.timeHundredths - attempt.timeHundredths : null });

@@ -13,16 +13,13 @@ const colors: { key: MedalColor; label: string; style: string }[] = [
 ];
 export function PerformanceMedalTable({ result, onRetry }: { result: PerformanceMedals; onRetry: () => void }) {
   const allTime = result.scope === ALL_TIME_SEASON;
+  if (allTime) return <section className="panel p-5 text-sm text-white/60" aria-label="Ewige Medaillen">
+    Dauerhaft vergebene Saisonmedaillen erscheinen hier nach Einführung des offiziellen Saisonabschlusses.
+  </section>;
   const exclusions = result.notes.filter(n => n.reason !== "empty");
   const threshold = timeThresholds.find(t => t.key === medalThresholdMetricKey)?.label;
   return <section className="dk-hof-ranking min-w-0" aria-labelledby="statistics-medals-title">
-    <div className="mb-4">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-gold-300/70">Live-Auswertung</p>
-      <h2 id="statistics-medals-title" className="mt-1 font-display text-xl font-black sm:text-2xl">Statistik-Medaillenspiegel</h2>
-      <p className="mt-1 text-sm text-white/65">{allTime ? "Ewiger Statistikvergleich · Alle offiziellen Zeiten" : `Saison ${result.scope} · Aktuelle Statistikplatzierungen`}</p>
-      <p className="mt-2 text-xs text-gold-200/75">Live-Auswertung · Noch keine endgültig vergebenen Saisonmedaillen</p>
-      {allTime && <p className="mt-1 text-xs text-white/45">Der All-Time-Spiegel vergleicht alle Spieler anhand ihrer aktuellen All-Time-Statistikwerte. Er ist keine Summe endgültiger Karriere-Medaillen.</p>}
-    </div>
+    <h2 id="statistics-medals-title" className="sr-only">Medaillenspiegel</h2>
     <details className="mb-4 text-xs text-white/55">
       <summary className="cursor-pointer rounded py-2 font-bold text-gold-200 focus-visible:outline focus-visible:outline-gold-300">Wie werden die Medaillen verteilt?</summary>
       <p className="mt-1 leading-5">Gleiche Statistikränge erhalten dieselbe Medaille: Platz 1 Gold, 2 Silber, 3 Bronze. Bei mehr als fünf Podiumsteilnehmern entfällt die gesamte Kategorie. Zeitgrenzen-Medaille: Unter {threshold} Sekunden. Die Auswahl in der Statistik-Karte ändert diese Wertung nicht. Negativ- und Spaßstatistiken zählen derzeit ebenfalls. Live bedeutet den aktuell verfügbaren offiziellen Stand; einige Werte ändern sich erst nach Eventabschluss.</p>
