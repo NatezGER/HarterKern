@@ -26,3 +26,12 @@ it("deduplicates and invalidates personal reads", async () => {
  for (const table of ["attempts","players","events","beer_brand_images"]) expect(groupsForRealtimeTable(table)).toContain("profile-beer");
  expect(profileSectionsForDataGroups(["profile-beer"])).toEqual(["beer"]);
 });
+
+it("accepts the complete aggregate without dropping compatible fields",async()=>{
+ const data={seasonYear:2026,validAttempts:2,beers:[{brand:"A",imagePath:null,attempts:2,bestHundredths:201}],brandRankings:[{brand:"A",imagePath:null,attempts:2,bestHundredths:201,worstHundredths:300,averageHundredths:250.5}]};
+ rpc.mockResolvedValue({data,error:null});expect(await getPlayerBeerProfile("p",2026)).toEqual(data);expect(rpc).toHaveBeenCalledOnce();
+});
+it.each([null,{},[{brand:"",imagePath:null,attempts:1,bestHundredths:200,worstHundredths:200,averageHundredths:200}],[{brand:"A",imagePath:null,attempts:1,bestHundredths:200,worstHundredths:200,averageHundredths:300}]])("rejects malformed new aggregates",brandRankings=>{
+ rpc.mockResolvedValue({data:{seasonYear:null,validAttempts:1,beers:[],brandRankings},error:null});
+ return expect(getPlayerBeerProfile("p")).rejects.toThrow("Bier-Ranking");
+});

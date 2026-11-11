@@ -17,22 +17,21 @@ vi.mock("@/components/history/HistoricalAttemptsDisclosure",()=>({HistoricalAtte
 import { StatsPage } from "./StatsPage";
 beforeEach(()=>{h.season=2026;h.bingoSeason=2026;h.bingoStatus="ready";h.playerStatus="ready";h.loading=false;h.error="";
  h.metrics=[{key:"fastest",title:"Schnellste Zeit",description:"",format:"time",direction:"asc",group:"performance",minimumSample:1,overallValue:null,overallCount:null,overallTotal:null,overallDetail:null,rankings:[{rank:1,playerId:"p",name:"Paul",avatarUrl:null,value:234,count:null,total:null,detail:null}]}];});
-it("shows the complete table above unchanged ranking content, including a zero player",()=>{
+it("keeps rankings and BINGO on Performance without the moved medal table",()=>{
  const html=renderToStaticMarkup(<StatsPage />);
- expect(html.indexOf("Statistik-Medaillenspiegel")).toBeLessThan(html.indexOf("Ligastatistiken"));
- expect(html).toContain('aria-label="1 Gold"');expect(html).toContain('href="/player/z"');
+ expect(html).not.toContain("Statistik-Medaillenspiegel");
+ expect(html).toContain('data-metric-key="fastest"');
+ expect(html).toContain('id="performance-bingo"');
+});
+it("does not depend on medal roster or bingo source status to render Performance",()=>{
+ h.bingoSeason="all-time";h.playerStatus="error";
+ const html=renderToStaticMarkup(<StatsPage />);
+ expect(html).not.toContain("Medaillendaten erneut laden");
  expect(html).toContain('data-metric-key="fastest"');
 });
-it("withholds the table for stale bingo scope while ordinary rankings remain visible",()=>{
- h.bingoSeason="all-time";const html=renderToStaticMarkup(<StatsPage />);
- expect(html).toContain("Noch offen: BINGO");expect(html).not.toContain('aria-label="1 Gold"');
- expect(html).toContain('data-metric-key="fastest"');
-});
-it("handles optional roster failure and later recovery without blocking rankings",()=>{
- h.playerStatus="error";let html=renderToStaticMarkup(<StatsPage />);
- expect(html).toContain("Medaillendaten erneut laden");expect(html).toContain('data-metric-key="fastest"');
- h.playerStatus="ready";html=renderToStaticMarkup(<StatsPage />);expect(html).toContain('aria-label="1 Gold"');
-});
-it("withholds old medal counts during a performance refresh",()=>{
- h.loading=true;const html=renderToStaticMarkup(<StatsPage />);expect(html).not.toContain('aria-label="1 Gold"');expect(html).toContain("Noch offen: Performance");
+it("retains ordinary performance loading and error recovery",()=>{
+ h.loading=true;
+ expect(renderToStaticMarkup(<StatsPage />)).toContain("Ranking-Statistiken werden geladen");
+ h.loading=false;h.error="offline";
+ expect(renderToStaticMarkup(<StatsPage />)).toContain("Bereich neu laden");
 });

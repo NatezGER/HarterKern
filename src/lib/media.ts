@@ -10,7 +10,7 @@ export type ImagePurpose = "avatar" | "event-photo";
 export function validateAwardAssetMetadata(
   file: Pick<File, "type" | "size">,
   dimensions?: { width: number; height: number },
-  assetType: "medal" | "badge" | "trophy" = "badge",
+  assetType: "medal" | "badge" | "trophy" | "record" = "badge",
 ): string | null {
   if (!AWARD_ASSET_MIME_TYPES.includes(file.type as (typeof AWARD_ASSET_MIME_TYPES)[number])) {
     return "Award-Grafiken müssen PNG- oder WebP-Dateien sein.";
@@ -30,7 +30,7 @@ export function validateAwardAssetMetadata(
 
 export async function validateAwardAssetFile(
   file: File,
-  assetType: "medal" | "badge" | "trophy",
+  assetType: "medal" | "badge" | "trophy" | "record",
 ): Promise<string | null> {
   const metadataError = validateAwardAssetMetadata(file, undefined, assetType);
   if (metadataError) return metadataError;

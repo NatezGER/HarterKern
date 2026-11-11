@@ -1,3 +1,6 @@
+import { RecordEmblem } from "@/components/common/RecordEmblem";
+import { StatisticsMedal } from "@/components/common/StatisticsMedal";
+import { recordAssetId, statisticsMedalAssetId, type RecordKind } from "@/lib/awardAssets";
 import { ImagePlus, LoaderCircle, Trash2, Trophy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PodiumMedal } from "@/components/common/PodiumMedal";
@@ -13,7 +16,6 @@ import {
 } from "@/lib/awardAssets";
 import { getBadgeMaterialLabel } from "@/lib/badgePresentation";
 import type {
-  AwardAssetType,
   BadgeAssetDefinition,
   MedalRank,
   TrophyAssetDefinition,
@@ -33,7 +35,8 @@ const medalOptions = [
 
 export function AwardAssetManagement() {
   const { mapping, refresh } = useAwardAssets();
-  const [type, setType] = useState<AwardAssetType>("medal");
+  const [type, setType] = useState<"medal" | "statistics" | "record" | "badge" | "trophy">("medal");
+  const [recordKind, setRecordKind] = useState<RecordKind>("wr");
   const [rank, setRank] = useState<MedalRank>(1);
   const [badges, setBadges] = useState<BadgeAssetDefinition[]>([]);
   const trophies: TrophyAssetDefinition[] = TROPHY_ASSET_DEFINITIONS;
@@ -68,6 +71,8 @@ export function AwardAssetManagement() {
     && item.year === selectedTrophyYear);
   const isHistoricalTrophy = Boolean(trophyCompetition?.isHistorical);
   const assetId = type === "medal" ? medalAssetId(rank)
+    : type === "statistics" ? statisticsMedalAssetId(rank)
+    : type === "record" ? recordAssetId(recordKind)
     : type === "badge" && badge ? badgeAssetId(badge.badgeKey)
       : type === "trophy" && trophy ? trophyAssetId(trophy) : "";
   const customUrl = assetId ? mapping[assetId] : null;
@@ -124,19 +129,22 @@ export function AwardAssetManagement() {
       <p className="mt-2 text-xs leading-5 text-white/50">
         {type === "trophy"
           ? "Trophäen: Hochformat empfohlen, etwa 768 × 1024 px · PNG oder WebP · max. 2 MB"
-          : "Badges und Medaillen: quadratisch, empfohlen 1024 × 1024 px · PNG oder WebP · max. 2 MB"}
+          : "Badges, Medaillen und Rekordsymbole: quadratisch, empfohlen 1024 × 1024 px · PNG oder WebP · max. 2 MB"}
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <select value={type} onChange={(event) => setType(event.target.value as AwardAssetType)} className={selectClass} aria-label="Award-Art">
-          <option value="medal">Medaille</option>
+        <select value={type} onChange={(event) => setType(event.target.value as typeof type)} className={selectClass} aria-label="Award-Art">
+          <option value="medal">Eventmedaillen</option>
+          <option value="statistics">Statistikmedaillen</option>
+          <option value="record">Rekordsymbole</option>
           <option value="badge">Badge</option>
           <option value="trophy">Trophäe</option>
         </select>
-        {type === "medal" && (
+        {(type === "medal" || type === "statistics") && (
           <select value={rank} onChange={(event) => setRank(Number(event.target.value) as MedalRank)} className={selectClass} aria-label="Medaillenvariante">
             {medalOptions.map((option) => <option key={option.rank} value={option.rank}>{option.label}</option>)}
           </select>
         )}
+        {type === "record" && <select value={recordKind} onChange={event => setRecordKind(event.target.value as RecordKind)} className={selectClass} aria-label="Rekordvariante">{(["wr", "sr", "pb", "eb"] as const).map(kind => <option key={kind} value={kind}>{kind.toUpperCase()}</option>)}</select>}
         {type === "badge" && <>
           <select value={family?.key ?? ""} onChange={(event) => { setFamilyKey(event.target.value); setBadgeKey(""); }} className={selectClass} aria-label="Badge-Familie">
             {badgeFamilies.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
@@ -176,6 +184,8 @@ export function AwardAssetManagement() {
           ? "grid aspect-[3/4] h-32 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/10 bg-black/25 p-2"
           : "grid size-24 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/10 bg-black/25 p-2"}>
           {customUrl ? <img src={customUrl} alt="Aktuelle Custom-Grafik" className="size-full object-contain" />
+            : type === "record" ? <RecordEmblem kind={recordKind} size="lg" />
+            : type === "statistics" ? <StatisticsMedal rank={rank} />
             : type === "medal" ? <PodiumMedal rank={rank} size="lg" />
               : type === "badge" && badge ? <PrestigeBadgeEmblem badge={{ badgeKey: badge.badgeKey, tier: badge.tier, name: badge.name }} size="md" />
                 : <Trophy className="size-14 text-gold-300" />}

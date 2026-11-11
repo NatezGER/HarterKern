@@ -34,7 +34,7 @@ describe("award upload request boundary", () => {
     });
   });
 
-  it.each(TROPHY_ASSET_IDS)(
+  it.each([...TROPHY_ASSET_IDS, "medal:statistics:gold", "medal:statistics:silver", "medal:statistics:bronze", "record:wr", "record:sr", "record:pb", "record:eb"])(
     "serializes and accepts the canonical trophy ID %s",
     async (assetId) => {
       const file = new File(["png"], "trophy.png", { type: "image/png" });

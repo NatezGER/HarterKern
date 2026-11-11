@@ -3,14 +3,14 @@ import { describe, expect, it } from "vitest";
 import { PodiumMedal } from "@/components/common/PodiumMedal";
 
 describe("PodiumMedal", () => {
-  it.each([1, 2, 3] as const)("uses the same centered ribbon geometry for place %s", (rank) => {
+  it.each([1, 2, 3] as const)("uses the same laurel geometry for place %s", (rank) => {
     const markup = renderToStaticMarkup(<PodiumMedal rank={rank} />);
 
     expect(markup).toContain(`data-podium-medal="${rank}"`);
-    expect(markup).toContain("left-1/2 top-0");
-    expect(markup).toContain("left-1/2 grid aspect-square");
-    expect(markup).toContain("-translate-x-1/2");
-    expect(markup).not.toContain("#");
+    expect(markup).toContain('viewBox="0 0 100 100"');
+    expect(markup).toContain("<ellipse");
+    expect(markup).toContain(`>${rank}</text>`);
+    expect(markup).not.toContain("clip-path");
   });
 
   it("keeps compact and featured medals on the same geometry", () => {
@@ -19,14 +19,13 @@ describe("PodiumMedal", () => {
 
     expect(compact).toContain("h-11 w-10");
     expect(featured).toContain("h-16 w-14 sm:h-24 sm:w-20");
-    expect(compact).toContain("w-[78%]");
-    expect(featured).toContain("w-[78%]");
+    expect(compact).toContain('viewBox="0 0 100 100"');
+    expect(featured).toContain('viewBox="0 0 100 100"');
   });
 
   it("keeps semantic medal gold independent from the season context", () => {
     const markup = renderToStaticMarkup(<PodiumMedal rank={1} />);
-    expect(markup).toContain("from-yellow-100");
-    expect(markup).toContain("via-yellow-400");
+    expect(markup).toContain("#e8bc54");
     expect(markup).not.toContain("context-accent");
   });
 });

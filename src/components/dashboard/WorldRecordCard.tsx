@@ -1,4 +1,5 @@
-import { CalendarDays, Crown, MapPin, Sparkles } from "lucide-react";
+import { RecordEmblem } from "@/components/common/RecordEmblem";
+import { CalendarDays, MapPin, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getPlayerById } from "@/data/selectors";
 import { useEffectivePublicData } from "@/hooks/useEffectivePublicData";
@@ -26,8 +27,8 @@ export function WorldRecordCard() {
       <div className="relative flex h-full min-h-72 flex-col justify-between">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-full bg-gold-400 text-black shadow-gold-sm">
-              <Crown className="size-5" />
+            <span className="grid size-11 place-items-center">
+              <RecordEmblem kind={isAllTime ? "wr" : "sr"} />
             </span>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-gold-300">{isAllTime ? "Aktueller Weltrekord" : `Saisonrekord ${season}`}</p>

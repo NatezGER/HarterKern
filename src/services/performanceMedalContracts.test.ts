@@ -16,11 +16,11 @@ it("uses the effective top-ten SQL sources, never UI-truncated five rows",()=>{
  expect(medals).not.toMatch(/\.slice\(/);
  expect(medals).toContain("entry.rank <= 3");
 });
-it("places the optional medal table above the existing content and reuses scoped data",()=>{
+it("moves medals exclusively into the lazy Hall of Fame while preserving BINGO rankings",()=>{
  const page=read("src/pages/StatsPage.tsx");
- expect(page.indexOf("<PerformanceMedalTable")).toBeLessThan(page.indexOf('title="Ligastatistiken"'));
- expect(page.indexOf("<StatsNavigation")).toBeLessThan(page.indexOf("<PerformanceMedalTable"));
- expect(page).toContain("season: badgeData?.season"); expect(page).toContain('useDataGroup("players")');
+ expect(page).not.toContain("PerformanceMedalTable");
+ expect(page).not.toContain('useDataGroup("players")');
  expect(page).toContain("<BadgeRankingSections"); expect(page).toContain("<PerformanceRankings");
+ expect(read("src/pages/LeaderboardPage.tsx")).toContain('useHallOfFameMedals(mode === "medals")');
  expect(read("src/components/stats/PerformanceMedalTable.tsx")).not.toMatch(/getSupabase|setInterval|useEffect|\.rpc\(/);
 });

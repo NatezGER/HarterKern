@@ -1,5 +1,6 @@
+import { RecordEmblem } from "@/components/common/RecordEmblem";
 import { motion, useReducedMotion } from "framer-motion";
-import { Crown, Sparkles, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { formatTime } from "@/utils/format";
@@ -45,7 +46,7 @@ export function RecordCelebration() {
       >
         <X className="size-5" />
       </button>
-      {worldRecord || seasonRecord ? <Crown className="mx-auto size-10 text-gold-400" /> : <Sparkles className="mx-auto size-8 text-emerald-300" />}
+      <RecordEmblem kind={worldRecord ? "wr" : seasonRecord ? "sr" : "pb"} size="lg" className="mx-auto" />
       <p className="mt-4 text-xs font-black uppercase tracking-[0.24em] text-gold-300">
         {worldRecord ? "Neuer Weltrekord" : seasonRecord
           ? `Neuer Saisonrekord ${celebration.seasonYear}` : "Neue persönliche Bestzeit"}

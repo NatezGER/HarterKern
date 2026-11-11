@@ -3,7 +3,7 @@ import type { BadgeTier } from "@/types/pr7Foundation";
 export type AwardAssetsTable = {
   Row: {
     asset_id: string;
-    asset_type: "medal" | "badge" | "trophy";
+    asset_type: "medal" | "badge" | "trophy" | "record";
     storage_path: string;
     mime_type: "image/png" | "image/webp";
     size_bytes: number;

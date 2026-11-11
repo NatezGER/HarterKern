@@ -131,7 +131,7 @@ export function getRouteDataPlan(pathname: string, season: SeasonSelection = ALL
     };
   }
   if (pathname === "/stats/performance") return {
-    required: season === ALL_TIME_SEASON ? ["performance", "historical"] : ["performance"], optional: ["badge-statistics", "players"],
+    required: season === ALL_TIME_SEASON ? ["performance", "historical"] : ["performance"], optional: ["badge-statistics"],
   };
   if (pathname === "/stats/most-wanted") return { required: ["navigation"], optional: [] };
   if (pathname === "/stats/milestones") return { required: ["navigation"], optional: ["most-wanted", "team-milestones"] };
@@ -156,10 +156,23 @@ export function getRouteDataPlan(pathname: string, season: SeasonSelection = ALL
 }
 
 export const dataGroupCache = new ReadCache<DataGroupPatch>();
+// Lazy Hall-of-Fame consumers observe invalidation without adding route reads.
+let medalDataVersion = 0;
+const medalListeners = new Set<() => void>();
+export const getMedalDataVersion = () => medalDataVersion;
+export function subscribeMedalData(listener: () => void) {
+  medalListeners.add(listener);
+  return () => { medalListeners.delete(listener); };
+}
 export function invalidateDataGroups(groups: DataGroup[]) {
+  if (groups.includes("leaderboard")) groups = [...new Set([...groups, "performance" as const, "badge-statistics" as const])];
   dataGroupCache.invalidate((key) => groups.some((group) => key.startsWith(group + ":")));
   if (groups.includes("statistics")) statisticDashboardCache.invalidate();
   if (groups.includes("performance") || groups.includes("statistics")) performanceDashboardCache.invalidate();
+  if (groups.some(group => ["performance", "statistics", "badge-statistics"].includes(group))) {
+    medalDataVersion += 1;
+    medalListeners.forEach(listener => listener());
+  }
 }
 function groupReadKey(group: DataGroup, season: SeasonSelection) {
   return `${group}:${group === "badge-rarity" || group === "prestige-activities" ? ALL_TIME_SEASON : season}`;

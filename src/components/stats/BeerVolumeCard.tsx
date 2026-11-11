@@ -8,8 +8,9 @@ const liters = (value: number) => value.toLocaleString("de-DE", {
   maximumFractionDigits: 1,
 });
 
-export function BeerVolumeCard({ validAttempts, contextLabel, compact = false, className, artwork }: {
+export function BeerVolumeCard({ validAttempts, contextLabel, compact = false, className, artwork, personalArtwork = false }: {
   artwork?: ReactNode;
+  personalArtwork?: boolean;
   validAttempts: number;
   contextLabel?: string;
   compact?: boolean;
@@ -17,8 +18,9 @@ export function BeerVolumeCard({ validAttempts, contextLabel, compact = false, c
 }) {
   const volume = resolveBeerVolumeMilestone(validAttempts);
   return <article className={cn("panel overflow-hidden p-5 sm:p-7", className)} data-beer-volume>
+    {personalArtwork && artwork && <div data-personal-beer-artwork className="mx-auto mb-5 w-full max-w-md">{artwork}</div>}
     <div className="flex items-start gap-4">
-      <span data-team-artwork="beer" aria-hidden="true" className={cn(artwork ? "w-28" : "size-11", "grid shrink-0 place-items-center rounded-2xl border border-gold-300/20 bg-gold-300/10 text-gold-200")}>{artwork ?? <Beer className="size-5" />}</span>
+      {!personalArtwork && <span data-team-artwork="beer" aria-hidden="true" className={cn(artwork ? "w-28" : "size-11", "grid shrink-0 place-items-center rounded-2xl border border-gold-300/20 bg-gold-300/10 text-gold-200")}>{artwork ?? <Beer className="size-5" />}</span>}
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold-300/70">{contextLabel ?? "Gemeinsam getrunken"}</p>
         <p className="mt-1 font-display text-3xl font-black text-white sm:text-4xl">{liters(volume.liters)} L</p>
