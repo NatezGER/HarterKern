@@ -18,7 +18,7 @@ export function LeaderboardPage() {
 
   return (
     <div className="space-y-10">
-      <PageHeader eyebrow={isAllTime ? "Hall of Fame" : `Saison ${season}`} title={isAllTime ? "Die Besten" : "Saison-Hall-of-Fame"} description={mode === "medals" ? "Olympische Wertung der aktuellen Statistikplatzierungen im gewählten Zeitraum." : isAllTime ? appMeta.leaderboardDescription : `Die schnellsten qualifizierten Einzelzeiten der Saison ${season}.`} action={<SeasonContextBadge />} />
+      <PageHeader eyebrow={isAllTime ? "Hall of Fame" : `Saison ${season}`} title={isAllTime ? "Die Besten" : "Saison-Hall-of-Fame"} description={mode === "medals" ? "" : isAllTime ? appMeta.leaderboardDescription : `Die schnellsten qualifizierten Einzelzeiten der Saison ${season}.`} action={<SeasonContextBadge />} />
       <div className="flex flex-wrap gap-2" role="group" aria-label="Hall-of-Fame-Wertung">
         <Button type="button" variant={mode === "best" ? "default" : "outline"} aria-pressed={mode === "best"} onClick={() => setMode("best")}>Bestzeit</Button>
         <Button type="button" variant={mode === "average" ? "default" : "outline"} aria-pressed={mode === "average"} onClick={() => setMode("average")}>Durchschnitt</Button>

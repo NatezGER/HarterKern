@@ -1,7 +1,15 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MetricRankingCard } from "@/components/stats/MetricRankingCard";
 import type { RankedMetric } from "@/types/statDashboard";
+
+vi.mock("@/hooks/useAwardAssets", () => ({
+  useAwardAssetUrl: (id: string) => ({
+    "medal:statistics:gold": "https://assets.test/gold.png",
+    "medal:statistics:silver": "https://assets.test/silver.png",
+    "medal:statistics:bronze": "https://assets.test/bronze.png",
+  })[id] ?? null,
+}));
 
 const metric: RankedMetric = {
   key: "sub3", title: "Unter 3 Sekunden", description: "Gültige Zeiten",
@@ -23,15 +31,29 @@ describe("shared metric ranking card", () => {
     expect(markup).toContain("128 / 369");
     expect(markup).toContain("25 / 48");
     expect(markup).toContain("https://cdn.test/a.png");
-    expect(markup).toMatch(/1\.<\/span>.*Lars/);
-    expect(markup).toMatch(/1\.<\/span>.*Paul/);
-    expect(markup).toMatch(/3\.<\/span>.*Fipsi/);
+    expect(markup).toContain("34,7 %");
+    const rows = markup.match(/<li\b[^>]*>[\s\S]*?<\/li>/g) ?? [];
+    expect(rows).toHaveLength(5);
+    for (const [index, entry] of metric.rankings.slice(0, 5).entries()) {
+      expect(rows[index]).toContain(`aria-label="Profilbild von ${entry.name}"`);
+      expect(rows[index]).toContain(`>${entry.name}</p>`);
+      expect(rows[index]).toContain(`${entry.count} / ${entry.total}`);
+      if (entry.avatarUrl) expect(rows[index]).toContain(`src="${entry.avatarUrl}"`);
+    }
+    for (const row of rows.slice(0, 2)) {
+      expect(row).toContain('<span class="sr-only">Platz 1</span>');
+      expect(row).toContain('src="https://assets.test/gold.png"');
+    }
+    expect(rows[2]).toContain('<span class="sr-only">Platz 3</span>');
+    expect(rows[2]).toContain('src="https://assets.test/bronze.png"');
+    expect(markup.match(/src="https:\/\/assets.test\/gold.png"/g)).toHaveLength(2);
+    expect(markup.match(/src="https:\/\/assets.test\/bronze.png"/g)).toHaveLength(1);
+    expect(markup).not.toContain('src="https://assets.test/silver.png"');
+    expect(markup).not.toContain("Platz 2");
     expect(markup).toContain("https://cdn.test/d.png");
     expect(markup).toContain("https://cdn.test/e.png");
     expect(markup).not.toContain("Nicht Top 5");
     expect(markup.match(/aria-label="Profilbild von /g)).toHaveLength(5);
-    expect(markup.match(/border-gold-400\/20/g)).toHaveLength(1);
-    expect(markup).toMatch(/border-gold-400\/20[^>]*>.*Profilbild von Lars/);
   });
 
   it("renders a short ranking without placeholders", () => {
