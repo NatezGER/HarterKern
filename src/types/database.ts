@@ -563,6 +563,10 @@ export interface Database {
         Args: { p_season_year?: number | null; p_event_id?: string | null };
         Returns: Json;
       };
+      get_performance_metric_details: {
+        Args: { p_season_year: number | null; p_metric_key: string; p_player_id: string };
+        Returns: Json;
+      };
       get_statistics_performance_dashboard: {
         Args: { p_season_year?: number | null };
         Returns: Json;

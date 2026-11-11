@@ -1,4 +1,4 @@
-import { getLiveStandings } from "@/lib/liveEventCalculations";
+import { getLiveStandings, isEventEligibleLiveAttempt } from "@/lib/liveEventCalculations";
 import type {
   LiveAttempt,
   LiveEvent,
@@ -28,7 +28,9 @@ export function deriveLiveLeaderboardTransition(input: {
   const gainedPositions = Math.max(0, previousIndex - nextIndex);
   const previousEventBest = beforeStandings.find(({ bestTime }) => bestTime != null)?.bestTime ?? null;
   const isNewEventBest = previousEventBest == null || next.bestTime < previousEventBest;
-  const tookLead = next.rank === 1 && previous.rank !== 1 && isNewEventBest;
+  const previousValidTimes = before.attempts.filter(item => item.id !== attempt.id && item.eventId === event.id && item.result === "time" && item.timeSeconds != null &&
+    isEventEligibleLiveAttempt(item, before.players.find(player => player.id === item.playerId))).length;
+  const tookLead = previousValidTimes >= 2 && next.rank === 1 && previous.rank !== 1 && isNewEventBest;
   const intensity = tookLead ? "lead"
     : gainedPositions > 1 ? "multi-position"
       : gainedPositions === 1 ? "position" : "best-time";

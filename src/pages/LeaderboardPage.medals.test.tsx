@@ -5,7 +5,7 @@ const h=vi.hoisted(()=>({mode:"best",season:2026 as number|"all-time",enabled:vi
 vi.mock("@/hooks/useSeason",()=>({useSeason:()=>({season:h.season,isAllTime:h.season==="all-time"})}));
 vi.mock("@/hooks/useEffectivePublicData",()=>({useEffectivePublicData:()=>({data:{players:[],leaderboard:[]}})}));
 vi.mock("@/hooks/useLeaderboard",()=>({useLeaderboard:()=>({mode:h.mode,setMode:vi.fn(),entries:[]})}));
-vi.mock("@/hooks/useHallOfFameMedals",()=>({useHallOfFameMedals:(enabled:boolean)=>{h.enabled(enabled);return {result:{scope:h.season,status:"ready",pending:[],rows:[],notes:[],evaluatedCategories:0},retry:vi.fn()};}}));
+vi.mock("@/hooks/useHallOfFameMedals",()=>({useHallOfFameMedals:(enabled:boolean)=>{h.enabled(enabled);return {result:{scope:h.season,status:"ready",pending:[],rows:[{playerId:"test-player",name:"Testspieler",avatarUrl:null,rank:1,gold:1,silver:0,bronze:0,total:1,medals:[]}],notes:[],evaluatedCategories:1},retry:vi.fn()};}}));
 vi.mock("@/components/common/DataState",()=>({DataState:({children}:{children:ReactNode})=>children}));
 vi.mock("@/components/common/SeasonContextBadge",()=>({SeasonContextBadge:()=>null}));
 vi.mock("@/components/leaderboard/AdvancedHallOfFame",()=>({AdvancedHallOfFame:()=>null}));
@@ -20,8 +20,30 @@ it("retains the average view without requesting medals",()=>{
  h.mode="average";const html=renderToStaticMarkup(<LeaderboardPage />);
  expect(html).toContain("Saison-Durchschnitt 2026");expect(html).not.toContain("Statistik-Medaillenspiegel");expect(h.enabled).toHaveBeenCalledWith(false);
 });
-it.each([2026,"all-time"] as const)("shows medals only in the selected mode and scope %s",season=>{
- h.mode="medals";h.season=season;const html=renderToStaticMarkup(<LeaderboardPage />);
- expect(html).toContain("Statistik-Medaillenspiegel");expect(html).toContain(season===2026?"Saison 2026":"Ewiger Statistikvergleich");
- expect(h.enabled).toHaveBeenCalledWith(true);expect(html).toContain('aria-label="Medaillenpodium"');
+it("shows the selected season medal mode with a populated podium and ranking",()=>{
+ h.mode="medals";const html=renderToStaticMarkup(<LeaderboardPage />);
+ expect(html).toContain('aria-pressed="true">Medaillenspiegel</button>');
+ expect(html).toContain("Saison 2026");
+ expect(html).toContain('aria-label="Medaillenpodium"');
+ expect(html).toContain('data-medal-podium-rank="1"');
+ expect(html).toContain('aria-label="Statistik-Medaillenrangliste"');
+ expect(html).toContain('href="/player/test-player"');
+ expect(html).toContain("Testspieler");
+ expect(html).toContain('aria-label="1 Gold"');
+ expect(html).not.toContain("Statistik-Medaillenspiegel");
+ expect(html).not.toContain("Olympische Wertung der aktuellen Statistikplatzierungen");
+ expect(h.enabled).toHaveBeenCalledWith(true);
+});
+it("keeps All-Time medals selectable but shows only the future season-awards notice",()=>{
+ h.mode="medals";h.season="all-time";const html=renderToStaticMarkup(<LeaderboardPage />);
+ expect(html).toContain('aria-pressed="true">Medaillenspiegel</button>');
+ expect(html).toContain('aria-label="Ewige Medaillen"');
+ expect(html).toContain("Dauerhaft vergebene Saisonmedaillen erscheinen hier nach Einführung des offiziellen Saisonabschlusses.");
+ expect(html).not.toContain('aria-label="Medaillenpodium"');
+ expect(html).not.toContain('aria-label="Statistik-Medaillenrangliste"');
+ expect(html).not.toContain('href="/player/test-player"');
+ expect(html).not.toContain("Testspieler");
+ expect(html).not.toContain("Olympische Wertung der aktuellen Statistikplatzierungen");
+ // The real hook's All-Time no-fetch contract is covered in useHallOfFameMedals.test.ts.
+ expect(h.enabled).toHaveBeenCalledWith(true);
 });

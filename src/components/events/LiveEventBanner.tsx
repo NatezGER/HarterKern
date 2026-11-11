@@ -1,27 +1,24 @@
+import { useMemo } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useElapsedTime } from "@/hooks/useElapsedTime";
 import { useLiveEvent } from "@/hooks/useLiveEvent";
 import { formatDate, formatTime } from "@/utils/format";
-import { getAttemptMilestones } from "@/lib/liveEventCalculations";
+import { getLiveTickerMoments } from "@/lib/liveTickerMoments";
+import { RecordEmblem } from "@/components/common/RecordEmblem";
 import { resolveEventTheme } from "@/lib/eventTheme";
 import { cn } from "@/lib/cn";
 
 export function LiveEventBanner() {
   const { activeEvent, state } = useLiveEvent();
   const elapsed = useElapsedTime(activeEvent?.startedAt ?? new Date().toISOString());
+  const today = new Date().toDateString();
+  const moments = useMemo(() => activeEvent ? getLiveTickerMoments(state, activeEvent, new Date(today)) : [], [state, activeEvent, today]);
   if (!activeEvent) return null;
   const denmark = resolveEventTheme(activeEvent) === "denmark";
   const attempts = state.attempts
     .filter(({ eventId }) => eventId === activeEvent.id)
     .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
-  const milestones = getAttemptMilestones(state.players, state.attempts);
-  const best = attempts
-    .filter((attempt) => !attempt.outOfCompetition && attempt.result === "time")
-    .sort((a, b) => (a.timeSeconds ?? Infinity) - (b.timeSeconds ?? Infinity))[0];
-  const seasonBest = [...state.attempts]
-    .filter((attempt) => !attempt.outOfCompetition && attempt.result === "time")
-    .sort((a, b) => (a.timeSeconds ?? Infinity) - (b.timeSeconds ?? Infinity))[0];
   const attemptText = (attempt: (typeof attempts)[number]) => {
     const player = state.players.find(({ id }) => id === attempt.playerId);
     return `${player?.name ?? "Spieler"} ${attempt.result === "dns" ? "DNF" : formatTime(attempt.timeSeconds ?? 0)}`;
@@ -30,10 +27,7 @@ export function LiveEventBanner() {
     activeEvent.name || "Spieleabend",
     formatDate(activeEvent.date),
     ...attempts.slice(0, 3).map(attemptText),
-    best ? `Tagesbestzeit: ${attemptText(best)}` : "Noch keine Tagesbestzeit",
-    seasonBest ? `Saisonrekord: ${attemptText(seasonBest)}` : "Noch kein Saisonrekord",
-    ...attempts.filter((attempt) => milestones.get(attempt.id)?.isPersonalBest).slice(0, 1).map((attempt) => `Neue PB: ${attemptText(attempt)}`),
-    ...attempts.filter((attempt) => milestones.get(attempt.id)?.isWorldRecord).slice(0, 1).map((attempt) => `🏆 Neuer Weltrekord: ${attemptText(attempt)}`),
+    ...moments.map(({ kind, attempt }) => <span className="inline-flex items-center gap-2" key={kind}><RecordEmblem kind={kind} className="size-7" />{attemptText(attempt)}</span>),
     `Läuft seit ${elapsed}`,
   ];
   return (
@@ -49,10 +43,10 @@ export function LiveEventBanner() {
           </span>
           {denmark ? "Dänemark live" : "Live"}
         </span>
-        <span className="min-w-0 flex-1 overflow-hidden">
-          <span className="live-ticker-track flex w-max items-center whitespace-nowrap text-white/70">
+        <span className="min-w-0 flex-1 overflow-hidden motion-reduce:overflow-x-auto">
+          <span className="live-ticker-track motion-reduce:animate-none flex w-max items-center whitespace-nowrap text-white/70">
             {[...items, ...items].map((item, index) => (
-              <span key={`${item}-${index}`} aria-hidden={index >= items.length} className="px-5">{item}</span>
+              <span key={index} aria-hidden={index >= items.length} className={`px-5 ${index >= items.length ? "motion-reduce:hidden" : ""}`}>{item}</span>
             ))}
           </span>
         </span>

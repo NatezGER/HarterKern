@@ -9,7 +9,7 @@ it("uses the effective top-ten SQL sources, never UI-truncated five rows",()=>{
  expect(bingo).toContain("rank() over (partition by metric_key order by value desc)");
  expect(bingo).toContain("r.display_position <= 10");
  const performance=read(`supabase/migrations/${defining("get_statistics_performance_dashboard")}`);
- expect(defining("get_statistics_performance_dashboard")).toContain("078_");
+ expect(defining("get_statistics_performance_dashboard")).toContain("080_");
  expect(performance.match(/display_position <= 10/g)).toHaveLength(3);
  expect(performance).toContain("display_order<=10");
  const medals=read("src/lib/performanceMedals.ts");

@@ -1,3 +1,5 @@
+import { PerformanceLazyDetails } from "./PerformanceLazyDetails";
+import { ALL_TIME_SEASON, type SeasonSelection } from "@/lib/season";
 import { PerformanceDevelopmentDetails } from "./PerformanceDevelopmentDetails";
 import { useState } from "react";
 import { MetricRankingCard } from "./MetricRankingCard";
@@ -8,7 +10,7 @@ import type { FiveWindowEvidence, RankedMetric } from "@/types/statDashboard";
 
 export function FiveWindowDetails({ evidence }: { evidence: FiveWindowEvidence }) {
   return <details className="mt-2 border-t border-white/10 pt-2 text-xs text-white/65">
-    <summary className="cursor-pointer rounded py-1 font-bold text-gold-200 focus-visible:outline focus-visible:outline-gold-300">Die fünf Versuche ansehen</summary>
+    <summary className="cursor-pointer rounded py-1 font-bold text-gold-200 focus-visible:outline focus-visible:outline-gold-300">Details ansehen</summary>
     <a className="mt-2 block break-words text-gold-200 underline" href={`/events/${evidence.eventId}`}>{evidence.eventName}</a>
     <p>{evidence.eventDate} · Versuche {evidence.startAttempt}–{evidence.endAttempt}</p>
     <ol className="my-2 flex flex-wrap gap-2" aria-label="Fünf aufeinanderfolgende Zeiten">
@@ -36,7 +38,7 @@ export function ThresholdRankingContent({ metrics, selected, onSelect }: { metri
   } />;
 }
 
-export function PerformanceRankings({ metrics }: { metrics: RankedMetric[] }) {
+export function PerformanceRankings({ metrics, season = ALL_TIME_SEASON }: { metrics: RankedMetric[]; season?: SeasonSelection }) {
   const byKey = new Map(metrics.map(metric => [metric.key, metric]));
   const sections = performanceSections.filter(section => section.keys.some(key => key === "thresholds" ? byKey.has("sub5") : byKey.has(key)));
   return <div className="space-y-8">
@@ -48,9 +50,9 @@ export function PerformanceRankings({ metrics }: { metrics: RankedMetric[] }) {
       <h3 id={`heading-${section.id}`} className="mb-4 border-b border-gold-300/15 pb-2 font-display text-xl font-black text-gold-200 sm:text-2xl">{section.title}</h3>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" data-metric-dashboard>
         {section.keys.map(key => key === "thresholds" ? <ThresholdRankingCard key={key} metrics={metrics} /> : byKey.has(key) &&
-          <MetricRankingCard key={key} metric={byKey.get(key)!} linkPlayers={key.startsWith("performance-")} wrapDetail={key === "performance-endspurt"}
+          <MetricRankingCard key={key} metric={byKey.get(key)!} linkPlayers={key.startsWith("performance-")}
             renderDetails={key === "best-five-window" ? entry => entry.windowEvidence && <FiveWindowDetails evidence={entry.windowEvidence} />
-              : key.startsWith("performance-") ? entry => entry.developmentEvidence ? <PerformanceDevelopmentDetails evidence={entry.developmentEvidence} /> : <PerformanceEventDetails entry={entry} /> : undefined} />)}
+              : key.startsWith("performance-") ? entry => entry.developmentEvidence ? <PerformanceDevelopmentDetails evidence={entry.developmentEvidence} /> : entry.rivalryEvidence || entry.chaosEvidence ? <PerformanceEventDetails entry={entry} /> : <PerformanceLazyDetails key={`${season}:${key}:${entry.playerId}`} season={season} metric={key} entry={entry} /> : undefined} />)}
       </div>
     </section>)}
   </div>;

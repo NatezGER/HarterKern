@@ -20,8 +20,7 @@ it.each(["all-time", 2026] as const)("maps PR B evidence and preserves server ti
   ] } });
   const result = await getPerformanceDashboard(season);
   const metric = (key: string) => result.dashboard.metrics.find(m => m.key === key)!;
-  expect(metric("performance-endspurt").rankings.map(r => [r.playerId,r.rank])).toEqual([["z",1],["a",1]]);
-  expect(metric("performance-endspurt").rankings[0].endspurtEvidence).toEqual(endspurtEvidence);
+  expect(metric("performance-endspurt")).toBeUndefined();
   expect(metric("performance-rivalry-events").rankings[0].rivalryEvidence).toEqual(rivalryEvidence);
   expect(metric("performance-chaos-takeovers").rankings[0].chaosEvidence).toEqual(chaosEvidence);
   expect(metric("fast-starter").minimumSample).toBe(2);

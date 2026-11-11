@@ -42,7 +42,7 @@ export function LiveLeadProgression({
       <h2 className="display-title mt-1 text-2xl">Live-Führungsstory</h2>
     </div>
     {!current ? <p className="px-5 py-10 text-center text-sm text-white/40">
-      Noch keine gültige Führungszeit.
+      Führung beginnt ab der zweiten gültigen Eventzeit.
     </p> : <>
       <motion.div
         animate={highlightAttemptId === current.id && !reducedMotion

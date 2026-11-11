@@ -140,7 +140,7 @@ describe("EventResults polish", () => {
       .toBeLessThan(markup.indexOf("Alle Versuche Inhalt"));
   });
 
-  it("shows the complete final standings directly after the retained podium", () => {
+  it("shows the complete final standings after podium and progression", () => {
     const markup = renderToStaticMarkup(
       <MemoryRouter><EventResults detail={detail} /></MemoryRouter>,
     );
@@ -150,7 +150,7 @@ describe("EventResults polish", () => {
     expect(markup).toContain("Gast");
     expect(markup).toContain('src="https://cdn.example/paul.webp"');
     const standings = markup.slice(markup.indexOf("Finale Bestenliste"),
-      markup.indexOf("Event-Führungsprogression"));
+      markup.indexOf("Rivalries dieses Events"));
     expect(standings.match(/>1\.<\/span>/g)?.length).toBe(2);
     expect(markup).toContain("DNF");
     expect(markup.indexOf("Podium")).toBeLessThan(markup.indexOf("Finale Bestenliste"));
@@ -305,4 +305,12 @@ describe("EventResults polish", () => {
     expect(markup).not.toContain("data-trophy-event-special-stats");
     expect(markup).not.toContain("Event-Meilensteine");
   });
+});
+
+it("places unlocked badges before progression and the remaining closed-event content",()=>{
+ const badge: EventDetail["badges"][number]={key:"test",playerId:"player-1",playerName:"Paul",playerAvatarUrl:null,name:"Test badge",tier:"bronze",awardedAt:"2026-08-20",eventId:detail.id,description:"Test",badgeKey:"test",category:"event",familyKey:null,requirement:"Test",threshold:1,rarityPercent:null,sourceAttemptId:null,sourceHistoricalAttemptId:null,eventName:detail.name,sourceAttemptNumber:null,sourceTimeHundredths:null,isSpecialEventBadge:false,badgeKind:"tiered",designVariant:"standard",scopeType:"event",bingoLineCounts:null};
+ const html=renderToStaticMarkup(<MemoryRouter><EventResults detail={{...detail,badges:[badge]}} /></MemoryRouter>);
+ const labels=["Podium","Freigeschaltet","Event-Führungsprogression","Finale Bestenliste","Rivalries dieses Events"];
+ labels.forEach((label,i)=>{expect(html).toContain(label);if(i)expect(html.indexOf(labels[i-1])).toBeLessThan(html.indexOf(label));});
+ expect(html).not.toContain("lg:order-4");
 });

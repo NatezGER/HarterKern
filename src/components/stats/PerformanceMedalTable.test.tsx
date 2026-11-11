@@ -8,7 +8,7 @@ const ready = (): PerformanceMedals => ({scope:2026,status:"ready",pending:[],ev
 },{playerId:"zero",name:"Ohne Medaille",avatarUrl:null,rank:2,gold:0,silver:0,bronze:0,total:0,medals:[]}]});
 it("renders medals, zero players, profile links, accessible details and German values", () => {
  const html=renderToStaticMarkup(<PerformanceMedalTable result={ready()} onRetry={()=>{}} />);
- for(const text of ["Statistik-Medaillenspiegel","Saison 2026","Noch keine endgültig vergebenen Saisonmedaillen","Unter 3,00 Sekunden","mehr als fünf","Negativ- und Spaßstatistiken","2,34","Platz 1","Aktuell keine Statistikmedaillen."]) expect(html).toContain(text);
+ for(const text of ["Medaillenspiegel","Saison 2026","Unter 3,00 Sekunden","mehr als fünf","Negativ- und Spaßstatistiken","2,34","Platz 1","Aktuell keine Statistikmedaillen."]) expect(html).toContain(text);
  expect(html).toContain('href="/player/p"'); expect(html).toContain('href="/stats/performance#performance-speed"');
  expect(html).toContain('aria-label="1 Gold"'); expect(html).toContain('aria-label="0 Silber"');
  expect(html).toContain("<summary"); expect(html).toContain("focus-visible:outline");
@@ -19,8 +19,8 @@ it("distinguishes All-Time from career awards and explains excluded categories",
  const result=ready(); result.scope="all-time";
  result.notes=[{key:"smooth",title:"Glatte Zeiten",reason:"too-many",recipients:7},{key:"x",title:"Unsicher",reason:"unsafe",recipients:0}];
  const html=renderToStaticMarkup(<PerformanceMedalTable result={result} onRetry={()=>{}} />);
- expect(html).toContain("Ewiger Statistikvergleich"); expect(html).toContain("keine Summe endgültiger Karriere-Medaillen");
- expect(html).toContain("7 Spieler auf den Podiumsplätzen"); expect(html).toContain("Nicht sicher auswertbar");
+ expect(html).toContain("offiziellen Saisonabschlusses");
+ expect(html).not.toContain("Statistik-Medaillenrangliste"); expect(html).not.toContain("/player/p");
 });
 it.each(["loading","error"] as const)("does not present partial results for %s", status => {
  const result={...ready(),status,pending:["BINGO"]}; const retry=vi.fn();
