@@ -131,7 +131,7 @@ export function getRouteDataPlan(pathname: string, season: SeasonSelection = ALL
     };
   }
   if (pathname === "/stats/performance") return {
-    required: season === ALL_TIME_SEASON ? ["performance", "historical"] : ["performance"], optional: ["badge-statistics"],
+    required: season === ALL_TIME_SEASON ? ["performance", "historical"] : ["performance"], optional: ["badge-statistics", "players"],
   };
   if (pathname === "/stats/most-wanted") return { required: ["navigation"], optional: [] };
   if (pathname === "/stats/milestones") return { required: ["navigation"], optional: ["most-wanted", "team-milestones"] };

@@ -9,6 +9,7 @@ export function usePerformanceDashboard(season: SeasonSelection, refreshVersion:
   const [retryVersion, setRetryVersion] = useState(0);
   const [state, setState] = useState<{
     season?: SeasonSelection;
+    refreshVersion?: number;
     data: PerformanceDashboard | null;
     loading: boolean;
     error: string;
@@ -18,14 +19,14 @@ export function usePerformanceDashboard(season: SeasonSelection, refreshVersion:
     if (!enabled || refreshVersion <= 0) return;
     let active = true;
     const controller = new AbortController();
-    setState({ season, data: null, loading: true, error: "" });
+    setState({ season, refreshVersion, data: null, loading: true, error: "" });
     void getPerformanceDashboard(season, controller.signal).then((data) => {
-      if (active) setState({ season, data, loading: false, error: "" });
+      if (active) setState({ season, refreshVersion, data, loading: false, error: "" });
     }).catch((error) => {
-      if (active) setState({ season, data: null, loading: false, error: getErrorMessage(error) });
+      if (active) setState({ season, refreshVersion, data: null, loading: false, error: getErrorMessage(error) });
     });
     return () => { active = false; controller.abort(); };
   }, [season, refreshVersion, retryVersion, enabled]);
 
-  return { ...(enabled && state.season === season ? state : { data: null, loading: enabled, error: "" }), retry: () => setRetryVersion((version) => version + 1) };
+  return { ...(enabled && state.season === season && state.refreshVersion === refreshVersion ? state : { data: null, loading: enabled, error: "" }), retry: () => setRetryVersion((version) => version + 1) };
 }
