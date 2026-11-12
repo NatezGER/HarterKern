@@ -5,7 +5,8 @@
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import assert from "node:assert/strict";
-const { PGlite } = await import(pathToFileURL(process.argv[2]).href);
+export async function checkPerformancePrF(pglitePath, afterChecks) {
+const { PGlite } = await import(pathToFileURL(pglitePath).href);
 const db = new PGlite();
 const read = name => readFileSync(`supabase/migrations/${name}`, "utf8");
 const m60 = read("202610040060_event_timing_pairwise_rivalries.sql");
@@ -108,4 +109,10 @@ try {
  check((await db.query("select get_performance_metric_details(2026,'performance-record-hunter',$1) p",[uuid(1)])).rows[0].p.developmentEvidence.kind,"hunt","anon detail execution");
  console.log(`PR F PostgreSQL fixture checks passed: ${checks}`);
  console.log("Fixture payload sizes (not production timings):",JSON.stringify(sizes));
+ await afterChecks?.(db);
 } finally { await db.close(); }
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+ await checkPerformancePrF(process.argv[2]);
+}
